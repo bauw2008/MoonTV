@@ -59,7 +59,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv
+          images: ghcr.io/${{ steps.lowercase.outputs.owner }}/MoonTV
           tags: |
             type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
 
@@ -71,8 +71,8 @@ jobs:
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv,name-canonical=true,push=true
+          tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/MoonTV:${{ github.event.inputs.tag || 'latest' }}
+          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/MoonTV,name-canonical=true,push=true
           no-cache: true
           pull: true
 
@@ -119,8 +119,8 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create -t ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv:${{ github.event.inputs.tag || 'latest' }} \
-            $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/lunatv@sha256:%s ' *)
+          docker buildx imagetools create -t ghcr.io/${{ steps.lowercase.outputs.owner }}/MoonTV:${{ github.event.inputs.tag || 'latest' }} \
+            $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/MoonTV@sha256:%s ' *)
 
   cleanup-refresh:
     runs-on: ubuntu-latest
