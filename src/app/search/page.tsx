@@ -23,13 +23,16 @@ import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 import YouTubeVideoCard from '@/components/YouTubeVideoCard';
 import DirectYouTubePlayer from '@/components/DirectYouTubePlayer';
 
-function SearchPageClient() {
+// 添加youtube/netdisk接口
+interface FeatureFlags {
+  netdiskEnabled: boolean;
+  youtubeEnabled: boolean;
+}
 
-  // 添加状态 youtube/netdisk
-  const [featureFlags, setFeatureFlags] = useState({
-    netdiskEnabled: true,
-    youtubeEnabled: true
-  });
+
+function SearchPageClient() {
+  // 添加youtube/netdisk状态
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
   // 添加 useEffect 来获取功能启用状态
   useEffect(() => {
@@ -815,102 +818,114 @@ function SearchPageClient() {
     }
   };
 
+
+  // 添加 ButtonSkeleton 组件
+  const ButtonSkeleton = () => (
+    <div className='w-20 h-8 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse'></div>
+  );
+  
   return (
     <PageLayout activePath='/search'>
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
-        {/* 搜索框 */}
-        <div className='mb-8'>
-          {/* 搜索类型选项卡 */}
-          <div className='max-w-2xl mx-auto mb-4'>
-            <div className='flex items-center justify-center'>
-              <div className='inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 space-x-1'>
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSearchType('video');
-                    // 切换到影视搜索时，清除网盘和YouTube搜索状态
-                    setNetdiskResults(null);
-                    setNetdiskError(null);
-                    setNetdiskTotal(0);
-                    setYoutubeResults(null);
-                    setYoutubeError(null);
-                    // 如果有搜索词且当前显示结果，触发影视搜索
-                    const currentQuery = searchQuery.trim() || searchParams?.get('q');
-                    if (currentQuery && showResults) {
-                      setIsLoading(true);
-                      router.push(`/search?q=${encodeURIComponent(currentQuery)}`);
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                    searchType === 'video'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  🎬 影视资源
-                </button>
-				
-			{/* 网盘资源按钮 - 只在启用时显示 */}
-			{featureFlags.netdiskEnabled && (				
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSearchType('netdisk');
-                    // 清除之前的网盘搜索状态，确保重新开始
-                    setNetdiskError(null);
-                    setNetdiskResults(null);
-                    setYoutubeResults(null);
-                    setYoutubeError(null);
-                    // 如果当前有搜索词，立即触发网盘搜索
-                    const currentQuery = searchQuery.trim() || searchParams?.get('q');
-                    if (currentQuery && showResults) {
-                      handleNetDiskSearch(currentQuery);
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                    searchType === 'netdisk'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  💾 网盘资源
-                </button>
-			)}
+	{/* 搜索框 */}
+	<div className='mb-8'>
+	  {/* 搜索类型选项卡 */}
+	  <div className='max-w-2xl mx-auto mb-4'>
+	    <div className='flex items-center justify-center'>
+	      <div className='inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 space-x-1'>
+		{/* 影视资源按钮，总是显示 */}
+		<button
+		  type='button'
+		  onClick={() => {
+		    setSearchType('video');
+		    // 切换到影视搜索时，清除网盘和YouTube搜索状态
+		    setNetdiskResults(null);
+		    setNetdiskError(null);
+		    setNetdiskTotal(0);
+		    setYoutubeResults(null);
+		    setYoutubeError(null);
+		    // 如果有搜索词且当前显示结果，触发影视搜索
+		    const currentQuery = searchQuery.trim() || searchParams?.get('q');
+		    if (currentQuery && showResults) {
+		      setIsLoading(true);
+		      router.push(`/search?q=${encodeURIComponent(currentQuery)}`);
+		    }
+		  }}
+		  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+		    searchType === 'video'
+		      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+		      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+		  }`}
+		>
+		  🎬 影视资源
+		</button>
 
-			{/* YouTube按钮 - 只在启用时显示 */}
-			{featureFlags.youtubeEnabled && (				
-                <button
-                  type='button'
-                  onClick={() => {
-                    const wasAlreadyYoutube = searchType === 'youtube';
-                    setSearchType('youtube');
-                    // 清除之前的YouTube搜索状态，确保重新开始
-                    setYoutubeError(null);
-                    setYoutubeWarning(null);
-                    setYoutubeResults(null);
-                    // 注意：不重置排序和内容类型，保持用户选择
-                    setNetdiskResults(null);
-                    setNetdiskError(null);
-                    setNetdiskTotal(0);
-                    // 如果当前有搜索词，立即触发YouTube搜索
-                    const currentQuery = searchQuery.trim() || searchParams?.get('q');
-                    if (currentQuery && showResults) {
-                      // 如果已经在YouTube标签，或者是新切换，都强制重新搜索
-                      setTimeout(() => handleYouTubeSearch(currentQuery), 0);
-                    }
-                  }}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                    searchType === 'youtube'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  📺 YouTube
-                </button>
-			)}
-            </div>
-          </div>
-		</div>
+		{/* 网盘资源按钮 */}
+		{featureFlags === null ? (
+		  <ButtonSkeleton />
+		) : featureFlags.netdiskEnabled ? (
+		  <button
+		    type='button'
+		    onClick={() => {
+		      setSearchType('netdisk');
+		      // 清除之前的网盘搜索状态，确保重新开始
+		      setNetdiskError(null);
+		      setNetdiskResults(null);
+		      setYoutubeResults(null);
+		      setYoutubeError(null);
+		      // 如果当前有搜索词，立即触发网盘搜索
+		      const currentQuery = searchQuery.trim() || searchParams?.get('q');
+		      if (currentQuery && showResults) {
+		        handleNetDiskSearch(currentQuery);
+		      }
+		    }}
+		    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+		      searchType === 'netdisk'
+		        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+		        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+		    }`}
+		  >
+		    💾 网盘资源
+		  </button>
+		) : null}
+
+		{/* YouTube按钮 */}
+		{featureFlags === null ? (
+		  <ButtonSkeleton />
+		) : featureFlags.youtubeEnabled ? (
+		  <button
+		    type='button'
+		    onClick={() => {
+		      const wasAlreadyYoutube = searchType === 'youtube';
+		      setSearchType('youtube');
+		      // 清除之前的YouTube搜索状态，确保重新开始
+		      setYoutubeError(null);
+		      setYoutubeWarning(null);
+		      setYoutubeResults(null);
+		      // 注意：不重置排序和内容类型，保持用户选择
+		      setNetdiskResults(null);
+		      setNetdiskError(null);
+		      setNetdiskTotal(0);
+		      // 如果当前有搜索词，立即触发YouTube搜索
+		      const currentQuery = searchQuery.trim() || searchParams?.get('q');
+		      if (currentQuery && showResults) {
+		        // 如果已经在YouTube标签，或者是新切换，都强制重新搜索
+		        setTimeout(() => handleYouTubeSearch(currentQuery), 0);
+		      }
+		    }}
+		    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+		      searchType === 'youtube'
+		        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+		        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+		    }`}
+		  >
+		    📺 YouTube
+		  </button>
+		) : null}
+	      </div>
+	    </div>
+	  </div>
+	</div>
 		
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
