@@ -24,6 +24,38 @@ import YouTubeVideoCard from '@/components/YouTubeVideoCard';
 import DirectYouTubePlayer from '@/components/DirectYouTubePlayer';
 
 function SearchPageClient() {
+
+  // 添加状态 youtube/netdisk
+  const [featureFlags, setFeatureFlags] = useState({
+    netdiskEnabled: true,
+    youtubeEnabled: true
+  });
+
+  // 添加 useEffect 来获取功能启用状态
+  useEffect(() => {
+    // 从本地存储或 API 获取功能启用状态
+    const fetchFeatureFlags = async () => {
+      try {
+        // 这里可以从 API 获取，或者从 localStorage 读取管理员配置
+        const response = await fetch('/api/search/feature');
+        const data = await response.json();
+        setFeatureFlags({
+          netdiskEnabled: data.netdiskEnabled ?? true,
+          youtubeEnabled: data.youtubeEnabled ?? true
+        });
+      } catch (error) {
+        console.error('Failed to fetch feature flags:', error);
+        // 默认都启用，保持向后兼容
+        setFeatureFlags({
+          netdiskEnabled: true,
+          youtubeEnabled: true
+        });
+      }
+    };
+
+    fetchFeatureFlags();
+  }, []);
+
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   // 返回顶部按钮显示状态
@@ -817,6 +849,9 @@ function SearchPageClient() {
                 >
                   🎬 影视资源
                 </button>
+				
+			{/* 网盘资源按钮 - 只在启用时显示 */}
+			{featureFlags.netdiskEnabled && (				
                 <button
                   type='button'
                   onClick={() => {
@@ -840,6 +875,10 @@ function SearchPageClient() {
                 >
                   💾 网盘资源
                 </button>
+			)}
+
+			{/* YouTube按钮 - 只在启用时显示 */}
+			{featureFlags.youtubeEnabled && (				
                 <button
                   type='button'
                   onClick={() => {
@@ -868,10 +907,11 @@ function SearchPageClient() {
                 >
                   📺 YouTube
                 </button>
-              </div>
+			)}
             </div>
           </div>
-
+		</div>
+		
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
@@ -1454,3 +1494,4 @@ export default function SearchPage() {
     </Suspense>
   );
 }
+
