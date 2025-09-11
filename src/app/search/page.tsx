@@ -818,12 +818,6 @@ function SearchPageClient() {
     }
   };
 
-
-  // 添加 ButtonSkeleton 组件
-  const ButtonSkeleton = () => (
-    <div className='w-20 h-8 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse'></div>
-  );
-  
   return (
     <PageLayout activePath='/search'>
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
@@ -833,7 +827,6 @@ function SearchPageClient() {
 	  <div className='max-w-2xl mx-auto mb-4'>
 	    <div className='flex items-center justify-center'>
 	      <div className='inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 space-x-1'>
-		{/* 影视资源按钮，总是显示 */}
 		<button
 		  type='button'
 		  onClick={() => {
@@ -859,11 +852,11 @@ function SearchPageClient() {
 		>
 		  🎬 影视资源
 		</button>
-
-		{/* 网盘资源按钮 */}
+		
+		{/* 网盘资源按钮 - 只在启用时显示 */}
 		{featureFlags === null ? (
-		  <ButtonSkeleton />
-		) : featureFlags.netdiskEnabled ? (
+		  <div className='w-20 h-8 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse'></div>
+		) : featureFlags.netdiskEnabled ? (				
 		  <button
 		    type='button'
 		    onClick={() => {
@@ -889,10 +882,10 @@ function SearchPageClient() {
 		  </button>
 		) : null}
 
-		{/* YouTube按钮 */}
+		{/* YouTube按钮 - 只在启用时显示 */}
 		{featureFlags === null ? (
-		  <ButtonSkeleton />
-		) : featureFlags.youtubeEnabled ? (
+		  <div className='w-20 h-8 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse'></div>
+		) : featureFlags.youtubeEnabled ? (				
 		  <button
 		    type='button'
 		    onClick={() => {
@@ -926,6 +919,7 @@ function SearchPageClient() {
 	    </div>
 	  </div>
 	</div>
+
 		
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
