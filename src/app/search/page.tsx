@@ -33,7 +33,6 @@ function SearchPageClient() {
   // 获取功能启用状态
   useEffect(() => {
     const fetchFeatureFlags = async () => {
-      try {
         const response = await fetch('/api/search/feature');
         const data = await response.json();
         setFeatureFlags({
