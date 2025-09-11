@@ -656,7 +656,7 @@ function SearchPageClient() {
       setShowResults(false);
       setShowSuggestions(false);
     }
-  }, [searchParams]);
+  }, [searchParams, useFluidSearch]); // ← 修复：添加 useFluidSearch 依赖
 
   // 组件卸载时，关闭可能存在的连接
   useEffect(() => {
@@ -918,9 +918,7 @@ function SearchPageClient() {
 	      </div>
 	    </div>
 	  </div>
-	</div>
-
-		
+	
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
