@@ -880,7 +880,9 @@ function SearchPageClient() {
 		  >
 		    💾 网盘资源
 		  </button>
-		) : null}
+		) : (
+		  <div className='w-20 h-8 opacity-0 pointer-events-none'></div>
+		)}
 
 		{/* YouTube按钮 - 只在启用时显示 */}
 		{featureFlags === null ? (
@@ -914,10 +916,13 @@ function SearchPageClient() {
 		  >
 		    📺 YouTube
 		  </button>
-		) : null}
+		) : (
+		  <div className='w-20 h-8 opacity-0 pointer-events-none'></div>
+		)}
 	      </div>
 	    </div>
 	  </div>
+	</div>
 	
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
