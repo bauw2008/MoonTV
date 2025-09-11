@@ -922,7 +922,6 @@ function SearchPageClient() {
 	      </div>
 	    </div>
 	  </div>
-	</div>
 	
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
