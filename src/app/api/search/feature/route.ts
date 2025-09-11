@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getConfig } from '@/lib/config';
 
 export async function GET(request: NextRequest) {
   try {
-    // 从环境变量读取开关，默认 true
-    const netdiskEnabled = process.env.NETDISK_ENABLED !== 'false';
-    const youtubeEnabled = process.env.YOUTUBE_ENABLED !== 'false';
+    // 获取完整配置
+    const config = await getConfig();
+
+    // 确保 NetDiskConfig 和 YouTubeConfig 存在
+    const netdiskEnabled = config.NetDiskConfig?.enabled ?? false;
+    const youtubeEnabled = config.YouTubeConfig?.enabled ?? false;
 
     return NextResponse.json({
       netdiskEnabled,
@@ -14,7 +18,12 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch feature flags:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch feature flags' },
+      {
+        error: 'Failed to fetch feature flags',
+        netdiskEnabled: false,
+        youtubeEnabled: false,
+        timestamp: new Date().toISOString(),
+      },
       { status: 500 }
     );
   }
