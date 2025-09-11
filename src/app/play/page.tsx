@@ -2625,19 +2625,41 @@ function PlayPageClient() {
               display: none !important;
             }
             
-            /* 弹幕配置面板自动适配定位 - 完全模仿ArtPlayer设置面板 */
+            /* 弹幕配置面板优化 - 修复全屏模式下点击问题 */
             .artplayer-plugin-danmuku .apd-config {
-              /* 确保相对定位容器不影响面板定位 */
               position: relative;
             }
             
             .artplayer-plugin-danmuku .apd-config-panel {
-              /* 改为绝对定位，相对于播放器容器 */
+              /* 使用绝对定位而不是fixed，让ArtPlayer的动态定位生效 */
+              position: absolute !important;
+              /* 移除固定的left/right定位，让JS动态计算 */
+              left: auto;
+              right: auto;
+              /* 保留z-index确保层级正确 */
+              z-index: 2147483647 !important; /* 使用最大z-index确保在全屏模式下也能显示在最顶层 */
+              /* 确保面板可以接收点击事件 */
+              pointer-events: auto !important;
+              /* 添加一些基础样式确保可见性 */
+              background: rgba(0, 0, 0, 0.8);
+              border-radius: 6px;
+              backdrop-filter: blur(10px);
+            }
+            
+            /* 全屏模式下的特殊优化 */
+            .artplayer[data-fullscreen="true"] .artplayer-plugin-danmuku .apd-config-panel {
+              /* 全屏时使用固定定位并调整位置 */
               position: fixed !important;
+              top: auto !important;
+              bottom: 80px !important; /* 距离底部控制栏80px */
+              right: 20px !important; /* 距离右边20px */
               left: auto !important;
-              right: 10px !important; /* 与ArtPlayer --art-padding 一致 */
-              transform: none !important; /* 移除任何变换 */
-              z-index: 91 !important; /* 比ArtPlayer设置面板(90)稍高 */
+              z-index: 2147483647 !important;
+            }
+            
+            /* 确保全屏模式下弹幕面板内部元素可点击 */
+            .artplayer[data-fullscreen="true"] .artplayer-plugin-danmuku .apd-config-panel * {
+              pointer-events: auto !important;
             }
           `;
           document.head.appendChild(style);
