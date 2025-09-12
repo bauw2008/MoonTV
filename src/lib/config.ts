@@ -51,6 +51,14 @@ export const API_CONFIG = {
       Accept: 'application/json',
     },
   },
+  shortdrama: {
+    baseUrl: 'https://api.r2afosne.dpdns.org',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      Accept: 'application/json',
+    },
+  },
 };
 
 // 在模块加载时根据环境决定配置来源
