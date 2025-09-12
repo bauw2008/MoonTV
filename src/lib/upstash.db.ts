@@ -344,6 +344,28 @@ export class UpstashRedisStorage implements IStorage {
     return configs;
   }
 
+  // ---------- 用户头像 ----------
+  private avatarKey(userName: string) {
+    return `u:${userName}:avatar`;
+  }
+
+  async getUserAvatar(userName: string): Promise<string | null> {
+    const val = await withRetry(() => this.client.get(this.avatarKey(userName)));
+    return val ? ensureString(val) : null;
+  }
+
+  async setUserAvatar(userName: string, avatarBase64: string): Promise<void> {
+    await withRetry(() =>
+      this.client.set(this.avatarKey(userName), avatarBase64)
+    );
+  }
+
+  async deleteUserAvatar(userName: string): Promise<void> {
+    await withRetry(() =>
+      this.client.del(this.avatarKey(userName))
+    );
+  }
+  
   // 清空所有数据
   async clearAllData(): Promise<void> {
     try {
