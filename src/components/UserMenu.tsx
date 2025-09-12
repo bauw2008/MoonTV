@@ -66,7 +66,7 @@ export const UserMenu: React.FC = () => {
 
   // Body 滚动锁定 - 使用 overflow 方式避免布局问题
   useEffect(() => {
-    if (isSettingsOpen || isChangePasswordOpen) {
+    if (isSettingsOpen || isChangePasswordOpen || isChangeAvatarOpen) {
       const body = document.body;
       const html = document.documentElement;
 
@@ -495,7 +495,7 @@ export const UserMenu: React.FC = () => {
       setIsUploadingAvatar(false);
     }
   };
-  
+
   const handleSubmitChangePassword = async () => {
     setPasswordError('');
 
@@ -1509,4 +1509,5 @@ export const UserMenu: React.FC = () => {
     </>
   );
 };
+
 
