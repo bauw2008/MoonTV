@@ -204,9 +204,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       const pingStart = performance.now();
       let pingTime = 0;
 
-      // 测量ping时间（如果使用代理，则测试代理URL的响应时间）
-      const pingUrl = needsProxy ? `/api/proxy/video/test?url=${encodeURIComponent(m3u8Url)}` : m3u8Url;
-      fetch(pingUrl, { method: 'HEAD', mode: needsProxy ? 'cors' : 'no-cors' })
+      const pingPromise = fetch(m3u8Url, { method: 'HEAD', mode: 'no-cors' })
         .then(() => {
           pingTime = performance.now() - pingStart;
         })
