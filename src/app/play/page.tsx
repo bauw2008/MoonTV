@@ -5,7 +5,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import Hls from 'hls.js';
-import { Heart, ChevronUp } from 'lucide-react';
+import { Heart, ChevronUp, PlayCircleIcon } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
@@ -29,6 +29,7 @@ import {
 import { getDoubanDetails } from '@/lib/douban.client';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import { getShortDramaRecommend, ShortDramaRecommendResponse } from '@/lib/shortdrama.client';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -79,6 +80,10 @@ function PlayPageClient() {
   const [netdiskLoading, setNetdiskLoading] = useState(false);
   const [netdiskError, setNetdiskError] = useState<string | null>(null);
   const [netdiskTotal, setNetdiskTotal] = useState(0);
+  
+    // 推荐短剧状态
+  const [recommendedShortDramas, setRecommendedShortDramas] = useState<ShortDramaRecommendResponse | null>(null);
+  const [recommendLoading, setRecommendLoading] = useState(false);
 
   // 跳过片头片尾配置
   const [skipConfig, setSkipConfig] = useState<{
@@ -149,6 +154,13 @@ function PlayPageClient() {
     searchParams.get('source') || ''
   );
   const [currentId, setCurrentId] = useState(searchParams.get('id') || '');
+
+  // 短剧ID（用于调用短剧全集地址API）
+  const [shortdramaId,] = useState(searchParams.get('shortdrama_id') || '');
+
+  // 短剧分类和标签信息（从URL参数获取）
+  const [vodClass] = useState(searchParams.get('vod_class') || '');
+  const [vodTag] = useState(searchParams.get('vod_tag') || '');
 
   // 搜索所需信息
   const [searchTitle] = useState(searchParams.get('stitle') || '');
@@ -386,6 +398,22 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
+
+  // 获取推荐短剧
+  const fetchRecommendedShortDramas = async (forceShortdrama?: boolean) => {
+    // 只在短剧播放页面显示推荐，或者强制调用时执行
+    if (!forceShortdrama && currentSource !== 'shortdrama') return;
+
+    try {
+      setRecommendLoading(true);
+      const recommendData = await getShortDramaRecommend({ size: '5' });
+      setRecommendedShortDramas(recommendData);
+    } catch (error) {
+      console.error('获取推荐短剧失败:', error);
+    } finally {
+      setRecommendLoading(false);
+    }
+  };
 
   // bangumi ID检测（6位数字）
   const isBangumiId = (id: number): boolean => {
@@ -1424,10 +1452,95 @@ function PlayPageClient() {
     };
 
     const initAll = async () => {
-      if (!currentSource && !currentId && !videoTitle && !searchTitle) {
+      console.log('播放页面初始化参数:', {
+        currentSource,
+        currentId,
+        videoTitle,
+        searchTitle,
+        shortdramaId,
+        videoYear,
+        allSearchParams: Array.from(searchParams.entries())
+      });
+      if (!currentSource && !currentId && !videoTitle && !searchTitle && !shortdramaId) {
+        console.error('缺少必要参数，所有参数都为空');
         setError('缺少必要参数');
         setLoading(false);
         return;
+      }
+
+      // 如果是短剧，直接调用短剧全集地址API
+      if (shortdramaId) {
+
+        setLoadingStage('fetching');
+        setLoadingMessage('🎬 正在获取短剧播放源...');
+
+        try {
+          const apiUrl = `/api/shortdrama/parse/all?id=${shortdramaId}`;
+          const response = await fetch(apiUrl);
+
+          if (!response.ok) {
+            throw new Error(`获取短剧播放源失败: ${response.status}`);
+          }
+          const data = await response.json();
+
+          // 验证API响应格式
+          if (!data || !Array.isArray(data.results)) {
+            throw new Error('API响应格式不正确或results为空');
+          }
+
+          // 按index排序，确保从第0集开始
+          const sortedResults = data.results
+            .filter((item: any) => item.status === 'success' && item.parsedUrl)
+            .sort((a: any, b: any) => a.index - b.index);
+
+          if (sortedResults.length === 0) {
+            throw new Error('没有可用的播放地址');
+          }
+
+          // 构造播放地址和集数标题数组，确保从index 0开始
+          const episodes = sortedResults.map((item: any) => item.parsedUrl);
+          const episodes_titles = sortedResults.map((item: any) => item.label || `第${item.index + 1}集`);
+
+          const detailData: SearchResult = {
+            id: shortdramaId,
+            source: 'shortdrama',
+            source_name: '短剧',
+            title: data.videoName || videoTitle || '短剧播放',
+            year: videoYear || new Date().getFullYear().toString(),
+            poster: data.cover || '',
+            douban_id: 0,
+            episodes: episodes,
+            episodes_titles: episodes_titles,
+            desc: data.description || '暂无剧情简介', // 添加描述信息字段
+            class: vodClass || '', // 使用从URL参数获取的分类字段
+            tag: vodTag || '', // 使用从URL参数获取的标签字段
+          };
+
+          setVideoTitle(detailData.title);
+          setVideoYear(detailData.year);
+          setVideoCover(detailData.poster);
+          setDetail(detailData);
+          setCurrentSource('shortdrama');
+          setCurrentId(shortdramaId);
+
+          setLoadingStage('ready');
+          setLoadingMessage('✨ 短剧播放源准备就绪...');
+
+          // 获取推荐短剧 - 强制调用，因为是短剧页面
+          setTimeout(() => {
+            fetchRecommendedShortDramas(true);
+          }, 1500);
+
+          setTimeout(() => {
+            setLoading(false);
+          }, 1000);
+
+          return;
+        } catch (error) {
+          setError(`获取短剧播放源失败: ${error instanceof Error ? error.message : String(error)}`);
+          setLoading(false);
+          return;
+        }
       }
       setLoading(true);
       setLoadingStage(currentSource && currentId ? 'fetching' : 'searching');
@@ -3921,8 +4034,212 @@ function PlayPageClient() {
             </div>
           </div>
         </div>
-      </div>
 
+        {/* 推荐短剧区域 */}
+        {currentSource === 'shortdrama' && (
+          <div className='mt-12 border-t border-gray-200 dark:border-gray-700 pt-8'>
+            <div className='mb-6'>
+              <h2 className='text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2'>
+                🎭 推荐短剧
+              </h2>
+              <p className='text-gray-600 dark:text-gray-400'>
+                为你精选更多精彩短剧
+              </p>
+            </div>
+
+            {recommendLoading ? (
+              <div className='flex justify-center py-8'>
+                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+              </div>
+            ) : recommendedShortDramas && recommendedShortDramas.items.length > 0 ? (
+              <div className='grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+                {recommendedShortDramas?.items.map((drama) => (
+                  <div key={drama.id} className='w-full'>
+                    <div
+                      className='group relative w-full rounded-lg bg-transparent cursor-pointer transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-[500]'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const urlParams = new URLSearchParams();
+                        urlParams.set('shortdrama_id', drama.vod_id.toString());
+                        urlParams.set('title', drama.name);
+                        if (drama.vod_class) urlParams.set('vod_class', drama.vod_class);
+                        if (drama.vod_tag) urlParams.set('vod_tag', drama.vod_tag);
+
+                        const url = `/play?${urlParams.toString()}`;
+                        // 使用window.location.href来触发完整的页面导航，包括加载页面
+                        window.location.href = url;
+                      }}
+                      style={{
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        WebkitTouchCallout: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation',
+                        pointerEvents: 'auto',
+                      } as React.CSSProperties}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        return false;
+                      }}
+                    >
+                      {/* 封面容器 */}
+                      <div className='relative w-full aspect-[3/4] overflow-hidden rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-gray-300 dark:bg-gray-700'>
+                        {drama.cover ? (
+                          <img
+                            src={drama.cover}
+                            alt={drama.name}
+                            className='w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110'
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://via.placeholder.com/300x400?text=暂无封面';
+                            }}
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          />
+                        ) : (
+                          <div className='w-full h-full flex items-center justify-center text-gray-500'>
+                            暂无封面
+                          </div>
+                        )}
+
+                        {/* 评分标识 */}
+                        {drama.score && drama.score > 0 && (
+                          <div
+                            className='absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-1 transition-all duration-300 ease-out group-hover:bg-black/80 group-hover:scale-[1.05]'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          >
+                            <span>⭐</span>
+                            <span>{drama.score}</span>
+                          </div>
+                        )}
+
+                        {/* 集数标识 */}
+                        {drama.total_episodes && (
+                          <div
+                            className='absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded-full shadow-sm transition-all duration-300 ease-out group-hover:bg-black/80 group-hover:scale-[1.05]'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          >
+                            {drama.total_episodes}集
+                          </div>
+                        )}
+
+                        {/* 播放按钮 */}
+                        <div
+                          className='absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
+                          style={{
+                            WebkitUserSelect: 'none',
+                            userSelect: 'none',
+                            WebkitTouchCallout: 'none',
+                          } as React.CSSProperties}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            return false;
+                          }}
+                        >
+                          <PlayCircleIcon
+                            size={50}
+                            strokeWidth={0.8}
+                            className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-blue-500 hover:scale-[1.1]'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              return false;
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 标题与来源 */}
+                      <div
+                        className='mt-2 text-center'
+                        style={{
+                          WebkitUserSelect: 'none',
+                          userSelect: 'none',
+                          WebkitTouchCallout: 'none',
+                        } as React.CSSProperties}
+                      >
+                        <div className='relative'>
+                          <span
+                            className='block text-sm font-semibold truncate text-gray-900 dark:text-gray-100 transition-colors duration-300 ease-in-out group-hover:text-blue-600 dark:group-hover:text-blue-400 peer'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          >
+                            {drama.name}
+                          </span>
+                          {/* 自定义 tooltip */}
+                          <div
+                            className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-nowrap pointer-events-none'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          >
+                            {drama.name}
+                            <div
+                              className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800'
+                              style={{
+                                WebkitUserSelect: 'none',
+                                userSelect: 'none',
+                                WebkitTouchCallout: 'none',
+                              } as React.CSSProperties}
+                            ></div>
+                          </div>
+                        </div>
+                        <span
+                          className='block text-xs text-gray-500 dark:text-gray-400 mt-1'
+                          style={{
+                            WebkitUserSelect: 'none',
+                            userSelect: 'none',
+                            WebkitTouchCallout: 'none',
+                          } as React.CSSProperties}
+                        >
+                          <span
+                            className='inline-block border rounded px-2 py-0.5 border-gray-500/60 dark:border-gray-400/60 transition-all duration-300 ease-in-out group-hover:border-blue-500/60 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                            style={{
+                              WebkitUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTouchCallout: 'none',
+                            } as React.CSSProperties}
+                          >
+                            短剧
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className='text-center py-8 text-gray-500'>
+                {!recommendedShortDramas ? '正在加载推荐内容...' : '暂无推荐内容'}
+              </div>
+            )}
+          </div>
+        )}
+
+
+      </div>
       {/* 返回顶部悬浮按钮 */}
       <button
         onClick={scrollToTop}
