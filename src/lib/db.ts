@@ -231,6 +231,26 @@ export class DbManager {
     return {};
   }
 
+  // ---------- 用户头像 ----------
+  async getUserAvatar(userName: string): Promise<string | null> {
+    if (typeof (this.storage as any).getUserAvatar === 'function') {
+      return (this.storage as any).getUserAvatar(userName);
+    }
+    return null;
+  }
+
+  async setUserAvatar(userName: string, avatarBase64: string): Promise<void> {
+    if (typeof (this.storage as any).setUserAvatar === 'function') {
+      await (this.storage as any).setUserAvatar(userName, avatarBase64);
+    }
+  }
+
+  async deleteUserAvatar(userName: string): Promise<void> {
+    if (typeof (this.storage as any).deleteUserAvatar === 'function') {
+      await (this.storage as any).deleteUserAvatar(userName);
+    }
+  }
+  
   // ---------- 数据清理 ----------
   async clearAllData(): Promise<void> {
     if (typeof (this.storage as any).clearAllData === 'function') {
