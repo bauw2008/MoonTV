@@ -441,7 +441,7 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
       </div>
 
       {/* 保存按钮 */}
-      <div className='mt-6'>
+      <div className='flex justify-end pt-6'>
         <button
           onClick={handleSave}
           disabled={isLoading}
