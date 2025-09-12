@@ -174,7 +174,8 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
+    // 移除最外层带背景和圆角的容器 div，直接返回片段
+    <>
       <div className='flex items-center gap-3 mb-6'>
         <Shield className='h-6 w-6 text-blue-600' />
         <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
@@ -379,66 +380,73 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
         </div>
 
         {/* URL示例 */}
-	<div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
-	  <h3 className='text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2'>
-	    TVBox配置URL
-	  </h3>
-
-	  {/* 格式选择 */}
-	  <div className='mb-3'>
-	    <select
-	      value={format}
-	      onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
-	      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-	    >
-	      <option value="json">JSON 格式（推荐）</option>
-	      <option value="base64">Base64 格式</option>
-	    </select>
-	  </div>
-
-	  {/* URL显示区域 */}
-	  <div className='bg-white dark:bg-gray-800 px-3 py-2 rounded border mb-2'>
-	    <code className='block text-sm text-gray-900 dark:text-gray-100 break-all leading-relaxed'>
-	      {generateExampleURL()}
-	    </code>
-	  </div>
-	  
-	  {/* 操作按钮 */}
-	  <div className='flex flex-col sm:flex-row gap-2'>
-	    <button
-	      onClick={() => {
-		navigator.clipboard.writeText(generateExampleURL());
-		showMessage('success', 'URL已复制到剪贴板');
-	      }}
-	      className='flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
-	    >
-	      <Copy className='h-4 w-4' />
-	      复制URL
-	    </button>
-	    <a
-	      href={generateExampleURL()}
-	      target='_blank'
-	      rel='noopener noreferrer'
-	      className='flex-1 sm:flex-none px-4 py-2 text-sm bg-green-100 dark:bg-green-800 hover:bg-green-200 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
-	    >
-	      <ExternalLink className='h-4 w-4' />
-	      测试访问
-	    </a>
-	  </div>
-	</div>     
+	<div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+            TVBox配置URL
+          </h3>
+          
+          {/* 格式选择 */}
+          <div className='mb-3'>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              配置格式
+            </label>
+            <div className='flex gap-4'>
+              <label className='inline-flex items-center'>
+                <input
+                  type='radio'
+                  value='json'
+                  checked={format === 'json'}
+                  onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
+                  className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
+                />
+                <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>JSON 格式（推荐）</span>
+              </label>
+              <label className='inline-flex items-center'>
+                <input
+                  type='radio'
+                  value='base64'
+                  checked={format === 'base64'}
+                  onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
+                  className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
+                />
+                <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>Base64 编码</span>
+              </label>
+            </div>
+          </div>
+          
+          {/* URL展示 */}
+          <div className='p-3 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 mb-3'>
+            <code className='text-sm text-gray-900 dark:text-gray-100 break-all'>
+              {generateExampleURL()}
+            </code>
+          </div>
+          
+          {/* 复制按钮 */}
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(generateExampleURL());
+              showMessage('success', 'URL已复制到剪贴板');
+            }}
+            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2'
+          >
+            <Copy className='h-4 w-4' />
+            复制URL
+          </button>
+        </div>
+      </div>
 
       {/* 保存按钮 */}
-      <div className='flex justify-end pt-6'>
+      <div className='mt-6'>
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className='px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors'
+          className='px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors'
         >
           {isLoading ? '保存中...' : '保存配置'}
         </button>
       </div>
-    </div>
-  </div>
+    </>
   );
 };
 
