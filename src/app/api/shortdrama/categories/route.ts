@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_CONFIG } from '@/lib/config';
 
-export async function GET(_request: NextRequest) {
-  try {
-    // 先尝试调用外部API
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+export const runtime = 'nodejs'; // 避免 Edge runtime 下 AbortController 不兼容
 
-    const response = await fetch(`${API_CONFIG.shortdrama.baseUrl}/vod/categories`, {
+export async function GET(_request: NextRequest) {
+  const apiUrl = `${API_CONFIG.shortdrama.baseUrl}/vod/categories`;
+  console.log("Requesting:", apiUrl);
+
+  try {
+    const response = await fetch(apiUrl, {
       method: 'GET',
-      headers: API_CONFIG.shortdrama.headers,
-      signal: controller.signal,
+      headers: API_CONFIG.shortdrama.headers || {},
     });
 
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
-      return NextResponse.json(data);
-    } else {
+    if (!response.ok) {
       throw new Error(`External API failed: ${response.status}`);
     }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Short drama categories API error:', error);
 
-    // 如果外部API失败，返回默认分类数据作为备用
+    // 返回 mock 数据
     return NextResponse.json({
       categories: [
         { type_id: 1, type_name: '古装' },
@@ -39,3 +37,4 @@ export async function GET(_request: NextRequest) {
     });
   }
 }
+
