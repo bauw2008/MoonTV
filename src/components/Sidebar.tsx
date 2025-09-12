@@ -73,7 +73,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     showVariety: true,
     showLive: false,
     showTvbox: false,
-    showShortDrama: true,
+    showShortDrama: false,
   });
 
   useEffect(() => {
@@ -87,7 +87,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
         showVariety: runtimeConfig.MenuSettings.showVariety ?? true,
         showLive: runtimeConfig.MenuSettings.showLive ?? false,
         showTvbox: runtimeConfig.MenuSettings.showTvbox ?? false,
-        showShortDrama: runtimeConfig.MenuSettings.showShortDrama ?? true,
+        showShortDrama: runtimeConfig.MenuSettings.showShortDrama ?? false,
       });
       
       // 如果直播菜单被隐藏，同时设置全局变量来禁止访问直播页面

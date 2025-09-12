@@ -23,6 +23,7 @@ export interface AdminConfig {
       showVariety: boolean;
       showLive: boolean;
       showTvbox: boolean;
+      showShortDrama: boolean;
       };
   };
   UserConfig: {

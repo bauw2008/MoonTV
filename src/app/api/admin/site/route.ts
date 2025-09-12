@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
 	showVariety: boolean;
 	showLive: boolean;
 	showTvbox: boolean;
+	showShortDrama: boolean;
       };	  
     };
 
@@ -81,7 +82,8 @@ export async function POST(request: NextRequest) {
       typeof MenuSettings?.showAnime !== 'boolean' ||
       typeof MenuSettings?.showVariety !== 'boolean' ||
       typeof MenuSettings?.showLive !== 'boolean' ||
-      typeof MenuSettings?.showTvbox !== 'boolean'  
+      typeof MenuSettings?.showTvbox !== 'boolean' ||
+      typeof MenuSettings?.showShortDrama !== 'boolean'   
     ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
@@ -118,6 +120,7 @@ export async function POST(request: NextRequest) {
 	showVariety: true,
 	showLive: false,
 	showTvbox: false,
+	showShortDrama: false,
 	}	  
     };
 

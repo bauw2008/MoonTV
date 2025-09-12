@@ -68,6 +68,7 @@ export default async function RootLayout({
     showAnime: true,
     showVariety: true,
     showLive: false,
+    showShortDrama: false,
   };
   
   if (storageType !== 'localstorage') {

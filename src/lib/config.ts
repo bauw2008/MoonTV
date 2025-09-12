@@ -236,6 +236,7 @@ async function getInitConfig(configFile: string, subConfig: {
 	showVariety: process.env.NEXT_PUBLIC_MENU_SHOW_VARIETY !== 'true',
 	showLive: process.env.NEXT_PUBLIC_MENU_SHOW_LIVE === 'false',
 	showTvbox: process.env.NEXT_PUBLIC_MENU_SHOW_TVBOX === 'false',
+	showShortDrama: process.env.NEXT_PUBLIC_MENU_SHOW_SHORTDRAMA === 'false',
 	}
       },
     UserConfig: {
@@ -380,6 +381,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     showVariety: true,
     showLive: false,
     showTvbox: false,
+    showShortDrama: false,
   };
 
   adminConfig.SiteConfig.MenuSettings = {

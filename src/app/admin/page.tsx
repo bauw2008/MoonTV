@@ -341,6 +341,7 @@ interface MenuSettings {
   showVariety: boolean;
   showLive: boolean;
   showTvbox: boolean;
+  showShortDrama: boolean;
 }
 
 // 新增站点配置类型
@@ -380,7 +381,7 @@ interface LiveDataSource {
   from: 'config' | 'custom';
 }
 
-// tvbox安全配置接口
+// tvbox配置接口
 interface SecurityConfig {
   enableAuth: boolean;
   token: string;
@@ -1557,7 +1558,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                               )}
                           </div>
                         </td>
-
                         <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
                           {/* 修改密码按钮 */}
                           {canChangePassword && (
@@ -3842,6 +3842,7 @@ const menuLabels = {
   showVariety: '综艺',
   showLive: '直播',
   showTvbox: 'TVBox'
+  showShortDrama: '短剧'
 };
 
 // 新增站点配置组件
@@ -3866,6 +3867,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
       showVariety: true,
       showLive: false,
       showTvbox: false,
+      showShortDrama: false,
     }
   });
 
@@ -3930,6 +3932,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
 	  showVariety: config.SiteConfig.MenuSettings.showVariety ?? true,
 	  showLive: config.SiteConfig.MenuSettings.showLive ?? false,
 	  showTvbox: config.SiteConfig.MenuSettings.showTvbox ?? false,
+	  showShortDrama: config.SiteConfig.MenuSettings.showShortDrama ?? false,
 	  },
         DoubanProxyType: config.SiteConfig.DoubanProxyType || 'direct',
         DoubanProxy: config.SiteConfig.DoubanProxy || '',

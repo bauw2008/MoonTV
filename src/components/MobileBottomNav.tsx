@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Box, Cat, Clover, Film, Home, Radio, Star, Tv } from 'lucide-react';
+import { Box, Cat, Clover, Film, Home, Radio, Star, PlayCircle, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -27,6 +27,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     showVariety: true,
     showLive: false,
     showTvbox: false,
+    showShortDrama: false,
   });
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
         showVariety: runtimeConfig.MenuSettings.showVariety ?? true,
         showLive: runtimeConfig.MenuSettings.showLive ?? false,
         showTvbox: runtimeConfig.MenuSettings.showTvbox ?? false,
+        showShortDrama: runtimeConfig.MenuSettings.showShortDrama ?? false,
       });
     }
   }, []);
@@ -57,6 +59,8 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
     if (menuConfig.showTVShows)
       items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
+    if (menuConfig.showShortDrama)
+      items.push({ icon: PlayCircle, label: '短剧', href: '/shortdrama' });      
     if (menuConfig.showAnime)
       items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
     if (menuConfig.showVariety)
