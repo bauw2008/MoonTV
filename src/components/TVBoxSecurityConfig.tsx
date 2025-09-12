@@ -176,13 +176,6 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
   return (
     // 移除最外层带背景和圆角的容器 div，直接返回片段
     <>
-      <div className='flex items-center gap-3 mb-6'>
-        <Shield className='h-6 w-6 text-blue-600' />
-        <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-          TVBox 安全配置
-        </h2>
-      </div>
-
       {message && (
         <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
           message.type === 'success' 
@@ -433,6 +426,16 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
             <Copy className='h-4 w-4' />
             复制URL
           </button>
+            {/* 测试访问 */}
+	  <a
+	    href={generateExampleURL()}
+	    target='_blank'
+	    rel='noopener noreferrer'
+	    className='flex-1 sm:flex-none px-4 py-2 text-sm bg-green-100 dark:bg-green-800 hover:bg-green-200 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
+	  >
+	    <ExternalLink className='h-4 w-4' />
+	    测试访问
+	  </a>
         </div>
       </div>
 
