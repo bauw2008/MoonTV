@@ -16,7 +16,7 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
-    // 新增：URL格式选择
+  // 新增：URL格式选择
   const [format, setFormat] = useState<'json' | 'base64'>('json');
   
   const [securitySettings, setSecuritySettings] = useState({
@@ -174,8 +174,8 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
   };
 
   return (
-    // 移除最外层带背景和圆角的容器 div，直接返回片段
-    <>{message && (
+    <div className="space-y-6">
+      {message && (
         <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
           message.type === 'success' 
             ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
@@ -190,267 +190,266 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
         </div>
       )}
 
-      <div className='space-y-6'>
-        {/* Token验证 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
-          <div className='flex items-center justify-between mb-4'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                Token 验证
-              </h3>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                要求TVBox在URL中携带token参数才能访问
-              </p>
-            </div>
-            <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                type='checkbox'
-                checked={securitySettings.enableAuth}
-                onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableAuth: e.target.checked }))}
-                className='sr-only peer'
-              />
-              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
+      {/* Token验证 */}
+      <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
+        <div className='flex items-center justify-between mb-4'>
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+              Token 验证
+            </h3>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
+              要求TVBox在URL中携带token参数才能访问
+            </p>
           </div>
-
-          {securitySettings.enableAuth && (
-            <div className='space-y-3'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  访问Token
-                </label>
-                <div className='space-y-2'>
-                  {/* Token 输入框 */}
-                  <div className='flex gap-2'>
-                    <input
-                      type={showToken ? 'text' : 'password'}
-                      value={securitySettings.token}
-                      onChange={(e) => setSecuritySettings(prev => ({ ...prev, token: e.target.value }))}
-                      className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm break-all'
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowToken(!showToken)}
-                      className='px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg whitespace-nowrap'
-                    >
-                      {showToken ? '隐藏' : '显示'}
-                    </button>
-                  </div>
-                  
-                  {/* 操作按钮 - 响应式布局 */}
-                  <div className='flex flex-col sm:flex-row gap-2'>
-                    <button
-                      type="button"
-                      onClick={copyToken}
-                      className='flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
-                    >
-                      <Copy className='h-4 w-4' />
-                      复制Token
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSecuritySettings(prev => ({ ...prev, token: generateToken() }))}
-                      className='flex-1 sm:flex-none px-4 py-2 text-sm bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
-                    >
-                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' />
-                      </svg>
-                      重新生成
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={securitySettings.enableAuth}
+              onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableAuth: e.target.checked }))}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
         </div>
 
-        {/* IP白名单 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
-          <div className='flex items-center justify-between mb-4'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                IP 白名单
-              </h3>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                只允许指定IP地址访问TVBox接口
-              </p>
-            </div>
-            <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                type='checkbox'
-                checked={securitySettings.enableIpWhitelist}
-                onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableIpWhitelist: e.target.checked }))}
-                className='sr-only peer'
-              />
-              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          {securitySettings.enableIpWhitelist && (
-            <div className='space-y-3'>
-              <div className='flex gap-2'>
-                <input
-                  type='text'
-                  value={newIP}
-                  onChange={(e) => setNewIP(e.target.value)}
-                  placeholder='192.168.1.100 或 192.168.1.0/24'
-                  className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                  onKeyDown={(e) => e.key === 'Enter' && addIP()}
-                />
-                <button
-                  type="button"
-                  onClick={addIP}
-                  className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg'
-                >
-                  添加
-                </button>
-              </div>
-              
-              {securitySettings.allowedIPs.length > 0 && (
-                <div className='space-y-2'>
-                  {securitySettings.allowedIPs.map((ip, index) => (
-                    <div key={index} className='flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded'>
-                      <span className='text-gray-900 dark:text-gray-100'>{ip}</span>
-                      <button
-                        onClick={() => removeIP(index)}
-                        className='text-red-600 hover:text-red-800 text-sm'
-                      >
-                        删除
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                支持单个IP (192.168.1.100) 和CIDR格式 (192.168.1.0/24)
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* 频率限制 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
-          <div className='flex items-center justify-between mb-4'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                访问频率限制
-              </h3>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                限制每个IP每分钟的访问次数，防止滥用
-              </p>
-            </div>
-            <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                type='checkbox'
-                checked={securitySettings.enableRateLimit}
-                onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableRateLimit: e.target.checked }))}
-                className='sr-only peer'
-              />
-              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          {securitySettings.enableRateLimit && (
+        {securitySettings.enableAuth && (
+          <div className='space-y-3'>
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                每分钟请求次数限制
+                访问Token
               </label>
-              <input
-                type='number'
-                min='1'
-                max='1000'
-                value={securitySettings.rateLimit}
-                onChange={(e) => setSecuritySettings(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 60 }))}
-                className='w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                建议设置30-60次，过低可能影响正常使用
-              </p>
+              <div className='space-y-2'>
+                {/* Token 输入框 */}
+                <div className='flex gap-2'>
+                  <input
+                    type={showToken ? 'text' : 'password'}
+                    value={securitySettings.token}
+                    onChange={(e) => setSecuritySettings(prev => ({ ...prev, token: e.target.value }))}
+                    className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm break-all'
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    className='px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg whitespace-nowrap'
+                  >
+                    {showToken ? '隐藏' : '显示'}
+                  </button>
+                </div>
+                
+                {/* 操作按钮 - 响应式布局 */}
+                <div className='flex flex-col sm:flex-row gap-2'>
+                  <button
+                    type="button"
+                    onClick={copyToken}
+                    className='flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
+                  >
+                    <Copy className='h-4 w-4' />
+                    复制Token
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSecuritySettings(prev => ({ ...prev, token: generateToken() }))}
+                    className='flex-1 sm:flex-none px-4 py-2 text-sm bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
+                  >
+                    <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' />
+                    </svg>
+                    重新生成
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* IP白名单 */}
+      <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
+        <div className='flex items-center justify-between mb-4'>
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+              IP 白名单
+            </h3>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
+              只允许指定IP地址访问TVBox接口
+            </p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={securitySettings.enableIpWhitelist}
+              onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableIpWhitelist: e.target.checked }))}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
         </div>
 
-        {/* URL示例 */}
-	<div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
-            TVBox配置URL
-          </h3>
-          
-          {/* 格式选择 */}
-          <div className='mb-3'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-              配置格式
-            </label>
-            <div className='flex gap-4'>
-              <label className='inline-flex items-center'>
-                <input
-                  type='radio'
-                  value='json'
-                  checked={format === 'json'}
-                  onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
-                  className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
-                />
-                <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>JSON 格式（推荐）</span>
-              </label>
-              <label className='inline-flex items-center'>
-                <input
-                  type='radio'
-                  value='base64'
-                  checked={format === 'base64'}
-                  onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
-                  className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
-                />
-                <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>Base64 编码</span>
-              </label>
+        {securitySettings.enableIpWhitelist && (
+          <div className='space-y-3'>
+            <div className='flex gap-2'>
+              <input
+                type='text'
+                value={newIP}
+                onChange={(e) => setNewIP(e.target.value)}
+                placeholder='192.168.1.100 或 192.168.1.0/24'
+                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                onKeyDown={(e) => e.key === 'Enter' && addIP()}
+              />
+              <button
+                type="button"
+                onClick={addIP}
+                className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg'
+              >
+                添加
+              </button>
             </div>
+            
+            {securitySettings.allowedIPs.length > 0 && (
+              <div className='space-y-2'>
+                {securitySettings.allowedIPs.map((ip, index) => (
+                  <div key={index} className='flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded'>
+                    <span className='text-gray-900 dark:text-gray-100'>{ip}</span>
+                    <button
+                      onClick={() => removeIP(index)}
+                      className='text-red-600 hover:text-red-800 text-sm'
+                    >
+                      删除
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <p className='text-xs text-gray-500 dark:text-gray-400'>
+              支持单个IP (192.168.1.100) 和CIDR格式 (192.168.1.0/24)
+            </p>
           </div>
-          
-          {/* URL展示 */}
-          <div className='p-3 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 mb-3'>
-            <code className='text-sm text-gray-900 dark:text-gray-100 break-all'>
-              {generateExampleURL()}
-            </code>
+        )}
+      </div>
+
+      {/* 频率限制 */}
+      <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
+        <div className='flex items-center justify-between mb-4'>
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+              访问频率限制
+            </h3>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
+              限制每个IP每分钟的访问次数，防止滥用
+            </p>
           </div>
-          
-	{/* 按钮组 */}
-	<div className="flex flex-wrap gap-4 mt-2">          
-          {/* 复制按钮 */}
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(generateExampleURL());
-              showMessage('success', 'URL已复制到剪贴板');
-            }}
-            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors'
-          >
-            <Copy className='h-4 w-4' />
-            复制URL
-          </button>
-            {/* 测试访问 */}
-	  <a
-	    href={generateExampleURL()}
-	    target='_blank'
-	    rel='noopener noreferrer'
-	    className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors'
-	  >
-	    <ExternalLink className='h-4 w-4' />
-	    测试访问
-	  </a>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={securitySettings.enableRateLimit}
+              onChange={(e) => setSecuritySettings(prev => ({ ...prev, enableRateLimit: e.target.checked }))}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
         </div>
+
+        {securitySettings.enableRateLimit && (
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              每分钟请求次数限制
+            </label>
+            <input
+              type='number'
+              min='1'
+              max='1000'
+              value={securitySettings.rateLimit}
+              onChange={(e) => setSecuritySettings(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 60 }))}
+              className='w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            />
+            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              建议设置30-60次，过低可能影响正常使用
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* URL示例 */}
+      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4'>
+        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+          TVBox配置URL
+        </h3>
+        
+        {/* 格式选择 */}
+        <div className='mb-3'>
+          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+            配置格式
+          </label>
+          <div className='flex gap-4'>
+            <label className='inline-flex items-center'>
+              <input
+                type='radio'
+                value='json'
+                checked={format === 'json'}
+                onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
+                className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
+              />
+              <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>JSON 格式（推荐）</span>
+            </label>
+            <label className='inline-flex items-center'>
+              <input
+                type='radio'
+                value='base64'
+                checked={format === 'base64'}
+                onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
+                className='text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600'
+              />
+              <span className='ml-2 text-sm text-gray-700 dark:text-gray-300'>Base64 编码</span>
+            </label>
+          </div>
+        </div>
+        
+        <div className='bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-start gap-2'>
+            <div className='flex-1 break-all text-sm text-gray-900 dark:text-gray-100'>
+              {generateExampleURL()}
+            </div>
+            <button
+              onClick={() => navigator.clipboard.writeText(generateExampleURL())}
+              className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              title='复制URL'
+            >
+              <Copy className='h-4 w-4' />
+            </button>
+          </div>
+        </div>
+        
+        <p className='text-xs text-blue-600 dark:text-blue-400 mt-2'>
+          <ExternalLink className='h-3 w-3 inline mr-1' />
+          将此URL配置到TVBox应用即可使用
+        </p>
       </div>
 
       {/* 保存按钮 */}
-      <div className='mt-6'>
+      <div className='flex justify-end'>
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className='px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors'
+          className='px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg flex items-center gap-2 transition-colors'
         >
-          {isLoading ? '保存中...' : '保存配置'}
+          {isLoading ? (
+            <>
+              <svg className='animate-spin h-4 w-4 text-white' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+              </svg>
+              保存中...
+            </>
+          ) : (
+            <>
+              <CheckCircle className='h-4 w-4' />
+              保存配置
+            </>
+          )}
         </button>
       </div>
-    </>
+    </div>
   );
 };
 
