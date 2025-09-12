@@ -175,8 +175,7 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
 
   return (
     // 移除最外层带背景和圆角的容器 div，直接返回片段
-    <>
-      {message && (
+    <>{message && (
         <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
           message.type === 'success' 
             ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
