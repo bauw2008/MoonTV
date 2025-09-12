@@ -164,6 +164,26 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
         };
       }
     }
+ 
+     // 检查是否需要使用代理
+    const needsProxy = m3u8Url.includes('quark.cn') ||
+      m3u8Url.includes('drive.quark.cn') ||
+      m3u8Url.includes('dl-c-zb-') ||
+      m3u8Url.includes('dl-c-') ||
+      m3u8Url.match(/https?:\/\/[^/]*\.drive\./) ||
+      // 添加更多可能需要代理的域名
+      m3u8Url.includes('ffzy-online') ||
+      m3u8Url.includes('bfikuncdn.com') ||
+      m3u8Url.includes('vip.') ||
+      !m3u8Url.includes('localhost');
+
+    const finalM3u8Url = needsProxy
+      ? `/api/proxy/video?url=${encodeURIComponent(m3u8Url)}`
+      : m3u8Url;
+
+    if (needsProxy) {
+      console.log('Using proxy for M3U8 resolution detection:', m3u8Url);
+    }
     
     // 非iPad设备使用优化后的测速逻辑
     return new Promise((resolve, reject) => {
@@ -184,7 +204,9 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       const pingStart = performance.now();
       let pingTime = 0;
 
-      const pingPromise = fetch(m3u8Url, { method: 'HEAD', mode: 'no-cors' })
+      // 测量ping时间（如果使用代理，则测试代理URL的响应时间）
+      const pingUrl = needsProxy ? `/api/proxy/video/test?url=${encodeURIComponent(m3u8Url)}` : m3u8Url;
+      fetch(pingUrl, { method: 'HEAD', mode: needsProxy ? 'cors' : 'no-cors' })
         .then(() => {
           pingTime = performance.now() - pingStart;
         })
