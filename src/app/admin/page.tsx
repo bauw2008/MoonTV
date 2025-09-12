@@ -1554,13 +1554,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                               )}
                           </div>
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap'>
-                          <MachineCodeCell
-                            username={user.username}
-                            canManage={canOperate}
-                            showAlert={showAlert}
-                          />
-                        </td>
+                        
                         <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
                           {/* 修改密码按钮 */}
                           {canChangePassword && (
