@@ -101,6 +101,7 @@ export interface SearchResult {
   source: string;
   source_name: string;
   class?: string;
+  tag?: string; // 添加标签字段
   year: string;
   desc?: string;
   type_name?: string;
