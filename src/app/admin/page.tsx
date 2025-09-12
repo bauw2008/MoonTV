@@ -24,7 +24,6 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   AlertCircle,
   AlertTriangle,
-  Brain,
   Check,
   CheckCircle,
   ChevronDown,
@@ -44,7 +43,7 @@ import {
 } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
 import Image from 'next/image';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
@@ -1484,7 +1483,10 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                           )}
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100'>
-                          {user.username}
+                          <div className='flex items-center gap-3'>
+                            <UserAvatar username={user.username} size="sm" />
+                            <span>{user.username}</span>
+                          </div>
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap'>
                           <span

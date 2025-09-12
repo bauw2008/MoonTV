@@ -46,6 +46,7 @@ export const UserMenu: React.FC = () => {
   const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
   const [storageType, setStorageType] = useState<string>('localstorage');
   const [mounted, setMounted] = useState(false);
+  const [showLiveSetting, setShowLiveSetting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -494,6 +495,7 @@ export const UserMenu: React.FC = () => {
       setIsUploadingAvatar(false);
     }
   };
+  
   const handleSubmitChangePassword = async () => {
     setPasswordError('');
 
@@ -730,6 +732,7 @@ export const UserMenu: React.FC = () => {
                   {authInfo?.username || 'default'}
                 </div>
                 <div className='text-[10px] text-gray-400 dark:text-gray-500'>
+                数据存储：
                   {storageType === 'localstorage' ? '本地' : storageType}
                 </div>
               </div>
