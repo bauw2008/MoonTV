@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Box, Cat, Clover, Film, Home, Menu, Radio, Search, Star, Tv } from 'lucide-react';
+import { Box, Cat, Clover, Film, Home, Menu, PlayCircle, Radio, Search, Star, Tv } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -73,6 +73,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     showVariety: true,
     showLive: false,
     showTvbox: false,
+    showShortDrama: true,
   });
 
   useEffect(() => {
@@ -86,6 +87,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
         showVariety: runtimeConfig.MenuSettings.showVariety ?? true,
         showLive: runtimeConfig.MenuSettings.showLive ?? false,
         showTvbox: runtimeConfig.MenuSettings.showTvbox ?? false,
+        showShortDrama: runtimeConfig.MenuSettings.showShortDrama ?? true,
       });
       
       // 如果直播菜单被隐藏，同时设置全局变量来禁止访问直播页面
@@ -104,6 +106,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
 
     if (menuConfig.showMovies) items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
     if (menuConfig.showTVShows) items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
+    if (menuConfig.showShortDrama) items.push({ icon: PlayCircle, label: '短剧', href: '/shortdrama' });
     if (menuConfig.showAnime) items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
     if (menuConfig.showVariety) items.push({ icon: Clover, label: '综艺', href: '/douban?type=show' });
     if (menuConfig.showLive) items.push({ icon: Radio, label: '直播', href: '/live' });
