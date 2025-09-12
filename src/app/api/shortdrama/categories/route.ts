@@ -7,8 +7,7 @@ export async function GET(_request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
 
-    // const response = await fetch(`${API_CONFIG.shortdrama.baseUrl}/vod/categories`, {
-    const response = await fetch(`https://api.r2afosne.dpdns.org/vod/categories`, {
+    const response = await fetch(`${API_CONFIG.shortdrama.baseUrl}/vod/categories`, {
       method: 'GET',
       headers: API_CONFIG.shortdrama.headers,
       signal: controller.signal,
