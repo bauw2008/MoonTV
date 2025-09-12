@@ -414,6 +414,8 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
             </code>
           </div>
           
+	{/* 按钮组 */}
+	<div className="flex flex-wrap gap-4 mt-2">          
           {/* 复制按钮 */}
           <button
             type="button"
@@ -421,7 +423,7 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
               navigator.clipboard.writeText(generateExampleURL());
               showMessage('success', 'URL已复制到剪贴板');
             }}
-            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2'
+            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors'
           >
             <Copy className='h-4 w-4' />
             复制URL
@@ -431,7 +433,7 @@ const TVBoxSecurityConfig = ({ config, refreshConfig }: TVBoxSecurityConfigProps
 	    href={generateExampleURL()}
 	    target='_blank'
 	    rel='noopener noreferrer'
-	    className='flex-1 sm:flex-none px-4 py-2 text-sm bg-green-100 dark:bg-green-800 hover:bg-green-200 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center gap-2 transition-colors'
+	    className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors'
 	  >
 	    <ExternalLink className='h-4 w-4' />
 	    测试访问
