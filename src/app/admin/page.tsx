@@ -3841,7 +3841,7 @@ const menuLabels = {
   showAnime: '动漫',
   showVariety: '综艺',
   showLive: '直播',
-  showTvbox: 'TVBox'
+  showTvbox: 'TVBox',
   showShortDrama: '短剧'
 };
 
