@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const pagesToFetch = parseInt(searchParams.get('pages') || '1');
 
   try {
-    let allResults: ShortDramaResult[] = [];
+    const allResults: ShortDramaResult[] = [];
 
     for (let p = 0; p < pagesToFetch; p++) {
       const results = await fetchDoubanShortDrama(page + p, limit);
@@ -114,6 +114,7 @@ async function fetchDoubanShortDrama(page: number, limit: number): Promise<Short
     const title = match[3].trim();
     const desc = match[4].trim().replace(/\s+/g, ' ');
     const year = extractYear(desc);
+    const region = extractRegion(desc);
 
     results.push({
       id,
@@ -121,13 +122,10 @@ async function fetchDoubanShortDrama(page: number, limit: number): Promise<Short
       poster,
       desc,
       year,
-      region: extractRegion(desc),
+      // rate,  // 评分
+      region,
       type_name: '短剧',
-      episodes: [],
-      episodes_titles: [],
-      source: 'douban',
-      source_name: '豆瓣',
-    });
+    } as ShortDramaResult);
   }
 
   return results;
@@ -176,4 +174,3 @@ function matchYear(resultYear: string, filterYear: string): boolean {
     default: return true;
   }
 }
-
