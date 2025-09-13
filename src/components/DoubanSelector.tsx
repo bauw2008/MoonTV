@@ -512,6 +512,24 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         </div>
       )}
 
+	{/* 短剧类型 - 显示多级筛选器 */}
+	{type === 'short-drama' && (
+	  <div className="space-y-3 sm:space-y-4">
+	    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+	      <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]">
+		筛选
+	      </span>
+	      <div className="overflow-x-auto">
+		<MultiLevelSelector
+		  key={`${type}-${primarySelection}`}
+		  onChange={handleMultiLevelChange}
+		  contentType={type}  // 这里会传 "short-drama"
+		/>
+	      </div>
+	    </div>
+	  </div>
+	)}
+
       {/* 综艺类型 - 显示两级选择器 */}
       {type === 'show' && (
         <div className='space-y-3 sm:space-y-4'>
