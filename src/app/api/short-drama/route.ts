@@ -123,6 +123,10 @@ async function fetchDoubanShortDrama(page: number, limit: number): Promise<Short
       year,
       region: extractRegion(desc),
       type_name: '短剧',
+      episodes: [],
+      episodes_titles: [],
+      source: 'douban',
+      source_name: '豆瓣',
     });
   }
 
