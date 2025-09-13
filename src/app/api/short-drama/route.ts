@@ -1,163 +1,272 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 import { NextRequest, NextResponse } from 'next/server';
 import { getCacheTime } from '@/lib/config';
-import { SearchResult } from '@/lib/types';
+import { DoubanItem, DoubanResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// 扩展 SearchResult，增加 region 字段
-export interface ShortDramaResult extends SearchResult {
+// 扩展 DoubanItem，增加短剧特定字段
+export interface ShortDramaItem extends DoubanItem {
   region: string;
+  types: string[];
+  desc: string;
 }
 
+// 用户代理池 - 使用与其他API相同的UA
 const USER_AGENTS = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15',
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
 ];
 
-/** 随机延迟 1-3 秒 */
-async function delayRandom() {
-  const ms = 1000 + Math.floor(Math.random() * 2000);
-  return new Promise(resolve => setTimeout(resolve, ms));
+// 请求限制器 - 与其他API保持一致
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 2000;
+
+function getRandomUserAgent(): string {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-/** 获取随机 UA */
-function getRandomUA() {
-  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+function randomDelay(min = 1000, max = 3000): Promise<void> {
+  const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+  return new Promise(resolve => setTimeout(resolve, delay));
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  
+  // 统一参数命名 - 使用与其他API相同的参数名
   const type = searchParams.get('type') || 'all';
   const region = searchParams.get('region') || 'all';
   const year = searchParams.get('year') || 'all';
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '25');
-  const pagesToFetch = parseInt(searchParams.get('pages') || '1');
+  const pageStart = parseInt(searchParams.get('start') || '0');
+  const pageLimit = parseInt(searchParams.get('limit') || '25');
+  const pages = parseInt(searchParams.get('pages') || '1');
+
+  // 参数验证 - 与其他API保持一致的验证风格
+  if (pageLimit < 1 || pageLimit > 100) {
+    return NextResponse.json(
+      { error: 'limit 必须在 1-100 之间' },
+      { status: 400 }
+    );
+  }
+
+  if (pageStart < 0) {
+    return NextResponse.json(
+      { error: 'start 不能小于 0' },
+      { status: 400 }
+    );
+  }
 
   try {
-    const allResults: ShortDramaResult[] = [];
+    const allResults: ShortDramaItem[] = [];
 
-    for (let p = 0; p < pagesToFetch; p++) {
-      const results = await fetchDoubanShortDrama(page + p, limit);
+    for (let p = 0; p < pages; p++) {
+      const results = await fetchDoubanShortDrama(pageStart + p * pageLimit, pageLimit);
       allResults.push(...results);
-      await delayRandom();
+      
+      // 使用统一的延时逻辑
+      if (p < pages - 1) {
+        await randomDelay(1000, 2000);
+      }
     }
 
-    // 类型/地区/年份筛选
+    // 筛选逻辑
     const filteredResults = allResults.filter((result) => {
-      if (type !== 'all' && getShortDramaType(result.type_name, result.title) !== type) return false;
+      if (type !== 'all' && !result.types.includes(type)) return false;
       if (region !== 'all' && result.region !== region) return false;
       if (year !== 'all' && result.year && !matchYear(result.year, year)) return false;
       return true;
     });
 
     // 去重
-    const seenTitles = new Set<string>();
-    const uniqueResults: ShortDramaResult[] = [];
-    for (const r of filteredResults) {
-      if (!seenTitles.has(r.title)) {
-        seenTitles.add(r.title);
-        uniqueResults.push(r);
-      }
-    }
+    const seenIds = new Set<string>();
+    const uniqueResults = filteredResults.filter(result => {
+      if (seenIds.has(result.id)) return false;
+      seenIds.add(result.id);
+      return true;
+    });
 
-    // 排序
+    // 排序 - 按年份降序
     const sortedResults = uniqueResults.sort((a, b) => {
       const yearA = parseInt(a.year) || 0;
       const yearB = parseInt(b.year) || 0;
-      if (yearA !== yearB) return yearB - yearA;
-      return a.title.length - b.title.length;
+      return yearB - yearA;
     });
 
-    const startIndex = 0;
-    const endIndex = Math.min(limit, sortedResults.length);
-    const paginatedResults = sortedResults.slice(startIndex, endIndex);
+    // 分页
+    const total = sortedResults.length;
+    const totalPages = Math.ceil(total / pageLimit);
+    const list = sortedResults.slice(0, pageLimit);
+
+    // 统一的响应格式
+    const response: DoubanResult = {
+      code: 200,
+      message: '获取成功',
+      list: list.map(item => ({
+        id: item.id,
+        title: item.title,
+        poster: item.poster,
+        rate: item.rate,
+        year: item.year,
+        // 保持与其他API字段的一致性
+        region: item.region,
+        desc: item.desc,
+        type_name: item.types.join(', ')
+      }))
+    };
 
     const cacheTime = await getCacheTime();
-    return NextResponse.json(
-      {
-        results: paginatedResults,
-        total: sortedResults.length,
-        page,
-        limit,
-        totalPages: Math.ceil(sortedResults.length / limit),
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Netlify-Vary': 'query',
       },
-      { headers: { 'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}` } }
-    );
+    });
   } catch (error) {
     console.error('获取豆瓣短剧数据失败:', error);
-    return NextResponse.json({ error: '获取豆瓣短剧数据失败' }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: '获取豆瓣短剧数据失败', 
+        details: (error as Error).message 
+      },
+      { status: 500 }
+    );
   }
 }
 
-/** 爬取豆瓣短剧标签页，每页 15 条 */
-async function fetchDoubanShortDrama(page: number, limit: number): Promise<ShortDramaResult[]> {
-  const start = (page - 1) * limit;
+/** 爬取豆瓣短剧标签页 */
+async function fetchDoubanShortDrama(start: number, limit: number): Promise<ShortDramaItem[]> {
   const url = `https://www.douban.com/tag/%E7%9F%AD%E5%89%A7/movie?start=${start}`;
 
-  const res = await fetch(url, { headers: { 'User-Agent': getRandomUA() } });
-  if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-  const html = await res.text();
+  // 请求限流 - 与其他API保持一致
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => 
+      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+    );
+  }
+  lastRequestTime = Date.now();
 
+  // 随机延时
+  await randomDelay(500, 1500);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Referer': 'https://movie.douban.com/',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const html = await response.text();
+    return parseShortDramaHtml(html);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/** 解析HTML内容 */
+function parseShortDramaHtml(html: string): ShortDramaItem[] {
   const dlPattern =
-    /<dl>[\s\S]*?<a href="https?:\/\/movie\.douban\.com\/subject\/(\d+)\/[^"]*"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>[\s\S]*?<a[^>]+class="title"[^>]*>([^<]+)<\/a>[\s\S]*?<div class="desc">([\s\S]*?)<\/div>[\s\S]*?(?:<span class="rating_nums">([\d.]+)<\/span>)?/g;
+    /<dl[^>]*>[\s\S]*?<a href="https?:\/\/movie\.douban\.com\/subject\/(\d+)\/[^"]*"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>[\s\S]*?<a[^>]+class="title"[^>]*>([^<]+)<\/a>[\s\S]*?<div class="desc">([\s\S]*?)<\/div>[\s\S]*?(?:<span class="rating_nums">([^<]+)<\/span>)?/g;
 
-  const results: ShortDramaResult[] = [];
+  const results: ShortDramaItem[] = [];
   let match;
+
   while ((match = dlPattern.exec(html)) !== null) {
     const id = match[1];
     const poster = match[2].replace(/^http:/, 'https:');
     const title = match[3].trim();
     const desc = match[4].trim().replace(/\s+/g, ' ');
+    const rate = match[5] ? match[5].trim() : '';
     const year = extractYear(desc);
     const region = extractRegion(desc);
+    const types = getShortDramaType(desc, title);
 
     results.push({
       id,
       title,
       poster,
-      desc,
+      rate,
       year,
-      // rate,  // 评分
       region,
-      type_name: '短剧',
-    } as ShortDramaResult);
+      types,
+      desc
+    });
   }
 
   return results;
 }
 
+// 辅助函数保持不变...
 function extractYear(desc: string) {
   const match = desc.match(/\b(19|20)\d{2}\b/);
   return match ? match[0] : '';
 }
 
 function extractRegion(desc: string) {
-  const text = desc.toLowerCase();
-  if (text.includes('韩国')) return 'korean';
-  if (text.includes('日本')) return 'japanese';
-  if (text.includes('美国')) return 'usa';
-  if (text.includes('英国')) return 'uk';
-  if (text.includes('泰国')) return 'thailand';
-  if (text.includes('中国') || text.includes('国产')) return 'mainland_china';
+  const regions = {
+    '韩国': 'korean',
+    '日本': 'japanese', 
+    '美国': 'usa',
+    '英国': 'uk',
+    '泰国': 'thailand',
+    '中国': 'mainland_china',
+    '国产': 'mainland_china',
+    '大陆': 'mainland_china',
+    '香港': 'hong_kong',
+    '台湾': 'taiwan'
+  };
+
+  for (const [key, value] of Object.entries(regions)) {
+    if (desc.includes(key)) return value;
+  }
+  
   return 'all';
 }
 
-function getShortDramaType(typeName?: string, title?: string): string {
-  const content = `${typeName || ''} ${title || ''}`.toLowerCase();
-  if (content.includes('爱情') || content.includes('romance')) return 'romance';
-  if (content.includes('家庭') || content.includes('family')) return 'family';
-  if (content.includes('古装') || content.includes('costume')) return 'costume';
-  if (content.includes('现代') || content.includes('modern')) return 'modern';
-  if (content.includes('都市') || content.includes('urban')) return 'urban';
-  if (content.includes('穿越') || content.includes('time')) return 'time_travel';
-  if (content.includes('喜剧') || content.includes('comedy')) return 'comedy';
-  if (content.includes('悬疑') || content.includes('suspense')) return 'suspense';
-  return 'all';
+function getShortDramaType(desc: string, title?: string): string[] {
+  const content = `${desc || ''} ${title || ''}`.toLowerCase();
+  const types: string[] = [];
+  
+  const typeMappings = [
+    { keywords: ['爱情', 'romance'], type: 'romance' },
+    { keywords: ['家庭', 'family'], type: 'family' },
+    { keywords: ['古装', 'costume'], type: 'costume' },
+    { keywords: ['现代', 'modern'], type: 'modern' },
+    { keywords: ['都市', 'urban'], type: 'urban' },
+    { keywords: ['穿越', 'time'], type: 'time_travel' },
+    { keywords: ['喜剧', 'comedy'], type: 'comedy' },
+    { keywords: ['悬疑', 'suspense'], type: 'suspense' },
+    { keywords: ['短片', 'short'], type: 'short' },
+  ];
+  
+  typeMappings.forEach(mapping => {
+    if (mapping.keywords.some(keyword => content.includes(keyword))) {
+      types.push(mapping.type);
+    }
+  });
+  
+  return types.length > 0 ? types : ['all'];
 }
 
 function matchYear(resultYear: string, filterYear: string): boolean {

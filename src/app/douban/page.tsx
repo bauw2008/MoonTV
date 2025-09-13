@@ -365,8 +365,11 @@ function DoubanPageClient() {
             poster: item.poster,
             rate: '', // 短剧通常没有豆瓣评分
             year: item.year,
+            region: item.region,
+            types: item.types || [],
           })),
         };
+        
       } else if (type === 'anime') {
         data = await getDoubanRecommends({
           kind: primarySelection === '番剧' ? 'tv' : 'movie',
@@ -537,8 +540,10 @@ function DoubanPageClient() {
                 id: item.id,
                 title: item.title,
                 poster: item.poster,
-                rate: '',
+                rate: item.rate || '',
                 year: item.year,
+                region: item.region,
+                types: item.types || [],
               })),
             };
           } else if (type === 'anime' && primarySelection === '每日放送') {
