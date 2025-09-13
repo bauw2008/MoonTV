@@ -115,8 +115,6 @@ async function fetchDoubanShortDrama(page: number, limit: number): Promise<Searc
     const rate = match[5] || '';
     const year = extractYear(desc);
 
-    const year = extractYear(desc);
-
 	results.push({
 	  id,
 	  title,
