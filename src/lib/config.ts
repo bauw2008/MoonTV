@@ -51,14 +51,6 @@ export const API_CONFIG = {
       Accept: 'application/json',
     },
   },
-  shortdrama: {
-    baseUrl: 'https://api.r2afosne.dpdns.org',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      Accept: 'application/json',
-    },
-  },
 };
 
 // 在模块加载时根据环境决定配置来源
@@ -241,6 +233,8 @@ async function getInitConfig(configFile: string, subConfig: {
       },
     UserConfig: {
       AllowRegister: false, // 默认禁止注册
+      RequireApproval: false,
+      PendingUsers: [],
       Users: [],
     },
     SourceConfig: [],
@@ -344,7 +338,7 @@ export function clearConfigCache(): void {
 export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   // 确保必要的属性存在和初始化
   if (!adminConfig.UserConfig) {
-    adminConfig.UserConfig = { AllowRegister: true, Users: [] };
+    adminConfig.UserConfig = { AllowRegister: true, RequireApproval: false, PendingUsers: [], Users: [] } as any;
   }
   if (!adminConfig.UserConfig.Users || !Array.isArray(adminConfig.UserConfig.Users)) {
     adminConfig.UserConfig.Users = [];
@@ -352,6 +346,13 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   // 确保 AllowRegister 有默认值
   if (adminConfig.UserConfig.AllowRegister === undefined) {
     adminConfig.UserConfig.AllowRegister = true;
+  }
+  // 新增：审核相关默认值
+  if ((adminConfig.UserConfig as any).RequireApproval === undefined) {
+    (adminConfig.UserConfig as any).RequireApproval = false;
+  }
+  if (!(adminConfig.UserConfig as any).PendingUsers) {
+    (adminConfig.UserConfig as any).PendingUsers = [];
   }
   if (!adminConfig.SourceConfig || !Array.isArray(adminConfig.SourceConfig)) {
     adminConfig.SourceConfig = [];

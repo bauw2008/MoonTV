@@ -79,6 +79,8 @@ function RegisterPageClient() {
   const [shouldShowRegister, setShouldShowRegister] = useState(false);
   const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const [disabledReason, setDisabledReason] = useState('');
+  const [reason, setReason] = useState('');
+  const [pending, setPending] = useState(false);
 
   const { siteName } = useSite();
 
@@ -140,23 +142,24 @@ function RegisterPageClient() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          password,
-          confirmPassword,
-        }),
+        body: JSON.stringify({ username, password, confirmPassword, reason }),
       });
 
       if (res.ok) {
-        await res.json(); // 读取响应但不使用
+        const data = await res.json();
         // 显示成功消息，稍等一下再跳转
         setError(null);
-        setSuccess('注册成功！正在跳转...');
-        // 给用户一个成功提示，然后再跳转
-        setTimeout(() => {
-          const redirect = searchParams.get('redirect') || '/';
-          router.replace(redirect);
-        }, 1500); // 1.5秒后跳转，让用户看到成功消息
+        if (data?.pending) {
+          setPending(true);
+          setSuccess('已提交注册申请，等待管理员审核');
+        } else {
+          setSuccess('注册成功！正在跳转...');
+          // 给用户一个成功提示，然后再跳转
+          setTimeout(() => {
+            const redirect = searchParams.get('redirect') || '/';
+            router.replace(redirect);
+          }, 1500); // 1.5秒后跳转，让用户看到成功消息
+        }
       } else {
         const data = await res.json();
         setError(data.error ?? '注册失败');
@@ -268,6 +271,21 @@ function RegisterPageClient() {
             />
           </div>
 
+          <div>
+            <label htmlFor='reason' className='sr-only'>
+              注册申请说明
+            </label>
+            <textarea
+              id='reason'
+              rows={3}
+              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur'
+              placeholder='请简要说明注册理由（填写暗号可以更快通过哟~）'
+              maxLength={200}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+
           {error && (
             <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
           )}
@@ -278,12 +296,16 @@ function RegisterPageClient() {
 
           <button
             type='submit'
-            disabled={
-              !username || !password || !confirmPassword || loading || !!success
-            }
+            disabled={!username || !password || !confirmPassword || loading || !!success}
             className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            {loading ? '注册中...' : success ? '注册成功，正在跳转...' : '注册'}
+            {loading
+              ? '注册中...'
+              : pending
+                ? '已提交审核'
+                : success
+                  ? '注册成功，正在跳转...'
+                  : '注册'}
           </button>
 
           <div className='text-center'>

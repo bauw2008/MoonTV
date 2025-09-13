@@ -5,7 +5,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import Hls from 'hls.js';
-import { Heart, ChevronUp, PlayCircleIcon } from 'lucide-react';
+import { Heart, ChevronUp } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import EpisodeSelector from '@/components/EpisodeSelector';
@@ -29,7 +29,6 @@ import {
 import { getDoubanDetails } from '@/lib/douban.client';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
-import { getShortDramaRecommend, ShortDramaRecommendResponse } from '@/lib/shortdrama.client';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -80,10 +79,6 @@ function PlayPageClient() {
   const [netdiskLoading, setNetdiskLoading] = useState(false);
   const [netdiskError, setNetdiskError] = useState<string | null>(null);
   const [netdiskTotal, setNetdiskTotal] = useState(0);
-  
-    // 推荐短剧状态
-  const [recommendedShortDramas, setRecommendedShortDramas] = useState<ShortDramaRecommendResponse | null>(null);
-  const [recommendLoading, setRecommendLoading] = useState(false);
 
   // 跳过片头片尾配置
   const [skipConfig, setSkipConfig] = useState<{
@@ -154,13 +149,6 @@ function PlayPageClient() {
     searchParams.get('source') || ''
   );
   const [currentId, setCurrentId] = useState(searchParams.get('id') || '');
-
-  // 短剧ID（用于调用短剧全集地址API）
-  const [shortdramaId,] = useState(searchParams.get('shortdrama_id') || '');
-
-  // 短剧分类和标签信息（从URL参数获取）
-  const [vodClass] = useState(searchParams.get('vod_class') || '');
-  const [vodTag] = useState(searchParams.get('vod_tag') || '');
 
   // 搜索所需信息
   const [searchTitle] = useState(searchParams.get('stitle') || '');
@@ -388,6 +376,11 @@ function PlayPageClient() {
   // 弹幕加载状态管理，防止重复加载
   const danmuLoadingRef = useRef<boolean>(false);
   const lastDanmuLoadKeyRef = useRef<string>('');
+  
+  // 🚀 新增：弹幕操作防抖和性能优化
+  const danmuOperationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const episodeSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const danmuPluginStateRef = useRef<any>(null); // 保存弹幕插件状态
 
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
@@ -398,22 +391,6 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
-
-  // 获取推荐短剧
-  const fetchRecommendedShortDramas = async (forceShortdrama?: boolean) => {
-    // 只在短剧播放页面显示推荐，或者强制调用时执行
-    if (!forceShortdrama && currentSource !== 'shortdrama') return;
-
-    try {
-      setRecommendLoading(true);
-      const recommendData = await getShortDramaRecommend({ size: '5' });
-      setRecommendedShortDramas(recommendData);
-    } catch (error) {
-      console.error('获取推荐短剧失败:', error);
-    } finally {
-      setRecommendLoading(false);
-    }
-  };
 
   // bangumi ID检测（6位数字）
   const isBangumiId = (id: number): boolean => {
@@ -589,8 +566,8 @@ function PlayPageClient() {
     if (sources.length === 1) return sources[0];
 
     // 使用全局统一的设备检测结果
-    const isIPad = /iPad/i.test(userAgent) || (userAgent.includes('Macintosh') && navigator.maxTouchPoints >= 1);
-    const isIOS = isIOSGlobal;
+    const _isIPad = /iPad/i.test(userAgent) || (userAgent.includes('Macintosh') && navigator.maxTouchPoints >= 1);
+    const _isIOS = isIOSGlobal;
     const isIOS13 = isIOS13Global;
     const isMobile = isMobileGlobal;
 
@@ -1017,6 +994,20 @@ function PlayPageClient() {
 
   // 清理播放器资源的统一函数（添加更完善的清理逻辑）
   const cleanupPlayer = () => {
+    // 🚀 新增：清理弹幕优化相关的定时器
+    if (danmuOperationTimeoutRef.current) {
+      clearTimeout(danmuOperationTimeoutRef.current);
+      danmuOperationTimeoutRef.current = null;
+    }
+    
+    if (episodeSwitchTimeoutRef.current) {
+      clearTimeout(episodeSwitchTimeoutRef.current);
+      episodeSwitchTimeoutRef.current = null;
+    }
+    
+    // 清理弹幕状态引用
+    danmuPluginStateRef.current = null;
+    
     if (artPlayerRef.current) {
       try {
         // 1. 清理弹幕插件的WebWorker
@@ -1206,6 +1197,73 @@ function PlayPageClient() {
     }
   }
 
+  // 🚀 优化的弹幕操作处理函数（防抖 + 性能优化）
+  const handleDanmuOperationOptimized = (nextState: boolean) => {
+    // 清除之前的防抖定时器
+    if (danmuOperationTimeoutRef.current) {
+      clearTimeout(danmuOperationTimeoutRef.current);
+    }
+    
+    // 立即更新UI状态（确保响应性）
+    externalDanmuEnabledRef.current = nextState;
+    setExternalDanmuEnabled(nextState);
+    
+    // 同步保存到localStorage（快速操作）
+    try {
+      localStorage.setItem('enable_external_danmu', String(nextState));
+    } catch (e) {
+      console.warn('localStorage设置失败:', e);
+    }
+    
+    // 防抖处理弹幕数据操作（避免频繁切换时的性能问题）
+    danmuOperationTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+          const plugin = artPlayerRef.current.plugins.artplayerPluginDanmuku;
+          
+          if (nextState) {
+            // 开启弹幕：使用更温和的加载方式
+            console.log('🚀 优化后开启外部弹幕...');
+            
+            // 使用requestIdleCallback优化性能（如果可用）
+            const loadDanmu = async () => {
+              const externalDanmu = await loadExternalDanmu();
+              // 二次确认状态，防止快速切换导致的状态不一致
+              if (externalDanmuEnabledRef.current && artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+                plugin.load(externalDanmu);
+                plugin.show();
+                console.log('✅ 外部弹幕已优化加载:', externalDanmu.length, '条');
+                
+                if (artPlayerRef.current && externalDanmu.length > 0) {
+                  artPlayerRef.current.notice.show = `已加载 ${externalDanmu.length} 条弹幕`;
+                }
+              }
+            };
+            
+            // 使用 requestIdleCallback 或 setTimeout 来确保不阻塞主线程
+            if (typeof requestIdleCallback !== 'undefined') {
+              requestIdleCallback(loadDanmu, { timeout: 1000 });
+            } else {
+              setTimeout(loadDanmu, 50);
+            }
+          } else {
+            // 关闭弹幕：立即处理
+            console.log('🚀 优化后关闭外部弹幕...');
+            plugin.load([]);
+            plugin.hide();
+            console.log('✅ 外部弹幕已关闭');
+            
+            if (artPlayerRef.current) {
+              artPlayerRef.current.notice.show = '外部弹幕已关闭';
+            }
+          }
+        }
+      } catch (error) {
+        console.error('优化后弹幕操作失败:', error);
+      }
+    }, 300); // 300ms防抖延迟
+  };
+
   // 加载外部弹幕数据（带缓存和防重复）
   const loadExternalDanmu = async (): Promise<any[]> => {
     if (!externalDanmuEnabledRef.current) {
@@ -1324,36 +1382,74 @@ function PlayPageClient() {
     }
   };
 
-  // 当集数索引变化时自动更新视频地址
+  // 🚀 优化的集数变化处理（防抖 + 状态保护）
   useEffect(() => {
     updateVideoUrl(detail, currentEpisodeIndex);
     
     // 重置弹幕加载标识，允许新集数加载弹幕
     lastDanmuLoadKeyRef.current = '';
     
+    // 清除之前的集数切换定时器，防止重复执行
+    if (episodeSwitchTimeoutRef.current) {
+      clearTimeout(episodeSwitchTimeoutRef.current);
+    }
+    
     // 如果播放器已经存在且弹幕插件已加载，重新加载弹幕
     if (artPlayerRef.current && artPlayerRef.current.plugins?.artplayerPluginDanmuku) {
-      console.log('集数变化，重新加载弹幕');
-      setTimeout(async () => {
+      console.log('🚀 集数变化，优化后重新加载弹幕');
+      
+      // 保存当前弹幕插件状态
+      danmuPluginStateRef.current = {
+        isHide: artPlayerRef.current.plugins.artplayerPluginDanmuku.isHide,
+        isStop: artPlayerRef.current.plugins.artplayerPluginDanmuku.isStop,
+        option: artPlayerRef.current.plugins.artplayerPluginDanmuku.option
+      };
+      
+      // 使用防抖处理弹幕重新加载
+      episodeSwitchTimeoutRef.current = setTimeout(async () => {
         try {
-          const externalDanmu = await loadExternalDanmu(); // 这里会检查开关状态
-          console.log('集数变化后外部弹幕加载结果:', externalDanmu);
+          // 确保播放器和插件仍然存在（防止快速切换时的状态不一致）
+          if (!artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+            console.warn('⚠️ 集数切换后弹幕插件不存在，跳过弹幕加载');
+            return;
+          }
           
+          const externalDanmu = await loadExternalDanmu(); // 这里会检查开关状态
+          console.log('🔄 集数变化后外部弹幕加载结果:', externalDanmu);
+          
+          // 再次确认插件状态
           if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
+            const plugin = artPlayerRef.current.plugins.artplayerPluginDanmuku;
+            
             if (externalDanmu.length > 0) {
-              console.log('向播放器插件重新加载弹幕数据:', externalDanmu.length, '条');
-              artPlayerRef.current.plugins.artplayerPluginDanmuku.load(externalDanmu);
-              artPlayerRef.current.notice.show = `已加载 ${externalDanmu.length} 条弹幕`;
+              console.log('✅ 向播放器插件重新加载弹幕数据:', externalDanmu.length, '条');
+              plugin.load(externalDanmu);
+              
+              // 恢复弹幕插件的状态
+              if (danmuPluginStateRef.current) {
+                if (!danmuPluginStateRef.current.isHide) {
+                  plugin.show();
+                }
+              }
+              
+              if (artPlayerRef.current) {
+                artPlayerRef.current.notice.show = `已加载 ${externalDanmu.length} 条弹幕`;
+              }
             } else {
-              console.log('集数变化后没有弹幕数据可加载');
-              // 不要自动load([])，保持当前状态
-              artPlayerRef.current.notice.show = '暂无弹幕数据';
+              console.log('📭 集数变化后没有弹幕数据可加载');
+              // 不自动清空，保持用户体验
+              if (artPlayerRef.current) {
+                artPlayerRef.current.notice.show = '暂无弹幕数据';
+              }
             }
           }
         } catch (error) {
-          console.error('集数变化后加载外部弹幕失败:', error);
+          console.error('❌ 集数变化后加载外部弹幕失败:', error);
+        } finally {
+          // 清理定时器引用
+          episodeSwitchTimeoutRef.current = null;
         }
-      }, 1000); // 延迟1秒确保视频加载完成
+      }, 800); // 缩短延迟时间，提高响应性
     }
   }, [detail, currentEpisodeIndex]);
 
@@ -1452,95 +1548,10 @@ function PlayPageClient() {
     };
 
     const initAll = async () => {
-      console.log('播放页面初始化参数:', {
-        currentSource,
-        currentId,
-        videoTitle,
-        searchTitle,
-        shortdramaId,
-        videoYear,
-        allSearchParams: Array.from(searchParams.entries())
-      });
-      if (!currentSource && !currentId && !videoTitle && !searchTitle && !shortdramaId) {
-        console.error('缺少必要参数，所有参数都为空');
+      if (!currentSource && !currentId && !videoTitle && !searchTitle) {
         setError('缺少必要参数');
         setLoading(false);
         return;
-      }
-
-      // 如果是短剧，直接调用短剧全集地址API
-      if (shortdramaId) {
-
-        setLoadingStage('fetching');
-        setLoadingMessage('🎬 正在获取短剧播放源...');
-
-        try {
-          const apiUrl = `/api/shortdrama/parse/all?id=${shortdramaId}`;
-          const response = await fetch(apiUrl);
-
-          if (!response.ok) {
-            throw new Error(`获取短剧播放源失败: ${response.status}`);
-          }
-          const data = await response.json();
-
-          // 验证API响应格式
-          if (!data || !Array.isArray(data.results)) {
-            throw new Error('API响应格式不正确或results为空');
-          }
-
-          // 按index排序，确保从第0集开始
-          const sortedResults = data.results
-            .filter((item: any) => item.status === 'success' && item.parsedUrl)
-            .sort((a: any, b: any) => a.index - b.index);
-
-          if (sortedResults.length === 0) {
-            throw new Error('没有可用的播放地址');
-          }
-
-          // 构造播放地址和集数标题数组，确保从index 0开始
-          const episodes = sortedResults.map((item: any) => item.parsedUrl);
-          const episodes_titles = sortedResults.map((item: any) => item.label || `第${item.index + 1}集`);
-
-          const detailData: SearchResult = {
-            id: shortdramaId,
-            source: 'shortdrama',
-            source_name: '短剧',
-            title: data.videoName || videoTitle || '短剧播放',
-            year: videoYear || new Date().getFullYear().toString(),
-            poster: data.cover || '',
-            douban_id: 0,
-            episodes: episodes,
-            episodes_titles: episodes_titles,
-            desc: data.description || '暂无剧情简介', // 添加描述信息字段
-            class: vodClass || '', // 使用从URL参数获取的分类字段
-            tag: vodTag || '', // 使用从URL参数获取的标签字段
-          };
-
-          setVideoTitle(detailData.title);
-          setVideoYear(detailData.year);
-          setVideoCover(detailData.poster);
-          setDetail(detailData);
-          setCurrentSource('shortdrama');
-          setCurrentId(shortdramaId);
-
-          setLoadingStage('ready');
-          setLoadingMessage('✨ 短剧播放源准备就绪...');
-
-          // 获取推荐短剧 - 强制调用，因为是短剧页面
-          setTimeout(() => {
-            fetchRecommendedShortDramas(true);
-          }, 1500);
-
-          setTimeout(() => {
-            setLoading(false);
-          }, 1000);
-
-          return;
-        } catch (error) {
-          setError(`获取短剧播放源失败: ${error instanceof Error ? error.message : String(error)}`);
-          setLoading(false);
-          return;
-        }
       }
       setLoading(true);
       setLoadingStage(currentSource && currentId ? 'fetching' : 'searching');
@@ -2128,10 +2139,15 @@ function PlayPageClient() {
     // 优先使用ArtPlayer的switch方法，避免重建播放器
     if (artPlayerRef.current && !loading) {
       try {
-        // 清空当前弹幕（为切换做准备）
+        // 🚀 优化：不在这里处理弹幕，让 useEffect 统一处理
+        // 保存当前弹幕状态，但不清空弹幕（避免闪烁）
         if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-          artPlayerRef.current.plugins.artplayerPluginDanmuku.load([]);
-          console.log('已清空弹幕数据，准备切换');
+          danmuPluginStateRef.current = {
+            isHide: artPlayerRef.current.plugins.artplayerPluginDanmuku.isHide,
+            isStop: artPlayerRef.current.plugins.artplayerPluginDanmuku.isStop,
+            option: artPlayerRef.current.plugins.artplayerPluginDanmuku.option
+          };
+          console.log('🔄 已保存弹幕状态，准备切换视频');
         }
         
         // 使用ArtPlayer的switch方法切换URL
@@ -2146,26 +2162,7 @@ function PlayPageClient() {
           );
         }
         
-        // 延迟重新加载弹幕，确保视频切换完成
-        setTimeout(async () => {
-          try {
-            const externalDanmu = await loadExternalDanmu();
-            console.log('切换后重新加载弹幕结果:', externalDanmu);
-            
-            if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-              if (externalDanmu.length > 0) {
-                console.log('切换后向播放器插件加载弹幕数据:', externalDanmu.length, '条');
-                artPlayerRef.current.plugins.artplayerPluginDanmuku.load(externalDanmu);
-                artPlayerRef.current.notice.show = `已加载 ${externalDanmu.length} 条弹幕`;
-              } else {
-                console.log('切换后没有弹幕数据可加载');
-                artPlayerRef.current.notice.show = '暂无弹幕数据';
-              }
-            }
-          } catch (error) {
-            console.error('切换后重新加载外部弹幕失败:', error);
-          }
-        }, 1500);
+        // 🚀 移除原有的 setTimeout 弹幕加载逻辑，交由 useEffect 统一优化处理
         
         console.log('使用switch方法成功切换视频');
         return;
@@ -2377,78 +2374,13 @@ function PlayPageClient() {
             onSwitch: function (item: any) {
               const nextState = !item.switch;
               
-              // 立即同步更新所有状态（确保UI响应速度）
-              externalDanmuEnabledRef.current = nextState;
-              setExternalDanmuEnabled(nextState);
+              // 🚀 使用优化后的弹幕操作处理函数
+              handleDanmuOperationOptimized(nextState);
+              
+              // 更新tooltip显示
               item.tooltip = nextState ? '外部弹幕已开启' : '外部弹幕已关闭';
               
-              // 同步localStorage操作（快速）
-              try {
-                localStorage.setItem('enable_external_danmu', String(nextState));
-              } catch (e) {
-                console.warn('localStorage设置失败:', e);
-              }
-              
-              // 异步处理弹幕数据（完全非阻塞）
-              Promise.resolve().then(async () => {
-                try {
-                  if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                    const plugin = artPlayerRef.current.plugins.artplayerPluginDanmuku;
-                    
-                    if (nextState) {
-                      // 开启外部弹幕：清空当前数据再加载新数据
-                      console.log('开启外部弹幕，清空并加载新数据...');
-                      plugin.load([]); // 先清空
-                      const externalDanmu = await loadExternalDanmu();
-                      if (externalDanmuEnabledRef.current) { // 再次检查状态，防止快速切换
-                        plugin.load(externalDanmu);
-                        plugin.show();
-                        console.log('外部弹幕已加载:', externalDanmu.length, '条');
-                        // 显示弹幕加载提示
-                        if (artPlayerRef.current) {
-                          if (externalDanmu.length > 0) {
-                            artPlayerRef.current.notice.show = `已加载 ${externalDanmu.length} 条弹幕`;
-                          } else {
-                            artPlayerRef.current.notice.show = '暂无弹幕数据';
-                          }
-                        }
-                      }
-                    } else {
-                      // 关闭外部弹幕：清空数据并隐藏
-                      console.log('关闭外部弹幕，清空数据并隐藏...');
-                      plugin.load([]); // 清空弹幕数据
-                      plugin.hide();
-                      console.log('外部弹幕已关闭并清空');
-                      // 显示关闭提示
-                      if (artPlayerRef.current) {
-                        artPlayerRef.current.notice.show = '外部弹幕已关闭';
-                      }
-                    }
-                  }
-                } catch (error) {
-                  console.error('异步处理外部弹幕失败:', error);
-                }
-              });
-              
               return nextState; // 立即返回新状态
-            },
-          },
-          {
-            html: '弹幕开关',
-            icon: '<text x="50%" y="50%" font-size="16" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">弹</text>',
-            tooltip: '弹幕显示/隐藏',
-            onClick() {
-              if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
-                const plugin = artPlayerRef.current.plugins.artplayerPluginDanmuku;
-                if (plugin.isHide) {
-                  plugin.show();
-                  return '弹幕已显示';
-                } else {
-                  plugin.hide();
-                  return '弹幕已隐藏';
-                }
-              }
-              return '弹幕功能未加载';
             },
           },
           {
@@ -2746,9 +2678,7 @@ function PlayPageClient() {
             .artplayer-plugin-danmuku .apd-config-panel {
               /* 使用绝对定位而不是fixed，让ArtPlayer的动态定位生效 */
               position: absolute !important;
-              /* 移除固定的left/right定位，让JS动态计算 */
-              left: auto;
-              right: auto;
+              /* 保持ArtPlayer原版的默认left: 0，让JS动态覆盖 */
               /* 保留z-index确保层级正确 */
               z-index: 2147483647 !important; /* 使用最大z-index确保在全屏模式下也能显示在最顶层 */
               /* 确保面板可以接收点击事件 */
@@ -2781,6 +2711,113 @@ function PlayPageClient() {
         // 应用CSS优化
         optimizeDanmukuControlsCSS();
 
+        // 精确解决弹幕菜单与进度条拖拽冲突 - 基于ArtPlayer原生拖拽逻辑
+        const fixDanmakuProgressConflict = () => {
+          let isDraggingProgress = false;
+          
+          setTimeout(() => {
+            const progressControl = document.querySelector('.art-control-progress') as HTMLElement;
+            if (!progressControl) return;
+            
+            // 添加精确的CSS控制
+            const addPrecisionCSS = () => {
+              if (document.getElementById('danmaku-drag-fix')) return;
+              
+              const style = document.createElement('style');
+              style.id = 'danmaku-drag-fix';
+              style.textContent = `
+                /* 仅在拖拽状态时禁用弹幕hover */
+                .artplayer[data-dragging="true"] .artplayer-plugin-danmuku .apd-config:hover .apd-config-panel,
+                .artplayer[data-dragging="true"] .artplayer-plugin-danmuku .apd-style:hover .apd-style-panel {
+                  opacity: 0 !important;
+                  pointer-events: none !important;
+                }
+                
+                /* 核心修复：确保进度条在弹幕面板上方，或让面板不拦截进度条点击 */
+                .art-progress {
+                  position: relative;
+                  z-index: 999 !important;
+                }
+                
+                /* 弹幕面板pointer-events精确控制 - 只有内容区域可点击，面板背景不拦截 */
+                .artplayer-plugin-danmuku .apd-config-panel {
+                  pointer-events: none !important;
+                }
+                
+                .artplayer-plugin-danmuku .apd-style-panel {
+                  pointer-events: none !important;
+                }
+                
+                /* 只有内容区域可以接收点击事件 */
+                .artplayer-plugin-danmuku .apd-config-panel-inner,
+                .artplayer-plugin-danmuku .apd-style-panel-inner {
+                  pointer-events: auto !important;
+                }
+                
+                /* 面板内的具体控件可以点击 */
+                .artplayer-plugin-danmuku .apd-config-panel .apd-mode,
+                .artplayer-plugin-danmuku .apd-config-panel .apd-other,
+                .artplayer-plugin-danmuku .apd-config-panel .apd-slider,
+                .artplayer-plugin-danmuku .apd-style-panel .apd-mode,
+                .artplayer-plugin-danmuku .apd-style-panel .apd-color {
+                  pointer-events: auto !important;
+                }
+              `;
+              document.head.appendChild(style);
+            };
+            
+            // 精确模拟ArtPlayer的拖拽检测逻辑
+            const handleProgressMouseDown = (event: MouseEvent) => {
+              // 只有左键才开始拖拽检测
+              if (event.button === 0) {
+                isDraggingProgress = true;
+                const artplayer = document.querySelector('.artplayer') as HTMLElement;
+                if (artplayer) {
+                  artplayer.setAttribute('data-dragging', 'true');
+                }
+              }
+            };
+            
+            // 监听document的mousemove，与ArtPlayer保持一致
+            const handleDocumentMouseMove = () => {
+              // 如果正在拖拽，确保弹幕菜单被隐藏
+              if (isDraggingProgress) {
+                const panels = document.querySelectorAll('.artplayer-plugin-danmuku .apd-config-panel, .artplayer-plugin-danmuku .apd-style-panel') as NodeListOf<HTMLElement>;
+                panels.forEach(panel => {
+                  if (panel.style.opacity !== '0') {
+                    panel.style.opacity = '0';
+                    panel.style.pointerEvents = 'none';
+                  }
+                });
+              }
+            };
+            
+            // mouseup时立即恢复 - 与ArtPlayer逻辑完全同步
+            const handleDocumentMouseUp = () => {
+              if (isDraggingProgress) {
+                isDraggingProgress = false;
+                const artplayer = document.querySelector('.artplayer') as HTMLElement;
+                if (artplayer) {
+                  artplayer.removeAttribute('data-dragging');
+                }
+                // 立即恢复，不使用延迟
+              }
+            };
+            
+            // 绑定事件 - 与ArtPlayer使用相同的事件绑定方式
+            progressControl.addEventListener('mousedown', handleProgressMouseDown);
+            document.addEventListener('mousemove', handleDocumentMouseMove);
+            document.addEventListener('mouseup', handleDocumentMouseUp);
+            
+            // 应用CSS
+            addPrecisionCSS();
+            
+          }, 1500); // 等待弹幕插件加载
+        };
+        
+        // 启用精确修复
+        fixDanmakuProgressConflict();
+
         // 移动端弹幕配置按钮点击切换支持 - 基于ArtPlayer设置按钮原理
         const addMobileDanmakuToggle = () => {
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2802,23 +2839,35 @@ function PlayPageClient() {
               
               let isConfigVisible = false;
               
-              // 弹幕面板位置修正函数 - 完全模仿ArtPlayer设置面板算法
+              // 弹幕面板位置修正函数 - 带防抖优化
+              let adjustPositionTimer: NodeJS.Timeout | null = null;
               const adjustPanelPosition = () => {
-                const player = document.querySelector('.artplayer');
-                if (!player || !configButton || !configPanel) return;
-                
-                try {
-                  const panelElement = configPanel as HTMLElement;
-                  
-                  // 始终清除内联样式，使用CSS默认定位
-                  panelElement.style.left = '';
-                  panelElement.style.right = '';
-                  panelElement.style.transform = '';
-                  
-                  console.log('弹幕面板：使用CSS默认定位，自动适配屏幕方向');
-                } catch (error) {
-                  console.warn('弹幕面板位置调整失败:', error);
+                // 清除之前的定时器，实现防抖
+                if (adjustPositionTimer) {
+                  clearTimeout(adjustPositionTimer);
                 }
+                
+                adjustPositionTimer = setTimeout(() => {
+                  const player = document.querySelector('.artplayer');
+                  if (!player || !configButton || !configPanel) return;
+                  
+                  try {
+                    const panelElement = configPanel as HTMLElement;
+                    const isFullscreen = player.classList.contains('art-fullscreen') || player.classList.contains('art-fullscreen-web');
+
+                    // 清除所有可能影响定位的内联样式，让CSS接管
+                    panelElement.style.left = '';
+                    panelElement.style.right = '';
+                    panelElement.style.top = '';
+                    panelElement.style.bottom = '';
+                    panelElement.style.transform = '';
+                    panelElement.style.position = '';
+
+                    console.log('弹幕面板：使用CSS默认定位，自动适配', isFullscreen ? '全屏模式' : '普通模式');
+                  } catch (error) {
+                    console.warn('弹幕面板位置调整失败:', error);
+                  }
+                }, 100); // 100ms防抖延迟
               };
               
               // 添加点击事件监听器
@@ -2829,12 +2878,16 @@ function PlayPageClient() {
                 isConfigVisible = !isConfigVisible;
                 
                 if (isConfigVisible) {
-                  (configPanel as HTMLElement).style.display = 'block';
-                  // 显示后立即调整位置
-                  setTimeout(adjustPanelPosition, 10);
+                  (configPanel as HTMLElement).style.opacity = '1';
+                  (configPanel as HTMLElement).style.pointerEvents = 'all';
+                  // 显示后延迟调整位置，确保DOM完全更新
+                  setTimeout(() => {
+                    adjustPanelPosition();
+                  }, 50);
                   console.log('移动端弹幕配置面板：显示');
                 } else {
-                  (configPanel as HTMLElement).style.display = 'none';
+                  (configPanel as HTMLElement).style.opacity = '0';
+                  (configPanel as HTMLElement).style.pointerEvents = 'none';
                   console.log('移动端弹幕配置面板：隐藏');
                 }
               });
@@ -2844,44 +2897,155 @@ function PlayPageClient() {
                 artPlayerRef.current.on('resize', () => {
                   if (isConfigVisible) {
                     console.log('检测到ArtPlayer resize事件，重新调整弹幕面板位置');
-                    setTimeout(adjustPanelPosition, 50); // 短暂延迟确保resize完成
+                    adjustPanelPosition(); // 使用防抖的调整函数
                   }
                 });
-                console.log('已监听ArtPlayer resize事件，实现自动适配');
+
+                // 监听全屏状态变化
+                artPlayerRef.current.on('fullscreen', (fullscreen: boolean) => {
+                  if (isConfigVisible) {
+                    console.log('检测到全屏状态变化:', fullscreen ? '进入全屏' : '退出全屏');
+                    adjustPanelPosition(); // 使用防抖的调整函数
+                  }
+                });
+
+                artPlayerRef.current.on('fullscreenWeb', (fullscreen: boolean) => {
+                  if (isConfigVisible) {
+                    console.log('检测到网页全屏状态变化:', fullscreen ? '进入网页全屏' : '退出网页全屏');
+                    adjustPanelPosition(); // 使用防抖的调整函数
+                  }
+                });
+
+                console.log('已监听ArtPlayer resize和全屏事件，实现自动适配');
               }
               
-              // 额外监听屏幕方向变化事件，确保完全自动适配
+              // 监听播放器设置面板的变化，确保弹幕菜单位置正确 - 优化版本
+              const observePlayerChanges = () => {
+                const playerElement = document.querySelector('.artplayer');
+                if (!playerElement) return () => { /* no-op */ };
+                
+                let observerTimer: NodeJS.Timeout | null = null;
+                const observer = new MutationObserver(() => {
+                  if (isConfigVisible) {
+                    // 防抖处理DOM变化
+                    if (observerTimer) clearTimeout(observerTimer);
+                    observerTimer = setTimeout(() => adjustPanelPosition(), 150);
+                  }
+                });
+                
+                observer.observe(playerElement, { 
+                  childList: true, 
+                  subtree: false, // 减少观察范围
+                  attributes: true, 
+                  attributeFilter: ['class'] // 只观察class变化
+                });
+                
+                return () => {
+                  observer.disconnect();
+                  if (observerTimer) clearTimeout(observerTimer);
+                };
+              };
+              
+              const disconnectObserver = observePlayerChanges();
+              
+              // 额外监听屏幕方向变化事件，确保完全自动适配 - 防抖版本
+              let orientationTimer: NodeJS.Timeout | null = null;
               const handleOrientationChange = () => {
                 if (isConfigVisible) {
                   console.log('检测到屏幕方向变化，重新调整弹幕面板位置');
-                  setTimeout(adjustPanelPosition, 100); // 稍长延迟等待方向变化完成
+                  // 防抖处理方向变化
+                  if (orientationTimer) clearTimeout(orientationTimer);
+                  orientationTimer = setTimeout(() => adjustPanelPosition(), 200);
                 }
               };
               
               window.addEventListener('orientationchange', handleOrientationChange);
               window.addEventListener('resize', handleOrientationChange);
               
-              // 清理函数
+              // 清理函数 - 增强版本
               const _cleanup = () => {
                 window.removeEventListener('orientationchange', handleOrientationChange);
                 window.removeEventListener('resize', handleOrientationChange);
+                disconnectObserver(); // 断开DOM变化观察器
+                if (adjustPositionTimer) clearTimeout(adjustPositionTimer);
+                if (orientationTimer) clearTimeout(orientationTimer);
               };
               
-              // 点击其他地方自动隐藏
-              document.addEventListener('click', (e) => {
-                if (isConfigVisible && 
-                    !configButton.contains(e.target as Node) && 
-                    !configPanel.contains(e.target as Node)) {
-                  isConfigVisible = false;
-                  (configPanel as HTMLElement).style.display = 'none';
-                  console.log('点击外部区域，隐藏弹幕配置面板');
-                }
-              });
+              // 移除点击外部区域自动隐藏功能，改为固定显示模式
+              // 弹幕设置菜单现在只能通过再次点击按钮来关闭，与显示设置保持一致
               
               console.log('移动端弹幕配置切换功能已激活');
             } else {
-              // 桌面端：保持原有hover机制
-              console.log('桌面端保持原有hover机制');
+              // 桌面端：使用hover延迟交互，与移动端保持一致
+              console.log('为桌面端添加弹幕配置按钮hover延迟交互功能');
+
+              let isConfigVisible = false;
+              let showTimer: NodeJS.Timeout | null = null;
+              let hideTimer: NodeJS.Timeout | null = null;
+
+              const showPanel = () => {
+                if (hideTimer) {
+                  clearTimeout(hideTimer);
+                  hideTimer = null;
+                }
+
+                if (!isConfigVisible) {
+                  isConfigVisible = true;
+                  (configPanel as HTMLElement).style.setProperty('display', 'block', 'important');
+                  // 添加show类来触发动画
+                  setTimeout(() => {
+                    (configPanel as HTMLElement).classList.add('show');
+                  }, 10);
+                  console.log('桌面端弹幕配置面板：显示');
+                }
+              };
+
+              const hidePanel = () => {
+                if (showTimer) {
+                  clearTimeout(showTimer);
+                  showTimer = null;
+                }
+
+                if (isConfigVisible) {
+                  isConfigVisible = false;
+                  (configPanel as HTMLElement).classList.remove('show');
+                  // 等待动画完成后隐藏
+                  setTimeout(() => {
+                    (configPanel as HTMLElement).style.setProperty('display', 'none', 'important');
+                  }, 200);
+                  console.log('桌面端弹幕配置面板：隐藏');
+                }
+              };
+
+              // 鼠标进入按钮或面板区域
+              const handleMouseEnter = () => {
+                if (hideTimer) {
+                  clearTimeout(hideTimer);
+                  hideTimer = null;
+                }
+
+                showTimer = setTimeout(showPanel, 300); // 300ms延迟显示
+              };
+
+              // 鼠标离开按钮或面板区域
+              const handleMouseLeave = () => {
+                if (showTimer) {
+                  clearTimeout(showTimer);
+                  showTimer = null;
+                }
+
+                hideTimer = setTimeout(hidePanel, 500); // 500ms延迟隐藏
+              };
+
+              // 为按钮添加hover事件
+              configButton.addEventListener('mouseenter', handleMouseEnter);
+              configButton.addEventListener('mouseleave', handleMouseLeave);
+
+              // 为面板添加hover事件
+              configPanel.addEventListener('mouseenter', handleMouseEnter);
+              configPanel.addEventListener('mouseleave', handleMouseLeave);
+
+              console.log('桌面端弹幕配置hover延迟交互功能已激活');
             }
           }, 2000); // 延迟2秒确保弹幕插件完全初始化
         };
@@ -4034,212 +4198,8 @@ function PlayPageClient() {
             </div>
           </div>
         </div>
-
-        {/* 推荐短剧区域 */}
-        {currentSource === 'shortdrama' && (
-          <div className='mt-12 border-t border-gray-200 dark:border-gray-700 pt-8'>
-            <div className='mb-6'>
-              <h2 className='text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2'>
-                🎭 推荐短剧
-              </h2>
-              <p className='text-gray-600 dark:text-gray-400'>
-                为你精选更多精彩短剧
-              </p>
-            </div>
-
-            {recommendLoading ? (
-              <div className='flex justify-center py-8'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-              </div>
-            ) : recommendedShortDramas && recommendedShortDramas.items.length > 0 ? (
-              <div className='grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-                {recommendedShortDramas?.items.map((drama) => (
-                  <div key={drama.id} className='w-full'>
-                    <div
-                      className='group relative w-full rounded-lg bg-transparent cursor-pointer transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-[500]'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        const urlParams = new URLSearchParams();
-                        urlParams.set('shortdrama_id', drama.vod_id.toString());
-                        urlParams.set('title', drama.name);
-                        if (drama.vod_class) urlParams.set('vod_class', drama.vod_class);
-                        if (drama.vod_tag) urlParams.set('vod_tag', drama.vod_tag);
-
-                        const url = `/play?${urlParams.toString()}`;
-                        // 使用window.location.href来触发完整的页面导航，包括加载页面
-                        window.location.href = url;
-                      }}
-                      style={{
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                        pointerEvents: 'auto',
-                      } as React.CSSProperties}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
-                    >
-                      {/* 封面容器 */}
-                      <div className='relative w-full aspect-[3/4] overflow-hidden rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-gray-300 dark:bg-gray-700'>
-                        {drama.cover ? (
-                          <img
-                            src={drama.cover}
-                            alt={drama.name}
-                            className='w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110'
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://via.placeholder.com/300x400?text=暂无封面';
-                            }}
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          />
-                        ) : (
-                          <div className='w-full h-full flex items-center justify-center text-gray-500'>
-                            暂无封面
-                          </div>
-                        )}
-
-                        {/* 评分标识 */}
-                        {drama.score && drama.score > 0 && (
-                          <div
-                            className='absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-1 transition-all duration-300 ease-out group-hover:bg-black/80 group-hover:scale-[1.05]'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          >
-                            <span>⭐</span>
-                            <span>{drama.score}</span>
-                          </div>
-                        )}
-
-                        {/* 集数标识 */}
-                        {drama.total_episodes && (
-                          <div
-                            className='absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded-full shadow-sm transition-all duration-300 ease-out group-hover:bg-black/80 group-hover:scale-[1.05]'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          >
-                            {drama.total_episodes}集
-                          </div>
-                        )}
-
-                        {/* 播放按钮 */}
-                        <div
-                          className='absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
-                          style={{
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            WebkitTouchCallout: 'none',
-                          } as React.CSSProperties}
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            return false;
-                          }}
-                        >
-                          <PlayCircleIcon
-                            size={50}
-                            strokeWidth={0.8}
-                            className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-blue-500 hover:scale-[1.1]'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              return false;
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* 标题与来源 */}
-                      <div
-                        className='mt-2 text-center'
-                        style={{
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties}
-                      >
-                        <div className='relative'>
-                          <span
-                            className='block text-sm font-semibold truncate text-gray-900 dark:text-gray-100 transition-colors duration-300 ease-in-out group-hover:text-blue-600 dark:group-hover:text-blue-400 peer'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          >
-                            {drama.name}
-                          </span>
-                          {/* 自定义 tooltip */}
-                          <div
-                            className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-nowrap pointer-events-none'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          >
-                            {drama.name}
-                            <div
-                              className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800'
-                              style={{
-                                WebkitUserSelect: 'none',
-                                userSelect: 'none',
-                                WebkitTouchCallout: 'none',
-                              } as React.CSSProperties}
-                            ></div>
-                          </div>
-                        </div>
-                        <span
-                          className='block text-xs text-gray-500 dark:text-gray-400 mt-1'
-                          style={{
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            WebkitTouchCallout: 'none',
-                          } as React.CSSProperties}
-                        >
-                          <span
-                            className='inline-block border rounded px-2 py-0.5 border-gray-500/60 dark:border-gray-400/60 transition-all duration-300 ease-in-out group-hover:border-blue-500/60 group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                            style={{
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties}
-                          >
-                            短剧
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className='text-center py-8 text-gray-500'>
-                {!recommendedShortDramas ? '正在加载推荐内容...' : '暂无推荐内容'}
-              </div>
-            )}
-          </div>
-        )}
-
-
       </div>
+
       {/* 返回顶部悬浮按钮 */}
       <button
         onClick={scrollToTop}

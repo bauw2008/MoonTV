@@ -17,14 +17,12 @@ interface MultiLevelCategory {
 
 interface MultiLevelSelectorProps {
   onChange: (values: Record<string, string>) => void;
-  contentType?: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie';
-  initialValues?: Record<string, string>; // 添加初始值支持
+  contentType?: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime-tv' | 'anime-movie';
 }
 
 const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   onChange,
   contentType = 'movie',
-  initialValues = {},
 }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{
@@ -32,18 +30,13 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
     y: number;
     width: number;
   }>({ x: 0, y: 0, width: 0 });
-  const [values, setValues] = useState<Record<string, string>>(initialValues);
+  const [values, setValues] = useState<Record<string, string>>({});
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 监听initialValues变化，更新内部状态
-  useEffect(() => {
-    setValues(initialValues);
-  }, [initialValues]);
-
   // 根据内容类型获取对应的类型选项
   const getTypeOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie'
+    contentType: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime-tv' | 'anime-movie'
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
 
@@ -70,7 +63,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
           { label: '情色', value: 'erotic' },
           { label: '灾难', value: 'disaster' },
           { label: '西部', value: 'western' },
-          { label: '纪录片', value: 'documentary' },
+          { label: '纪录', value: 'documentary' },
           { label: '短片', value: 'short' },
         ];
       case 'tv':
@@ -97,6 +90,20 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
           { label: '歌舞', value: 'musical' },
           { label: '音乐', value: 'music' },
         ];
+      case 'short-drama':
+        return [
+          ...baseOptions,
+          { label: '爱情', value: 'romance' },
+          { label: '家庭', value: 'family' },
+          { label: '现代', value: 'modern' },
+          { label: '都市', value: 'urban' },
+          { label: '古装', value: 'costume' },
+          { label: '穿越', value: 'time_travel' },
+          { label: '商战', value: 'business' },
+          { label: '悬疑', value: 'suspense' },
+          { label: '喜剧', value: 'comedy' },
+          { label: '青春', value: 'youth' },
+        ];
       case 'show':
         return [
           ...baseOptions,
@@ -114,7 +121,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
 
   // 根据内容类型获取对应的地区选项
   const getRegionOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie'
+    contentType: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime-tv' | 'anime-movie'
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
 
@@ -149,6 +156,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
       case 'tv':
       case 'anime-tv':
       case 'show':
+      case 'short-drama':
         return [
           ...baseOptions,
           { label: '华语', value: 'chinese' },
@@ -181,7 +189,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   };
 
   const getLabelOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie'
+    contentType: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime-tv' | 'anime-movie'
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
     switch (contentType) {
@@ -237,7 +245,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
 
   // 根据内容类型获取对应的平台选项
   const getPlatformOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie'
+    contentType: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime-tv' | 'anime-movie'
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
 
@@ -247,6 +255,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
       case 'tv':
       case 'anime-tv':
       case 'show':
+      case 'short-drama':
         return [
           ...baseOptions,
           { label: '腾讯视频', value: 'tencent' },
@@ -310,9 +319,10 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
         { label: '更早', value: 'earlier' },
       ],
     },
-    // 只在电视剧和综艺时显示平台选项
+    // 只在电视剧、短剧和综艺时显示平台选项
     ...(contentType === 'tv' ||
       contentType === 'show' ||
+      contentType === 'short-drama' ||
       contentType === 'anime-tv'
       ? [
         {
@@ -330,7 +340,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
         { label: '近期热度', value: 'U' },
         {
           label:
-            contentType === 'tv' || contentType === 'show'
+            contentType === 'tv' || contentType === 'show' || contentType === 'short-drama'
               ? '首播时间'
               : '首映时间',
           value: 'R',

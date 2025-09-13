@@ -13,7 +13,7 @@ interface SelectorOption {
 }
 
 interface DoubanSelectorProps {
-  type: 'movie' | 'tv' | 'show' | 'anime';
+  type: 'movie' | 'tv' | 'show' | 'short-drama' | 'anime';
   primarySelection?: string;
   secondarySelection?: string;
   onPrimaryChange: (value: string) => void;
@@ -45,9 +45,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     left: number;
     width: number;
   }>({ left: 0, width: 0 });
-
-  // 添加状态来跟踪当前的筛选值，用于传递给MultiLevelSelector
-  const [currentFilterValues, setCurrentFilterValues] = useState<Record<string, string>>({});
 
   // 电影的一级选择器选项
   const moviePrimaryOptions: SelectorOption[] = [
@@ -81,7 +78,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     { label: '日本', value: 'tv_japanese' },
     { label: '韩国', value: 'tv_korean' },
     { label: '动漫', value: 'tv_animation' },
-    { label: '纪录片', value: 'tv_documentary' },
+  //{ label: '纪录片', value: 'tv_documentary' },
   ];
 
   // 综艺一级选择器选项
@@ -104,240 +101,10 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     { label: '剧场版', value: '剧场版' },
   ];
 
-  // 快捷类型按钮选项 - 电影
-  const quickGenreOptions = [
-    { label: '恐怖', value: 'horror' },
-    { label: '动作', value: 'action' },
-    { label: '科幻', value: 'sci-fi' },
-    { label: '爱情', value: 'romance' },
-    { label: '喜剧', value: 'comedy' },
-    { label: '悬疑', value: 'suspense' },
-    { label: '犯罪', value: 'crime' },
-    { label: '惊悚', value: 'thriller' },
-  ];
 
-  // 快捷类型按钮选项 - 电视剧
-  const quickTVGenreOptions = [
-    { label: '爱情', value: 'romance' },
-    { label: '悬疑', value: 'suspense' },
-    { label: '古装', value: 'costume' },
-    { label: '家庭', value: 'family' },
-    { label: '犯罪', value: 'crime' },
-    { label: '剧情', value: 'drama' },
-    { label: '喜剧', value: 'comedy' },
-    { label: '武侠', value: 'wuxia' },
-  ];
-
-  // 快捷类型按钮选项 - 综艺
-  const quickShowGenreOptions = [
-    { label: '真人秀', value: 'reality' },
-    { label: '脱口秀', value: 'talkshow' },
-    { label: '音乐', value: 'music' },
-    { label: '歌舞', value: 'musical' },
-  ];
-
-  // 处理快捷类型按钮点击
-  const handleQuickGenreClick = (genreValue: string) => {
-    // 自动切换到"全部"分类
-    onPrimaryChange('全部');
-    
-    // 根据内容类型选择对应的选项数组
-    let currentOptions;
-    if (type === 'movie') {
-      currentOptions = quickGenreOptions;
-    } else if (type === 'tv') {
-      currentOptions = quickTVGenreOptions;
-    } else if (type === 'show') {
-      currentOptions = quickShowGenreOptions;
-    } else {
-      return; // 其他类型不支持快捷按钮
-    }
-    
-    // 根据value找到对应的中文label
-    const genreOption = currentOptions.find(opt => opt.value === genreValue);
-    const genreLabel = genreOption?.label || genreValue;
-    
-    // 设置MultiLevelSelector的初始值
-    const newFilterValues = { type: genreValue };
-    setCurrentFilterValues(newFilterValues);
-    
-    // 直接调用onMultiLevelChange，让父组件立即更新数据
-    setTimeout(() => {
-      onMultiLevelChange?.({ 
-        type: genreLabel,  // 传递中文label给API
-        region: 'all',
-        year: 'all', 
-        sort: 'T'
-      });
-    }, 50);
-  };
 
   // 处理多级选择器变化
   const handleMultiLevelChange = (values: Record<string, string>) => {
-    // 当用户手动操作MultiLevelSelector时，需要同步更新currentFilterValues
-    // 这样可以确保状态的一致性
-    const newFilterValues: Record<string, string> = {};
-    
-    // 类型选项映射 - 电影
-    const movieTypeOptions = [
-      { label: '喜剧', value: 'comedy' },
-      { label: '爱情', value: 'romance' },
-      { label: '动作', value: 'action' },
-      { label: '科幻', value: 'sci-fi' },
-      { label: '悬疑', value: 'suspense' },
-      { label: '犯罪', value: 'crime' },
-      { label: '惊悚', value: 'thriller' },
-      { label: '冒险', value: 'adventure' },
-      { label: '音乐', value: 'music' },
-      { label: '历史', value: 'history' },
-      { label: '奇幻', value: 'fantasy' },
-      { label: '恐怖', value: 'horror' },
-      { label: '战争', value: 'war' },
-      { label: '传记', value: 'biography' },
-      { label: '歌舞', value: 'musical' },
-      { label: '武侠', value: 'wuxia' },
-      { label: '情色', value: 'erotic' },
-      { label: '灾难', value: 'disaster' },
-      { label: '西部', value: 'western' },
-      { label: '纪录片', value: 'documentary' },
-      { label: '短片', value: 'short' },
-    ];
-
-    // 类型选项映射 - 电视剧
-    const tvTypeOptions = [
-      { label: '喜剧', value: 'comedy' },
-      { label: '爱情', value: 'romance' },
-      { label: '悬疑', value: 'suspense' },
-      { label: '武侠', value: 'wuxia' },
-      { label: '古装', value: 'costume' },
-      { label: '家庭', value: 'family' },
-      { label: '犯罪', value: 'crime' },
-      { label: '科幻', value: 'sci-fi' },
-      { label: '恐怖', value: 'horror' },
-      { label: '历史', value: 'history' },
-      { label: '战争', value: 'war' },
-      { label: '动作', value: 'action' },
-      { label: '冒险', value: 'adventure' },
-      { label: '传记', value: 'biography' },
-      { label: '剧情', value: 'drama' },
-      { label: '奇幻', value: 'fantasy' },
-      { label: '惊悚', value: 'thriller' },
-      { label: '灾难', value: 'disaster' },
-      { label: '歌舞', value: 'musical' },
-      { label: '音乐', value: 'music' },
-    ];
-
-    // 类型选项映射 - 综艺
-    const showTypeOptions = [
-      { label: '真人秀', value: 'reality' },
-      { label: '脱口秀', value: 'talkshow' },
-      { label: '音乐', value: 'music' },
-      { label: '歌舞', value: 'musical' },
-    ];
-
-    // 根据内容类型选择对应的类型映射
-    let typeOptions: { label: string; value: string }[];
-    if (type === 'movie') {
-      typeOptions = movieTypeOptions;
-    } else if (type === 'tv') {
-      typeOptions = tvTypeOptions;
-    } else if (type === 'show') {
-      typeOptions = showTypeOptions;
-    } else {
-      typeOptions = movieTypeOptions; // 默认使用电影类型
-    }
-
-    // 地区选项映射
-    const regionOptions = [
-      { label: '华语', value: 'chinese' },
-      { label: '欧美', value: 'western' },
-      { label: '韩国', value: 'korean' },
-      { label: '日本', value: 'japanese' },
-      { label: '中国大陆', value: 'mainland_china' },
-      { label: '美国', value: 'usa' },
-      { label: '中国香港', value: 'hong_kong' },
-      { label: '中国台湾', value: 'taiwan' },
-      { label: '英国', value: 'uk' },
-      { label: '法国', value: 'france' },
-      { label: '德国', value: 'germany' },
-      { label: '意大利', value: 'italy' },
-      { label: '西班牙', value: 'spain' },
-      { label: '印度', value: 'india' },
-      { label: '泰国', value: 'thailand' },
-      { label: '俄罗斯', value: 'russia' },
-      { label: '加拿大', value: 'canada' },
-      { label: '澳大利亚', value: 'australia' },
-      { label: '爱尔兰', value: 'ireland' },
-      { label: '瑞典', value: 'sweden' },
-      { label: '巴西', value: 'brazil' },
-      { label: '丹麦', value: 'denmark' },
-    ];
-
-    // 年代选项映射
-    const yearOptions = [
-      { label: '2020年代', value: '2020s' },
-      { label: '2025', value: '2025' },
-      { label: '2024', value: '2024' },
-      { label: '2023', value: '2023' },
-      { label: '2022', value: '2022' },
-      { label: '2021', value: '2021' },
-      { label: '2020', value: '2020' },
-      { label: '2019', value: '2019' },
-      { label: '2010年代', value: '2010s' },
-      { label: '2000年代', value: '2000s' },
-      { label: '90年代', value: '1990s' },
-      { label: '80年代', value: '1980s' },
-      { label: '70年代', value: '1970s' },
-      { label: '60年代', value: '1960s' },
-      { label: '更早', value: 'earlier' },
-    ];
-
-    // 平台选项映射
-    const platformOptions = [
-      { label: '腾讯视频', value: 'tencent' },
-      { label: '爱奇艺', value: 'iqiyi' },
-      { label: '优酷', value: 'youku' },
-      { label: '湖南卫视', value: 'hunan_tv' },
-      { label: 'Netflix', value: 'netflix' },
-      { label: 'HBO', value: 'hbo' },
-      { label: 'BBC', value: 'bbc' },
-      { label: 'NHK', value: 'nhk' },
-      { label: 'CBS', value: 'cbs' },
-      { label: 'NBC', value: 'nbc' },
-      { label: 'tvN', value: 'tvn' },
-    ];
-    
-    // 处理每个选项，将中文label转换为英文value保存到内部状态
-    Object.entries(values).forEach(([key, value]) => {
-      if (value && value !== 'all' && !(key === 'sort' && value === 'T')) {
-        if (key === 'type') {
-          const typeOption = typeOptions.find(opt => opt.label === value);
-          if (typeOption) {
-            newFilterValues[key] = typeOption.value;
-          }
-        } else if (key === 'region') {
-          const regionOption = regionOptions.find(opt => opt.label === value);
-          if (regionOption) {
-            newFilterValues[key] = regionOption.value;
-          }
-        } else if (key === 'year') {
-          const yearOption = yearOptions.find(opt => opt.label === value);
-          if (yearOption) {
-            newFilterValues[key] = yearOption.value;
-          }
-        } else if (key === 'platform') {
-          const platformOption = platformOptions.find(opt => opt.label === value);
-          if (platformOption) {
-            newFilterValues[key] = platformOption.value;
-          }
-        } else {
-          // 对于其他字段（如sort），直接使用value
-          newFilterValues[key] = value;
-        }
-      }
-    });
-    
-    setCurrentFilterValues(newFilterValues);
     onMultiLevelChange?.(values);
   };
 
@@ -532,21 +299,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     }
   }, [secondarySelection]);
 
-  // 监听主选择器变化，清除筛选状态
-  useEffect(() => {
-    // 如果从"全部"切换到其他分类，清除筛选状态
-    if (primarySelection && primarySelection !== '全部') {
-      setCurrentFilterValues({});
-    }
-  }, [primarySelection]);
-
-  // 监听type变化，当不是movie类型时清除筛选状态
-  useEffect(() => {
-    if (type !== 'movie') {
-      setCurrentFilterValues({});
-    }
-  }, [type]);
-
   // 渲染胶囊式选择器
   const renderCapsuleSelector = (
     options: SelectorOption[],
@@ -601,72 +353,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     );
   };
 
-  // 渲染快捷类型按钮
-  const renderQuickGenreButtons = () => {
-    // 根据内容类型选择对应的选项
-    let currentOptions;
-    let titleText;
-    
-    if (type === 'movie') {
-      currentOptions = quickGenreOptions;
-      titleText = '快捷分类';
-    } else if (type === 'tv') {
-      currentOptions = quickTVGenreOptions;
-      titleText = '热门剧集';
-    } else if (type === 'show') {
-      currentOptions = quickShowGenreOptions;
-      titleText = '节目类型';
-    } else {
-      return null; // 其他类型不显示快捷按钮
-    }
-
-    return (
-      <div className='space-y-2'>
-        <div className='flex items-center gap-2'>
-          <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap'>
-            {titleText}
-          </span>
-          <div className='flex flex-wrap gap-1.5 sm:gap-2'>
-            {currentOptions.map((genre) => {
-              const isActive = genre.value === currentFilterValues.type;
-              return (
-                <button
-                  key={genre.value}
-                  onClick={() => handleQuickGenreClick(genre.value)}
-                  className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium 
-                           rounded-full shadow-sm transition-all duration-200 transform hover:scale-105 active:scale-95
-                           ${isActive 
-                             ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' 
-                             : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-md hover:from-blue-600 hover:to-purple-700'
-                           }
-                           dark:from-blue-600 dark:to-purple-700 dark:hover:from-blue-700 dark:hover:to-purple-800`}
-                >
-                  {genre.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className='text-xs text-gray-500 dark:text-gray-400 ml-14 sm:ml-16'>
-          💡 {(() => {
-            if (type === 'movie') return '热门类型快捷访问';
-            if (type === 'tv') return '热门剧集类型快捷访问';
-            if (type === 'show') return '节目类型快捷访问';
-            return '快捷访问';
-          })()} · 更多类型请选择"全部"进行筛选
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className='space-y-4 sm:space-y-6'>
       {/* 电影类型 - 显示两级选择器 */}
       {type === 'movie' && (
         <div className='space-y-3 sm:space-y-4'>
-          {/* 快捷类型按钮 - 只在电影类型时显示 */}
-          {renderQuickGenreButtons()}
-          
           {/* 一级选择器 */}
           <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
             <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
@@ -708,7 +399,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}
                   contentType={type}
-                  initialValues={currentFilterValues}
                 />
               </div>
             </div>
@@ -719,9 +409,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {/* 电视剧类型 - 显示两级选择器 */}
       {type === 'tv' && (
         <div className='space-y-3 sm:space-y-4'>
-          {/* 快捷类型按钮 - 只在电视剧类型时显示 */}
-          {renderQuickGenreButtons()}
-          
           {/* 一级选择器 */}
           <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
             <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
@@ -763,7 +450,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}
                   contentType={type}
-                  initialValues={currentFilterValues}
                 />
               </div>
             </div>
@@ -829,9 +515,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {/* 综艺类型 - 显示两级选择器 */}
       {type === 'show' && (
         <div className='space-y-3 sm:space-y-4'>
-          {/* 快捷类型按钮 - 只在综艺类型时显示 */}
-          {renderQuickGenreButtons()}
-          
           {/* 一级选择器 */}
           <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
             <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
@@ -873,13 +556,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}
                   contentType={type}
-                  initialValues={currentFilterValues}
                 />
               </div>
             </div>
           ) : null}
         </div>
       )}
+
+
     </div>
   );
 };

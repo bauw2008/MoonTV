@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { clearConfigCache, getConfig } from '@/lib/config';
+import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { username, password, confirmPassword } = await req.json();
+    const { username, password, confirmPassword, reason } = await req.json();
 
     // 先检查配置中是否允许注册（在验证输入之前）
     try {
@@ -132,18 +133,53 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: '该用户名已被注册' }, { status: 400 });
       }
 
-      // 注册用户
+      // 注册用户，获取配置判断是否需要审核
+      const config = await getConfig();
+      const requireApproval = (config.UserConfig as any).RequireApproval === true;
+
+      if (requireApproval) {
+        // 加密保存密码到待审核队列，使用站长 PASSWORD 作为加密密钥
+        const secret = process.env.PASSWORD || 'site-secret';
+        const encryptedPassword = SimpleCrypto.encrypt(password, secret);
+
+        // 初始化 PendingUsers
+        if (!(config.UserConfig as any).PendingUsers) {
+          (config.UserConfig as any).PendingUsers = [];
+        }
+
+        // 防重：如果已在待审核队列中，返回提示
+        const existsInPending = (config.UserConfig as any).PendingUsers.find(
+          (u: any) => u.username === username
+        );
+        if (existsInPending) {
+          return NextResponse.json(
+            { error: '该用户名已提交审核，请耐心等待审批' },
+            { status: 400 }
+          );
+        }
+
+        (config.UserConfig as any).PendingUsers.push({
+          username,
+          reason,
+          encryptedPassword,
+          appliedAt: new Date().toISOString(),
+        });
+        await db.saveAdminConfig(config);
+        clearConfigCache();
+        return NextResponse.json({ ok: true, pending: true, message: '已提交注册申请，等待管理员审核' });
+      }
+
+      // 不需要审核：直接创建账号
       await db.registerUser(username, password);
 
-      // 重新获取配置来添加用户
-      const config = await getConfig();
       const newUser = {
         username: username,
         role: 'user' as const,
+        createdAt: new Date().toISOString(),
       };
-      
-      config.UserConfig.Users.push(newUser);
-      
+
+      config.UserConfig.Users.push(newUser as any);
+
       // 保存更新后的配置
       await db.saveAdminConfig(config);
       

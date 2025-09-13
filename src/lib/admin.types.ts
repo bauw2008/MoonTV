@@ -28,12 +28,20 @@ export interface AdminConfig {
   };
   UserConfig: {
     AllowRegister?: boolean; // 是否允许用户注册，默认 true
+    RequireApproval?: boolean; // 是否需要注册审核，默认 false
+    PendingUsers?: {
+      username: string;
+      reason?: string;
+      encryptedPassword?: string; // 加密后的密码，审批通过时解密
+      appliedAt: string; // ISO 时间
+    }[]; // 待审核用户队列
     Users: {
       username: string;
       role: 'user' | 'admin' | 'owner';
       banned?: boolean;
       enabledApis?: string[]; // 优先级高于tags限制
       tags?: string[]; // 多 tags 取并集限制
+      createdAt?: string; // 创建时间（可选）
     }[];
     Tags?: {
       name: string;

@@ -1,6 +1,89 @@
 import he from 'he';
 import Hls from 'hls.js';
 
+/**
+ * 判断是否为短剧内容
+ * @param typeName 内容类型名称
+ * @param title 内容标题
+ * @returns boolean
+ */
+export function isShortDrama(typeName?: string, title?: string): boolean {
+  if (!typeName && !title) return false;
+  
+  // 常见的短剧type_name标识
+  const shortDramaTypes = [
+    '短剧',
+    '微电影',
+    '微剧',
+    '小剧场',
+    '竖屏短剧',
+    '网络微电影',
+    'short drama',
+    'short film',
+    'mini drama',
+    'micro drama',
+    'vertical drama'
+  ];
+  
+  // 标题中的关键词
+  const shortDramaTitleKeywords = [
+    '短剧',
+    '竖屏',
+    '微电影',
+    '小剧场'
+  ];
+  
+  // 检查type_name
+  if (typeName) {
+    const typeNameLower = typeName.toLowerCase();
+    if (shortDramaTypes.some(type => typeNameLower.includes(type.toLowerCase()))) {
+      return true;
+    }
+  }
+  
+  // 检查标题
+  if (title) {
+    const titleLower = title.toLowerCase();
+    if (shortDramaTitleKeywords.some(keyword => titleLower.includes(keyword))) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * 获取内容类型
+ * @param typeName API返回的type_name
+ * @param title 内容标题
+ * @returns 'movie' | 'tv' | 'short-drama' | 'unknown'
+ */
+export function getContentType(typeName?: string, title?: string): 'movie' | 'tv' | 'short-drama' | 'unknown' {
+  // 首先检查是否为短剧
+  if (isShortDrama(typeName, title)) {
+    return 'short-drama';
+  }
+  
+  if (!typeName) return 'unknown';
+  
+  const typeNameLower = typeName.toLowerCase();
+  
+  // 电影类型
+  if (typeNameLower.includes('电影') || typeNameLower.includes('movie')) {
+    return 'movie';
+  }
+  
+  // 电视剧类型
+  if (typeNameLower.includes('电视剧') || 
+      typeNameLower.includes('连续剧') || 
+      typeNameLower.includes('tv') || 
+      typeNameLower.includes('剧集')) {
+    return 'tv';
+  }
+  
+  return 'unknown';
+}
+
 // 增强的设备检测逻辑，参考最新的设备特征
 const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
@@ -163,26 +246,6 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           pingTime: 9999
         };
       }
-    }
- 
-     // 检查是否需要使用代理
-    const needsProxy = m3u8Url.includes('quark.cn') ||
-      m3u8Url.includes('drive.quark.cn') ||
-      m3u8Url.includes('dl-c-zb-') ||
-      m3u8Url.includes('dl-c-') ||
-      m3u8Url.match(/https?:\/\/[^/]*\.drive\./) ||
-      // 添加更多可能需要代理的域名
-      m3u8Url.includes('ffzy-online') ||
-      m3u8Url.includes('bfikuncdn.com') ||
-      m3u8Url.includes('vip.') ||
-      !m3u8Url.includes('localhost');
-
-    const finalM3u8Url = needsProxy
-      ? `/api/proxy/video?url=${encodeURIComponent(m3u8Url)}`
-      : m3u8Url;
-
-    if (needsProxy) {
-      console.log('Using proxy for M3U8 resolution detection:', m3u8Url);
     }
     
     // 非iPad设备使用优化后的测速逻辑

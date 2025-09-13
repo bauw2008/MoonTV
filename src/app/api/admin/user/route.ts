@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { SimpleCrypto } from '@/lib/crypto';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +22,8 @@ const ACTIONS = [
   'userGroup',
   'updateUserGroups',
   'batchUpdateUserGroups',
+  'approveRegister',
+  'rejectRegister',
 ] as const;
 
 export async function POST(request: NextRequest) {
@@ -147,6 +150,35 @@ export async function POST(request: NextRequest) {
           adminConfig.UserConfig.Users[
           adminConfig.UserConfig.Users.length - 1
           ];
+        break;
+      }
+      case 'approveRegister': {
+        // 审核通过：从 PendingUsers 取回密码并创建用户
+        if (!adminConfig.UserConfig.PendingUsers || adminConfig.UserConfig.PendingUsers.length === 0) {
+          return NextResponse.json({ error: '无待审核用户' }, { status: 400 });
+        }
+        const pendingIndex = adminConfig.UserConfig.PendingUsers.findIndex(u => u.username === targetUsername);
+        if (pendingIndex === -1) {
+          return NextResponse.json({ error: '未找到该待审核用户' }, { status: 404 });
+        }
+        const pending: any = adminConfig.UserConfig.PendingUsers[pendingIndex];
+        const secret = process.env.PASSWORD || 'site-secret';
+        const decryptedPwd = SimpleCrypto.decrypt(pending.encryptedPassword, secret);
+
+        await db.registerUser(targetUsername!, decryptedPwd);
+        adminConfig.UserConfig.Users.push({ username: targetUsername!, role: 'user', createdAt: new Date().toISOString() } as any);
+        adminConfig.UserConfig.PendingUsers.splice(pendingIndex, 1);
+        break;
+      }
+      case 'rejectRegister': {
+        if (!adminConfig.UserConfig.PendingUsers || adminConfig.UserConfig.PendingUsers.length === 0) {
+          return NextResponse.json({ error: '无待审核用户' }, { status: 400 });
+        }
+        const pendingIndex = adminConfig.UserConfig.PendingUsers.findIndex(u => u.username === targetUsername);
+        if (pendingIndex === -1) {
+          return NextResponse.json({ error: '未找到该待审核用户' }, { status: 404 });
+        }
+        adminConfig.UserConfig.PendingUsers.splice(pendingIndex, 1);
         break;
       }
       case 'ban': {

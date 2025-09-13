@@ -1072,9 +1072,8 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
               <div className='flex items-center'>
                 <button
                   type="button"
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                    config.UserConfig.AllowRegister ? buttonStyles.toggleOn : buttonStyles.toggleOff
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${config.UserConfig.AllowRegister ? buttonStyles.toggleOn : buttonStyles.toggleOff
+                    }`}
                   role="switch"
                   aria-checked={config.UserConfig.AllowRegister}
                   onClick={async () => {
@@ -1111,13 +1110,73 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                 >
                   <span
                     aria-hidden="true"
-                    className={`pointer-events-none inline-block h-5 w-5 rounded-full ${buttonStyles.toggleThumb} shadow transform ring-0 transition duration-200 ease-in-out ${
-                      config.UserConfig.AllowRegister ? buttonStyles.toggleThumbOn : buttonStyles.toggleThumbOff
-                    }`}
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full ${buttonStyles.toggleThumb} shadow transform ring-0 transition duration-200 ease-in-out ${config.UserConfig.AllowRegister ? buttonStyles.toggleThumbOn : buttonStyles.toggleThumbOff
+                      }`}
                   />
                 </button>
                 <span className='ml-3 text-sm font-medium text-gray-900 dark:text-gray-100'>
                   {config.UserConfig.AllowRegister ? '开启' : '关闭'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className='mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <div className='font-medium text-gray-900 dark:text-gray-100'>
+                  注册审核
+                </div>
+                <div className='text-sm text-gray-600 dark:text-gray-400'>
+                  开启后，新用户提交注册申请需管理员审核通过才可使用
+                </div>
+              </div>
+              <div className='flex items-center'>
+                <button
+                  type="button"
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${(config as any).UserConfig.RequireApproval ? buttonStyles.toggleOn : buttonStyles.toggleOff
+                    }`}
+                  role="switch"
+                  aria-checked={(config as any).UserConfig.RequireApproval}
+                  onClick={async () => {
+                    await withLoading('toggleRequireApproval', async () => {
+                      try {
+                        const response = await fetch('/api/admin/config', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            ...config,
+                            UserConfig: {
+                              ...config.UserConfig,
+                              RequireApproval: !(config as any).UserConfig.RequireApproval,
+                              PendingUsers: (config as any).UserConfig.PendingUsers || [],
+                            }
+                          })
+                        });
+                        if (response.ok) {
+                          await refreshConfig();
+                          showAlert({
+                            type: 'success',
+                            title: '设置已更新',
+                            message: (config as any).UserConfig.RequireApproval ? '已关闭注册审核' : '已开启注册审核',
+                            timer: 2000
+                          });
+                        } else {
+                          throw new Error('更新配置失败');
+                        }
+                      } catch (err) {
+                        showError(err instanceof Error ? err.message : '操作失败', showAlert);
+                      }
+                    });
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full ${buttonStyles.toggleThumb} shadow transform ring-0 transition duration-200 ease-in-out ${(config as any).UserConfig.RequireApproval ? buttonStyles.toggleThumbOn : buttonStyles.toggleThumbOff
+                      }`}
+                  />
+                </button>
+                <span className='ml-3 text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  {(config as any).UserConfig.RequireApproval ? '开启' : '关闭'}
                 </span>
               </div>
             </div>
@@ -1130,17 +1189,105 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
           用户统计
         </h4>
-        <div className='p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
-          <div className='text-2xl font-bold text-green-800 dark:text-green-300'>
-            {config.UserConfig.Users.length}
+        <div className='grid grid-cols-3 gap-4'>
+          <div className='p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
+            <div className='text-2xl font-bold text-green-800 dark:text-green-300'>
+              {config.UserConfig.Users.length}
+            </div>
+            <div className='text-sm text-green-600 dark:text-green-400'>
+              总用户数
+            </div>
           </div>
-          <div className='text-sm text-green-600 dark:text-green-400'>
-            总用户数
+          <div className='p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+            <div className='text-2xl font-bold text-blue-800 dark:text-blue-300'>
+              {(config as any).UserConfig.PendingUsers?.length || 0}
+            </div>
+            <div className='text-sm text-blue-600 dark:text-blue-400'>
+              待审核用户
+            </div>
+          </div>
+          <div className='p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800'>
+            <div className='text-2xl font-bold text-purple-800 dark:text-purple-300'>
+              {config.UserConfig.Users.filter(u => (u as any).createdAt?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length}
+            </div>
+            <div className='text-sm text-purple-600 dark:text-purple-400'>
+              今日新增
+            </div>
           </div>
         </div>
       </div>
 
-
+      {/* 注册审核队列（管理员与站长可见） */}
+      {(role === 'owner' || role === 'admin') && (
+        <div>
+          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            注册审核
+          </h4>
+          <div className='rounded-lg border border-gray-200 dark:border-gray-800 overflow-x-auto md:overflow-visible max-h-[60vh] overflow-y-auto scrollbar-hide'>
+            <table className='min-w-[720px] md:min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+              <thead className='bg-gray-50 dark:bg-gray-900/40'>
+                <tr>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>用户名</th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>说明</th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>申请时间</th>
+                  <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>操作</th>
+                </tr>
+              </thead>
+              <tbody className='bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-700'>
+                {((config as any).UserConfig.PendingUsers || []).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className='px-6 py-6 text-center text-sm text-gray-500 dark:text-gray-400'>暂无待审核用户</td>
+                  </tr>
+                ) : (
+                  ((config as any).UserConfig.PendingUsers || []).map((p: any) => (
+                    <tr key={p.username}>
+                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>{p.username}</td>
+                      <td className='px-6 py-4 text-sm text-gray-600 dark:text-gray-300 break-words max-w-[28rem]'>{p.reason || '-'}</td>
+                      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>{new Date(p.appliedAt).toLocaleString()}</td>
+                      <td className='px-6 py-4 whitespace-nowrap text-right text-sm'>
+                        <button
+                          className={buttonStyles.success}
+                          onClick={async () => {
+                            await withLoading(`approve_${p.username}`, async () => {
+                              const resp = await fetch('/api/admin/user', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'approveRegister', targetUsername: p.username })
+                              });
+                              if (resp.ok) {
+                                await refreshConfig();
+                              }
+                            });
+                          }}
+                        >
+                          通过
+                        </button>
+                        <button
+                          className={`ml-2 ${buttonStyles.danger}`}
+                          onClick={async () => {
+                            await withLoading(`reject_${p.username}`, async () => {
+                              const resp = await fetch('/api/admin/user', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'rejectRegister', targetUsername: p.username })
+                              });
+                              if (resp.ok) {
+                                await refreshConfig();
+                              }
+                            });
+                          }}
+                        >
+                          拒绝
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 用户组管理 */}
       <div>

@@ -12,6 +12,7 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
+import { getShortDramaData } from '@/lib/short-drama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
@@ -64,12 +65,14 @@ function DoubanPageClient() {
     if (type === 'movie') return '热门';
     if (type === 'tv' || type === 'show') return '最近热门';
     if (type === 'anime') return '每日放送';
+    if (type === 'short-drama') return '热门';
     return '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
     if (type === 'movie') return '全部';
     if (type === 'tv') return 'tv';
     if (type === 'show') return 'show';
+    if (type === 'short-drama') return '全部';
     return '全部';
   });
 
@@ -188,6 +191,9 @@ function DoubanPageClient() {
         setSecondarySelection('show');
       } else if (type === 'anime') {
         setPrimarySelection('每日放送');
+        setSecondarySelection('全部');
+      } else if (type === 'short-drama') {
+        setPrimarySelection('热门');
         setSecondarySelection('全部');
       } else {
         setPrimarySelection('');
@@ -339,6 +345,28 @@ function DoubanPageClient() {
         } else {
           throw new Error('没有找到对应的日期');
         }
+      } else if (type === 'short-drama') {
+        // 短剧数据处理
+        const shortDramaResponse = await getShortDramaData({
+          type: multiLevelValues.type !== 'all' ? multiLevelValues.type : undefined,
+          region: multiLevelValues.region !== 'all' ? multiLevelValues.region : undefined,
+          year: multiLevelValues.year !== 'all' ? multiLevelValues.year : undefined,
+          page: 1,
+          limit: 25,
+        });
+        
+        // 转换为豆瓣数据格式
+        data = {
+          code: 200,
+          message: 'success',
+          list: shortDramaResponse.results.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            poster: item.poster,
+            rate: '', // 短剧通常没有豆瓣评分
+            year: item.year,
+          })),
+        };
       } else if (type === 'anime') {
         data = await getDoubanRecommends({
           kind: primarySelection === '番剧' ? 'tv' : 'movie',
@@ -491,6 +519,28 @@ function DoubanPageClient() {
             } else {
               throw new Error('没有找到对应的分类');
             }
+          } else if (type === 'short-drama') {
+            // 短剧加载更多数据
+            const shortDramaResponse = await getShortDramaData({
+              type: multiLevelValues.type !== 'all' ? multiLevelValues.type : undefined,
+              region: multiLevelValues.region !== 'all' ? multiLevelValues.region : undefined,
+              year: multiLevelValues.year !== 'all' ? multiLevelValues.year : undefined,
+              page: currentPage + 1,
+              limit: 25,
+            });
+            
+            // 转换为豆瓣数据格式
+            data = {
+              code: 200,
+              message: 'success',
+              list: shortDramaResponse.results.map((item: any) => ({
+                id: item.id,
+                title: item.title,
+                poster: item.poster,
+                rate: '',
+                year: item.year,
+              })),
+            };
           } else if (type === 'anime' && primarySelection === '每日放送') {
             // 每日放送模式下，不进行数据请求，返回空数据
             data = {
@@ -747,12 +797,17 @@ function DoubanPageClient() {
           ? '动漫'
           : type === 'show'
             ? '综艺'
-            : '自定义';
+            : type === 'short-drama'
+              ? '短剧'
+              : '纪录';
   };
 
   const getPageDescription = () => {
     if (type === 'anime' && primarySelection === '每日放送') {
       return '来自 Bangumi 番组计划的精选内容';
+    }
+    if (type === 'short-drama') {
+      return '来自采集站的精选短剧内容';
     }
     return '来自豆瓣的精选内容';
   };
@@ -785,7 +840,7 @@ function DoubanPageClient() {
           {type !== 'custom' ? (
             <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-sm'>
               <DoubanSelector
-                type={type as 'movie' | 'tv' | 'show' | 'anime'}
+                type={type as 'movie' | 'tv' | 'show' | 'short-drama' | 'anime'}
                 primarySelection={primarySelection}
                 secondarySelection={secondarySelection}
                 onPrimaryChange={handlePrimaryChange}

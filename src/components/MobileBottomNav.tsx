@@ -60,7 +60,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
     if (menuConfig.showTVShows)
       items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
     if (menuConfig.showShortDrama)
-      items.push({ icon: PlayCircle, label: '短剧', href: '/shortdrama' });      
+      items.push({ icon: PlayCircle, label: '短剧', href: '/douban?type=short-drama' });      
     if (menuConfig.showAnime)
       items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
     if (menuConfig.showVariety)

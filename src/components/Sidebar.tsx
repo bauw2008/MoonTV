@@ -106,7 +106,7 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
 
     if (menuConfig.showMovies) items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
     if (menuConfig.showTVShows) items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
-    if (menuConfig.showShortDrama) items.push({ icon: PlayCircle, label: '短剧', href: '/shortdrama' });
+    if (menuConfig.showShortDrama) items.push({ icon: PlayCircle, label: '短剧', href: '/douban?type=short-drama' });
     if (menuConfig.showAnime) items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
     if (menuConfig.showVariety) items.push({ icon: Clover, label: '综艺', href: '/douban?type=show' });
     if (menuConfig.showLive) items.push({ icon: Radio, label: '直播', href: '/live' });
