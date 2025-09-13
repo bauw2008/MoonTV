@@ -115,16 +115,17 @@ async function fetchDoubanShortDrama(page: number, limit: number): Promise<Searc
     const rate = match[5] || '';
     const year = extractYear(desc);
 
-	results.push({
-	  id,
-	  title,
-	  poster,
-	  desc,
-	  year,
-	  //rate,  //评分
-	  region: extractRegion(desc),
-	  type_name: '短剧',
-	});
+  results.push({
+    id,
+    title,
+    poster,
+    desc,
+    year,
+    // rate,  // 评分，如果后面需要可启用
+    region: extractRegion(desc),
+    type_name: '短剧',
+  });
+}
 
 
   return results;
