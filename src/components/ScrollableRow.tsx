@@ -14,28 +14,6 @@ export default function ScrollableRow({
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  // 检测是否为移动设备
-  useEffect(() => {
-    // 标记组件已在客户端挂载
-    setIsClient(true);
-
-    // 初始检测
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // 在客户端执行检测
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   const checkScroll = () => {
     if (containerRef.current) {
@@ -112,75 +90,6 @@ export default function ScrollableRow({
     }
   };
 
-  // 移动端触摸滑动处理 - 简化版本，只提供视觉反馈
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile || !containerRef.current) return;
-
-    setIsDragging(true);
-
-    // 添加抓取光标样式
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grabbing';
-      containerRef.current.style.userSelect = 'none';
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile || !containerRef.current) return;
-
-    setIsDragging(false);
-
-    // 恢复光标样式
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grab';
-      containerRef.current.style.userSelect = '';
-    }
-  };
-
-  // 鼠标拖动处理（桌面端）
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-
-    setIsDragging(true);
-    setStartX(e.pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-
-    // 添加抓取光标样式
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grabbing';
-      containerRef.current.style.userSelect = 'none';
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
-
-    e.preventDefault();
-    const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // 滑动速度系数
-    containerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleMouseUp = () => {
-    if (!containerRef.current) return;
-
-    setIsDragging(false);
-
-    // 恢复光标样式
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grab';
-      containerRef.current.style.userSelect = '';
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (isDragging && containerRef.current) {
-      setIsDragging(false);
-      containerRef.current.style.cursor = 'grab';
-      containerRef.current.style.userSelect = '';
-    }
-  };
-
   return (
     <div
       className='relative'
@@ -189,43 +98,15 @@ export default function ScrollableRow({
         // 当鼠标进入时重新检查一次
         checkScroll();
       }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        handleMouseLeave();
-      }}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         ref={containerRef}
-        className={`flex space-x-6 overflow-x-auto scrollbar-hide py-1 sm:py-2 pb-12 sm:pb-14 px-4 sm:px-6 ${
-          isClient && isMobile ? 'cursor-grab' : ''
-        } ${isDragging ? 'cursor-grabbing' : ''}`}
+        className='flex space-x-6 overflow-x-auto scrollbar-hide py-1 sm:py-2 pb-12 sm:pb-14 px-4 sm:px-6'
         onScroll={checkScroll}
-        onTouchStart={isClient && isMobile ? handleTouchStart : undefined}
-        onTouchEnd={isClient && isMobile ? handleTouchEnd : undefined}
-        onMouseDown={isClient && isMobile ? undefined : handleMouseDown}
-        onMouseMove={isClient && isMobile ? undefined : handleMouseMove}
-        onMouseUp={isClient && isMobile ? undefined : handleMouseUp}
-        onMouseLeave={isClient && isMobile ? undefined : handleMouseLeave}
-        style={{
-          WebkitOverflowScrolling: isClient && isMobile ? 'touch' : 'auto', // 在 iOS 上提供平滑滚动
-          scrollSnapType: isClient && isMobile ? 'x mandatory' : 'none', // 移动端启用滚动吸附
-          scrollBehavior: 'smooth',
-          touchAction: isClient && isMobile ? 'pan-x' : 'auto', // 明确告诉浏览器只处理水平方向的触摸滑动
-        }}
       >
         {children}
       </div>
-
-      {/* 移动端滑动指示器 */}
-      {isClient && isMobile && (
-        <div className='flex justify-center space-x-1 mt-2 sm:hidden'>
-          <div className='w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
-          <div className='w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
-          <div className='w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
-        </div>
-      )}
-
-      {/* 桌面端滚动按钮 */}
       {showLeftScroll && (
         <div
           className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
