@@ -51,7 +51,7 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
       </div>
 
       {/* 移动端底部导航 */}
-      <div className='md:hidden glass dark:glass-dark border-t border-gray-200/30 dark:border-gray-700/30'>
+      <div className='md:hidden'>
         <MobileBottomNav activePath={activePath} />
       </div>
     </div>
