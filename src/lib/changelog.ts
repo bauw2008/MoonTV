@@ -1,0 +1,33 @@
+// 此文件由 scripts/convert-changelog.js 自动生成
+// 请勿手动编辑
+
+export interface ChangelogEntry {
+  version: string;
+  date: string;
+  added: string[];
+  changed: string[];
+  fixed: string[];
+}
+
+export const changelog: ChangelogEntry[] = [
+  {
+    version: '1.0.0',
+    date: '2025-09-18',
+    added: [
+      '🚀【导航菜单】动态构建灵活开启/隐藏',
+      '📝【配置管理】移除默认主窗口/tvbox配置，转至管理员配置项集中管理',
+      '📊【分类配置】菜单结构优化，操作更便捷',
+      '🔗【直播源】litv/Tvbox 默认关闭，关闭后litv/Tvbox/访问将无效',
+      '🎯【接口管理】/tvbox 调整为配置源播放窗口',
+      '🔍【搜索页】Youtube/网盘搜索菜单默认隐藏',
+      '⚡【AI推荐】默认隐藏',
+      '📺【播放器】弹幕发射器新建优化，控制栏菜单CSS样式调整',
+      '🎯【网盘搜索】... ',
+      '🎮【其他】虚拟滑动显示异常修复，增加头像显示，统计ip登陆记录，用户注册审核等...',
+    ],
+    changed: ['📐 ...'],
+    fixed: ['🎮 ...'],
+  },
+];
+
+export default changelog;

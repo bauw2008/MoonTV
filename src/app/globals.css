@@ -1,0 +1,460 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* 琉璃玻璃态效果 */
+  .glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.02)
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card-dark {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.01)
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* 发光效果 */
+  .glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5),
+      0 0 40px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.1);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3),
+      0 0 60px rgba(34, 197, 94, 0.1);
+  }
+
+  .glow-green-only {
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.2);
+  }
+
+  .hover-glow {
+    position: relative;
+  }
+
+  .hover-glow-random::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 1rem;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      var(--glow-color, rgba(34, 197, 94, 0.15)),
+      transparent
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(12px);
+  }
+
+  .hover-glow-random:hover::before {
+    opacity: 1;
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5),
+      0 0 40px rgba(168, 85, 247, 0.3), 0 0 60px rgba(168, 85, 247, 0.1);
+  }
+
+  /* 渐变文字 */
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-green {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 动态背景 */
+  .animated-gradient {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* 琉璃按钮 */
+  .glass-button {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.1)
+    );
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(31, 38, 135, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-button:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.15)
+    );
+    box-shadow: 0 6px 20px rgba(31, 38, 135, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+  }
+}
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  /* 阻止 iOS Safari 拉动回弹 */
+  overscroll-behavior: none;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+}
+
+html:not(.dark) body {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(16, 185, 129, 0.05) 25%,
+    rgba(34, 197, 94, 0.05) 50%,
+    rgba(6, 182, 212, 0.05) 75%,
+    rgba(99, 102, 241, 0.05) 100%
+  );
+  background-attachment: fixed;
+  position: relative;
+}
+
+html:not(.dark) body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at 20% 50%,
+      rgba(59, 130, 246, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(16, 185, 129, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 20%,
+      rgba(6, 182, 212, 0.1) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.5);
+}
+
+/* 视频卡片悬停效果 */
+.video-card-hover {
+  transition: transform 0.3s ease;
+}
+
+.video-card-hover:hover {
+  transform: scale(1.05);
+}
+
+/* 渐变遮罩 */
+.gradient-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* 隐藏移动端（<768px）垂直滚动条 */
+@media (max-width: 767px) {
+  html,
+  body {
+    -ms-overflow-style: none; /* IE & Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome Safari */
+  }
+}
+
+/* 隐藏所有滚动条（兼容 WebKit、Firefox、IE/Edge）- 排除ArtPlayer */
+*:not(.artplayer):not(.artplayer *) {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*:not(.artplayer):not(.artplayer *)::webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* View Transitions API 动画 */
+@keyframes slide-from-top {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes slide-from-bottom {
+  from {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+/*
+  切换时，旧的视图不应该有动画，它应该在下面，等待被新的视图覆盖。
+  这可以防止在动画完成前，页面底部提前变色。
+*/
+::view-transition-old(root) {
+  animation: none;
+}
+
+/* 从浅色到深色：新内容（深色）从顶部滑入 */
+html.dark::view-transition-new(root) {
+  animation-name: slide-from-top;
+}
+
+/* 从深色到浅色：新内容（浅色）从底部滑入 */
+html:not(.dark)::view-transition-new(root) {
+  animation-name: slide-from-bottom;
+}
+
+/* 强制播放器内部的 video 元素高度为 100%，并保持内容完整显示 */
+div[data-media-provider] video {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ArtPlayer 封面样式 */
+.art-poster {
+  background-size: contain !important; /* 使图片完整展示 */
+  background-position: center center !important; /* 居中显示 */
+  background-repeat: no-repeat !important; /* 防止重复 */
+  background-color: #000 !important; /* 其余区域填充为黑色 */
+}
+
+/* 隐藏移动端竖屏时的 pip 按钮 */
+@media (max-width: 1024px) {
+  .art-control-pip {
+    display: none !important;
+  }
+
+  .art-control-fullscreenWeb {
+    display: none !important;
+  }
+
+  .art-control-volume {
+    display: none !important;
+  }
+
+  /* 调整移动端控制栏按钮间距，确保所有图标都能正常显示和点击 */
+  .art-controls-right {
+    gap: 1px !important;
+    padding-right: 2px !important;
+    margin-right: -4px !important;
+  }
+
+  .art-controls-left {
+    gap: 1px !important;
+    padding-left: 4px !important;
+  }
+
+  /* 弹幕开关按钮在移动端的特殊样式 */
+  .art-danmaku-toggle-button {
+    margin-left: 1px !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* 强制移除所有控制栏按钮的圆形背景 */
+  .art-controls .art-control,
+  .art-controls [class*='art-control'],
+  .art-danmaku-toggle-button {
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* 调整播放器控制栏整体间距 */
+  .art-controls {
+    padding: 0 2px !important;
+  }
+
+  .art-bottom {
+    padding: 0 2px !important;
+  }
+
+  /* 确保全屏按钮可见 */
+  .art-control-fullscreen,
+  .art-control-fullscreenWeb {
+    display: flex !important;
+    min-width: 28px !important;
+    width: 28px !important;
+  }
+}
+
+/* 修复音量控制hover区域 - 精确优化版本 */
+.art-control-volume {
+  position: relative !important;
+}
+
+/* 精确控制音量按钮的hover检测区域 */
+.art-control-volume::before {
+  content: '';
+  position: absolute;
+  top: -40px; /* 减少向上扩展，只扩展40px到音量滑条区域 */
+  left: -8px; /* 减少左右扩展 */
+  right: -8px;
+  bottom: -2px; /* 减少向下扩展 */
+  z-index: -1;
+  pointer-events: auto;
+}
+
+/* 当面板本身被hover时也要保持显示 */
+.art-volume-panel:hover {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+/* 强化原有的hover规则 */
+.art-control-volume:hover .art-volume-panel {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  transition: all 0.1s ease !important; /* 更快的响应 */
+}
+
+/* 弹入动画 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+/* 平滑过渡效果 */
+.smooth-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* 弹幕配置按钮，仅显示配置 */
+.artplayer-plugin-danmuku .apd-toggle {
+  display: none !important;
+}
