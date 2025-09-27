@@ -59,9 +59,8 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
   computeGroupStats,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { columnCount, itemWidth, itemHeight, containerWidth } =
-    useResponsiveGrid(containerRef);
-
+  const { columnCount, itemWidth, itemHeight, containerWidth } = useResponsiveGrid(containerRef);
+  
   // 渐进式加载状态
   const [visibleItemCount, setVisibleItemCount] = useState(INITIAL_BATCH_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -85,7 +84,7 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
     const checkContainer = () => {
       const element = containerRef.current;
       const actualWidth = element?.offsetWidth || 0;
-
+      
       console.log('VirtualSearchGrid container debug:', {
         actualWidth,
         containerWidth,
@@ -95,7 +94,7 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
         element: !!element,
       });
     };
-
+    
     checkContainer();
   }, [containerWidth]);
 
@@ -141,15 +140,15 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
     }: any) => {
       const index = rowIndex * cellColumnCount + columnIndex;
 
-      // 如果超出显示范围，返回空
+    // 如果超出显示范围，返回隐藏的占位符
       if (index >= cellDisplayItemCount) {
-        return <div style={style} />;
+      return <div style={{ ...style, visibility: 'hidden' }} />;
       }
 
       const item = cellDisplayData[index];
 
       if (!item) {
-        return <div style={style} />;
+      return <div style={{ ...style, visibility: 'hidden' }} />;
       }
 
       // 根据视图模式渲染不同内容
@@ -158,9 +157,8 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
         const title = group[0]?.title || '';
         const poster = group[0]?.poster || '';
         const year = group[0]?.year || 'unknown';
-        const { episodes, source_names, douban_id } =
-          cellComputeGroupStats(group);
-        const type = episodes === 1 ? 'movie' : 'tv';
+      const { episodes, source_names, douban_id } = cellComputeGroupStats(group);
+      const type = episodes === 1 ? 'movie' : 'tv';
 
         // 如果该聚合第一次出现，写入初始统计
         if (!cellGroupStatsRef.current.has(mapKey)) {
@@ -218,11 +216,6 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
     []
   );
 
-  // 计算网格高度
-  const gridHeight = Math.min(
-    typeof window !== 'undefined' ? window.innerHeight - 200 : 600,
-    800
-  );
 
   return (
     <div ref={containerRef} className='w-full'>
@@ -259,23 +252,19 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
           }}
           columnCount={columnCount}
           columnWidth={itemWidth}
-          defaultHeight={gridHeight}
-          defaultWidth={containerWidth}
           rowCount={rowCount}
           rowHeight={itemHeight}
-          overscanCount={1}
+          overscanCount={3}
           // 添加ARIA支持提升无障碍体验
-          role='grid'
-          aria-label={`搜索结果列表 "${searchQuery}"，共${displayItemCount}个结果，当前视图：${
-            viewMode === 'agg' ? '聚合视图' : '全部结果'
-          }`}
+          role="grid"
+          aria-label={`搜索结果列表 "${searchQuery}"，共${displayItemCount}个结果，当前视图：${viewMode === 'agg' ? '聚合视图' : '全部结果'}`}
           aria-rowcount={rowCount}
           aria-colcount={columnCount}
           style={{
-            overflowX: 'hidden',
-            overflowY: 'auto',
             // 确保不创建新的stacking context，让菜单能正确显示在最顶层
             isolation: 'auto',
+            // 平滑滚动优化
+            scrollBehavior: 'smooth',
             // 单行网格优化：防止高度异常
             ...(isSingleRow && {
               minHeight: itemHeight + 16,
@@ -283,18 +272,13 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
             }),
           }}
           onCellsRendered={(visibleCells, allCells) => {
-            // 使用react-window v2.1.0的新API - 优化性能：
+            // 使用react-window v2.1.2的API：
             // 1. visibleCells: 真实可见的单元格范围
             // 2. allCells: 包含overscan的所有渲染单元格范围
             const { rowStopIndex: visibleRowStopIndex } = visibleCells;
-            const { rowStopIndex: allRowStopIndex } = allCells;
 
-            // 性能优化：只基于真实可见区域判断加载，避免overscan区域误触发
-            if (
-              visibleRowStopIndex >= rowCount - LOAD_MORE_THRESHOLD &&
-              hasNextPage &&
-              !isLoadingMore
-            ) {
+            // 简化逻辑：基于可见行检测
+            if (visibleRowStopIndex >= rowCount - LOAD_MORE_THRESHOLD && hasNextPage && !isLoadingMore) {
               loadMoreItems();
             }
           }}
@@ -324,3 +308,4 @@ export const VirtualSearchGrid: React.FC<VirtualSearchGridProps> = ({
 };
 
 export default VirtualSearchGrid;
+
