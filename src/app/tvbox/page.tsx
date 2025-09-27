@@ -442,7 +442,7 @@ function toDoubanItem(v: VideoItem): DoubanItem {
     id: v.douban_id?.toString() || v.id,
     title: v.title || '',
     poster: v.poster || '',
-    rate?: string;
+    rate: v.rate?.toString() || ''
     year: v.year || '',
   };
 }
