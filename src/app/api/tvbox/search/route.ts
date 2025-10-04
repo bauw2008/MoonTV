@@ -5,7 +5,7 @@ import { getAvailableApiSites, getConfig, hasSpecialFeaturePermission } from '@/
 import { searchFromApi } from '@/lib/downstream';
 import { getTVBoxCache, setTVBoxCache } from '@/lib/tvbox-cache';
 import { calculatePagination } from '@/lib/tvbox-utils';
-import { yellowWords } from '@/lib/yellow';
+import { getYellowWords } from '@/lib/yellow';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -52,17 +52,17 @@ export async function GET(request: NextRequest) {
     // 使用现有的搜索函数
     const results = await searchFromApi(site, keyword);
 
-    // 获取配置以检查是否禁用黄色过滤器
+    // 获取配置以检查是否禁用18+过滤器
     const config = await getConfig();
 
-    // 检查用户是否有禁用黄色过滤的权限
+    // 检查用户是否有禁用18+过滤的权限
     const hasYellowFilterPermission = await hasSpecialFeaturePermission(
       authInfo.username,
       'disable-yellow-filter',
       config
     );
 
-    // 过滤黄色内容：当全局禁用黄色过滤关闭时，且用户没有禁用黄色过滤权限时进行过滤
+    // 过滤18+内容：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
     let filteredResults = results;
     if (!config.SiteConfig.DisableYellowFilter && !hasYellowFilterPermission) {
       filteredResults = results.filter((result) => {

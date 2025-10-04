@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { yellowWords } from '@/lib/yellow';
+import { getYellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
 
@@ -87,24 +87,36 @@ export async function GET(request: NextRequest) {
 
           const results = (await searchPromise) as any[];
 
-          // 过滤黄色内容
+          // 过滤18+内容
           let filteredResults = results;
           if (!config.SiteConfig.DisableYellowFilter) {
-            filteredResults = results.filter((result) => {
-              const typeName = result.type_name || '';
-              const title = result.title || '';
+            try {
+              const yellowWords = await getYellowWords();
+              console.log('18+词汇过滤配置:', {
+                disableFilter: config.SiteConfig.DisableYellowFilter,
+                wordsCount: yellowWords.length,
+                words: yellowWords
+              });
+              
+              filteredResults = results.filter((result) => {
+                const typeName = result.type_name || '';
+                const title = result.title || '';
 
-              // 同时检查 type_name 和 title 字段
-              const matchedTypeWord = yellowWords.find((word: string) =>
-                typeName.includes(word)
-              );
-              const matchedTitleWord = yellowWords.find((word: string) =>
-                title.includes(word)
-              );
-              const shouldFilter = !!matchedTypeWord || !!matchedTitleWord;
+                // 同时检查 type_name 和 title 字段
+                const matchedTypeWord = yellowWords.find((word: string) =>
+                  typeName.includes(word)
+                );
+                const matchedTitleWord = yellowWords.find((word: string) =>
+                  title.includes(word)
+                );
+                const shouldFilter = !!matchedTypeWord || !!matchedTitleWord;
 
-              return !shouldFilter;
-            });
+                return !shouldFilter;
+              });
+            } catch (error) {
+              console.error('获取18+词汇失败:', error);
+              // 出错时不过滤
+            }
           }
 
           // 发送该源的搜索结果

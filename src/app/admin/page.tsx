@@ -32,6 +32,7 @@ import {
   Database,
   ExternalLink,
   FileText,
+  Filter,
   FolderOpen,
   Settings,
   Shield,
@@ -53,6 +54,7 @@ import CacheManager from '@/components/CacheManager';
 import DataMigration from '@/components/DataMigration';
 import PageLayout from '@/components/PageLayout';
 import TVBoxSecurityConfig from '@/components/TVBoxSecurityConfig';
+import YellowFilterConfig from '@/components/YellowFilterConfig';
 import YouTubeConfig from '@/components/YouTubeConfig';
 
 // 统一按钮样式系统
@@ -2650,7 +2652,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                           </div>
                         </label>
 
-                        {/* 黄色过滤器控制 */}
+                        {/* 18+过滤器控制 */}
                         <label className='flex items-center space-x-3 p-3 border border-yellow-200 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 cursor-pointer transition-colors'>
                           <input
                             type='checkbox'
@@ -2679,10 +2681,10 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                           />
                           <div className='flex-1'>
                             <div className='text-sm font-medium text-yellow-900 dark:text-yellow-100'>
-                              🚫 禁用黄色内容过滤
+                              🚫 禁用18+内容过滤
                             </div>
                             <div className='text-xs text-yellow-700 dark:text-yellow-300'>
-                              允许用户查看被过滤的黄色内容，不受全局设置影响
+                              允许用户查看被过滤的18+内容，不受全局设置影响
                             </div>
                           </div>
                         </label>
@@ -5326,6 +5328,8 @@ const menuLabels = {
   showShortDrama: '短剧',
 };
 
+
+
 // 新增站点配置组件
 const SiteConfigComponent = ({
   config,
@@ -5345,7 +5349,6 @@ const SiteConfigComponent = ({
     DoubanProxy: '',
     DoubanImageProxyType: 'direct',
     DoubanImageProxy: '',
-    DisableYellowFilter: false,
     FluidSearch: true,
     // TMDB配置默认值
     TMDBApiKey: '',
@@ -5431,7 +5434,6 @@ const SiteConfigComponent = ({
         DoubanImageProxyType:
           config.SiteConfig.DoubanImageProxyType || 'direct',
         DoubanImageProxy: config.SiteConfig.DoubanImageProxy || '',
-        DisableYellowFilter: config.SiteConfig.DisableYellowFilter || false,
         FluidSearch: config.SiteConfig.FluidSearch || true,
         // TMDB配置
         TMDBApiKey: config.SiteConfig.TMDBApiKey || '',
@@ -5863,41 +5865,7 @@ const SiteConfigComponent = ({
         />
       </div>
 
-      {/* 禁用18+过滤器 */}
-      <div>
-        <div className='flex items-center justify-between'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            ⛔️18+过滤器
-          </label>
-          <button
-            type='button'
-            onClick={() =>
-              setSiteSettings((prev) => ({
-                ...prev,
-                DisableYellowFilter: !prev.DisableYellowFilter,
-              }))
-            }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-              siteSettings.DisableYellowFilter
-                ? buttonStyles.toggleOn
-                : buttonStyles.toggleOff
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full ${
-                buttonStyles.toggleThumb
-              } transition-transform ${
-                siteSettings.DisableYellowFilter
-                  ? buttonStyles.toggleThumbOn
-                  : buttonStyles.toggleThumbOff
-              }`}
-            />
-          </button>
-        </div>
-        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-          禁用18+内容的过滤功能，允许显示所有内容。
-        </p>
-      </div>
+      
 
       {/* 流式搜索 */}
       <div>
@@ -7009,6 +6977,7 @@ function AdminPageClient() {
     liveSource: false,
     siteConfig: false,
     categoryConfig: false,
+    yellowFilterConfig: false,
     netdiskConfig: false,
     aiRecommendConfig: false,
     youtubeConfig: false,
@@ -7217,6 +7186,21 @@ function AdminPageClient() {
               onToggle={() => toggleTab('categoryConfig')}
             >
               <CategoryConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            {/* 18+过滤配置标签 */}
+            <CollapsibleTab
+              title='18+过滤配置'
+              icon={
+                <Filter
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              }
+              isExpanded={expandedTabs.yellowFilterConfig}
+              onToggle={() => toggleTab('yellowFilterConfig')}
+            >
+              <YellowFilterConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
 
             {/* 网盘搜索配置标签 */}

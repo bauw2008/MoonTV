@@ -13,7 +13,7 @@ import {
   setTVBoxCategoryCache,
 } from '@/lib/tvbox-cache';
 import { calculatePagination } from '@/lib/tvbox-utils';
-import { yellowWords } from '@/lib/yellow';
+import { getYellowWords } from '@/lib/yellow';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -164,17 +164,17 @@ export async function GET(request: NextRequest) {
       const sourceCategories = await fetchSourceCategories(site.api);
       finalCategoryStructure = buildCategoryStructure(sourceCategories);
 
-      // 获取配置以检查是否禁用黄色过滤器
+      // 获取配置以检查是否禁用18+过滤器
       const config = await getConfig();
       
-      // 检查用户是否有禁用黄色过滤的权限
+      // 检查用户是否有禁用18+过滤的权限
       const hasYellowFilterPermission = await hasSpecialFeaturePermission(
         authInfo.username,
         'disable-yellow-filter',
         config
       );
       
-      // 过滤黄色分类：当全局禁用黄色过滤关闭时，且用户没有禁用黄色过滤权限时进行过滤
+      // 过滤18+分类：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
       if (!config.SiteConfig.DisableYellowFilter && !hasYellowFilterPermission) {
         finalCategoryStructure.primary_categories = finalCategoryStructure.primary_categories.filter((category) => {
           const categoryName = category.type_name || '';

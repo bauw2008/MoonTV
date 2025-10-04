@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { yellowWords } from '@/lib/yellow';
+import { getYellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       .map((result) => (result as PromiseFulfilledResult<any>).value);
     let flattenedResults = successResults.flat();
     if (!config.SiteConfig.DisableYellowFilter) {
+      const yellowWords = await getYellowWords();
       flattenedResults = flattenedResults.filter((result) => {
         const typeName = result.type_name || '';
         return !yellowWords.some((word: string) => typeName.includes(word));

@@ -245,6 +245,29 @@ async function getInitConfig(
     SourceConfig: [],
     CustomCategories: [],
     LiveConfig: [],
+    // 添加默认过滤词
+    YellowWords: [
+      '伦理片',
+      '福利',
+      '制服诱惑',
+      '国产传媒',
+      '黑丝诱惑',
+      '无码',
+      '日本无码',
+      '有码',
+      '日本有码',
+      'SWAG',
+      '色情片',
+      '同性片',
+      '福利视频',
+      '福利片',
+      '倫理片',
+      '理论片',
+      '韩国伦理',
+      '港台三级',
+      '伦理',
+      '日本伦理',
+    ],
   };
 
   // 补充用户信息
@@ -329,10 +352,19 @@ export async function getConfig(): Promise<AdminConfig> {
   // db 中无配置，执行一次初始化
   if (!adminConfig) {
     adminConfig = await getInitConfig('');
+    adminConfig = configSelfCheck(adminConfig);
+    cachedConfig = adminConfig;
+    // 保存初始化配置到数据库
+    try {
+      await db.saveAdminConfig(cachedConfig);
+      console.log('初始化配置已保存到数据库');
+    } catch (error) {
+      console.error('保存初始化配置到数据库失败:', error);
+    }
+  } else {
+    adminConfig = configSelfCheck(adminConfig);
+    cachedConfig = adminConfig;
   }
-  adminConfig = configSelfCheck(adminConfig);
-  cachedConfig = adminConfig;
-  db.saveAdminConfig(cachedConfig);
   return cachedConfig;
 }
 
@@ -380,6 +412,38 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   }
   if (!adminConfig.LiveConfig || !Array.isArray(adminConfig.LiveConfig)) {
     adminConfig.LiveConfig = [];
+  }
+  // 确保过滤词配置存在
+  if (!adminConfig.YellowWords || !Array.isArray(adminConfig.YellowWords)) {
+    console.log('初始化 YellowWords 配置');
+    adminConfig.YellowWords = [
+      '伦理片',
+      '福利',
+      '里番动漫',
+      '门事件',
+      '萝莉少女',
+      '制服诱惑',
+      '国产传媒',
+      'cosplay',
+      '黑丝诱惑',
+      '无码',
+      '日本无码',
+      '有码',
+      '日本有码',
+      'SWAG',
+      '网红主播',
+      '色情片',
+      '同性片',
+      '福利视频',
+      '福利片',
+      '写真热舞',
+      '倫理片',
+      '理论片',
+      '韩国伦理',
+      '港台三级',
+      '伦理',
+      '日本伦理',
+    ];
   }
 
   // 确保网盘搜索配置有默认值

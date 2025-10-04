@@ -30,6 +30,7 @@ export interface AdminConfig {
       showShortDrama: boolean;
     };
   };
+  YellowWords?: string[]; // 18+内容过滤词
   UserConfig: {
     AllowRegister?: boolean; // 是否允许用户注册，默认 true
     AutoCleanupInactiveUsers?: boolean; // 是否自动清理非活跃用户，默认 false
