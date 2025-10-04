@@ -21,6 +21,14 @@ const YellowFilterConfig = ({
     text: string;
   } | null>(null);
 
+  if (!config) {
+    return (
+      <div className='text-center text-gray-500 dark:text-gray-400'>
+        加载中...
+      </div>
+    );
+  }
+
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 3000);
@@ -316,3 +324,4 @@ const YellowFilterConfig = ({
 };
 
 export default YellowFilterConfig;
+
