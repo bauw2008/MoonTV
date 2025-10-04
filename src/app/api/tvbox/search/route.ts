@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getAvailableApiSites, getConfig, hasSpecialFeaturePermission } from '@/lib/config';
+import {
+  getAvailableApiSites,
+  getConfig,
+  hasSpecialFeaturePermission,
+} from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getTVBoxCache, setTVBoxCache } from '@/lib/tvbox-cache';
 import { calculatePagination } from '@/lib/tvbox-utils';
@@ -65,6 +69,7 @@ export async function GET(request: NextRequest) {
     // 过滤18+内容：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
     let filteredResults = results;
     if (!config.SiteConfig.DisableYellowFilter && !hasYellowFilterPermission) {
+      const yellowWords = await getYellowWords();
       filteredResults = results.filter((result) => {
         const typeName = result.type_name || '';
         const title = result.title || '';

@@ -9,11 +9,17 @@ interface YellowFilterConfigProps {
   refreshConfig: () => Promise<void>;
 }
 
-const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) => {
+const YellowFilterConfig = ({
+  config,
+  refreshConfig,
+}: YellowFilterConfigProps) => {
   const [yellowWords, setYellowWords] = useState<string[]>([]);
   const [newWord, setNewWord] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -22,7 +28,7 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
 
   const handleAddWord = () => {
     if (!newWord.trim()) return;
-    
+
     const trimmedWord = newWord.trim();
     if (yellowWords.includes(trimmedWord)) {
       showMessage('error', '该过滤词已存在');
@@ -32,7 +38,7 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
     const updatedWords = [...yellowWords, trimmedWord];
     setYellowWords(updatedWords);
     setNewWord('');
-    
+
     // 自动保存
     saveYellowWords(updatedWords);
   };
@@ -40,7 +46,7 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
   const handleRemoveWord = (word: string) => {
     const updatedWords = yellowWords.filter((w) => w !== word);
     setYellowWords(updatedWords);
-    
+
     // 自动保存
     saveYellowWords(updatedWords);
   };
@@ -116,7 +122,12 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
       });
 
       if (response.ok) {
-        showMessage('success', `已${config.SiteConfig?.DisableYellowFilter ? '启用' : '禁用'}18+过滤器`);
+        showMessage(
+          'success',
+          `已${
+            config.SiteConfig?.DisableYellowFilter ? '启用' : '禁用'
+          }18+过滤器`
+        );
         await refreshConfig();
       } else {
         const data = await response.json();
@@ -170,16 +181,15 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
               🚫 18+ 过滤器
             </h3>
             <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-              {config.SiteConfig?.DisableYellowFilter 
+              {config.SiteConfig?.DisableYellowFilter
                 ? '当前已禁用18+内容过滤，所有内容将不会被过滤'
-                : '当前已启用18+内容过滤，包含过滤词的内容将被隐藏'
-              }
+                : '当前已启用18+内容过滤，包含过滤词的内容将被隐藏'}
             </p>
           </div>
           <button
             type='button'
             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-              !config.SiteConfig?.DisableYellowFilter 
+              !config.SiteConfig?.DisableYellowFilter
                 ? 'bg-green-600 dark:bg-green-600'
                 : 'bg-gray-200 dark:bg-gray-700'
             }`}
@@ -191,7 +201,9 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
             <span
               aria-hidden='true'
               className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out ${
-                !config.SiteConfig?.DisableYellowFilter ? 'translate-x-6' : 'translate-x-1'
+                !config.SiteConfig?.DisableYellowFilter
+                  ? 'translate-x-6'
+                  : 'translate-x-1'
               }`}
             />
           </button>
@@ -244,7 +256,7 @@ const YellowFilterConfig = ({ config, refreshConfig }: YellowFilterConfigProps) 
             重置为默认
           </button>
         </div>
-        
+
         {yellowWords.length === 0 ? (
           <div className='p-8 text-center text-gray-500 dark:text-gray-400'>
             暂无过滤词

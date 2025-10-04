@@ -12,12 +12,12 @@ export async function getYellowWords(): Promise<string[]> {
     const config = await getConfig();
     return config.YellowWords || [];
   }
-  
+
   // 生产环境使用缓存
   if (cachedYellowWords && Date.now() - cacheTimestamp < CACHE_TTL) {
     return cachedYellowWords;
   }
-  
+
   try {
     const config = await getConfig();
     cachedYellowWords = config.YellowWords || [];
@@ -38,9 +38,9 @@ export async function containsYellowWords(text: string): Promise<boolean> {
     if (!text || !yellowWords || yellowWords.length === 0) {
       return false;
     }
-    
+
     const lowerText = text.toLowerCase();
-    return yellowWords.some(word => lowerText.includes(word.toLowerCase()));
+    return yellowWords.some((word) => lowerText.includes(word.toLowerCase()));
   } catch (error) {
     console.error('检查过滤词失败:', error);
     return false;

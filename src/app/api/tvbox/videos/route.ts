@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getAvailableApiSites, getConfig, hasSpecialFeaturePermission } from '@/lib/config';
+import {
+  getAvailableApiSites,
+  getConfig,
+  hasSpecialFeaturePermission,
+} from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getVideosByCategory } from '@/lib/tvbox-analysis';
 import {
@@ -166,32 +170,45 @@ export async function GET(request: NextRequest) {
 
       // 获取配置以检查是否禁用18+过滤器
       const config = await getConfig();
-      
+
       // 检查用户是否有禁用18+过滤的权限
       const hasYellowFilterPermission = await hasSpecialFeaturePermission(
         authInfo.username,
         'disable-yellow-filter',
         config
       );
-      
+
       // 过滤18+分类：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
-      if (!config.SiteConfig.DisableYellowFilter && !hasYellowFilterPermission) {
-        finalCategoryStructure.primary_categories = finalCategoryStructure.primary_categories.filter((category) => {
-          const categoryName = category.type_name || '';
-          const shouldFilter = yellowWords.some(word => categoryName.includes(word));
-          return !shouldFilter;
-        });
-        
-        finalCategoryStructure.secondary_categories = finalCategoryStructure.secondary_categories.filter((category) => {
-          const categoryName = category.type_name || '';
-          const shouldFilter = yellowWords.some(word => categoryName.includes(word));
-          return !shouldFilter;
-        });
-        
+      if (
+        !config.SiteConfig.DisableYellowFilter &&
+        !hasYellowFilterPermission
+      ) {
+        const yellowWords = await getYellowWords();
+        finalCategoryStructure.primary_categories =
+          finalCategoryStructure.primary_categories.filter((category) => {
+            const categoryName = category.type_name || '';
+            const shouldFilter = yellowWords.some((word) =>
+              categoryName.includes(word)
+            );
+            return !shouldFilter;
+          });
+
+        finalCategoryStructure.secondary_categories =
+          finalCategoryStructure.secondary_categories.filter((category) => {
+            const categoryName = category.type_name || '';
+            const shouldFilter = yellowWords.some((word) =>
+              categoryName.includes(word)
+            );
+            return !shouldFilter;
+          });
+
         // 从category_map中移除被过滤的分类
-        Object.keys(finalCategoryStructure.category_map).forEach(typeId => {
-          const category = finalCategoryStructure.category_map[parseInt(typeId)];
-          const shouldFilter = yellowWords.some(word => category.type_name.includes(word));
+        Object.keys(finalCategoryStructure.category_map).forEach((typeId) => {
+          const category =
+            finalCategoryStructure.category_map[parseInt(typeId)];
+          const shouldFilter = yellowWords.some((word) =>
+            category.type_name.includes(word)
+          );
           if (shouldFilter) {
             delete finalCategoryStructure.category_map[parseInt(typeId)];
           }

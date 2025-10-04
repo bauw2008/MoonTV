@@ -2987,7 +2987,8 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                                     ? {
                                         ...prev,
                                         enabledApis: prev.enabledApis.filter(
-                                          (api) => api !== 'disable-yellow-filter'
+                                          (api) =>
+                                            api !== 'disable-yellow-filter'
                                         ),
                                       }
                                     : null
@@ -5328,8 +5329,6 @@ const menuLabels = {
   showShortDrama: '短剧',
 };
 
-
-
 // 新增站点配置组件
 const SiteConfigComponent = ({
   config,
@@ -5865,8 +5864,6 @@ const SiteConfigComponent = ({
           className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
         />
       </div>
-
-      
 
       {/* 流式搜索 */}
       <div>

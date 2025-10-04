@@ -95,9 +95,9 @@ export async function GET(request: NextRequest) {
               console.log('18+词汇过滤配置:', {
                 disableFilter: config.SiteConfig.DisableYellowFilter,
                 wordsCount: yellowWords.length,
-                words: yellowWords
+                words: yellowWords,
               });
-              
+
               filteredResults = results.filter((result) => {
                 const typeName = result.type_name || '';
                 const title = result.title || '';

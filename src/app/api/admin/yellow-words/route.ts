@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
     const username = authInfo.username;
 
     // 参数校验
-    if (!Array.isArray(yellowWords) || !yellowWords.every(word => typeof word === 'string')) {
+    if (
+      !Array.isArray(yellowWords) ||
+      !yellowWords.every((word) => typeof word === 'string')
+    ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 

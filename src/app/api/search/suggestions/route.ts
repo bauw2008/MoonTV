@@ -143,4 +143,3 @@ async function generateSuggestions(
 
   return sortedSuggestions;
 }
-
