@@ -21,14 +21,6 @@ const YellowFilterConfig = ({
     text: string;
   } | null>(null);
 
-  if (!config) {
-    return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
-    );
-  }
-
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 3000);
@@ -165,6 +157,14 @@ const YellowFilterConfig = ({
       showMessage('error', '获取默认过滤词失败');
     }
   };
+
+  if (!config) {
+    return (
+      <div className='text-center text-gray-500 dark:text-gray-400'>
+        加载中...
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-6'>
