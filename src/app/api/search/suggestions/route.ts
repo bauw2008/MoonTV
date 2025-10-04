@@ -75,6 +75,7 @@ async function generateSuggestions(
     const firstSite = apiSites[0];
     const results = await searchFromApi(firstSite, query);
 
+    const yellowWords = await getYellowWords();
     realKeywords = Array.from(
       new Set(
         results
@@ -142,3 +143,4 @@ async function generateSuggestions(
 
   return sortedSuggestions;
 }
+

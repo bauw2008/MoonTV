@@ -84,3 +84,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }
 }
+
