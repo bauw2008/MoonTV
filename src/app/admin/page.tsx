@@ -5349,6 +5349,7 @@ const SiteConfigComponent = ({
     DoubanProxy: '',
     DoubanImageProxyType: 'direct',
     DoubanImageProxy: '',
+    DisableYellowFilter: false,
     FluidSearch: true,
     // TMDB配置默认值
     TMDBApiKey: '',
