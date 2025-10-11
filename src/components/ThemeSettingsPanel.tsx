@@ -1395,7 +1395,6 @@ export const ThemeSettingsPanel: React.FC<{
       backgroundImage: undefined,
       backgroundMode: 'gradient',
       navigationMenuColor: '#000000',
-      categoryMenuColor: '#000000',
       homeFavoritesColor: '#000000',
       enableDynamicBackground: false,
       dynamicIntensity: 50,
