@@ -207,4 +207,3 @@ export function isDeviceBound(
 ): boolean {
   return currentDevices.some((device) => device.deviceId === deviceId);
 }
-

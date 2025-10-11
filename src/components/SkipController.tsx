@@ -1011,8 +1011,8 @@ export default function SkipController({
           <div
             className={`${
               showSettingsPanel
-                ? 'glass-card-dark backdrop-blur-xl rounded-xl p-3 w-72 max-h-[60vh] overflow-y-auto border border-gray-600/40 shadow-2xl'
-                : 'glass-card-dark backdrop-blur-xl rounded-xl p-3 w-full max-w-xs max-h-[70vh] overflow-y-auto border border-gray-600/40 shadow-2xl'
+                ? 'glass-card-dark backdrop-blur-xl rounded-xl p-3 w-64 max-h-[45vh] overflow-y-auto border border-gray-600/40 shadow-2xl'
+                : 'glass-card-dark backdrop-blur-xl rounded-xl p-3 w-full max-w-xs max-h-[45vh] overflow-y-auto border border-gray-600/40 shadow-2xl'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1198,7 +1198,7 @@ export default function SkipController({
                         })
                       }
                       className='w-full px-1.5 py-1 text-xs border border-gray-600/50 rounded bg-gray-800/80 text-gray-100 placeholder-gray-500'
-                      placeholder='留空直接跳下一集'
+                      placeholder='留空'
                     />
                   </div>
                   <div className='flex items-end'>

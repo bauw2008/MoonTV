@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+
 import PageLayout from '@/components/PageLayout';
 
 interface SecurityConfig {
@@ -13,6 +15,16 @@ interface SecurityConfig {
   rateLimit: number;
   enableDeviceBinding: boolean;
   maxDevices: number;
+  userTokens?: Array<{
+    username: string;
+    token: string;
+    enabled: boolean;
+    devices: Array<{
+      deviceId: string;
+      deviceInfo: string;
+      bindTime: number;
+    }>;
+  }>;
 }
 
 export default function TVBoxConfigPage() {
@@ -135,7 +147,7 @@ export default function TVBoxConfigPage() {
                     </h3>
                     <div className='text-sm text-green-700 dark:text-green-300 space-y-1'>
                       {securityConfig.enableDeviceBinding && (
-                        <p>• Token验证：已启用 </p>
+                        <p>• Token验证：已启用</p>
                       )}
                       {securityConfig.enableIpWhitelist && (
                         <p>
@@ -145,6 +157,25 @@ export default function TVBoxConfigPage() {
                       )}
                       {securityConfig.enableRateLimit && (
                         <p>• 频率限制：{securityConfig.rateLimit}次/分钟</p>
+                      )}
+                      {securityConfig.enableDeviceBinding && (
+                        <p>
+                          • 绑定设备数量：
+                          {(() => {
+                            const authInfo = getAuthInfoFromBrowserCookie();
+                            const currentUsername = authInfo?.username;
+                            if (currentUsername && securityConfig.userTokens) {
+                              const userToken = securityConfig.userTokens.find(
+                                (t) =>
+                                  t.username === currentUsername && t.enabled
+                              );
+                              if (userToken) {
+                                return `${userToken.devices.length}/${securityConfig.maxDevices}`;
+                              }
+                            }
+                            return '0/0';
+                          })()}
+                        </p>
                       )}
                     </div>
                   </div>

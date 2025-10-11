@@ -977,6 +977,26 @@ export async function savePlayRecord(
       updateUserStats(record).catch((err) => {
         console.warn('更新用户统计数据失败:', err);
       });
+
+      // 🔧 优化：如果播放记录更新了总集数，同步更新对应的收藏项
+      if (record.total_episodes && record.total_episodes > 0) {
+        try {
+          const allFavorites = await getAllFavorites();
+          const favorite = allFavorites[key];
+          if (favorite && favorite.total_episodes !== record.total_episodes) {
+            // 更新收藏项的总集数
+            const updatedFavorite = {
+              ...favorite,
+              total_episodes: record.total_episodes
+            };
+            await saveFavorite(source, id, updatedFavorite);
+            console.log(`✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`);
+          }
+        } catch (favError) {
+          console.warn('同步更新收藏项总集数失败:', favError);
+          // 不阻塞主流程，继续执行
+        }
+      }
     } catch (err) {
       await handleDatabaseOperationFailure('playRecords', err);
       triggerGlobalError('保存播放记录失败');
@@ -1005,6 +1025,26 @@ export async function savePlayRecord(
     updateUserStats(record).catch((err) => {
       console.warn('更新用户统计数据失败:', err);
     });
+
+    // 🔧 优化：如果播放记录更新了总集数，同步更新对应的收藏项
+    if (record.total_episodes && record.total_episodes > 0) {
+      try {
+        const allFavorites = await getAllFavorites();
+        const favorite = allFavorites[key];
+        if (favorite && favorite.total_episodes !== record.total_episodes) {
+          // 更新收藏项的总集数
+          const updatedFavorite = {
+            ...favorite,
+            total_episodes: record.total_episodes
+          };
+          await saveFavorite(source, id, updatedFavorite);
+          console.log(`✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`);
+        }
+      } catch (favError) {
+        console.warn('同步更新收藏项总集数失败:', favError);
+        // 不阻塞主流程，继续执行
+      }
+    }
   } catch (err) {
     console.error('保存播放记录失败:', err);
     triggerGlobalError('保存播放记录失败');

@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       rateLimit: securityConfig.rateLimit || 60,
       enableDeviceBinding: securityConfig.enableDeviceBinding || false,
       maxDevices: securityConfig.maxDevices || 1,
+      userTokens: securityConfig.userTokens || [], // 添加userTokens数据
     };
 
     // 如果启用了设备绑定，返回当前用户的Token

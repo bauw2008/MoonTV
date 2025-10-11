@@ -44,11 +44,16 @@ const Logo = () => {
   return (
     <Link
       href='/'
-      className='flex items-center justify-center h-16 select-none hover:opacity-80 transition-opacity duration-200'
+      className='flex items-center justify-center h-16 select-none group'
     >
-      <span className='text-2xl font-bold gradient-text-green tracking-tight'>
-        {siteName}
-      </span>
+      <div className='relative'>
+        {/* 发光背景效果 */}
+        <div className='absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300 rounded-lg scale-110'></div>
+
+        <span className='relative text-2xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent tracking-tight transition-all duration-300 group-hover:scale-105 inline-block group-hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'>
+          {siteName}
+        </span>
+      </div>
     </Link>
   );
 };
@@ -64,6 +69,80 @@ declare global {
     __sidebarCollapsed?: boolean;
   }
 }
+
+// 为每个菜单项定义独特的渐变色主题
+const colorThemes = [
+  {
+    hover:
+      'hover:from-red-50/80 hover:to-pink-50/80 dark:hover:from-red-500/10 dark:hover:to-pink-500/10',
+    active:
+      'data-[active=true]:from-red-500/15 data-[active=true]:to-pink-500/15 dark:data-[active=true]:from-red-500/10 dark:data-[active=true]:to-pink-500/10',
+    text: 'hover:text-red-600 data-[active=true]:text-red-700 dark:hover:text-red-400 dark:data-[active=true]:text-red-400',
+    icon: 'group-hover:text-red-600 data-[active=true]:text-red-700 dark:group-hover:text-red-400 dark:data-[active=true]:text-red-400',
+    shadow: 'hover:shadow-red-500/5 data-[active=true]:shadow-red-500/10',
+    border: 'from-red-500 to-pink-500',
+  }, // 电影
+  {
+    hover:
+      'hover:from-blue-50/80 hover:to-indigo-50/80 dark:hover:from-blue-500/10 dark:hover:to-indigo-500/10',
+    active:
+      'data-[active=true]:from-blue-500/15 data-[active=true]:to-indigo-500/15 dark:data-[active=true]:from-blue-500/10 dark:data-[active=true]:to-indigo-500/10',
+    text: 'hover:text-blue-600 data-[active=true]:text-blue-700 dark:hover:text-blue-400 dark:data-[active=true]:text-blue-400',
+    icon: 'group-hover:text-blue-600 data-[active=true]:text-blue-700 dark:group-hover:text-blue-400 dark:data-[active=true]:text-blue-400',
+    shadow: 'hover:shadow-blue-500/5 data-[active=true]:shadow-blue-500/10',
+    border: 'from-blue-500 to-indigo-500',
+  }, // 剧集
+  {
+    hover:
+      'hover:from-purple-50/80 hover:to-violet-50/80 dark:hover:from-purple-500/10 dark:hover:to-violet-500/10',
+    active:
+      'data-[active=true]:from-purple-500/15 data-[active=true]:to-violet-500/15 dark:data-[active=true]:from-purple-500/10 dark:data-[active=true]:to-violet-500/10',
+    text: 'hover:text-purple-600 data-[active=true]:text-purple-700 dark:hover:text-purple-400 dark:data-[active=true]:text-purple-400',
+    icon: 'group-hover:text-purple-600 data-[active=true]:text-purple-700 dark:group-hover:text-purple-400 dark:data-[active=true]:text-purple-400',
+    shadow: 'hover:shadow-purple-500/5 data-[active=true]:shadow-purple-500/10',
+    border: 'from-purple-500 to-violet-500',
+  }, // 短剧
+  {
+    hover:
+      'hover:from-pink-50/80 hover:to-rose-50/80 dark:hover:from-pink-500/10 dark:hover:to-rose-500/10',
+    active:
+      'data-[active=true]:from-pink-500/15 data-[active=true]:to-rose-500/15 dark:data-[active=true]:from-pink-500/10 dark:data-[active=true]:to-rose-500/10',
+    text: 'hover:text-pink-600 data-[active=true]:text-pink-700 dark:hover:text-pink-400 dark:data-[active=true]:text-pink-400',
+    icon: 'group-hover:text-pink-600 data-[active=true]:text-pink-700 dark:group-hover:text-pink-400 dark:data-[active=true]:text-pink-400',
+    shadow: 'hover:shadow-pink-500/5 data-[active=true]:shadow-pink-500/10',
+    border: 'from-pink-500 to-rose-500',
+  }, // 动漫
+  {
+    hover:
+      'hover:from-orange-50/80 hover:to-amber-50/80 dark:hover:from-orange-500/10 dark:hover:to-amber-500/10',
+    active:
+      'data-[active=true]:from-orange-500/15 data-[active=true]:to-amber-500/15 dark:data-[active=true]:from-orange-500/10 dark:data-[active=true]:to-amber-500/10',
+    text: 'hover:text-orange-600 data-[active=true]:text-orange-700 dark:hover:text-orange-400 dark:data-[active=true]:text-orange-400',
+    icon: 'group-hover:text-orange-600 data-[active=true]:text-orange-700 dark:group-hover:text-orange-400 dark:data-[active=true]:text-orange-400',
+    shadow: 'hover:shadow-orange-500/5 data-[active=true]:shadow-orange-500/10',
+    border: 'from-orange-500 to-amber-500',
+  }, // 综艺
+  {
+    hover:
+      'hover:from-teal-50/80 hover:to-cyan-50/80 dark:hover:from-teal-500/10 dark:hover:to-cyan-500/10',
+    active:
+      'data-[active=true]:from-teal-500/15 data-[active=true]:to-cyan-500/15 dark:data-[active=true]:from-teal-500/10 dark:data-[active=true]:to-cyan-500/10',
+    text: 'hover:text-teal-600 data-[active=true]:text-teal-700 dark:hover:text-teal-400 dark:data-[active=true]:text-teal-400',
+    icon: 'group-hover:text-teal-600 data-[active=true]:text-teal-700 dark:group-hover:text-teal-400 dark:data-[active=true]:text-teal-400',
+    shadow: 'hover:shadow-teal-500/5 data-[active=true]:shadow-teal-500/10',
+    border: 'from-teal-500 to-cyan-500',
+  }, // 直播
+  {
+    hover:
+      'hover:from-yellow-50/80 hover:to-amber-50/80 dark:hover:from-yellow-500/10 dark:hover:to-amber-500/10',
+    active:
+      'data-[active=true]:from-yellow-500/15 data-[active=true]:to-amber-500/15 dark:data-[active=true]:from-yellow-500/10 dark:data-[active=true]:to-amber-500/10',
+    text: 'hover:text-yellow-600 data-[active=true]:text-yellow-700 dark:hover:text-yellow-400 dark:data-[active=true]:text-yellow-400',
+    icon: 'group-hover:text-yellow-600 data-[active=true]:text-yellow-700 dark:group-hover:text-yellow-400 dark:data-[active=true]:text-yellow-400',
+    shadow: 'hover:shadow-yellow-500/5 data-[active=true]:shadow-yellow-500/10',
+    border: 'from-yellow-500 to-amber-500',
+  }, // 其他/自定义
+];
 
 const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   const router = useRouter();
@@ -203,26 +282,27 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
             isCollapsed ? 'w-16' : 'w-64'
           }`}
           style={{
-            backdropFilter: 'blur(30px)',
-            WebkitBackdropFilter: 'blur(30px)',
+            background: 'rgba(255, 255, 255, 0.2)', // 更透明的背景 (60%)
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '4px 0 16px rgba(0, 0, 0, 0.05)',
           }}
         >
+          {/* 暗色模式支持 */}
           <style jsx global>{`
-            .fixed[data-sidebar] {
-              background: transparent;
-              backdrop-filter: blur(16px) saturate(180%);
-              -webkit-backdrop-filter: blur(16px) saturate(180%);
-              border-right: 1px solid rgba(255, 255, 255, 0.1);
-              box-shadow: 4px 0 16px rgba(0, 0, 0, 0.02);
-            }
-            html.dark .fixed[data-sidebar] {
-              background: transparent;
-              border-right: 1px solid rgba(255, 255, 255, 0.05);
-              box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+            html.dark aside[data-sidebar] {
+              background: rgba(17, 24, 39, 0.6) !important;
+              border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
             }
           `}</style>
-          <div className='flex h-full flex-col'>
-            {/* 顶部 Logo */}
+
+          {/* 装饰性背景光晕 */}
+          <div className='absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-green-400/3 via-blue-400/3 to-transparent pointer-events-none'></div>
+          <div className='absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-purple-400/3 via-pink-400/3 to-transparent pointer-events-none'></div>
+
+          <div className='flex h-full flex-col relative z-10'>
+            {/* 顶部 Logo 区域 */}
             <div className='relative h-16'>
               <div
                 className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
@@ -235,32 +315,41 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
               </div>
               <button
                 onClick={handleToggle}
-                className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 z-10 ${
+                className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-700 transition-all duration-300 z-10 dark:text-gray-400 dark:hover:text-gray-200 group/toggle ${
                   isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-2'
                 }`}
               >
-                <Menu className='h-4 w-4' />
+                {/* 渐变边框效果 */}
+                <div className='absolute inset-0 rounded-full bg-gradient-to-r from-green-400/50 via-blue-400/50 to-purple-400/50 opacity-0 group-hover/toggle:opacity-100 transition-opacity duration-300'></div>
+                <div className='absolute inset-[2px] rounded-full bg-white/80 dark:bg-gray-900/80 group-hover/toggle:bg-gray-50/80 dark:group-hover/toggle:bg-gray-800/80 transition-colors duration-300'></div>
+
+                <Menu className='h-4 w-4 relative z-10 transition-transform duration-300 group-hover/toggle:rotate-180' />
               </button>
             </div>
 
-            {/* 首页和搜索 */}
+            {/* 首页和搜索导航 */}
             <nav className='px-2 mt-4 space-y-1'>
               <Link
                 href='/'
                 onClick={() => setActive('/')}
                 data-active={active === '/'}
-                className={`group flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-white/5 hover:text-green-600 data-[active=true]:bg-green-500/10 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] dark:text-gray-300 dark:hover:text-green-400 dark:data-[active=true]:bg-green-500/20 dark:data-[active=true]:text-green-400 ${
+                className={`group relative flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gradient-to-r hover:from-green-50/80 hover:to-emerald-50/80 hover:text-green-600 data-[active=true]:bg-gradient-to-r data-[active=true]:from-green-500/15 data-[active=true]:to-emerald-500/15 data-[active=true]:text-green-700 font-medium transition-all duration-200 min-h-[40px] dark:text-gray-300 dark:hover:from-green-500/10 dark:hover:to-emerald-500/10 dark:hover:text-green-400 dark:data-[active=true]:from-green-500/10 dark:data-[active=true]:to-emerald-500/10 dark:data-[active=true]:text-green-400 ${
                   isCollapsed ? 'w-full max-w-none mx-0' : 'mx-0'
-                } gap-3 justify-start`}
+                } gap-3 justify-start hover:shadow-md hover:shadow-green-500/5 data-[active=true]:shadow-lg data-[active=true]:shadow-green-500/10`}
               >
-                <div className='w-4 h-4 flex items-center justify-center'>
-                  <Home className='h-4 w-4 transition-colors duration-200' />
+                <div className='w-4 h-4 flex items-center justify-center relative z-10'>
+                  <Home className='h-4 w-4 text-gray-500 group-hover:text-green-600 data-[active=true]:text-green-700 dark:text-gray-400 dark:group-hover:text-green-400 dark:data-[active=true]:text-green-400 transition-all duration-200 group-hover:scale-110' />
                 </div>
                 {!isCollapsed && (
-                  <span className='whitespace-nowrap transition-opacity duration-200 opacity-100'>
+                  <span className='whitespace-nowrap transition-opacity duration-200 opacity-100 relative z-10'>
                     首页
                   </span>
                 )}
+                {/* 激活状态的左侧边框指示器 */}
+                <div
+                  className='absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-green-500 to-emerald-500 rounded-r-full transition-all duration-200 data-[active=true]:h-8 opacity-0 data-[active=true]:opacity-100'
+                  data-active={active === '/'}
+                ></div>
               </Link>
 
               <Link
@@ -271,62 +360,74 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
                   setActive('/search');
                 }}
                 data-active={active === '/search'}
-                className={`group flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-white/5 hover:text-green-600 data-[active=true]:bg-green-500/10 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] dark:text-gray-300 dark:hover:text-green-400 dark:data-[active=true]:bg-green-500/20 dark:data-[active=true]:text-green-400 ${
+                className={`group relative flex items-center rounded-lg px-2 py-2 pl-4 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-cyan-50/80 hover:text-blue-600 data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-500/15 data-[active=true]:to-cyan-500/15 data-[active=true]:text-blue-700 font-medium transition-all duration-200 min-h-[40px] dark:text-gray-300 dark:hover:from-blue-500/10 dark:hover:to-cyan-500/10 dark:hover:text-blue-400 dark:data-[active=true]:from-blue-500/10 dark:data-[active=true]:to-cyan-500/10 dark:data-[active=true]:text-blue-400 ${
                   isCollapsed ? 'w-full max-w-none mx-0' : 'mx-0'
-                } gap-3 justify-start`}
+                } gap-3 justify-start hover:shadow-md hover:shadow-blue-500/5 data-[active=true]:shadow-lg data-[active=true]:shadow-blue-500/10`}
               >
-                <div className='w-4 h-4 flex items-center justify-center'>
-                  <Search className='h-4 w-4 transition-colors duration-200' />
+                <div className='w-4 h-4 flex items-center justify-center relative z-10'>
+                  <Search className='h-4 w-4 text-gray-500 group-hover:text-blue-600 data-[active=true]:text-blue-700 dark:text-gray-400 dark:group-hover:text-blue-400 dark:data-[active=true]:text-blue-400 transition-all duration-200 group-hover:scale-110' />
                 </div>
                 {!isCollapsed && (
-                  <span className='whitespace-nowrap transition-opacity duration-200 opacity-100'>
+                  <span className='whitespace-nowrap transition-opacity duration-200 opacity-100 relative z-10'>
                     搜索
                   </span>
                 )}
+                {/* 激活状态的左侧边框指示器 */}
+                <div
+                  className='absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r-full transition-all duration-200 data-[active=true]:h-8 opacity-0 data-[active=true]:opacity-100'
+                  data-active={active === '/search'}
+                ></div>
               </Link>
             </nav>
 
             {/* 菜单项 */}
             <div className='flex-1 overflow-y-auto px-2 pt-4'>
               <div className='space-y-1'>
-                {menuItems.map((item) => {
+                {menuItems.map((item, index) => {
                   // 检查当前路径是否匹配这个菜单项
                   const typeMatch = item.href.match(/type=([^&]+)/)?.[1];
 
                   // 解码URL以进行正确的比较
                   const decodedActive = decodeURIComponent(active);
                   const decodedItemHref = decodeURIComponent(item.href);
+
                   const isActive =
                     decodedActive === decodedItemHref ||
                     (decodedActive.startsWith('/douban') &&
                       decodedActive.includes(`type=${typeMatch}`));
                   const Icon = item.icon;
+
+                  const theme = colorThemes[index] || colorThemes[0];
+
                   return (
                     <Link
                       key={item.label}
                       href={item.href}
                       onClick={() => setActive(item.href)}
                       data-active={isActive}
-                      className={`group flex items-center rounded-lg px-2 py-2 pl-4 hover:bg-white/5 hover:text-green-600 data-[active=true]:bg-green-500/10 data-[active=true]:text-green-700 font-medium transition-colors duration-200 min-h-[40px] dark:hover:text-green-400 dark:data-[active=true]:bg-green-500/20 dark:data-[active=true]:text-green-400 ${
+                      className={`group relative flex items-center rounded-lg px-2 py-2 pl-4 text-sm text-gray-700 hover:bg-gradient-to-r ${
+                        theme.hover
+                      } ${theme.active} ${
+                        theme.text
+                      } transition-all duration-200 min-h-[40px] dark:text-gray-300 ${
                         isCollapsed ? 'w-full max-w-none mx-0' : 'mx-0'
-                      } gap-3 justify-start`}
-                      style={{
-                        color: 'var(--nav-menu-color)',
-                      }}
+                      } gap-3 justify-start hover:shadow-md ${theme.shadow}`}
                     >
-                      <div className='w-4 h-4 flex items-center justify-center'>
+                      <div className='w-4 h-4 flex items-center justify-center relative z-10'>
                         <Icon
-                          className='h-4 w-4 transition-colors duration-200'
-                          style={{
-                            color: 'var(--category-menu-color)',
-                          }}
+                          className={`h-4 w-4 text-gray-500 ${theme.icon} dark:text-gray-400 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12`}
                         />
                       </div>
                       {!isCollapsed && (
-                        <span className='whitespace-nowrap transition-opacity duration-200 opacity-100'>
+                        <span className='whitespace-nowrap transition-opacity duration-200 opacity-100 relative z-10'>
                           {item.label}
                         </span>
                       )}
+                      {/* 激活状态的左侧边框指示器 */}
+                      <div
+                        className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b ${theme.border} rounded-r-full transition-all duration-200 data-[active=true]:h-8 opacity-0 data-[active=true]:opacity-100`}
+                        data-active={isActive}
+                      ></div>
                     </Link>
                   );
                 })}

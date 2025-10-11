@@ -20,7 +20,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;
     width: number;
-  }>({ left: 0, width: 0 });
+    opacity: number;
+  }>({ left: 0, width: 0, opacity: 0 });
 
   const activeIndex = options.findIndex((opt) => opt.value === active);
 
@@ -41,6 +42,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
           setIndicatorStyle({
             left: buttonRect.left - containerRect.left,
             width: buttonRect.width,
+            opacity: 1,
           });
         }
       }
@@ -62,19 +64,32 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex bg-gray-300/80 rounded-full p-1 dark:bg-gray-700 ${
+      className={`relative inline-flex bg-white/20 dark:bg-gray-800/30 backdrop-blur-sm rounded-full p-1 border border-white/20 shadow-lg ${
         className || ''
       }`}
     >
-      {/* 滑动的白色背景指示器 */}
+      {/* 玻璃质感背景层 */}
+      <div className='absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full backdrop-blur-md' />
+
+      {/* 光泽效果 */}
+      <div className='absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-full opacity-20' />
+
+      {/* 滑动的指示器 - 带有渐变和阴影 */}
       {indicatorStyle.width > 0 && (
         <div
-          className='absolute top-1 bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+          className='absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-out shadow-lg'
           style={{
             left: `${indicatorStyle.left}px`,
             width: `${indicatorStyle.width}px`,
+            opacity: indicatorStyle.opacity,
+            background: `linear-gradient(135deg, var(--home-favorites-color, #3b82f6) 0%, color-mix(in srgb, var(--home-favorites-color, #3b82f6) 70%, rgba(168, 85, 247, 0.8)) 100%)`,
+            boxShadow:
+              '0 4px 12px color-mix(in srgb, var(--home-favorites-color, #3b82f6) 30%, transparent), 0 2px 4px rgba(168, 85, 247, 0.2)',
           }}
-        />
+        >
+          {/* 指示器光泽效果 */}
+          <div className='absolute inset-0 rounded-full bg-gradient-to-b from-white/20 to-transparent' />
+        </div>
       )}
 
       {options.map((opt, index) => {
@@ -86,16 +101,30 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
               buttonRefs.current[index] = el;
             }}
             onClick={() => onChange(opt.value)}
-            className={`relative z-10 w-16 px-3 py-1 text-xs sm:w-20 sm:py-2 sm:text-sm rounded-full font-medium transition-all duration-200 cursor-pointer ${
+            className={`relative z-10 w-20 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 cursor-pointer group overflow-hidden ${
               isActive
-                ? 'text-gray-900 dark:text-gray-100'
-                : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ? 'text-white shadow-inner'
+                : 'text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-white/10'
             }`}
             style={{
-              color: isActive ? 'var(--home-favorites-color)' : '',
+              color: isActive ? 'white' : '',
             }}
           >
-            {opt.label}
+            {/* 悬停时的微光效果 */}
+            {!isActive && (
+              <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+            )}
+
+            {/* 文字发光效果 */}
+            <span
+              className={`relative z-10 ${
+                isActive
+                  ? 'drop-shadow-sm'
+                  : 'group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]'
+              } transition-all duration-300`}
+            >
+              {opt.label}
+            </span>
           </button>
         );
       })}

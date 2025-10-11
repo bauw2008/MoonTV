@@ -77,6 +77,30 @@
       0 0 40px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.1);
   }
 
+  .hover-glow-random::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 1rem;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      var(--glow-color, rgba(34, 197, 94, 0.15)),
+      transparent
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(12px);
+  }
+
+  .hover-glow-random:hover::before {
+    opacity: 1;
+  }
+
   .glow-green {
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3),
       0 0 60px rgba(34, 197, 94, 0.1);
@@ -842,6 +866,16 @@ div[data-media-provider] video {
 
 .animate-scale-in {
   animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* VideoCard 光泽扫过动画 */
+@keyframes card-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* 现代悬浮效果 */

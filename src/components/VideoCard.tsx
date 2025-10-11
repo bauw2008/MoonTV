@@ -92,6 +92,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const router = useRouter();
     const [favorited, setFavorited] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false); // 图片加载状态
     const [showMobileActions, setShowMobileActions] = useState(false);
     const [searchFavorited, setSearchFavorited] = useState<boolean | null>(
       null
@@ -584,12 +585,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     return (
       <>
         <div
-          className='group relative w-full rounded-2xl cursor-pointer transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-[500] hover-glow-random'
-          onMouseEnter={(e) => {
-            const card = e.currentTarget;
-            const hue = Math.floor(Math.random() * 360);
-            card.style.setProperty('--glow-color', `hsl(${hue}, 50%, 70%)`);
-          }}
+          className='group relative w-full rounded-lg bg-transparent cursor-pointer transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-[500] hover:drop-shadow-2xl'
           onClick={handleClick}
           {...longPressProps}
           style={
@@ -633,9 +629,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         >
           {/* 海报容器 */}
           <div
-            className={`relative aspect-[2/3] overflow-hidden rounded-2xl ${
+            className={`relative aspect-[2/3] overflow-hidden rounded-lg ${
               origin === 'live'
-                ? 'ring-1 ring-gray-300/30 dark:ring-gray-600/30'
+                ? 'ring-1 ring-gray-300/80 dark:ring-gray-600/80'
                 : ''
             }`}
             style={
@@ -650,6 +646,17 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               return false;
             }}
           >
+            {/* 渐变光泽动画层 */}
+            <div
+              className='absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10'
+              style={{
+                background:
+                  'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.15) 55%, transparent 70%)',
+                backgroundSize: '200% 100%',
+                animation: 'card-shimmer 2.5s ease-in-out infinite',
+              }}
+            />
+
             {/* 骨架屏 */}
             {!isLoading && <ImagePlaceholder aspectRatio='aspect-[2/3]' />}
             {/* 图片 */}
@@ -657,10 +664,19 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               src={processImageUrl(actualPoster)}
               alt={actualTitle}
               fill
-              className={origin === 'live' ? 'object-contain' : 'object-cover'}
+              className={`${
+                origin === 'live' ? 'object-contain' : 'object-cover'
+              } transition-all duration-700 ease-out ${
+                imageLoaded
+                  ? 'opacity-100 blur-0 scale-100'
+                  : 'opacity-0 blur-md scale-105'
+              }`}
               referrerPolicy='no-referrer'
               loading='lazy'
-              onLoadingComplete={() => setIsLoading(true)}
+              onLoadingComplete={() => {
+                setIsLoading(true);
+                setImageLoaded(true);
+              }}
               onError={(e) => {
                 // 图片加载失败时的重试机制
                 const img = e.target as HTMLImageElement;
@@ -690,9 +706,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 悬浮遮罩 */}
+            {/* 悬浮遮罩 - 玻璃态效果 */}
             <div
-              className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
+              className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 backdrop-blur-[2px]'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -723,24 +739,22 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   return false;
                 }}
               >
-                <div className='glass-button rounded-full p-1.5 sm:p-2'>
-                  <PlayCircleIcon
-                    size={28}
-                    strokeWidth={0.8}
-                    className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-green-400 hover:scale-[1.1] w-7 h-7 sm:w-10 sm:h-10'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e: React.MouseEvent) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  />
-                </div>
+                <PlayCircleIcon
+                  size={50}
+                  strokeWidth={0.8}
+                  className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-green-500 hover:scale-[1.1]'
+                  style={
+                    {
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none',
+                      WebkitTouchCallout: 'none',
+                    } as React.CSSProperties
+                  }
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    return false;
+                  }}
+                />
               </div>
             )}
 
@@ -834,7 +848,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {/* 已完结徽章 */}
             {remarks && isSeriesCompleted(remarks) && (
               <div
-                className='absolute bottom-4 left-3 opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 bg-gray-800 text-white px-2 py-1 rounded text-xs'
+                className='absolute bottom-4 left-3 opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 bg-gradient-to-br from-blue-500/95 via-indigo-500/95 to-purple-600/95 backdrop-blur-md text-white px-2 py-1 rounded text-xs ring-2 ring-white/30'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1152,7 +1166,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             }}
           >
             <div
-              className='relative'
+              className='relative px-1'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -1161,13 +1175,21 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 } as React.CSSProperties
               }
             >
+              {/* 背景高亮效果 */}
+              <div className='absolute inset-0 bg-gradient-to-r from-transparent via-green-50/0 to-transparent dark:via-green-900/0 group-hover:via-green-50/50 dark:group-hover:via-green-900/30 transition-all duration-300 rounded-md'></div>
+
               <span
-                className='block text-sm font-semibold truncate text-gray-900 dark:text-gray-100 transition-colors duration-300 ease-in-out group-hover:text-green-600 dark:group-hover:text-green-400 peer'
+                className='block text-sm font-bold line-clamp-2 text-gray-900 dark:text-gray-100 transition-all duration-300 ease-in-out group-hover:scale-[1.02] peer relative z-10 group-hover:bg-gradient-to-r group-hover:from-green-600 group-hover:via-emerald-600 group-hover:to-teal-600 dark:group-hover:from-green-400 dark:group-hover:via-emerald-400 dark:group-hover:to-teal-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]'
                 style={
                   {
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
                     WebkitTouchCallout: 'none',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: '1.4',
                   } as React.CSSProperties
                 }
                 onContextMenu={(e) => {
@@ -1179,12 +1201,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               </span>
               {/* 自定义 tooltip */}
               <div
-                className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-nowrap pointer-events-none'
+                className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gradient-to-br from-gray-800 to-gray-900 text-white text-xs rounded-lg shadow-xl border border-white/10 opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-nowrap pointer-events-none z-50 backdrop-blur-sm'
                 style={
                   {
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
                     WebkitTouchCallout: 'none',
+                    maxWidth: '200px',
                   } as React.CSSProperties
                 }
                 onContextMenu={(e) => {
@@ -1192,9 +1215,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   return false;
                 }}
               >
-                {actualTitle}
+                <span className='font-medium'>{actualTitle}</span>
                 <div
-                  className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800'
+                  className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-gray-800'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -1206,8 +1229,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               </div>
             </div>
             {config.showSourceName && source_name && (
-              <span
-                className='block text-xs text-gray-500 dark:text-gray-400 mt-1'
+              <div
+                className='flex items-center justify-center mt-2'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1221,7 +1244,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 }}
               >
                 <span
-                  className='inline-block border rounded px-2 py-0.5 border-gray-500/60 dark:border-gray-400/60 transition-all duration-300 ease-in-out group-hover:border-green-500/60 group-hover:text-green-600 dark:group-hover:text-green-400'
+                  className='relative inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-gray-300/60 dark:border-gray-600/60 text-gray-600 dark:text-gray-400 transition-all duration-300 ease-out overflow-hidden group-hover:border-green-500/80 group-hover:text-green-600 dark:group-hover:text-green-400 group-hover:shadow-md group-hover:shadow-green-500/20 group-hover:scale-105'
                   style={
                     {
                       WebkitUserSelect: 'none',
@@ -1234,15 +1257,25 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     return false;
                   }}
                 >
+                  {/* 背景渐变效果 */}
+                  <span className='absolute inset-0 bg-gradient-to-r from-transparent via-green-50/0 to-transparent dark:via-green-500/0 group-hover:via-green-50/80 dark:group-hover:via-green-500/20 transition-all duration-300'></span>
+
+                  {/* 左侧装饰点 */}
+                  <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)]'></span>
+
                   {origin === 'live' && (
                     <Radio
                       size={12}
-                      className='inline-block text-gray-500 dark:text-gray-400 mr-1.5'
+                      className='relative inline-block transition-all duration-300 group-hover:text-green-500 dark:group-hover:text-green-400'
                     />
                   )}
-                  {source_name}
+
+                  <span className='relative font-semibold'>{source_name}</span>
+
+                  {/* 右侧装饰点 */}
+                  <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)]'></span>
                 </span>
-              </span>
+              </div>
             )}
           </div>
         </div>

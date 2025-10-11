@@ -126,6 +126,10 @@ function PlayPageClient() {
     externalDanmuEnabledRef.current = externalDanmuEnabled;
   }, [externalDanmuEnabled]);
 
+  // 跳过片头片尾设置（由 SkipController 组件内部管理）
+  // 这些状态现在由 SkipController 组件内部管理，不再需要在此处定义
+  // 保留 localStorage 事件通知以便 SkipController 组件能够监听设置变化
+
   // 获取功能启用状态
   useEffect(() => {
     const fetchFeatureFlags = async () => {

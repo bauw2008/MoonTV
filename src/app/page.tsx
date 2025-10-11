@@ -2,7 +2,14 @@
 
 'use client';
 
-import { Brain, ChevronRight } from 'lucide-react';
+import {
+  Brain,
+  Calendar,
+  ChevronRight,
+  Film,
+  Sparkles,
+  Tv,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -25,7 +32,9 @@ import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import PageLayout from '@/components/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
+import SectionTitle from '@/components/SectionTitle';
 import { useSite } from '@/components/SiteProvider';
+import SkeletonCard from '@/components/SkeletonCard';
 import VideoCard from '@/components/VideoCard';
 
 function HomeClient() {
@@ -194,9 +203,12 @@ function HomeClient() {
         const source = key.slice(0, plusIndex);
         const id = key.slice(plusIndex + 1);
 
-        // 查找对应的播放记录，获取当前集数
+        // 查找对应的播放记录，获取当前集数和最新的总集数
         const playRecord = allPlayRecords[key];
         const currentEpisode = playRecord?.index;
+        
+        // 优先使用播放记录中的总集数（动态更新），如果没有则使用收藏时的总集数
+        const totalEpisodes = playRecord?.total_episodes || fav.total_episodes || 1;
 
         return {
           id,
@@ -204,7 +216,7 @@ function HomeClient() {
           title: fav.title,
           year: fav.year,
           poster: fav.cover,
-          episodes: fav.total_episodes,
+          episodes: totalEpisodes, // 使用动态更新的总集数
           source_name: fav.source_name,
           currentEpisode,
           search_title: fav?.search_title,
@@ -249,26 +261,30 @@ function HomeClient() {
       >
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex flex-col sm:flex-row items-center justify-center gap-4'>
-          <div className='glass dark:glass-dark rounded-full p-1'>
-            <CapsuleSwitch
-              options={[
-                { label: '首页', value: 'home' },
-                { label: '收藏夹', value: 'favorites' },
-              ]}
-              active={activeTab}
-              onChange={(value) => setActiveTab(value as 'home' | 'favorites')}
-            />
-          </div>
+          <CapsuleSwitch
+            options={[
+              { label: '首页', value: 'home' },
+              { label: '收藏夹', value: 'favorites' },
+            ]}
+            active={activeTab}
+            onChange={(value) => setActiveTab(value as 'home' | 'favorites')}
+          />
 
-          {/* AI推荐按钮 - 只在功能启用时显示 */}
+          {/* AI推荐按钮 - 只在功能启用时显示，添加脉冲动画 */}
           {aiEnabled && (
             <button
               onClick={() => setShowAIRecommendModal(true)}
-              className='flex items-center space-x-2 px-4 py-2 glass-button bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-700/30 hover:to-purple-700/30 text-gray-900 dark:text-white rounded-full font-medium transition-all transform hover:scale-105 glow-purple'
+              className='relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full font-medium transition-all transform hover:scale-105 shadow-lg hover:shadow-xl group overflow-hidden'
               title='AI影视推荐'
             >
-              <Brain className='h-4 w-4 text-gray-900 dark:text-white' />
-              <span className='text-gray-900 dark:text-white'>AI推荐</span>
+              {/* 脉冲光环 */}
+              <div className='absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 animate-ping'></div>
+
+              {/* 闪烁背景 */}
+              <div className='absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20 animate-pulse'></div>
+
+              <Brain className='h-4 w-4 relative z-10 group-hover:rotate-12 transition-transform duration-300' />
+              <span className='relative z-10'>AI推荐</span>
             </button>
           )}
         </div>
@@ -278,12 +294,12 @@ function HomeClient() {
             // 收藏夹视图
             <section className='mb-8'>
               <div className='mb-4 flex items-center justify-between'>
-                <h2 className='text-xl font-bold gradient-text-green dark:text-gray-200'>
+                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
                   我的收藏
                 </h2>
                 {favoriteItems.length > 0 && (
                   <button
-                    className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 glass-button rounded-full px-3 py-1'
+                    className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                     onClick={async () => {
                       await clearAllFavorites();
                       setFavoriteItems([]);
@@ -295,10 +311,7 @@ function HomeClient() {
               </div>
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
                 {favoriteItems.map((item) => (
-                  <div
-                    key={item.id + item.source}
-                    className='w-full flex-shrink-0 scroll-snap-align-start'
-                  >
+                  <div key={item.id + item.source} className='w-full'>
                     <VideoCard
                       query={item.search_title}
                       {...item}
@@ -308,8 +321,41 @@ function HomeClient() {
                   </div>
                 ))}
                 {favoriteItems.length === 0 && (
-                  <div className='col-span-full text-center text-gray-500 py-8 dark:text-gray-400'>
-                    暂无收藏内容
+                  <div className='col-span-full flex flex-col items-center justify-center py-16 px-4'>
+                    {/* SVG 插画 - 空收藏夹 */}
+                    <div className='mb-6 relative'>
+                      <div className='absolute inset-0 bg-gradient-to-r from-pink-300 to-purple-300 dark:from-pink-600 dark:to-purple-600 opacity-20 blur-3xl rounded-full animate-pulse'></div>
+                      <svg
+                        className='w-32 h-32 relative z-10'
+                        viewBox='0 0 200 200'
+                        fill='none'
+                        xmlns='http://www.w3.org/2000/svg'
+                      >
+                        {/* 心形主体 */}
+                        <path
+                          d='M100 170C100 170 30 130 30 80C30 50 50 30 70 30C85 30 95 40 100 50C105 40 115 30 130 30C150 30 170 50 170 80C170 130 100 170 100 170Z'
+                          className='fill-gray-300 dark:fill-gray-600 stroke-gray-400 dark:stroke-gray-500 transition-colors duration-300'
+                          strokeWidth='3'
+                        />
+                        {/* 虚线边框 */}
+                        <path
+                          d='M100 170C100 170 30 130 30 80C30 50 50 30 70 30C85 30 95 40 100 50C105 40 115 30 130 30C150 30 170 50 170 80C170 130 100 170 100 170Z'
+                          fill='none'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeDasharray='5,5'
+                          className='text-gray-400 dark:text-gray-500'
+                        />
+                      </svg>
+                    </div>
+
+                    {/* 文字提示 */}
+                    <h3 className='text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2'>
+                      收藏夹空空如也
+                    </h3>
+                    <p className='text-sm text-gray-500 dark:text-gray-400 text-center max-w-xs'>
+                      快去发现喜欢的影视作品，点击 ❤️ 添加到收藏吧！
+                    </p>
                   </div>
                 )}
               </div>
@@ -323,12 +369,14 @@ function HomeClient() {
               {/* 热门电影 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold gradient-text-green dark:text-gray-200'>
-                    热门电影
-                  </h2>
+                  <SectionTitle
+                    title='热门电影'
+                    icon={Film}
+                    iconColor='text-red-500'
+                  />
                   <Link
                     href='/douban?type=movie'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 glass-button rounded-full px-3 py-1'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
                   >
                     查看更多
                     <ChevronRight className='w-4 h-4 ml-1' />
@@ -338,21 +386,13 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
-                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
-                          </div>
-                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
-                        </div>
+                        <SkeletonCard key={index} />
                       ))
                     : // 显示真实数据
                       hotMovies.map((movie, index) => (
                         <div
                           key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
                           <VideoCard
                             from='douban'
@@ -371,12 +411,14 @@ function HomeClient() {
               {/* 热门剧集 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold gradient-text-green dark:text-gray-200'>
-                    热门剧集
-                  </h2>
+                  <SectionTitle
+                    title='热门剧集'
+                    icon={Tv}
+                    iconColor='text-blue-500'
+                  />
                   <Link
                     href='/douban?type=tv'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 glass-button rounded-full px-3 py-1'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
                   >
                     查看更多
                     <ChevronRight className='w-4 h-4 ml-1' />
@@ -386,21 +428,13 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
-                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
-                          </div>
-                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
-                        </div>
+                        <SkeletonCard key={index} />
                       ))
                     : // 显示真实数据
                       hotTvShows.map((show, index) => (
                         <div
                           key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
                           <VideoCard
                             from='douban'
@@ -418,12 +452,14 @@ function HomeClient() {
               {/* 每日新番放送 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold gradient-text-green dark:text-gray-200'>
-                    新番放送
-                  </h2>
+                  <SectionTitle
+                    title='新番放送'
+                    icon={Calendar}
+                    iconColor='text-purple-500'
+                  />
                   <Link
                     href='/douban?type=anime'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
                   >
                     查看更多
                     <ChevronRight className='w-4 h-4 ml-1' />
@@ -433,15 +469,7 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
-                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
-                          </div>
-                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
-                        </div>
+                        <SkeletonCard key={index} />
                       ))
                     : // 展示当前日期的番剧
                       (() => {
@@ -494,12 +522,14 @@ function HomeClient() {
               {/* 热门综艺 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold gradient-text-green dark:text-gray-200'>
-                    热门综艺
-                  </h2>
+                  <SectionTitle
+                    title='热门综艺'
+                    icon={Sparkles}
+                    iconColor='text-pink-500'
+                  />
                   <Link
                     href='/douban?type=show'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
                   >
                     查看更多
                     <ChevronRight className='w-4 h-4 ml-1' />
@@ -509,21 +539,13 @@ function HomeClient() {
                   {loading
                     ? // 加载状态显示灰色占位数据
                       Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
-                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
-                          </div>
-                          <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
-                        </div>
+                        <SkeletonCard key={index} />
                       ))
                     : // 显示真实数据
                       hotVarietyShows.map((show, index) => (
                         <div
                           key={index}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 flex-shrink-0 scroll-snap-align-start'
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
                         >
                           <VideoCard
                             from='douban'
