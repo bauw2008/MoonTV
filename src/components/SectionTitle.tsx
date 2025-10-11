@@ -25,10 +25,10 @@ export default function SectionTitle({
           </div>
         )}
 
-        {/* 渐变文本 */}
-        <h2 className='text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 dark:from-gray-100 dark:via-gray-200 dark:to-gray-300 bg-clip-text text-transparent transition-all duration-300'>
-          {title}
-        </h2>
+        {/* 标题文本 */}
+      <h2 className='text-xl sm:text-2xl font-bold text-[var(--section-title-color,#333333)] dark:text-gray-200 transition-all duration-300'>
+        {title}
+      </h2>
       </div>
 
       {/* 动态下划线 */}

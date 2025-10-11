@@ -36,8 +36,8 @@ interface ThemeSettings {
   isCustom: boolean;
   backgroundImage?: string;
   backgroundMode: 'gradient' | 'image';
-  navigationMenuColor: string; // 导航菜单文字颜色
-  categoryMenuColor: string; // 菜单分类颜色
+  navigationMenuColor: string; // 导航菜单文字颜色（现在使用首页字体）
+  sectionTitleColor: string; // 首页标题字体颜色
   homeFavoritesColor: string; // 首页和收藏颜色
   enableDynamicBackground: boolean; // 启用动态背景
   dynamicIntensity: number; // 动态效果强度
@@ -291,6 +291,7 @@ const gradientOptions: GradientOption[] = [
 
 // 颜色选项
 const colorOptions = [
+  { name: 'AI蓝紫渐变', value: '#3b82f6' }, // AI推荐按钮的蓝色主色调
   { name: '黑色', value: '#000000' },
   { name: '纯白', value: '#ffffff' },
   { name: '深灰', value: '#333333' },
@@ -325,8 +326,8 @@ export const ThemeSettingsPanel: React.FC<{
     lightness: gradientOptions[0].lightness,
     isCustom: false,
     backgroundMode: 'gradient',
-    navigationMenuColor: '#333333',
-    categoryMenuColor: '#333333',
+    navigationMenuColor: '#3b82f6', // AI推荐按钮的背景颜色
+    sectionTitleColor: '#333333', // 新增首页标题字体颜色
     homeFavoritesColor: '#000000',
     enableDynamicBackground: false,
     dynamicIntensity: 50,
@@ -338,7 +339,7 @@ export const ThemeSettingsPanel: React.FC<{
 
   const [isTextColorMenuOpen, setIsTextColorMenuOpen] = useState(false);
   const [selectedColorType, setSelectedColorType] = useState<
-    'navigationMenu' | 'categoryMenu' | 'homeFavorites'
+    'navigationMenu' | 'sectionTitle' | 'homeFavorites'
   >('navigationMenu');
 
   // 获取预览动画类
@@ -437,7 +438,7 @@ export const ThemeSettingsPanel: React.FC<{
                 parsed.navigationMenuColor ||
                 parsed.navigationTextColor ||
                 '#000000',
-              categoryMenuColor: parsed.categoryMenuColor || '#000000',
+              sectionTitleColor: parsed.sectionTitleColor || '#333333',
               homeFavoritesColor: parsed.homeFavoritesColor || '#000000',
               enableDynamicBackground: parsed.enableDynamicBackground || false,
               dynamicIntensity: parsed.dynamicIntensity || 50,
@@ -915,8 +916,8 @@ export const ThemeSettingsPanel: React.FC<{
       // 应用导航文字颜色
       root.style.setProperty('--nav-menu-color', settings.navigationMenuColor);
       root.style.setProperty(
-        '--category-menu-color',
-        settings.categoryMenuColor
+        '--section-title-color',
+        settings.sectionTitleColor
       );
       root.style.setProperty(
         '--home-favorites-color',
@@ -1098,13 +1099,13 @@ export const ThemeSettingsPanel: React.FC<{
   const getCurrentColor = () => {
     switch (selectedColorType) {
       case 'navigationMenu':
-        return settings.navigationMenuColor;
-      case 'categoryMenu':
-        return settings.categoryMenuColor;
+        return settings.homeFavoritesColor; // 导航菜单使用首页字体
+      case 'sectionTitle':
+        return settings.sectionTitleColor;
       case 'homeFavorites':
         return settings.homeFavoritesColor;
       default:
-        return settings.navigationMenuColor;
+        return settings.homeFavoritesColor;
     }
   };
 
@@ -1112,16 +1113,18 @@ export const ThemeSettingsPanel: React.FC<{
     let newSettings;
     switch (selectedColorType) {
       case 'navigationMenu':
+        // 导航菜单使用AI推荐按钮的渐变效果，不直接使用颜色值
+        // 这里存储基础颜色，实际样式使用固定的渐变
         newSettings = { ...settings, navigationMenuColor: color };
         break;
-      case 'categoryMenu':
-        newSettings = { ...settings, categoryMenuColor: color };
+      case 'sectionTitle':
+        newSettings = { ...settings, sectionTitleColor: color };
         break;
       case 'homeFavorites':
         newSettings = { ...settings, homeFavoritesColor: color };
         break;
       default:
-        newSettings = { ...settings, navigationMenuColor: color };
+        newSettings = { ...settings, homeFavoritesColor: color };
     }
     setSettings(newSettings);
     saveSettings(newSettings);
@@ -1858,17 +1861,17 @@ export const ThemeSettingsPanel: React.FC<{
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >
-                        导航菜单
+                        AI推荐按钮
                       </button>
                       <button
-                        onClick={() => setSelectedColorType('categoryMenu')}
+                        onClick={() => setSelectedColorType('sectionTitle')}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedColorType === 'categoryMenu'
+                          selectedColorType === 'sectionTitle'
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >
-                        菜单图标
+                        首页标题
                       </button>
                       <button
                         onClick={() => setSelectedColorType('homeFavorites')}
@@ -1918,9 +1921,9 @@ export const ThemeSettingsPanel: React.FC<{
                       ))}
                     </div>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      导航菜单：左侧栏导航菜单内的文字颜色
+                      AI推荐按钮：主页顶部AI推荐按钮的背景颜色
                       <br />
-                      菜单图标：左侧栏菜单前图标颜色
+                      首页标题：主页上的"热门电影"、"热门剧集"等标题颜色
                       <br />
                       首页收藏：页面顶部的首页和收藏夹切换按钮颜色
                     </p>

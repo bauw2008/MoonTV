@@ -274,14 +274,27 @@ function HomeClient() {
           {aiEnabled && (
             <button
               onClick={() => setShowAIRecommendModal(true)}
-              className='relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full font-medium transition-all transform hover:scale-105 shadow-lg hover:shadow-xl group overflow-hidden'
+              style={{
+                background: `linear-gradient(to right, var(--nav-menu-color, #3b82f6), var(--nav-menu-hover-color, #8b5cf6))`
+              }}
+              className='relative flex items-center space-x-2 px-4 py-2 text-white rounded-full font-medium transition-all transform hover:scale-105 shadow-lg hover:shadow-xl group overflow-hidden hover:opacity-90'
               title='AI影视推荐'
             >
               {/* 脉冲光环 */}
-              <div className='absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 animate-ping'></div>
+              <div 
+                className='absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 animate-ping'
+                style={{
+                  background: `linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))`
+                }}
+              ></div>
 
               {/* 闪烁背景 */}
-              <div className='absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20 animate-pulse'></div>
+              <div 
+                className='absolute inset-0 rounded-full opacity-20 animate-pulse'
+                style={{
+                  background: `linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))`
+                }}
+              ></div>
 
               <Brain className='h-4 w-4 relative z-10 group-hover:rotate-12 transition-transform duration-300' />
               <span className='relative z-10'>AI推荐</span>
