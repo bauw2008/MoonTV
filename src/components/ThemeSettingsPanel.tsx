@@ -387,7 +387,6 @@ export const ThemeSettingsPanel: React.FC<{
     settings.darkGradient,
     settings.isCustom,
     settings.navigationMenuColor,
-    settings.categoryMenuColor,
     settings.homeFavoritesColor,
   ]);
 
@@ -2148,3 +2147,4 @@ export const ThemeSettingsPanel: React.FC<{
 
   return null;
 };
+
