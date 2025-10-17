@@ -92,8 +92,8 @@ export default function ImportExportModal({
   };
 
   const modalContent = (
-    <div className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden'>
+    <div className='fixed inset-0 bg-black/20 backdrop-blur-sm z-[9999] flex items-center justify-center p-4'>
+      <div className='bg-transparent dark:bg-gray-800/80 rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden'>
         {/* 头部 - 更紧凑的设计 */}
         <div
           className={`relative px-5 py-4 ${
@@ -108,7 +108,7 @@ export default function ImportExportModal({
         >
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-3'>
-              <div className='bg-white/20 backdrop-blur-sm p-2 rounded-lg'>
+              <div className='bg-white/10 backdrop-blur-sm p-2 rounded-lg'>
                 {mode === 'import' ? (
                   <Upload className='w-5 h-5 text-white' />
                 ) : (
@@ -154,9 +154,9 @@ export default function ImportExportModal({
                   {importProgress.current}/{importProgress.total}
                 </span>
               </div>
-              <div className='h-2 bg-white/20 rounded-full overflow-hidden'>
+              <div className='h-2 bg-white/10 rounded-full overflow-hidden'>
                 <div
-                  className='h-full bg-white/90 transition-all duration-300 ease-out'
+                  className={`h-full bg-white/70 transition-all duration-300 ease-out`}
                   style={{
                     width: `${
                       (importProgress.current / importProgress.total) * 100
@@ -179,7 +179,7 @@ export default function ImportExportModal({
                 onDragLeave={handleDragLeave}
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
                   isDragging
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
                     : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
                 }`}
               >
@@ -187,8 +187,8 @@ export default function ImportExportModal({
                   <div
                     className={`p-3 rounded-full ${
                       isDragging
-                        ? 'bg-blue-100 dark:bg-blue-900/40'
-                        : 'bg-gray-100 dark:bg-gray-700'
+                        ? 'bg-blue-100/50 dark:bg-blue-900/40'
+                        : 'bg-gray-100/50 dark:bg-gray-700'
                     }`}
                   >
                     <Upload
@@ -229,7 +229,7 @@ export default function ImportExportModal({
               </div>
 
               {/* 说明文档 - 更紧凑 */}
-              <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+              <div className='bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
                 <h4 className='font-semibold text-blue-900 dark:text-blue-200 mb-1.5 text-sm'>
                   📝 导入说明
                 </h4>
@@ -246,7 +246,7 @@ export default function ImportExportModal({
           {mode === 'export' && (
             <div className='space-y-3'>
               <div className='text-center py-6'>
-                <div className='inline-flex p-3 bg-green-100 dark:bg-green-900/40 rounded-full mb-3'>
+                <div className='inline-flex p-3 bg-green-100/50 dark:bg-green-900/40 rounded-full mb-3'>
                   <CheckCircle className='w-12 h-12 text-green-600 dark:text-green-400' />
                 </div>
                 <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1.5'>
@@ -257,7 +257,7 @@ export default function ImportExportModal({
                 </p>
               </div>
 
-              <div className='bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3'>
+              <div className='bg-green-50/50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3'>
                 <h4 className='font-semibold text-green-900 dark:text-green-200 mb-1.5 text-sm'>
                   📦 导出内容
                 </h4>
@@ -275,7 +275,7 @@ export default function ImportExportModal({
             <div className='space-y-3'>
               {/* 统计信息 - 更紧凑 */}
               <div className='grid grid-cols-3 gap-3'>
-                <div className='bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center'>
+                <div className='bg-green-50/50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center'>
                   <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
                     {result.success}
                   </div>
@@ -283,7 +283,7 @@ export default function ImportExportModal({
                     成功导入
                   </div>
                 </div>
-                <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center'>
+                <div className='bg-yellow-50/50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center'>
                   <div className='text-2xl font-bold text-yellow-600 dark:text-yellow-400'>
                     {result.skipped}
                   </div>
@@ -291,7 +291,7 @@ export default function ImportExportModal({
                     已跳过
                   </div>
                 </div>
-                <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center'>
+                <div className='bg-red-50/50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center'>
                   <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
                     {result.failed}
                   </div>
@@ -309,10 +309,10 @@ export default function ImportExportModal({
                       key={index}
                       className={`flex items-start space-x-2.5 p-2.5 rounded-lg border ${
                         item.status === 'success'
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                          ? 'bg-green-50/50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                           : item.status === 'skipped'
-                          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          ? 'bg-yellow-50/50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                          : 'bg-red-50/50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                       }`}
                     >
                       {item.status === 'success' ? (
@@ -350,7 +350,7 @@ export default function ImportExportModal({
         </div>
 
         {/* 底部按钮 - 更紧凑 */}
-        <div className='flex-shrink-0 px-5 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2.5'>
+        <div className='flex-shrink-0 px-5 py-3 bg-gray-50/50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2.5'>
           {mode === 'export' && (
             <button
               onClick={onExport}
@@ -379,3 +379,4 @@ export default function ImportExportModal({
   if (typeof window === 'undefined') return null;
   return createPortal(modalContent, document.body);
 }
+
