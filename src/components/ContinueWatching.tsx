@@ -283,7 +283,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                       }
                       type={latestTotalEpisodes > 1 ? 'tv' : ''}
                       remarks={record.remarks}
-                      priority={index < 4}
+                      // priority={index < 4}
                     />
                   </div>
                   {/* 新集数徽章 */}
