@@ -9,12 +9,13 @@ import {
   clearAllPlayRecords,
   getAllPlayRecords,
   subscribeToDataUpdates,
+  forceRefreshPlayRecordsCache,
 } from '@/lib/db.client';
 import {
-  type WatchingUpdate,
-  checkWatchingUpdates,
   getDetailedWatchingUpdates,
   subscribeToWatchingUpdatesEvent,
+  checkWatchingUpdates,
+  type WatchingUpdate,
 } from '@/lib/watching-updates';
 
 import ScrollableRow from '@/components/ScrollableRow';
@@ -198,7 +199,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
     return matchedSeries ? matchedSeries.newEpisodes || 0 : 0;
   };
 
-  // 获取最新的总集数（用于显示，不修改原始数据）
+  // 获取最新的总集数
   const getLatestTotalEpisodes = (
     record: PlayRecord & { key: string }
   ): number => {
@@ -212,7 +213,6 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       (series) => series.sourceKey === source && series.videoId === id
     );
 
-    // 如果找到匹配的剧集且有最新集数信息，返回最新集数；否则返回原始集数
     return matchedSeries && matchedSeries.totalEpisodes
       ? matchedSeries.totalEpisodes
       : record.total_episodes;
@@ -254,35 +254,38 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
               </div>
             ))
           : // 显示真实数据
-            playRecords.map((record) => {
+            playRecords.map((record, index) => {
               const { source, id } = parseKey(record.key);
               const newEpisodesCount = getNewEpisodesCount(record);
               const latestTotalEpisodes = getLatestTotalEpisodes(record);
               return (
                 <div
                   key={record.key}
-                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 relative'
+                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 relative group/card'
                 >
-                  <VideoCard
-                    id={id}
-                    title={record.title}
-                    poster={record.cover}
-                    year={record.year}
-                    source={source}
-                    source_name={record.source_name}
-                    progress={getProgress(record)}
-                    episodes={latestTotalEpisodes}
-                    currentEpisode={record.index}
-                    query={record.search_title}
-                    from='playrecord'
-                    onDelete={() =>
-                      setPlayRecords((prev) =>
-                        prev.filter((r) => r.key !== record.key)
-                      )
-                    }
-                    type={latestTotalEpisodes > 1 ? 'tv' : ''}
-                    remarks={record.remarks}
-                  />
+                  <div className='relative group-hover/card:z-[5] transition-all duration-300'>
+                    <VideoCard
+                      id={id}
+                      title={record.title}
+                      poster={record.cover}
+                      year={record.year}
+                      source={source}
+                      source_name={record.source_name}
+                      progress={getProgress(record)}
+                      episodes={latestTotalEpisodes}
+                      currentEpisode={record.index}
+                      query={record.search_title}
+                      from='playrecord'
+                      onDelete={() =>
+                        setPlayRecords((prev) =>
+                          prev.filter((r) => r.key !== record.key)
+                        )
+                      }
+                      type={latestTotalEpisodes > 1 ? 'tv' : ''}
+                      remarks={record.remarks}
+                      priority={index < 4}
+                    />
+                  </div>
                   {/* 新集数徽章 */}
                   {enableWatchingUpdates && newEpisodesCount > 0 && (
                     <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50'>
@@ -296,3 +299,4 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
     </section>
   );
 }
+

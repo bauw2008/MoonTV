@@ -1,10 +1,11 @@
 'use client';
 
 import {
-  forceRefreshPlayRecordsCache,
-  generateStorageKey,
   getAllPlayRecords,
   PlayRecord,
+  generateStorageKey,
+  forceRefreshPlayRecordsCache,
+  savePlayRecord,
 } from './db.client';
 
 // 缓存键
@@ -319,9 +320,7 @@ async function checkSingleRecordUpdate(
       recordKey
     );
 
-    // 检查两种情况：
-    // 1. 新集数更新：API返回的集数比观看时的原始集数多
-    // 只需要比较原始集数，因为播放记录会被自动更新，不能作为判断依据
+    // 检查新集数更新：API返回的集数比当前播放记录的总集数多
     const hasUpdate = latestEpisodes > originalTotalEpisodes;
     const newEpisodes = hasUpdate ? latestEpisodes - originalTotalEpisodes : 0;
 
@@ -346,15 +345,10 @@ async function checkSingleRecordUpdate(
     }
 
     if (hasUpdate) {
-      // 🔑 关键修复：watching-updates 不应该调用 savePlayRecord 更新播放记录
-      // 因为 savePlayRecord 会触发 checkShouldUpdateOriginalEpisodes，导致 original_episodes 被错误更新
-      //
-      // 正确的更新流程应该是：
-      // 1. watching-updates 只负责检测和显示新集数提醒
-      // 2. 用户下次实际观看时，播放器会自动获取最新的 total_episodes
-      // 3. 只有用户真正观看新集数时，original_episodes 才会被更新
-      //
-      // 因此，这里移除了 savePlayRecord 调用，避免误更新 original_episodes
+      if (latestEpisodes > record.total_episodes) {
+        // watching-updates 只负责检测和显示新集数提醒
+        // 注意：不调用 savePlayRecord，避免触发 original_episodes 的错误更新
+      }
     }
 
     return {
@@ -759,3 +753,4 @@ export function subscribeToWatchingUpdatesEvent(
     );
   };
 }
+
