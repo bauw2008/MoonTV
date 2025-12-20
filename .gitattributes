@@ -1,0 +1,16 @@
+# Set default behavior for file permissions
+* text=auto eol=lf
+
+# JavaScript files should have LF line endings
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

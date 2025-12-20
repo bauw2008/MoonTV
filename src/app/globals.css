@@ -1,0 +1,988 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-opacity: 60%;
+  --ui-opacity: 90%;
+  --bg-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  --nav-menu-color: #000000;
+  --category-menu-color: #000000;
+  --home-favorites-color: #000000;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* 极致透明玻璃态效果 */
+  .glass {
+    background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.25));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.2));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.04)),
+      0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.02));
+  }
+
+  .glass-dark {
+    background: rgba(17, 24, 39, calc(var(--ui-opacity) / 100 * 0.3));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.08));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.15)),
+      0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.08));
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05)),
+      rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.02))
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.15));
+    box-shadow: 0 8px 32px
+        rgba(31, 38, 135, calc(var(--ui-opacity) / 100 * 0.1)),
+      inset 0 1px 0 rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.1));
+  }
+
+  .glass-card-dark {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.02)),
+      rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.01))
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.08));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.2)),
+      inset 0 1px 0 rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05));
+  }
+
+  /* 发光效果 */
+  .glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5),
+      0 0 40px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.1);
+  }
+
+  .hover-glow-random::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 1rem;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      var(--glow-color, rgba(34, 197, 94, 0.15)),
+      transparent
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(12px);
+  }
+
+  .hover-glow-random:hover::before {
+    opacity: 1;
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3),
+      0 0 60px rgba(34, 197, 94, 0.1);
+  }
+
+  .glow-green-only {
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.2);
+  }
+
+  .hover-glow {
+    position: relative;
+  }
+
+  .hover-glow-random::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 1rem;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      var(--glow-color, rgba(34, 197, 94, 0.15)),
+      transparent
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(12px);
+  }
+
+  .hover-glow-random:hover::before {
+    opacity: 1;
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.5),
+      0 0 40px rgba(168, 85, 247, 0.3), 0 0 60px rgba(168, 85, 247, 0.1);
+  }
+
+  /* 现代渐变文字 */
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  .gradient-text-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  .gradient-text-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  .gradient-text-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  /* 动态背景 */
+  .animated-gradient {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* 极致透明玻璃按钮 */
+  .glass-button {
+    background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.15));
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.25));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.03)),
+      0 1px 3px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.01));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-button:hover {
+    background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.25));
+    box-shadow: 0 6px 20px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.05)),
+      0 2px 6px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.02));
+    transform: translateY(-1px);
+  }
+
+  /* 极致透明玻璃卡片 */
+  .modern-card {
+    background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.12));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.15));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.02)),
+      0 1px 3px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.01));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .modern-card:hover {
+    background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.18));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.04)),
+      0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.02));
+    transform: translateY(-2px);
+  }
+
+  .modern-card-dark {
+    background: rgba(17, 24, 39, calc(var(--ui-opacity) / 100 * 0.2));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.06));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.1)),
+      0 1px 3px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.05));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .modern-card-dark:hover {
+    background: rgba(17, 24, 39, calc(var(--ui-opacity) / 100 * 0.3));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.15)),
+      0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.08));
+    transform: translateY(-2px);
+  }
+}
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  /* 阻止 iOS Safari 拉动回弹 */
+  overscroll-behavior: none;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+}
+
+html:not(.dark) body {
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  position: relative;
+  opacity: 1; /* body不使用opacity，透明度直接应用到渐变中 */
+}
+
+html:not(.dark) body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-gradient);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1; /* 伪元素不使用opacity，透明度直接应用到渐变中 */
+}
+
+html.dark body {
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  position: relative;
+  opacity: 1; /* body不使用opacity，透明度直接应用到渐变中 */
+}
+
+html.dark body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-gradient);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1; /* 伪元素不使用opacity，透明度直接应用到渐变中 */
+}
+
+/* 动态背景效果直接应用到body */
+/* 动态背景效果只应用到背景层 */
+body.dynamic-background-enabled {
+  animation: none !important;
+}
+
+body.dynamic-background-enabled::before {
+  animation: none !important;
+}
+
+body.dynamic-background-enabled.subtle-gradient-animation::before {
+  animation: subtleColorShift 15s ease infinite !important;
+}
+
+body.dynamic-background-enabled.strong-gradient-animation::before {
+  animation: strongColorShift 12s ease infinite !important;
+}
+
+body.dynamic-background-enabled.breathing-animation::before {
+  animation: breathingColorShift 10s ease-in-out infinite !important;
+}
+
+body.dynamic-background-enabled.strong-breathing-animation::before {
+  animation: strongBreathingColorShift 6s ease-in-out infinite !important;
+}
+
+body.dynamic-background-enabled.ultra-strong-animation::before {
+  animation: ultraStrongShift 4s ease infinite !important;
+}
+
+/* 预览元素的动态效果 */
+.subtle-gradient-animation {
+  animation: subtleColorShift 15s ease infinite !important;
+}
+
+.strong-gradient-animation {
+  animation: strongColorShift 12s ease infinite !important;
+}
+
+.breathing-animation {
+  animation: breathingColorShift 10s ease-in-out infinite !important;
+}
+
+.strong-breathing-animation {
+  animation: strongBreathingColorShift 6s ease-in-out infinite !important;
+}
+
+.ultra-strong-animation {
+  animation: ultraStrongShift 4s ease infinite !important;
+}
+
+/* 确保图片和视频不受滤镜动画影响 */
+img,
+video,
+picture,
+source {
+  filter: none !important;
+  animation: none !important;
+}
+
+/* 确保页面内容不受背景动画影响 */
+.page-container,
+main,
+.content-wrapper {
+  position: relative;
+  background: transparent;
+}
+
+/* 动态背景效果 - 微妙渐变颜色变化 */
+@keyframes subtleColorShift {
+  0% {
+    filter: brightness(1.1) contrast(1.1) hue-rotate(0deg);
+    transform: scale(1.02);
+  }
+  25% {
+    filter: brightness(1.15) contrast(1.15) hue-rotate(15deg);
+    transform: scale(1.04);
+  }
+  50% {
+    filter: brightness(1.2) contrast(1.2) hue-rotate(-10deg);
+    transform: scale(1.06);
+  }
+  75% {
+    filter: brightness(1.15) contrast(1.15) hue-rotate(10deg);
+    transform: scale(1.04);
+  }
+  100% {
+    filter: brightness(1.1) contrast(1.1) hue-rotate(0deg);
+    transform: scale(1.02);
+  }
+}
+
+/* 动态背景效果 - 强烈渐变颜色变化 */
+@keyframes strongColorShift {
+  0% {
+    filter: brightness(1.15) contrast(1.15) hue-rotate(0deg);
+    transform: scale(1.03) translate(0, 0);
+  }
+  20% {
+    filter: brightness(1.25) contrast(1.25) hue-rotate(30deg);
+    transform: scale(1.07) translate(-1%, -1%);
+  }
+  40% {
+    filter: brightness(1.35) contrast(1.35) hue-rotate(-20deg);
+    transform: scale(1.1) translate(1%, -1%);
+  }
+  60% {
+    filter: brightness(1.25) contrast(1.25) hue-rotate(20deg);
+    transform: scale(1.07) translate(1%, 1%);
+  }
+  80% {
+    filter: brightness(1.35) contrast(1.35) hue-rotate(-30deg);
+    transform: scale(1.1) translate(-1%, 1%);
+  }
+  100% {
+    filter: brightness(1.15) contrast(1.15) hue-rotate(0deg);
+    transform: scale(1.03) translate(0, 0);
+  }
+}
+
+/* 动态背景效果 - 呼吸颜色变化 */
+@keyframes breathingColorShift {
+  0%,
+  100% {
+    filter: brightness(1.1) contrast(1.1) hue-rotate(0deg);
+    transform: scale(1.02);
+  }
+  50% {
+    filter: brightness(1.3) contrast(1.3) hue-rotate(45deg);
+    transform: scale(1.08);
+  }
+}
+
+/* 动态背景效果 - 强烈呼吸颜色变化 */
+@keyframes strongBreathingColorShift {
+  0%,
+  100% {
+    filter: brightness(1.15) contrast(1.15) hue-rotate(0deg);
+    transform: scale(1.03) translate(0, 0);
+  }
+  25% {
+    filter: brightness(1.4) contrast(1.4) hue-rotate(60deg);
+    transform: scale(1.1) translate(-1%, -1%);
+  }
+  50% {
+    filter: brightness(1.5) contrast(1.5) hue-rotate(-30deg);
+    transform: scale(1.15) translate(1%, -1%);
+  }
+  75% {
+    filter: brightness(1.4) contrast(1.4) hue-rotate(30deg);
+    transform: scale(1.1) translate(1%, 1%);
+  }
+}
+
+/* 增强动态背景效果 - 超强变化 */
+@keyframes ultraStrongShift {
+  0% {
+    filter: brightness(1.2) contrast(1.2) hue-rotate(0deg);
+    transform: scale(1.05) translate(0, 0);
+  }
+  12.5% {
+    filter: brightness(1.6) contrast(1.6) hue-rotate(90deg);
+    transform: scale(1.12) translate(-2%, -2%);
+  }
+  25% {
+    filter: brightness(1.8) contrast(1.8) hue-rotate(-45deg);
+    transform: scale(1.18) translate(2%, -2%);
+  }
+  37.5% {
+    filter: brightness(1.6) contrast(1.6) hue-rotate(45deg);
+    transform: scale(1.12) translate(2%, 2%);
+  }
+  50% {
+    filter: brightness(1.8) contrast(1.8) hue-rotate(-90deg);
+    transform: scale(1.18) translate(-2%, 2%);
+  }
+  62.5% {
+    filter: brightness(1.6) contrast(1.6) hue-rotate(90deg);
+    transform: scale(1.12) translate(-2%, -2%);
+  }
+  75% {
+    filter: brightness(1.8) contrast(1.8) hue-rotate(-45deg);
+    transform: scale(1.18) translate(2%, -2%);
+  }
+  87.5% {
+    filter: brightness(1.6) contrast(1.6) hue-rotate(45deg);
+    transform: scale(1.12) translate(2%, 2%);
+  }
+  100% {
+    filter: brightness(1.2) contrast(1.2) hue-rotate(0deg);
+    transform: scale(1.05) translate(0, 0);
+  }
+}
+
+/* 琉璃通透模式 - 真正的透明玻璃效果 */
+body.glass-transparent-mode,
+html.glass-transparent-mode {
+  background: none !important;
+  background-image: none !important;
+}
+
+body.glass-transparent-mode::before,
+html.glass-transparent-mode::before {
+  background: none !important;
+  background-image: none !important;
+}
+
+/* 玻璃层 */
+#glass-content-layer,
+#glass-effect-layer,
+#glass-shine-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 确保琉璃通透模式下玻璃效果能正常工作 */
+.glass-transparent-mode .glass,
+.glass-transparent-mode .glass-dark,
+.glass-transparent-mode .glass-card,
+.glass-transparent-mode .glass-card-dark,
+.glass-transparent-mode .glass-button,
+.glass-transparent-mode .modern-card,
+.glass-transparent-mode .modern-card-dark {
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+}
+
+/* 琉璃通透模式下的页面容器 */
+.glass-transparent-mode main,
+.glass-transparent-mode .page-container {
+  background: transparent !important;
+}
+
+/* 增强琉璃通透模式下的UI组件玻璃效果 */
+.glass-transparent-mode .glass,
+.glass-transparent-mode .glass-dark,
+.glass-transparent-mode .glass-card,
+.glass-transparent-mode .glass-card-dark,
+.glass-transparent-mode .glass-button,
+.glass-transparent-mode .modern-card,
+.glass-transparent-mode .modern-card-dark {
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  background: rgba(
+    255,
+    255,
+    255,
+    calc(var(--ui-opacity) / 100 * 0.08)
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.18)) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.06)),
+    0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.03)) !important;
+}
+
+.glass-transparent-mode.dark .glass,
+.glass-transparent-mode.dark .glass-dark,
+.glass-transparent-mode.dark .glass-card,
+.glass-transparent-mode.dark .glass-card-dark,
+.glass-transparent-mode.dark .glass-button,
+.glass-transparent-mode.dark .modern-card,
+.glass-transparent-mode.dark .modern-card-dark {
+  background: rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.15)) !important;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.08)) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.2)),
+    0 2px 8px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.1)) !important;
+}
+
+/* 为琉璃通透模式添加额外的玻璃质感 */
+.glass-transparent-mode .glass-ultra,
+.glass-transparent-mode .glass-ultra-dark {
+  backdrop-filter: blur(20px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
+}
+
+.glass-transparent-mode .glass-ultra {
+  background: rgba(
+    255,
+    255,
+    255,
+    calc(var(--ui-opacity) / 100 * 0.05)
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.12)) !important;
+}
+
+.glass-transparent-mode .glass-ultra-dark {
+  background: rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.1)) !important;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05)) !important;
+}
+
+/* 现代滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.4);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.6);
+}
+
+/* 视频卡片悬停效果 */
+.video-card-hover {
+  transition: transform 0.3s ease;
+}
+
+.video-card-hover:hover {
+  transform: scale(1.05);
+}
+
+/* 渐变遮罩 */
+.gradient-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* 隐藏移动端（<768px）垂直滚动条 */
+@media (max-width: 767px) {
+  html,
+  body {
+    -ms-overflow-style: none; /* IE & Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome Safari */
+  }
+}
+
+/* 隐藏所有滚动条（兼容 WebKit、Firefox、IE/Edge）- 排除ArtPlayer */
+*:not(.artplayer):not(.artplayer *) {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*:not(.artplayer):not(.artplayer *)::webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* View Transitions API 动画 */
+@keyframes slide-from-top {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes slide-from-bottom {
+  from {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+/*
+  切换时，旧的视图不应该有动画，它应该在下面，等待被新的视图覆盖。
+  这可以防止在动画完成前，页面底部提前变色。
+*/
+::view-transition-old(root) {
+  animation: none;
+}
+
+/* 从浅色到深色：新内容（深色）从顶部滑入 */
+html.dark::view-transition-new(root) {
+  animation-name: slide-from-top;
+}
+
+/* 从深色到浅色：新内容（浅色）从底部滑入 */
+html:not(.dark)::view-transition-new(root) {
+  animation-name: slide-from-bottom;
+}
+
+/* 强制播放器内部的 video 元素高度为 100%，并保持内容完整显示 */
+div[data-media-provider] video {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ArtPlayer 封面样式 */
+.art-poster {
+  background-size: contain !important; /* 使图片完整展示 */
+  background-position: center center !important; /* 居中显示 */
+  background-repeat: no-repeat !important; /* 防止重复 */
+  background-color: #000 !important; /* 其余区域填充为黑色 */
+}
+
+/* 隐藏移动端竖屏时的 pip 按钮 */
+@media (max-width: 1024px) {
+  .art-control-pip {
+    display: none !important;
+  }
+
+  .art-control-fullscreenWeb {
+    display: none !important;
+  }
+
+  .art-control-volume {
+    display: none !important;
+  }
+
+  /* 调整移动端控制栏按钮间距，确保所有图标都能正常显示和点击 */
+  .art-controls-right {
+    gap: 1px !important;
+    padding-right: 2px !important;
+    margin-right: -4px !important;
+  }
+
+  .art-controls-left {
+    gap: 1px !important;
+    padding-left: 4px !important;
+  }
+
+  /* 弹幕开关按钮在移动端的特殊样式 */
+  .art-danmaku-toggle-button {
+    margin-left: 1px !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* 强制移除所有控制栏按钮的圆形背景 */
+  .art-controls .art-control,
+  .art-controls [class*='art-control'],
+  .art-danmaku-toggle-button {
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* 调整播放器控制栏整体间距 */
+  .art-controls {
+    padding: 0 2px !important;
+  }
+
+  .art-bottom {
+    padding: 0 2px !important;
+  }
+
+  /* 确保全屏按钮可见 */
+  .art-control-fullscreen,
+  .art-control-fullscreenWeb {
+    display: flex !important;
+    min-width: 28px !important;
+    width: 28px !important;
+  }
+}
+
+/* 修复音量控制hover区域 - 精确优化版本 */
+.art-control-volume {
+  position: relative !important;
+}
+
+/* 精确控制音量按钮的hover检测区域 */
+.art-control-volume::before {
+  content: '';
+  position: absolute;
+  top: -40px; /* 减少向上扩展，只扩展40px到音量滑条区域 */
+  left: -8px; /* 减少左右扩展 */
+  right: -8px;
+  bottom: -2px; /* 减少向下扩展 */
+  z-index: -1;
+  pointer-events: auto;
+}
+
+/* 当面板本身被hover时也要保持显示 */
+.art-volume-panel:hover {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+/* 强化原有的hover规则 */
+.art-control-volume:hover .art-volume-panel {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  transition: all 0.1s ease !important; /* 更快的响应 */
+}
+
+/* 弹入动画 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+/* 现代微交互动画 */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* VideoCard 光泽扫过动画 */
+@keyframes card-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 现代悬浮效果 */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* 现代焦点效果 */
+.focus-ring {
+  transition: all 0.2s ease;
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+    0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+/* 超级透明玻璃效果 */
+.glass-ultra {
+  background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.08));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.01)),
+    0 1px 2px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.005));
+}
+
+.glass-ultra-dark {
+  background: rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.08));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.03));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.08)),
+    0 1px 2px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.04));
+}
+
+/* 玻璃态文字背景 */
+.glass-text-bg {
+  background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.1));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.15));
+}
+
+.glass-text-bg-dark {
+  background: rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.15));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05));
+}
+
+/* 平滑过渡效果 */
+.smooth-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* 弹幕配置按钮，仅显示配置 */
+.artplayer-plugin-danmuku .apd-toggle {
+  display: none !important;
+}
+
+/* 移动端竖屏 */
+@media (max-width: 1024px) and (orientation: portrait) {
+  /* 隐藏弹幕发射器容器 */
+  .artplayer-plugin-danmuku .apd-emitter {
+    display: none !important;
+  }
+
+  /* 隐藏弹幕输入框 */
+  .artplayer-plugin-danmuku .apd-input {
+    display: none !important;
+  }
+
+  /* 隐藏弹幕发送按钮 */
+  .artplayer-plugin-danmuku .apd-send {
+    display: none !important;
+  }
+
+  /* 调整弹幕控件布局
+  .artplayer-plugin-danmuku {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+    确保弹幕开关按钮可见
+  .artplayer-plugin-danmuku .apd-toggle {
+    display: flex !important;
+  }
+
+    隐藏弹幕配置面板
+  .artplayer-plugin-danmuku .apd-config-panel {
+    display: none !important;
+  }
+   
+    隐藏弹幕样式面板
+  .artplayer-plugin-danmuku .apd-style-panel {
+    display: none !important;
+  }
+  */
+}
