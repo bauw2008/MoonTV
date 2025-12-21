@@ -23,7 +23,7 @@ interface ValidationResult {
 export function validateDeviceAccess(
   config: DeviceBindingConfig,
   currentDevice: DeviceFingerprint,
-  requestIP: string
+  requestIP: string,
 ): ValidationResult {
   // 如果设备绑定未启用，直接允许访问
   if (!config.enableDeviceBinding) {
@@ -36,7 +36,7 @@ export function validateDeviceAccess(
 
   // 检查设备是否已绑定
   const isBound = config.currentDevices.some(
-    (device) => device.deviceId === currentDevice.deviceId
+    (device) => device.deviceId === currentDevice.deviceId,
   );
 
   if (isBound) {
@@ -70,7 +70,7 @@ export function validateDeviceAccess(
  */
 export function handleNewDeviceBinding(
   config: DeviceBindingConfig,
-  currentDevice: DeviceFingerprint
+  currentDevice: DeviceFingerprint,
 ): DeviceBindingConfig {
   if (!config.enableDeviceBinding) {
     return config;
@@ -78,7 +78,7 @@ export function handleNewDeviceBinding(
 
   // 检查设备是否已存在
   const existingIndex = config.currentDevices.findIndex(
-    (device) => device.deviceId === currentDevice.deviceId
+    (device) => device.deviceId === currentDevice.deviceId,
   );
 
   let updatedDevices = [...config.currentDevices];
@@ -111,10 +111,10 @@ export function handleNewDeviceBinding(
  */
 export function removeDeviceBinding(
   config: DeviceBindingConfig,
-  deviceId: string
+  deviceId: string,
 ): DeviceBindingConfig {
   const updatedDevices = config.currentDevices.filter(
-    (device) => device.deviceId !== deviceId
+    (device) => device.deviceId !== deviceId,
   );
 
   return {
@@ -127,7 +127,7 @@ export function removeDeviceBinding(
  * 清空所有设备绑定
  */
 export function clearAllDeviceBindings(
-  config: DeviceBindingConfig
+  config: DeviceBindingConfig,
 ): DeviceBindingConfig {
   return {
     ...config,

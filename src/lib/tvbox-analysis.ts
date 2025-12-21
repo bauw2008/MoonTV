@@ -30,7 +30,7 @@ interface ApiResponseData {
 export async function getVideosByCategory(
   apiSite: ApiSite,
   category?: string,
-  page = 1
+  page = 1,
 ): Promise<{ results: SearchResult[]; pageCount: number }> {
   let timeoutId: NodeJS.Timeout | null = null;
   const controller = new AbortController();
@@ -94,7 +94,7 @@ export async function getVideosByCategory(
     // 处理结果数据（复用现有的映射逻辑）
     const results = data.list.map((item: ApiSearchItem) => {
       const { episodes, titles } = extractEpisodesFromPlayUrl(
-        item.vod_play_url
+        item.vod_play_url,
       );
 
       return {
@@ -117,7 +117,7 @@ export async function getVideosByCategory(
 
     // 过滤掉集数为 0 的结果
     const filteredResults = results.filter(
-      (result: SearchResult) => result.episodes.length > 0
+      (result: SearchResult) => result.episodes.length > 0,
     );
 
     // 获取总页数

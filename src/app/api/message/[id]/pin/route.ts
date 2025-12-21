@@ -20,9 +20,10 @@ interface Comment {
 // 置顶/取消置顶评论
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return new Response(JSON.stringify({ success: false, error: '未登录' }), {
@@ -42,7 +43,7 @@ export async function POST(
         adminConfig.UserConfig.Users
       ) {
         const user = adminConfig.UserConfig.Users.find(
-          (u) => u.username === authInfo.username
+          (u) => u.username === authInfo.username,
         );
         if (user) {
           userRole = user.role;
@@ -57,22 +58,22 @@ export async function POST(
     if (userRole !== 'admin' && userRole !== 'owner') {
       return new Response(
         JSON.stringify({ success: false, error: '权限不足' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
-    const commentId = params.id;
+    // 获取评论ID（已在上面解构）
 
     // 获取现有评论
     const commentsData = await db.getCache('message_board_comments');
     const comments: Comment[] = commentsData || [];
 
     // 查找评论
-    const commentIndex = comments.findIndex((c) => c.id === commentId);
+    const commentIndex = comments.findIndex((c) => c.id === id);
     if (commentIndex === -1) {
       return new Response(
         JSON.stringify({ success: false, error: '评论不存在' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -91,7 +92,7 @@ export async function POST(
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('置顶评论失败:', error);

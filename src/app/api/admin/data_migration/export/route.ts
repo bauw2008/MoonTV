@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (storageType === 'localstorage') {
       return NextResponse.json(
         { error: '不支持本地存储进行数据迁移' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       return NextResponse.json(
         { error: '权限不足，只有站长可以导出数据' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -96,17 +96,17 @@ export async function POST(req: NextRequest) {
     // 使用提供的密码加密压缩后的数据
     const encryptedData = SimpleCrypto.encrypt(
       compressedData.toString('base64'),
-      password
+      password,
     );
 
     // 生成文件名
     const now = new Date();
     const timestamp = `${now.getFullYear()}${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(
-      now.getHours()
+      now.getHours(),
     ).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(
-      now.getSeconds()
+      now.getSeconds(),
     ).padStart(2, '0')}`;
     const filename = `vidora-backup-${timestamp}.dat`;
 
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
     console.error('数据导出失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '导出失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

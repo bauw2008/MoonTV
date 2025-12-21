@@ -5,14 +5,14 @@ import { db } from '@/lib/db';
 
 // 获取用户角色的辅助函数
 async function getUserRole(
-  username: string
+  username: string,
 ): Promise<'owner' | 'admin' | 'user'> {
   try {
     // 获取管理员配置
     const adminConfig = await db.getAdminConfig();
     if (adminConfig && adminConfig.UserConfig && adminConfig.UserConfig.Users) {
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (user) {
         return user.role;
@@ -57,7 +57,7 @@ function generateId() {
 
 // 计算用户留言数量的辅助函数
 function calculateUserCommentCounts(
-  comments: Comment[]
+  comments: Comment[],
 ): Record<string, number> {
   const userCommentCounts: Record<string, number> = {};
 
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
               role: replyUserRole,
               commentCount: replyUserCommentCount,
             };
-          })
+          }),
         );
 
         return {
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
           commentCount: userCommentCount,
           replies: repliesWithAvatarsAndRoles,
         };
-      })
+      }),
     );
 
     return new Response(
@@ -188,13 +188,13 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('获取评论失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '获取评论失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
     if (!content || content.trim().length === 0) {
       return new Response(
         JSON.stringify({ success: false, error: '评论内容不能为空' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -263,13 +263,13 @@ export async function POST(request: NextRequest) {
       {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('发布评论失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '发布评论失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!role) {
     return NextResponse.json(
       { error: '你没有权限访问源检测功能' },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       { sources },
       {
         headers: { 'Cache-Control': 'no-store' },
-      }
+      },
     );
   } catch (error) {
     return NextResponse.json({ error: '获取源列表失败' }, { status: 500 });

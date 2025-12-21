@@ -29,7 +29,7 @@ function parseMovieHTML(html: string): ReleaseCalendarItem[] {
       // 提取标题 - 从dd-d1 div中
       const titleMatch =
         /<div class="dd-d1"><a[^>]*title="[^"]*">([^<]+)<\/a><\/div>/.exec(
-          block
+          block,
         );
 
       // 提取导演
@@ -43,7 +43,7 @@ function parseMovieHTML(html: string): ReleaseCalendarItem[] {
 
       // 提取上映时间
       const dateMatch = /<div>上映时间：(\d{4}\/\d{2}\/\d{2})<\/div>/.exec(
-        block
+        block,
       );
 
       // 提取主演 - 需要处理多个链接
@@ -120,7 +120,7 @@ function parseTVHTML(html: string): ReleaseCalendarItem[] {
       // 提取标题 - 从dd-d1 div中
       const titleMatch =
         /<div class="dd-d1"><a[^>]*title="[^"]*">([^<]+)<\/a><\/div>/.exec(
-          block
+          block,
         );
 
       // 提取导演
@@ -134,7 +134,7 @@ function parseTVHTML(html: string): ReleaseCalendarItem[] {
 
       // 提取上映时间
       const dateMatch = /<div>上映时间：(\d{4}\/\d{2}\/\d{2})<\/div>/.exec(
-        block
+        block,
       );
 
       // 提取主演 - 需要处理多个链接
@@ -287,7 +287,7 @@ export async function getReleaseCalendar(
     dateTo?: string;
     limit?: number;
     offset?: number;
-  } = {}
+  } = {},
 ): Promise<{
   items: ReleaseCalendarItem[];
   total: number;
@@ -302,31 +302,31 @@ export async function getReleaseCalendar(
 
     if (options.type) {
       filteredItems = filteredItems.filter(
-        (item) => item.type === options.type
+        (item) => item.type === options.type,
       );
     }
 
     if (options.region && options.region !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.region.includes(options.region!)
+        item.region.includes(options.region!),
       );
     }
 
     if (options.genre && options.genre !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.genre.includes(options.genre!)
+        item.genre.includes(options.genre!),
       );
     }
 
     if (options.dateFrom) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate >= options.dateFrom!
+        (item) => item.releaseDate >= options.dateFrom!,
       );
     }
 
     if (options.dateTo) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate <= options.dateTo!
+        (item) => item.releaseDate <= options.dateTo!,
       );
     }
 

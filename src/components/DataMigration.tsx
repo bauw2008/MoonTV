@@ -148,7 +148,7 @@ const AlertModal = ({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
@@ -305,7 +305,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
             <p><strong>导入完成！</strong></p>
             <p class="mt-2">导入的用户数量: ${result.importedUsers}</p>
             <p>备份时间: ${new Date(result.timestamp).toLocaleString(
-              'zh-CN'
+              'zh-CN',
             )}</p>
             <p>服务器版本: ${result.serverVersion || '未知版本'}</p>
             <p class="mt-3 text-orange-600">请刷新页面以查看最新数据。</p>

@@ -18,7 +18,7 @@ const Grid = dynamic(
     loading: () => (
       <div className='animate-pulse h-96 bg-gray-200 dark:bg-gray-800 rounded-lg' />
     ),
-  }
+  },
 );
 
 import { DoubanItem } from '@/lib/types';
@@ -71,7 +71,7 @@ export const VirtualDoubanGrid = React.forwardRef<
       primarySelection,
       isBangumi = false,
     },
-    ref
+    ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<any>(null); // Grid ref for imperative scroll
@@ -95,7 +95,7 @@ export const VirtualDoubanGrid = React.forwardRef<
       const urls: string[] = [];
       const itemsToPreload = doubanData.slice(
         displayItemCount,
-        Math.min(displayItemCount + 20, totalItemCount)
+        Math.min(displayItemCount + 20, totalItemCount),
       );
 
       itemsToPreload.forEach((item) => {
@@ -159,12 +159,12 @@ export const VirtualDoubanGrid = React.forwardRef<
         setVisibleItemCount((prev) => {
           const newCount = Math.min(
             prev + LOAD_MORE_BATCH_SIZE,
-            totalItemCount
+            totalItemCount,
           );
 
           // 如果虚拟数据即将用完，触发服务器数据加载
           if (newCount >= totalItemCount * 0.8 && hasMore && !isLoadingMore) {
-            onLoadMore();
+            setTimeout(onLoadMore, 0);
           }
 
           return newCount;
@@ -194,13 +194,13 @@ export const VirtualDoubanGrid = React.forwardRef<
             } catch (error) {
               console.debug(
                 'Grid scroll to top error (safe to ignore):',
-                error
+                error,
               );
             }
           }
         },
       }),
-      []
+      [],
     );
 
     // 网格行数计算
@@ -236,81 +236,6 @@ export const VirtualDoubanGrid = React.forwardRef<
           return <div style={{ ...style, visibility: 'hidden' }} />;
         }
 
-        // TVBox场景：根据contentType推断类型
-        const inferTypeFromContentType = (): string => {
-          if (!item.contentType) {
-            // 豆瓣场景：使用cellType
-            return cellType === 'movie'
-              ? 'movie'
-              : cellType === 'show'
-              ? 'variety'
-              : cellType === 'tv'
-              ? 'tv'
-              : cellType === 'anime'
-              ? 'anime'
-              : cellType === 'short-drama'
-              ? 'shortdrama'
-              : '';
-          }
-
-          // TVBox场景：根据contentType关键词推断
-          const tn = item.contentType.toLowerCase();
-
-          if (['短剧', '短片', '小剧场', '微剧'].some((k) => tn.includes(k))) {
-            return 'shortdrama';
-          }
-          if (
-            [
-              '动漫',
-              '动画',
-              '番剧',
-              '国漫',
-              '日漫',
-              '动画片',
-              'acg',
-              '卡通',
-              '新番',
-              '里番',
-              '泡面番',
-            ].some((k) => tn.includes(k))
-          ) {
-            return 'anime';
-          }
-          if (
-            [
-              '综艺',
-              '真人秀',
-              '娱乐',
-              '脱口秀',
-              '选秀',
-              '访谈',
-              '晚会',
-              '相声',
-              '小品',
-            ].some((k) => tn.includes(k))
-          ) {
-            return 'variety';
-          }
-          if (
-            (tn.includes('电影') ||
-              tn.includes('影片') ||
-              tn.includes('院线')) &&
-            !tn.includes('电视电影')
-          ) {
-            return 'movie';
-          }
-          if (
-            ['电视剧', '连续剧', '网剧', '剧集', '电视'].some((k) =>
-              tn.includes(k)
-            )
-          ) {
-            return 'tv';
-          }
-
-          // 默认根据集数判断
-          return item.episodes === 1 ? 'movie' : 'tv';
-        };
-
         return (
           <div style={{ ...style, padding: '8px' }} {...ariaAttributes}>
             <VideoCard
@@ -323,7 +248,7 @@ export const VirtualDoubanGrid = React.forwardRef<
               douban_id={Number(item.id)}
               rate={item.rate}
               year={item.year}
-              type={inferTypeFromContentType()}
+              type={item.type || 'tv'}
               isBangumi={cellIsBangumi}
               episodes={item.episodes}
               isAggregate={false}
@@ -331,7 +256,7 @@ export const VirtualDoubanGrid = React.forwardRef<
           </div>
         );
       },
-      []
+      [],
     );
 
     // 生成骨架屏数据
@@ -568,7 +493,7 @@ export const VirtualDoubanGrid = React.forwardRef<
           )}
       </div>
     );
-  }
+  },
 );
 
 VirtualDoubanGrid.displayName = 'VirtualDoubanGrid';

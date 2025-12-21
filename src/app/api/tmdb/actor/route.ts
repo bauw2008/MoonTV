@@ -96,14 +96,14 @@ export async function GET(request: NextRequest) {
   if (!actorName?.trim()) {
     return NextResponse.json(
       { error: '缺少必要参数: actor（演员名字）' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (!['tv', 'movie'].includes(type)) {
     return NextResponse.json(
       { error: 'type 参数必须是 tv 或 movie' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
           error: 'TMDB演员搜索功能未启用',
           message: '请在管理后台配置TMDB API Key并启用此功能',
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         console.log(
           `✅ [TMDB API] 缓存命中: ${actorName} - ${
             cachedResult.list?.length || 0
-          } 项`
+          } 项`,
         );
         return NextResponse.json(cachedResult);
       }
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
     const result = await searchTMDBActorWorks(
       actorName.trim(),
       type as 'movie' | 'tv',
-      filterOptions
+      filterOptions,
     );
     console.log(`[TMDB演员搜索API] searchTMDBActorWorks 调用完成`);
 
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       console.log(
         `💾 TMDB演员搜索结果已缓存(数据库): "${actorName}" - ${
           result.list?.length || 0
-        } 个结果, TTL: ${TMDB_CACHE_TIME}s`
+        } 个结果, TTL: ${TMDB_CACHE_TIME}s`,
       );
     } catch (cacheError) {
       console.warn('TMDB演员搜索缓存保存失败:', cacheError);
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error(
       `[TMDB演员搜索API] 搜索失败: ${actorName}`,
-      (error as Error).message
+      (error as Error).message,
     );
     return NextResponse.json(
       {
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
         details: (error as Error).message,
         params: { actorName, type, filterOptions },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

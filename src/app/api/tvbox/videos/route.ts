@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 import {
   getAvailableApiSites,
   getConfig,
@@ -22,132 +23,6 @@ interface Category {
   type_id: number;
   type_pid: number;
   type_name: string;
-}
-
-// 服务端类型推断函数
-function inferVideoTypeFromCategory(
-  categoryMap: Record<number, Category>,
-  primaryCategoryId: number | null,
-  secondaryCategoryId: number | null,
-  typeName?: string,
-  episodes?: number,
-  sourceName?: string
-): 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama' {
-  const currentCategory = secondaryCategoryId
-    ? categoryMap[secondaryCategoryId]
-    : primaryCategoryId
-    ? categoryMap[primaryCategoryId]
-    : null;
-
-  let parentCategoryName = '';
-  if (secondaryCategoryId && currentCategory?.type_pid) {
-    const parentCategory = categoryMap[currentCategory.type_pid];
-    parentCategoryName = parentCategory?.type_name || '';
-  }
-
-  const categoryName = currentCategory?.type_name || '';
-  const checkName = (
-    parentCategoryName +
-    ' ' +
-    categoryName +
-    ' ' +
-    (typeName || '') +
-    ' ' +
-    (sourceName || '')
-  ).toLowerCase();
-
-  // 短剧关键词（优先级最高）- 扩展关键词列表
-  if (
-    [
-      '短剧',
-      '短片',
-      '小剧场',
-      '微剧',
-      '短剧大全',
-      '爽文短剧',
-      '甜宠短剧',
-      '古风短剧',
-      '现代短剧',
-      '都市短剧',
-      '穿越短剧',
-      '重生短剧',
-      '复仇短剧',
-      '虐恋短剧',
-      '总裁短剧',
-      '言情短剧',
-      '悬疑短剧',
-      '年代短剧',
-      '民国短剧',
-      '重生民国',
-      '民国剧',
-      '战神短剧',
-      '神豪短剧',
-      '赘婿短剧',
-      '女频短剧',
-      '男频短剧',
-    ].some((k) => checkName.includes(k))
-  ) {
-    return 'shortdrama';
-  }
-
-  // 动漫关键词
-  if (
-    [
-      '动漫',
-      '动画',
-      '番剧',
-      '国漫',
-      '动画片',
-      '卡通',
-      '新番',
-      '里番',
-      '泡面番',
-      '国产动漫',
-      '日韩动漫',
-      '欧美动漫',
-    ].some((k) => checkName.includes(k))
-  ) {
-    return 'anime';
-  }
-
-  // 综艺关键词
-  if (
-    [
-      '综艺',
-      '真人秀',
-      '娱乐',
-      '脱口秀',
-      '选秀',
-      '访谈',
-      '晚会',
-      '相声',
-      '小品',
-    ].some((k) => checkName.includes(k))
-  ) {
-    return 'variety';
-  }
-
-  // 电影关键词
-  if (
-    (checkName.includes('电影') ||
-      checkName.includes('影片') ||
-      checkName.includes('院线')) &&
-    !checkName.includes('电视电影')
-  ) {
-    return 'movie';
-  }
-
-  // 剧集关键词
-  if (
-    ['电视剧', '连续剧', '网剧', '剧集', '电视'].some((k) =>
-      checkName.includes(k)
-    )
-  ) {
-    return 'tv';
-  }
-
-  // 默认根据集数判断
-  return episodes === 1 ? 'movie' : 'tv';
 }
 
 interface CategoryData {
@@ -180,7 +55,7 @@ async function fetchSourceCategories(apiUrl: string): Promise<Category[]> {
           if (categoryUrlObj.pathname.endsWith('/list')) {
             categoryUrlObj.pathname = categoryUrlObj.pathname.replace(
               '/list',
-              ''
+              '',
             );
           }
 
@@ -220,7 +95,7 @@ async function fetchSourceCategories(apiUrl: string): Promise<Category[]> {
 
       if (!response.ok) {
         throw new Error(
-          `分类信息请求失败: ${response.status} ${response.statusText}`
+          `分类信息请求失败: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -252,7 +127,7 @@ async function fetchSourceCategories(apiUrl: string): Promise<Category[]> {
 
       // 检查分类字段
       const categories = (data?.class || data?.list || []).filter(
-        (cat: any) => cat?.type_id !== undefined && cat?.type_name
+        (cat: any) => cat?.type_id !== undefined && cat?.type_name,
       );
 
       if (categories.length > 0) {
@@ -264,7 +139,7 @@ async function fetchSourceCategories(apiUrl: string): Promise<Category[]> {
       lastError = error instanceof Error ? error : new Error(String(error));
       console.warn(
         `获取分类信息失败 (尝试 ${attempt}/${maxRetries}):`,
-        lastError.message
+        lastError.message,
       );
 
       // 如果不是最后一次尝试，等待一段时间后重试
@@ -488,7 +363,7 @@ CATEGORY_MAPPINGS.forEach((mapping) => {
 
 // 简化的分类匹配函数
 function findCategoryMatch(
-  categoryName: string
+  categoryName: string,
 ): { primary: string; secondary?: string } | null {
   const name = categoryName.trim();
   const nameLower = name.toLowerCase();
@@ -551,10 +426,10 @@ function buildCategoryStructure(categories: Category[]): {
   // 如果源站已经提供了层级信息(type_pid字段),直接使用
   if (categories.length > 0 && categories[0].type_pid !== undefined) {
     structure.primary_categories = categories.filter(
-      (cat) => cat.type_pid === 0
+      (cat) => cat.type_pid === 0,
     );
     structure.secondary_categories = categories.filter(
-      (cat) => cat.type_pid !== 0
+      (cat) => cat.type_pid !== 0,
     );
 
     [
@@ -614,7 +489,7 @@ function buildCategoryStructure(categories: Category[]): {
   [...structure.primary_categories, ...structure.secondary_categories].forEach(
     (cat) => {
       structure.category_map[cat.type_id] = cat;
-    }
+    },
   );
 
   return structure;
@@ -701,7 +576,7 @@ export async function GET(request: NextRequest) {
         const hasYellowFilterPermission = await hasSpecialFeaturePermission(
           authInfo.username,
           'disable-yellow-filter',
-          config
+          config,
         );
 
         // 过滤18+分类：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
@@ -714,7 +589,7 @@ export async function GET(request: NextRequest) {
             finalCategoryStructure.primary_categories.filter((category) => {
               const categoryName = category.type_name || '';
               const shouldFilter = yellowWords.some((word) =>
-                categoryName.includes(word)
+                categoryName.includes(word),
               );
               return !shouldFilter;
             });
@@ -723,7 +598,7 @@ export async function GET(request: NextRequest) {
             finalCategoryStructure.secondary_categories.filter((category) => {
               const categoryName = category.type_name || '';
               const shouldFilter = yellowWords.some((word) =>
-                categoryName.includes(word)
+                categoryName.includes(word),
               );
               return !shouldFilter;
             });
@@ -733,7 +608,7 @@ export async function GET(request: NextRequest) {
             const category =
               finalCategoryStructure.category_map[parseInt(typeId)];
             const shouldFilter = yellowWords.some((word) =>
-              category.type_name.includes(word)
+              category.type_name.includes(word),
             );
             if (shouldFilter) {
               delete finalCategoryStructure.category_map[parseInt(typeId)];
@@ -747,7 +622,7 @@ export async function GET(request: NextRequest) {
           finalCategoryStructure.primary_categories.filter((category) => {
             const categoryName = category.type_name || '';
             const shouldBlock = blockedCategories.some((word) =>
-              categoryName.includes(word)
+              categoryName.includes(word),
             );
             return !shouldBlock;
           });
@@ -756,7 +631,7 @@ export async function GET(request: NextRequest) {
           finalCategoryStructure.secondary_categories.filter((category) => {
             const categoryName = category.type_name || '';
             const shouldBlock = blockedCategories.some((word) =>
-              categoryName.includes(word)
+              categoryName.includes(word),
             );
             return !shouldBlock;
           });
@@ -766,7 +641,7 @@ export async function GET(request: NextRequest) {
           const category =
             finalCategoryStructure.category_map[parseInt(typeId)];
           const shouldBlock = blockedCategories.some((word) =>
-            category.type_name.includes(word)
+            category.type_name.includes(word),
           );
           if (shouldBlock) {
             delete finalCategoryStructure.category_map[parseInt(typeId)];
@@ -811,7 +686,7 @@ export async function GET(request: NextRequest) {
       const categoryResult = await getVideosByCategory(
         site,
         category || undefined,
-        page
+        page,
       );
       results = categoryResult.results;
       totalPages = categoryResult.pageCount;
@@ -838,34 +713,32 @@ export async function GET(request: NextRequest) {
           { list: results, pagecount: totalPages },
           category,
           page,
-          page <= 3
+          page <= 3,
         );
       } catch (cacheError) {
         // 缓存失败不影响主流程
       }
     }
 
-    // 为每个视频添加源名称和推断类型
-    const videosWithMetadata = results.map((video) => {
-      // 获取视频的分类ID（可能在 type_id 或 tid 字段）
-      const videoCategoryId = video.type_id || video.tid || null;
+    // 为每个视频添加源名称和统一类型推断
+    const videosWithMetadata = TypeInferenceService.inferBatch(
+      results.map((video) => {
+        // 获取视频的分类ID（可能在 type_id 或 tid 字段）
+        const videoCategoryId = video.type_id || video.tid || null;
 
-      // 推断视频类型
-      const inferredType = inferVideoTypeFromCategory(
-        finalCategoryStructure.category_map,
-        category || videoCategoryId, // 使用请求的分类或视频自身的分类
-        null, // 这里没有二级分类信息
-        video.type_name,
-        video.episodes?.length || 0,
-        site.name
-      );
+        // 保留分类信息用于调试
+        const categoryInfo = videoCategoryId
+          ? finalCategoryStructure.category_map[videoCategoryId]
+          : null;
 
-      return {
-        ...video,
-        source_name: site.name,
-        inferredType, // 添加推断的类型
-      };
-    });
+        return {
+          ...video,
+          source_name: site.name,
+          categoryInfo, // 添加分类信息用于调试
+          // TypeInferenceService会处理类型推断
+        };
+      }),
+    );
 
     return NextResponse.json({
       list: videosWithMetadata,

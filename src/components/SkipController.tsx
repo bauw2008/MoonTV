@@ -118,7 +118,7 @@ export default function SkipController({
         }
       }
     },
-    [artPlayerRef, onNextEpisode]
+    [artPlayerRef, onNextEpisode],
   );
 
   // 检查当前播放时间是否在跳过区间内
@@ -178,7 +178,7 @@ export default function SkipController({
       }
 
       const currentSegment = segments.find(
-        (segment) => time >= segment.start && time <= segment.end
+        (segment) => time >= segment.start && time <= segment.end,
       );
 
       // 使用 source + id + episodeIndex 作为集数标识，确保不同集数有不同的ID
@@ -237,7 +237,7 @@ export default function SkipController({
       id,
       episodeIndex,
       skipSettings,
-    ]
+    ],
   );
 
   // 初始化加载配置
@@ -267,14 +267,14 @@ export default function SkipController({
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(
       'localStorageChanged',
-      handleCustomEvent as EventListener
+      handleCustomEvent as EventListener,
     );
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(
         'localStorageChanged',
-        handleCustomEvent as EventListener
+        handleCustomEvent as EventListener,
       );
     };
   }, []);

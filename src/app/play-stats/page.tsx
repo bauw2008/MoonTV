@@ -1,6 +1,5 @@
 'use client';
 
-import { ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -126,10 +125,10 @@ function formatLoginDisplay(loginCount: number) {
       loginCount === 0
         ? '0'
         : loginCount > 10000
-        ? '10000+'
-        : loginCount > 1000
-        ? `${Math.floor(loginCount / 1000)}k+`
-        : loginCount.toString(),
+          ? '10000+'
+          : loginCount > 1000
+            ? `${Math.floor(loginCount / 1000)}k+`
+            : loginCount.toString(),
   };
 }
 
@@ -145,13 +144,13 @@ const PlayStatsPage: React.FC = () => {
     role?: string;
   } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+
   const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
-    null
+    null,
   );
   const [showWatchingUpdates, setShowWatchingUpdates] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'users' | 'personal'>(
-    'admin'
+    'admin',
   ); // 新增Tab状态
   const [upcomingReleases, setUpcomingReleases] = useState<
     ReleaseCalendarItem[]
@@ -311,7 +310,8 @@ const PlayStatsPage: React.FC = () => {
       const age = now - parseInt(watchingUpdateTime);
       if (age >= WATCHING_CACHE_DURATION) {
         localStorage.removeItem('vidora_watching_updates');
-              localStorage.removeItem('vidora_last_update_check');        console.log('已清理过期的追番更新缓存');
+        localStorage.removeItem('vidora_last_update_check');
+        console.log('已清理过期的追番更新缓存');
       }
     }
 
@@ -351,7 +351,7 @@ const PlayStatsPage: React.FC = () => {
       const response = await fetch(
         `/api/release-calendar?dateFrom=${
           today.toISOString().split('T')[0]
-        }&dateTo=${twoWeeks.toISOString().split('T')[0]}`
+        }&dateTo=${twoWeeks.toISOString().split('T')[0]}`,
       );
 
       if (response.ok) {
@@ -423,7 +423,7 @@ const PlayStatsPage: React.FC = () => {
   // 获取进度百分比
   const getProgressPercentage = (
     playTime: number,
-    totalTime: number
+    totalTime: number,
   ): number => {
     if (!totalTime || totalTime === 0) return 0;
     return Math.min(Math.round((playTime / totalTime) * 100), 100);
@@ -498,7 +498,7 @@ const PlayStatsPage: React.FC = () => {
       return () => {
         window.removeEventListener(
           'playRecordsUpdated',
-          handlePlayRecordsUpdate
+          handlePlayRecordsUpdate,
         );
       };
     }
@@ -510,7 +510,7 @@ const PlayStatsPage: React.FC = () => {
     console.log('updatedCount:', watchingUpdates?.updatedCount);
     console.log(
       'continueWatchingCount:',
-      watchingUpdates?.continueWatchingCount
+      watchingUpdates?.continueWatchingCount,
     );
 
     if (
@@ -552,7 +552,7 @@ const PlayStatsPage: React.FC = () => {
             updatedCount: 0,
             continueWatchingCount: 0,
           }
-        : null
+        : null,
     );
   };
 
@@ -570,41 +570,6 @@ const PlayStatsPage: React.FC = () => {
 
     const days = Math.floor(hours / 24);
     return `${days}天前`;
-  };
-
-  // 监听滚动位置，显示/隐藏回到顶部按钮
-  useEffect(() => {
-    // 获取滚动位置的函数
-    const getScrollTop = () => {
-      return document.body.scrollTop || document.documentElement.scrollTop || 0;
-    };
-
-    // 滚动事件处理
-    const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
-    };
-
-    // 监听 body 元素的滚动事件（参考搜索页面的实现方式）
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // 返回顶部功能
-  const scrollToTop = () => {
-    try {
-      // 根据搜索页面的调试结果，真正的滚动容器是 document.body
-      document.body.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    } catch (error) {
-      // 如果平滑滚动完全失败，使用立即滚动
-      document.body.scrollTop = 0;
-    }
   };
 
   // 未授权时显示加载
@@ -743,8 +708,8 @@ const PlayStatsPage: React.FC = () => {
               {activeTab === 'admin'
                 ? '查看全站播放数据和趋势分析'
                 : activeTab === 'users'
-                ? '查看用户播放数据和统计信息'
-                : '查看您的个人播放记录和统计'}
+                  ? '查看用户播放数据和统计信息'
+                  : '查看您的个人播放记录和统计'}
             </p>
 
             {/* Tab 切换 */}
@@ -932,7 +897,7 @@ const PlayStatsPage: React.FC = () => {
                             )}
                           </div>
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
@@ -1273,7 +1238,7 @@ const PlayStatsPage: React.FC = () => {
                                             {formatTime(record.total_time)} (
                                             {getProgressPercentage(
                                               record.play_time,
-                                              record.total_time
+                                              record.total_time,
                                             )}
                                             %)
                                           </span>
@@ -1284,7 +1249,7 @@ const PlayStatsPage: React.FC = () => {
                                             style={{
                                               width: `${getProgressPercentage(
                                                 record.play_time,
-                                                record.total_time
+                                                record.total_time,
                                               )}%`,
                                             }}
                                           ></div>
@@ -1391,7 +1356,7 @@ const PlayStatsPage: React.FC = () => {
               {/* 有新集数的剧集 */}
               {watchingUpdates &&
                 watchingUpdates.updatedSeries.filter(
-                  (series) => series.hasNewEpisode
+                  (series) => series.hasNewEpisode,
                 ).length > 0 && (
                   <div className='mb-8'>
                     <div className='flex items-center gap-2 mb-4'>
@@ -1403,7 +1368,7 @@ const PlayStatsPage: React.FC = () => {
                         <span className='text-sm text-red-500 font-medium'>
                           {
                             watchingUpdates.updatedSeries.filter(
-                              (series) => series.hasNewEpisode
+                              (series) => series.hasNewEpisode,
                             ).length
                           }
                           部剧集有更新
@@ -1479,7 +1444,7 @@ const PlayStatsPage: React.FC = () => {
               {watchingUpdates &&
                 watchingUpdates.updatedSeries.filter(
                   (series) =>
-                    series.hasContinueWatching && !series.hasNewEpisode
+                    series.hasContinueWatching && !series.hasNewEpisode,
                 ).length > 0 && (
                   <div className='mb-8'>
                     <div className='flex items-center gap-2 mb-4'>
@@ -1493,7 +1458,7 @@ const PlayStatsPage: React.FC = () => {
                             watchingUpdates.updatedSeries.filter(
                               (series) =>
                                 series.hasContinueWatching &&
-                                !series.hasNewEpisode
+                                !series.hasNewEpisode,
                             ).length
                           }
                           部剧集待续看
@@ -1508,7 +1473,7 @@ const PlayStatsPage: React.FC = () => {
                           .filter(
                             (series) =>
                               series.hasContinueWatching &&
-                              !series.hasNewEpisode
+                              !series.hasNewEpisode,
                           )
                           .map((series, index) => (
                             <div
@@ -1543,7 +1508,7 @@ const PlayStatsPage: React.FC = () => {
                           .filter(
                             (series) =>
                               series.hasContinueWatching &&
-                              !series.hasNewEpisode
+                              !series.hasNewEpisode,
                           )
                           .map((series, index) => (
                             <div
@@ -1636,7 +1601,7 @@ const PlayStatsPage: React.FC = () => {
                                 {formatTime(record.total_time)} (
                                 {getProgressPercentage(
                                   record.play_time,
-                                  record.total_time
+                                  record.total_time,
                                 )}
                                 %)
                               </span>
@@ -1647,7 +1612,7 @@ const PlayStatsPage: React.FC = () => {
                                 style={{
                                   width: `${getProgressPercentage(
                                     record.play_time,
-                                    record.total_time
+                                    record.total_time,
                                   )}%`,
                                 }}
                               ></div>
@@ -1682,17 +1647,6 @@ const PlayStatsPage: React.FC = () => {
             </>
           )}
         </div>
-        <button
-          onClick={scrollToTop}
-          className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
-            showBackToTop
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-4 pointer-events-none'
-          }`}
-          aria-label='返回顶部'
-        >
-          <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-        </button>
       </PageLayout>
     );
   }
@@ -1893,7 +1847,7 @@ const PlayStatsPage: React.FC = () => {
           {/* 有新集数的剧集 */}
           {watchingUpdates &&
             watchingUpdates.updatedSeries.filter(
-              (series) => series.hasNewEpisode
+              (series) => series.hasNewEpisode,
             ).length > 0 && (
               <div className='mb-8'>
                 <div className='flex items-center gap-2 mb-4'>
@@ -1905,7 +1859,7 @@ const PlayStatsPage: React.FC = () => {
                     <span className='text-sm text-red-500 font-medium'>
                       {
                         watchingUpdates.updatedSeries.filter(
-                          (series) => series.hasNewEpisode
+                          (series) => series.hasNewEpisode,
                         ).length
                       }
                       部剧集有更新
@@ -1982,7 +1936,7 @@ const PlayStatsPage: React.FC = () => {
           {/* 继续观看的剧集 */}
           {watchingUpdates &&
             watchingUpdates.updatedSeries.filter(
-              (series) => series.hasContinueWatching && !series.hasNewEpisode
+              (series) => series.hasContinueWatching && !series.hasNewEpisode,
             ).length > 0 && (
               <div className='mb-8'>
                 <div className='flex items-center gap-2 mb-4'>
@@ -1995,7 +1949,7 @@ const PlayStatsPage: React.FC = () => {
                       {
                         watchingUpdates.updatedSeries.filter(
                           (series) =>
-                            series.hasContinueWatching && !series.hasNewEpisode
+                            series.hasContinueWatching && !series.hasNewEpisode,
                         ).length
                       }
                       部剧集待续看
@@ -2009,7 +1963,7 @@ const PlayStatsPage: React.FC = () => {
                     {watchingUpdates.updatedSeries
                       .filter(
                         (series) =>
-                          series.hasContinueWatching && !series.hasNewEpisode
+                          series.hasContinueWatching && !series.hasNewEpisode,
                       )
                       .map((series, index) => (
                         <div
@@ -2044,7 +1998,7 @@ const PlayStatsPage: React.FC = () => {
                     {watchingUpdates.updatedSeries
                       .filter(
                         (series) =>
-                          series.hasContinueWatching && !series.hasNewEpisode
+                          series.hasContinueWatching && !series.hasNewEpisode,
                       )
                       .map((series, index) => (
                         <div
@@ -2141,7 +2095,7 @@ const PlayStatsPage: React.FC = () => {
                             {formatTime(record.total_time)} (
                             {getProgressPercentage(
                               record.play_time,
-                              record.total_time
+                              record.total_time,
                             )}
                             %)
                           </span>
@@ -2152,7 +2106,7 @@ const PlayStatsPage: React.FC = () => {
                             style={{
                               width: `${getProgressPercentage(
                                 record.play_time,
-                                record.total_time
+                                record.total_time,
                               )}%`,
                             }}
                           ></div>
@@ -2185,24 +2139,10 @@ const PlayStatsPage: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* 返回顶部悬浮按钮 */}
-        <button
-          onClick={scrollToTop}
-          className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
-            showBackToTop
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-4 pointer-events-none'
-          }`}
-          aria-label='返回顶部'
-        >
-          <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-        </button>
       </PageLayout>
     );
   }
 
-  // 加载中或错误状态
   return (
     <PageLayout activePath='/play-stats'>
       <div className='max-w-6xl mx-auto px-4 py-8'>
@@ -2216,19 +2156,6 @@ const PlayStatsPage: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* 返回顶部悬浮按钮 */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
-          showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}
-        aria-label='返回顶部'
-      >
-        <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-      </button>
     </PageLayout>
   );
 };

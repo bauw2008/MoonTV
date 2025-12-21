@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行管理员配置',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -33,21 +33,21 @@ export async function POST(request: NextRequest) {
     if (typeof tvboxSecurityConfig.enableAuth !== 'boolean') {
       return NextResponse.json(
         { error: 'Invalid enableAuth value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof tvboxSecurityConfig.enableIpWhitelist !== 'boolean') {
       return NextResponse.json(
         { error: 'Invalid enableIpWhitelist value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof tvboxSecurityConfig.enableRateLimit !== 'boolean') {
       return NextResponse.json(
         { error: 'Invalid enableRateLimit value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,18 +60,18 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           { error: '启用设备绑定需要配置用户Token' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       // 检查至少有一个启用的用户Token
       const enabledTokens = tvboxSecurityConfig.userTokens.filter(
-        (t: any) => t.enabled
+        (t: any) => t.enabled,
       );
       if (enabledTokens.length === 0) {
         return NextResponse.json(
           { error: '至少需要一个启用的用户Token' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         ) {
           return NextResponse.json(
             { error: `用户 ${token.username} 的Token长度至少8位` },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           { error: '最大设备数量必须大于0' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           { error: '用户Token配置必须是数组' },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       if (!Array.isArray(tvboxSecurityConfig.allowedIPs)) {
         return NextResponse.json(
           { error: 'allowedIPs必须是数组' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         if (typeof ip !== 'string' || !isValidIPOrCIDR(ip.trim())) {
           return NextResponse.json(
             { error: `无效的IP地址格式: ${ip}` },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       if (!Number.isInteger(rateLimit) || rateLimit < 1 || rateLimit > 1000) {
         return NextResponse.json(
           { error: '频率限制应在1-1000之间' },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       // 管理员
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (!user || user.role !== 'admin' || user.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     console.error('Save TVBox security config error:', error);
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

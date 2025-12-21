@@ -27,7 +27,7 @@ let lastCleanupTime = 0;
 function makeSearchCacheKey(
   sourceKey: string,
   query: string,
-  page: number
+  page: number,
 ): string {
   return `${sourceKey}::${query.trim()}::${page}`;
 }
@@ -38,7 +38,7 @@ function makeSearchCacheKey(
 export function getCachedSearchPage(
   sourceKey: string,
   query: string,
-  page: number
+  page: number,
 ): CachedPageEntry | null {
   const key = makeSearchCacheKey(sourceKey, query, page);
   const entry = SEARCH_CACHE.get(key);
@@ -62,7 +62,7 @@ export function setCachedSearchPage(
   page: number,
   status: CachedPageStatus,
   data: SearchResult[],
-  pageCount?: number
+  pageCount?: number,
 ): void {
   // 惰性启动自动清理
   ensureAutoCleanupStarted();

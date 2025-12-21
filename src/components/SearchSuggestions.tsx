@@ -45,7 +45,7 @@ export default function SearchSuggestions({
         `/api/search/suggestions?q=${encodeURIComponent(searchQuery)}`,
         {
           signal: controller.signal,
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -53,7 +53,7 @@ export default function SearchSuggestions({
           (item: { text: string }) => ({
             text: item.text,
             type: 'related' as const,
-          })
+          }),
         );
         setSuggestions(apiSuggestions);
       }
@@ -85,7 +85,7 @@ export default function SearchSuggestions({
         }
       }, 300); //300ms
     },
-    [isVisible, fetchSuggestionsFromAPI]
+    [isVisible, fetchSuggestionsFromAPI],
   );
 
   useEffect(() => {

@@ -44,7 +44,7 @@ function computeMatchRate(results: SearchResult[], q: string) {
   const lowerQ = (q || '').toLowerCase();
   if (!results || results.length === 0) return 0;
   const hit = results.filter((r) =>
-    (r.title || '').toLowerCase().includes(lowerQ)
+    (r.title || '').toLowerCase().includes(lowerQ),
   ).length;
   return hit / results.length;
 }
@@ -52,7 +52,7 @@ function computeMatchRate(results: SearchResult[], q: string) {
 function computeTopMatches(results: SearchResult[], q: string) {
   const lowerQ = (q || '').toLowerCase();
   const hit = results.filter((r) =>
-    (r.title || '').toLowerCase().includes(lowerQ)
+    (r.title || '').toLowerCase().includes(lowerQ),
   );
   return hit.slice(0, 3).map((r) => r.title || '');
 }
@@ -97,13 +97,13 @@ async function getAllApiSites(): Promise<ApiSite[]> {
 // 测试单个源
 async function testSource(
   sourceKey: string,
-  query: string
+  query: string,
 ): Promise<SourceTestResult> {
   const startTime = Date.now();
 
   try {
     const response = await fetch(
-      `/api/source-test?q=${encodeURIComponent(query)}&source=${sourceKey}`
+      `/api/source-test?q=${encodeURIComponent(query)}&source=${sourceKey}`,
     );
     const responseTime = Date.now() - startTime;
 
@@ -177,7 +177,7 @@ export default function SourceTestModule() {
   const [sources, setSources] = useState<ApiSite[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [testResults, setTestResults] = useState<Map<string, SourceTestResult>>(
-    new Map()
+    new Map(),
   );
   const [isTestingAll, setIsTestingAll] = useState(false);
   const [selectedResults, setSelectedResults] = useState<SearchResult[]>([]);
@@ -219,8 +219,8 @@ export default function SourceTestModule() {
             status: 'testing',
             results: [],
             disabled: source.disabled,
-          })
-        )
+          }),
+        ),
     );
 
     const result = await testSource(sourceKey, searchKeyword);
@@ -263,8 +263,8 @@ export default function SourceTestModule() {
             prev.set(source.key, {
               ...prev.get(source.key)!,
               status: 'testing',
-            })
-          )
+            }),
+          ),
       );
 
       const result = await testSource(source.key, searchKeyword);
@@ -335,8 +335,8 @@ export default function SourceTestModule() {
       // 本地更新状态
       setSources((prev) =>
         prev.map((s) =>
-          s.key === source.key ? { ...s, disabled: !s.disabled } : s
-        )
+          s.key === source.key ? { ...s, disabled: !s.disabled } : s,
+        ),
       );
       setTestResults(
         (prev) =>
@@ -349,8 +349,8 @@ export default function SourceTestModule() {
                 results: [],
               }),
               disabled: !source.disabled,
-            })
-          )
+            }),
+          ),
       );
     } catch (e: any) {
       alert(e.message || '操作失败');
@@ -365,30 +365,30 @@ export default function SourceTestModule() {
 
     const enabledTotal = enabledResults.length;
     const enabledSuccess = enabledResults.filter(
-      (r) => r.status === 'success'
+      (r) => r.status === 'success',
     ).length;
     const enabledError = enabledResults.filter(
-      (r) => r.status === 'error'
+      (r) => r.status === 'error',
     ).length;
     const enabledTimeout = enabledResults.filter(
-      (r) => r.status === 'timeout'
+      (r) => r.status === 'timeout',
     ).length;
     const enabledTesting = enabledResults.filter(
-      (r) => r.status === 'testing'
+      (r) => r.status === 'testing',
     ).length;
 
     const disabledTotal = disabledResults.length;
     const disabledSuccess = disabledResults.filter(
-      (r) => r.status === 'success'
+      (r) => r.status === 'success',
     ).length;
     const disabledError = disabledResults.filter(
-      (r) => r.status === 'error'
+      (r) => r.status === 'error',
     ).length;
     const disabledTimeout = disabledResults.filter(
-      (r) => r.status === 'timeout'
+      (r) => r.status === 'timeout',
     ).length;
     const disabledTesting = disabledResults.filter(
-      (r) => r.status === 'testing'
+      (r) => r.status === 'testing',
     ).length;
 
     const total = results.length;
@@ -707,7 +707,7 @@ export default function SourceTestModule() {
                   <div className='flex items-center gap-3 flex-1'>
                     {getStatusIcon(
                       result?.status || 'pending',
-                      source.disabled
+                      source.disabled,
                     )}
                     <div className='flex-1 min-w-0'>
                       <div className='flex items-center gap-2 flex-wrap'>
@@ -804,8 +804,8 @@ export default function SourceTestModule() {
                       {result?.status === 'testing'
                         ? '测试中'
                         : source.disabled
-                        ? '测试禁用源'
-                        : '单独测试'}
+                          ? '测试禁用源'
+                          : '单独测试'}
                     </button>
 
                     <button
@@ -962,7 +962,7 @@ export default function SourceTestModule() {
               </div>
             </div>
           </>,
-          document.body
+          document.body,
         )}
 
       {/* 空状态 */}

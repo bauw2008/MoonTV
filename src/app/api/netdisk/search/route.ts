@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   if (!netDiskConfig?.pansouUrl) {
     return NextResponse.json(
       { error: 'PanSou服务地址未配置' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const cached = await db.getCache(cacheKey);
     if (cached) {
       console.log(
-        `✅ 网盘搜索缓存命中(数据库): "${query}" (${enabledCloudTypesStr})`
+        `✅ 网盘搜索缓存命中(数据库): "${query}" (${enabledCloudTypesStr})`,
       );
       return NextResponse.json({
         ...cached,
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
-      (netDiskConfig.timeout || 30) * 1000
+      (netDiskConfig.timeout || 30) * 1000,
     );
 
     const pansouResponse = await fetch(
@@ -93,14 +93,14 @@ export async function GET(request: NextRequest) {
             'uc',
           ],
         }),
-      }
+      },
     );
 
     clearTimeout(timeout);
 
     if (!pansouResponse.ok) {
       throw new Error(
-        `PanSou服务响应错误: ${pansouResponse.status} ${pansouResponse.statusText}`
+        `PanSou服务响应错误: ${pansouResponse.status} ${pansouResponse.statusText}`,
       );
     }
 
@@ -122,14 +122,14 @@ export async function GET(request: NextRequest) {
     try {
       await db.setCache(cacheKey, responseData, NETDISK_CACHE_TIME);
       console.log(
-        `💾 网盘搜索结果已缓存(数据库): "${query}" - ${responseData.data.total} 个结果, TTL: ${NETDISK_CACHE_TIME}s`
+        `💾 网盘搜索结果已缓存(数据库): "${query}" - ${responseData.data.total} 个结果, TTL: ${NETDISK_CACHE_TIME}s`,
       );
     } catch (cacheError) {
       console.warn('网盘搜索缓存保存失败:', cacheError);
     }
 
     console.log(
-      `✅ 网盘搜索完成: "${query}" - ${responseData.data.total} 个结果`
+      `✅ 网盘搜索完成: "${query}" - ${responseData.data.total} 个结果`,
     );
     return NextResponse.json(responseData);
   } catch (error: any) {
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         error: errorMessage,
         suggestion: '请检查PanSou服务是否正常运行或联系管理员',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

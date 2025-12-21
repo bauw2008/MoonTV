@@ -126,7 +126,7 @@ const YellowFilterConfig = ({
           'success',
           `已${
             config.SiteConfig?.DisableYellowFilter ? '启用' : '禁用'
-          }18+过滤器`
+          }18+过滤器`,
         );
         await refreshConfig();
       } else {

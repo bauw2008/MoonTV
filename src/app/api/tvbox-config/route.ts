@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       Array.isArray(securityConfig.userTokens)
     ) {
       const userTokenInfo = securityConfig.userTokens.find(
-        (t) => t.username === authInfo.username
+        (t) => t.username === authInfo.username,
       );
       console.log('[TVBoxConfig] 查找用户Token:', {
         username: authInfo.username,
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     console.error('获取 TVBox 配置失败:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

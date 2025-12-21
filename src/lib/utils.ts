@@ -120,12 +120,12 @@ export function processImageUrl(originalUrl: string): string {
     case 'cmliussss-cdn-tencent':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.net'
+        'img.doubanio.cmliussss.net',
       );
     case 'cmliussss-cdn-ali':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.com'
+        'img.doubanio.cmliussss.com',
       );
     case 'custom':
       return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
@@ -225,21 +225,21 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           devicePerformance === 'low'
             ? 3
             : devicePerformance === 'medium'
-            ? 8
-            : 15,
+              ? 8
+              : 15,
         maxBufferSize:
           devicePerformance === 'low'
             ? 1 * 1024 * 1024
             : devicePerformance === 'medium'
-            ? 5 * 1024 * 1024
-            : 15 * 1024 * 1024,
+              ? 5 * 1024 * 1024
+              : 15 * 1024 * 1024,
         backBufferLength: isTablet ? 20 : isMobile ? 10 : 30,
         frontBufferFlushThreshold:
           devicePerformance === 'low'
             ? 15
             : devicePerformance === 'medium'
-            ? 30
-            : 60,
+              ? 30
+              : 60,
 
         // v1.6.13 增强：更智能的缓冲区管理
         maxBufferHole: 0.3, // 允许较小的缓冲区空洞
@@ -250,8 +250,8 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           devicePerformance === 'low'
             ? 1500000
             : devicePerformance === 'medium'
-            ? 3000000
-            : 6000000,
+              ? 3000000
+              : 6000000,
         abrBandWidthFactor: 0.95,
         abrBandWidthUpFactor: isMobile ? 0.6 : 0.7,
         abrMaxWithRealBitrate: true,
@@ -326,14 +326,14 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
               width >= 3840
                 ? '4K'
                 : width >= 2560
-                ? '2K'
-                : width >= 1920
-                ? '1080p'
-                : width >= 1280
-                ? '720p'
-                : width >= 854
-                ? '480p'
-                : 'SD';
+                  ? '2K'
+                  : width >= 1920
+                    ? '1080p'
+                    : width >= 1280
+                      ? '720p'
+                      : width >= 854
+                        ? '480p'
+                        : 'SD';
           }
 
           cleanup();

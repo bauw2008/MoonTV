@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getYellowWords } from '@/lib/yellow';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,7 +82,10 @@ export async function GET(request: NextRequest) {
           const searchPromise = Promise.race([
             searchFromApi(site, query),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000)
+              setTimeout(
+                () => reject(new Error(`${site.name} timeout`)),
+                20000,
+              ),
             ),
           ]);
 
@@ -99,10 +103,10 @@ export async function GET(request: NextRequest) {
 
                 // 同时检查 type_name 和 title 字段
                 const matchedTypeWord = yellowWords.find((word: string) =>
-                  typeName.includes(word)
+                  typeName.includes(word),
                 );
                 const matchedTitleWord = yellowWords.find((word: string) =>
-                  title.includes(word)
+                  title.includes(word),
                 );
                 const shouldFilter = !!matchedTypeWord || !!matchedTitleWord;
 
@@ -113,6 +117,10 @@ export async function GET(request: NextRequest) {
             }
           }
 
+          // 使用统一类型推断服务预处理搜索结果
+          const processedResults =
+            TypeInferenceService.inferBatch(filteredResults);
+
           // 发送该源的搜索结果
           completedSources++;
 
@@ -121,7 +129,7 @@ export async function GET(request: NextRequest) {
               type: 'source_result',
               source: site.key,
               sourceName: site.name,
-              results: filteredResults,
+              results: processedResults,
               timestamp: Date.now(),
             })}\n\n`;
 

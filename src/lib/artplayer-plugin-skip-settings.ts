@@ -52,14 +52,13 @@ const SKIP_PROFILES: Record<string, SkipSettingsConfig> = {
 };
 
 export default function artplayerPluginSkipSettings(
-  initialConfig?: Partial<SkipSettingsConfig>
+  initialConfig?: Partial<SkipSettingsConfig>,
 ) {
   return (art: any) => {
-    
     // 使用默认配置和初始配置，具体值由 SkipController 管理
-    let config: SkipSettingsConfig = { 
-      ...DEFAULT_CONFIG, 
-      ...initialConfig
+    let config: SkipSettingsConfig = {
+      ...DEFAULT_CONFIG,
+      ...initialConfig,
     };
     let panelElement: HTMLElement | null = null;
     let isVisible = false;
@@ -74,7 +73,10 @@ export default function artplayerPluginSkipSettings(
       // 第二优先级：标签检测（兜底）
       if (typeof window !== 'undefined') {
         const search = window.location.search;
-        if (search.includes('source=shortdrama') || search.includes('stype=shortdrama')) {
+        if (
+          search.includes('source=shortdrama') ||
+          search.includes('stype=shortdrama')
+        ) {
           return true;
         }
       }
@@ -103,7 +105,7 @@ export default function artplayerPluginSkipSettings(
       // 显示短剧提醒
       if (isShort) {
         const shortDramaNotice = document.querySelector(
-          '.art-short-drama-notice'
+          '.art-short-drama-notice',
         ) as HTMLElement;
         if (shortDramaNotice) {
           shortDramaNotice.style.display = 'block';
@@ -588,406 +590,146 @@ export default function artplayerPluginSkipSettings(
       const locateOpeningBtn = panel.querySelector('#locateOpeningBtn');
       const locateEndingBtn = panel.querySelector('#locateEndingBtn');
       const autoSkipCheckbox = panel.querySelector(
-        '#autoSkip'
+        '#autoSkip',
       ) as HTMLInputElement;
       const autoNextEpisodeCheckbox = panel.querySelector(
-        '#autoNextEpisode'
+        '#autoNextEpisode',
       ) as HTMLInputElement;
-      
+
       console.log('SkipSettings: 绑定事件，元素检查', {
         locateOpeningBtn: !!locateOpeningBtn,
         locateEndingBtn: !!locateEndingBtn,
         autoSkipCheckbox: !!autoSkipCheckbox,
-        autoNextEpisodeCheckbox: !!autoNextEpisodeCheckbox
+        autoNextEpisodeCheckbox: !!autoNextEpisodeCheckbox,
       });
-      
+
       // 片尾模式切换
-      const endingModeRadios = panel.querySelectorAll('input[name="endingMode"]');
+      const endingModeRadios = panel.querySelectorAll(
+        'input[name="endingMode"]',
+      );
       console.log('SkipSettings: 片尾模式单选框数量', endingModeRadios.length);
-      endingModeRadios.forEach(radio => {
+      endingModeRadios.forEach((radio) => {
         radio.addEventListener('change', (e) => {
           const target = e.target as HTMLInputElement;
           switchEndingMode(target.value as 'remaining' | 'absolute');
         });
       });
-      
-
-      
 
       // 切换片尾模式
-      
 
-      
+      const switchEndingMode = (mode: 'remaining' | 'absolute') => {
+        try {
+          const endingFirstLabel = panel.querySelector(
+            '#endingFirstLabel',
+          ) as HTMLElement;
+
+          if (endingFirstLabel) {
+            endingFirstLabel.textContent =
+              mode === 'remaining' ? '剩余' : '开始';
+          }
+        } catch (e) {
+          console.error('SkipSettings: 切换片尾模式失败', e);
+        }
+      };
+
+      // 获取时间值
+
+      const getTimeValues = () => {
+        try {
+          const openingStartMin =
+            parseInt(
+              (panel.querySelector('#openingStartMin') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const openingStartSec =
+            parseInt(
+              (panel.querySelector('#openingStartSec') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const openingEndMin =
+            parseInt(
+              (panel.querySelector('#openingEndMin') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const openingEndSec =
+            parseInt(
+              (panel.querySelector('#openingEndSec') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const endingFirstMin =
+            parseInt(
+              (panel.querySelector('#endingFirstMin') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const endingFirstSec =
+            parseInt(
+              (panel.querySelector('#endingFirstSec') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const endingEndMin =
+            parseInt(
+              (panel.querySelector('#endingEndMin') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const endingEndSec =
+            parseInt(
+              (panel.querySelector('#endingEndSec') as HTMLInputElement)
+                ?.value || '0',
+            ) || 0;
+
+          const endingMode =
+            (
+              panel.querySelector(
+                'input[name="endingMode"]:checked',
+              ) as HTMLInputElement
+            )?.value || 'remaining';
+
+          return {
+            openingStart: openingStartMin * 60 + openingStartSec,
+
+            openingEnd: openingEndMin * 60 + openingEndSec,
+
+            endingFirst: endingFirstMin * 60 + endingFirstSec,
+
+            endingEnd: endingEndMin * 60 + endingEndSec,
+
+            endingMode,
+          };
+        } catch (e) {
+          console.error('SkipSettings: 获取时间值失败', e);
+
+          return {
+            openingStart: 0,
+
+            openingEnd: 90,
+
+            endingFirst: 120,
+
+            endingEnd: 0,
+
+            endingMode: 'remaining',
+          };
+        }
+      };
 
-            const switchEndingMode = (mode: 'remaining' | 'absolute') => {
-      
-
-      
-
-              try {
-      
-
-      
-
-                const endingFirstLabel = panel.querySelector('#endingFirstLabel') as HTMLElement;
-      
-
-      
-
-                if (endingFirstLabel) {
-      
-
-      
-
-                  endingFirstLabel.textContent = mode === 'remaining' ? '剩余' : '开始';
-      
-
-      
-
-                }
-      
-
-      
-
-              } catch (e) {
-      
-
-      
-
-                console.error('SkipSettings: 切换片尾模式失败', e);
-      
-
-      
-
-              }
-      
-
-      
-
-            };
-      
-
-      
-
-      
-      
-
-      
-
-            // 获取时间值
-      
-
-      
-
-            const getTimeValues = () => {
-      
-
-      
-
-              try {
-      
-
-      
-
-                const openingStartMin =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#openingStartMin') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const openingStartSec =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#openingStartSec') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const openingEndMin =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#openingEndMin') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const openingEndSec =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#openingEndSec') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const endingFirstMin =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#endingFirstMin') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const endingFirstSec =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#endingFirstSec') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const endingEndMin =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#endingEndMin') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-                const endingEndSec =
-      
-
-      
-
-                  parseInt(
-      
-
-      
-
-                    (panel.querySelector('#endingEndSec') as HTMLInputElement)?.value || '0'
-      
-
-      
-
-                  ) || 0;
-      
-
-      
-
-      
-      
-
-      
-
-                const endingMode = (
-      
-
-      
-
-                  panel.querySelector('input[name="endingMode"]:checked') as HTMLInputElement
-      
-
-      
-
-                )?.value || 'remaining';
-      
-
-      
-
-      
-      
-
-      
-
-                return {
-      
-
-      
-
-                  openingStart: openingStartMin * 60 + openingStartSec,
-      
-
-      
-
-                  openingEnd: openingEndMin * 60 + openingEndSec,
-      
-
-      
-
-                  endingFirst: endingFirstMin * 60 + endingFirstSec,
-      
-
-      
-
-                  endingEnd: endingEndMin * 60 + endingEndSec,
-      
-
-      
-
-                  endingMode,
-      
-
-      
-
-                };
-      
-
-      
-
-              } catch (e) {
-      
-
-      
-
-                console.error('SkipSettings: 获取时间值失败', e);
-      
-
-      
-
-                return {
-      
-
-      
-
-                  openingStart: 0,
-      
-
-      
-
-                  openingEnd: 90,
-      
-
-      
-
-                  endingFirst: 120,
-      
-
-      
-
-                  endingEnd: 0,
-      
-
-      
-
-                  endingMode: 'remaining',
-      
-
-      
-
-                };
-      
-
-      
-
-              }
-      
-
-      
-
-            };
-      
-
-      
-
-      
-      
-
-      
-
-            
-      
-
-      
-
-      
-      
-
-      
-
-            // 保存配置
+      // 保存配置
       const saveConfig = () => {
         try {
           const times = getTimeValues();
           config = {
             openingStart: times.openingStart,
             openingEnd: times.openingEnd,
-            endingRemaining: times.endingMode === 'remaining' ? times.endingFirst : 0,
-            endingStart: times.endingMode === 'absolute' ? times.endingFirst : 0,
+            endingRemaining:
+              times.endingMode === 'remaining' ? times.endingFirst : 0,
+            endingStart:
+              times.endingMode === 'absolute' ? times.endingFirst : 0,
             endingEnd: times.endingEnd,
             endingMode: times.endingMode as 'remaining' | 'absolute',
             autoSkip: autoSkipCheckbox?.checked || false,
@@ -1008,12 +750,20 @@ export default function artplayerPluginSkipSettings(
       const resetConfig = () => {
         try {
           config = { ...DEFAULT_CONFIG };
-          setTimeValues(config.openingStart, config.openingEnd, config.endingRemaining, 0);
+          setTimeValues(
+            config.openingStart,
+            config.openingEnd,
+            config.endingRemaining,
+            0,
+          );
           if (autoSkipCheckbox) autoSkipCheckbox.checked = config.autoSkip;
-          if (autoNextEpisodeCheckbox) autoNextEpisodeCheckbox.checked = config.autoNextEpisode;
-          
+          if (autoNextEpisodeCheckbox)
+            autoNextEpisodeCheckbox.checked = config.autoNextEpisode;
+
           // 重置片尾模式为剩余
-          const remainingRadio = panel.querySelector('input[name="endingMode"][value="remaining"]') as HTMLInputElement;
+          const remainingRadio = panel.querySelector(
+            'input[name="endingMode"][value="remaining"]',
+          ) as HTMLInputElement;
           if (remainingRadio) {
             remainingRadio.checked = true;
             switchEndingMode('remaining');
@@ -1039,10 +789,6 @@ export default function artplayerPluginSkipSettings(
         resetBtn.addEventListener('click', resetConfig);
       }
 
-
-
-      
-
       // 定位按钮事件
       if (locateOpeningBtn) {
         locateOpeningBtn.addEventListener('click', () => {
@@ -1052,7 +798,12 @@ export default function artplayerPluginSkipSettings(
               console.log('SkipSettings: 当前时间', art.currentTime);
               const times = getTimeValues();
               console.log('SkipSettings: 获取到的时间值', times);
-              setTimeValues(times.openingStart, art.currentTime, times.endingFirst, times.endingEnd);
+              setTimeValues(
+                times.openingStart,
+                art.currentTime,
+                times.endingFirst,
+                times.endingEnd,
+              );
               console.log('SkipSettings: 片头定位完成');
             } else {
               console.warn('SkipSettings: 无法获取当前时间');
@@ -1067,22 +818,48 @@ export default function artplayerPluginSkipSettings(
         locateEndingBtn.addEventListener('click', () => {
           try {
             console.log('SkipSettings: 片尾定位按钮点击');
-            if (art && art.currentTime !== undefined && art.duration && panelElement) {
-              console.log('SkipSettings: 当前时间', art.currentTime, '总时长', art.duration);
-              const endingMode = (panelElement.querySelector('input[name="endingMode"]:checked') as HTMLInputElement)?.value || 'remaining';
+            if (
+              art &&
+              art.currentTime !== undefined &&
+              art.duration &&
+              panelElement
+            ) {
+              console.log(
+                'SkipSettings: 当前时间',
+                art.currentTime,
+                '总时长',
+                art.duration,
+              );
+              const endingMode =
+                (
+                  panelElement.querySelector(
+                    'input[name="endingMode"]:checked',
+                  ) as HTMLInputElement
+                )?.value || 'remaining';
               let endingFirst: number;
-              
+
               if (endingMode === 'remaining') {
-                const remainingTime = Math.max(0, art.duration - art.currentTime);
+                const remainingTime = Math.max(
+                  0,
+                  art.duration - art.currentTime,
+                );
                 endingFirst = remainingTime;
                 console.log('SkipSettings: 剩余模式，剩余时间', remainingTime);
               } else {
                 endingFirst = art.currentTime;
-                console.log('SkipSettings: 绝对模式，开始时间', art.currentTime);
+                console.log(
+                  'SkipSettings: 绝对模式，开始时间',
+                  art.currentTime,
+                );
               }
-              
+
               const times = getTimeValues();
-              setTimeValues(times.openingStart, times.openingEnd, endingFirst, times.endingEnd);
+              setTimeValues(
+                times.openingStart,
+                times.openingEnd,
+                endingFirst,
+                times.endingEnd,
+              );
               console.log('SkipSettings: 片尾定位完成');
             } else {
               console.warn('SkipSettings: 无法获取时间信息');
@@ -1092,8 +869,6 @@ export default function artplayerPluginSkipSettings(
           }
         });
       }
-
-      
 
       // 输入框变化时自动保存
       const handleTimeInputChange = (e: Event) => {
@@ -1131,8 +906,6 @@ export default function artplayerPluginSkipSettings(
       return panel;
     };
 
-    
-
     // 更新时间显示
     const updateTimeDisplayCurrent = () => {
       if (!panelElement || !art) return;
@@ -1162,7 +935,7 @@ export default function artplayerPluginSkipSettings(
             endingMode: 'remaining',
           };
         }
-        
+
         const timeToSeconds = (timeStr: string): number => {
           if (!timeStr || timeStr.trim() === '') return 0;
           if (timeStr.includes(':')) {
@@ -1174,23 +947,30 @@ export default function artplayerPluginSkipSettings(
             return parseFloat(timeStr) || 0;
           }
         };
-        
+
         const openingStart = timeToSeconds(
-          (panelElement.querySelector('#openingStart') as HTMLInputElement)?.value || '0'
+          (panelElement.querySelector('#openingStart') as HTMLInputElement)
+            ?.value || '0',
         );
         const openingEnd = timeToSeconds(
-          (panelElement.querySelector('#openingEnd') as HTMLInputElement)?.value || '0'
+          (panelElement.querySelector('#openingEnd') as HTMLInputElement)
+            ?.value || '0',
         );
         const endingFirst = timeToSeconds(
-          (panelElement.querySelector('#endingFirst') as HTMLInputElement)?.value || '0'
+          (panelElement.querySelector('#endingFirst') as HTMLInputElement)
+            ?.value || '0',
         );
         const endingEnd = timeToSeconds(
-          (panelElement.querySelector('#endingEnd') as HTMLInputElement)?.value || '0'
+          (panelElement.querySelector('#endingEnd') as HTMLInputElement)
+            ?.value || '0',
         );
 
-        const endingMode = (
-          panelElement.querySelector('input[name="endingMode"]:checked') as HTMLInputElement
-        )?.value || 'remaining';
+        const endingMode =
+          (
+            panelElement.querySelector(
+              'input[name="endingMode"]:checked',
+            ) as HTMLInputElement
+          )?.value || 'remaining';
 
         return {
           openingStart,
@@ -1212,36 +992,41 @@ export default function artplayerPluginSkipSettings(
     };
 
     // 设置时间值
-    const setTimeValues = (openingStart: number, openingEnd: number, endingFirst: number, endingEnd: number) => {
+    const setTimeValues = (
+      openingStart: number,
+      openingEnd: number,
+      endingFirst: number,
+      endingEnd: number,
+    ) => {
       try {
         if (!panelElement) return;
-        
+
         const formatTime = (seconds: number): string => {
           const mins = Math.floor(seconds / 60);
           const secs = Math.floor(seconds % 60);
           return `${mins}:${secs.toString().padStart(2, '0')}`;
         };
-        
+
         console.log('SkipSettings: 设置时间值', {
           openingStart,
           openingEnd,
           endingFirst,
           endingEnd,
           formattedOpeningStart: formatTime(openingStart),
-          formattedOpeningEnd: formatTime(openingEnd)
+          formattedOpeningEnd: formatTime(openingEnd),
         });
-        
+
         const openingStartEl = panelElement.querySelector(
-          '#openingStart'
+          '#openingStart',
         ) as HTMLInputElement;
         const openingEndEl = panelElement.querySelector(
-          '#openingEnd'
+          '#openingEnd',
         ) as HTMLInputElement;
         const endingFirstEl = panelElement.querySelector(
-          '#endingFirst'
+          '#endingFirst',
         ) as HTMLInputElement;
         const endingEndEl = panelElement.querySelector(
-          '#endingEnd'
+          '#endingEnd',
         ) as HTMLInputElement;
 
         if (openingStartEl) {
@@ -1272,10 +1057,10 @@ export default function artplayerPluginSkipSettings(
 
       // 更新UI状态
       const autoSkipCheckbox = panelElement.querySelector(
-        '#autoSkip'
+        '#autoSkip',
       ) as HTMLInputElement;
       const autoNextEpisodeCheckbox = panelElement.querySelector(
-        '#autoNextEpisode'
+        '#autoNextEpisode',
       ) as HTMLInputElement;
 
       if (autoSkipCheckbox) {
@@ -1286,7 +1071,12 @@ export default function artplayerPluginSkipSettings(
       }
 
       // 更新时间显示
-      setTimeValues(config.openingStart, config.openingEnd, config.endingRemaining, 0);
+      setTimeValues(
+        config.openingStart,
+        config.openingEnd,
+        config.endingRemaining,
+        0,
+      );
 
       panelElement.style.display = 'block';
       isVisible = true;
@@ -1484,7 +1274,7 @@ export default function artplayerPluginSkipSettings(
 
       // 清理短剧提醒元素
       const shortDramaNotice = document.querySelector(
-        '.art-short-drama-notice'
+        '.art-short-drama-notice',
       );
       if (shortDramaNotice && shortDramaNotice.parentNode) {
         shortDramaNotice.parentNode.removeChild(shortDramaNotice);

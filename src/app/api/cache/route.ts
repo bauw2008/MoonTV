@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error(
       `❌ API缓存错误 (key: ${request.nextUrl.searchParams.get('key')}):`,
-      error
+      error,
     );
     console.error('错误详情:', {
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -61,7 +61,7 @@ export async function DELETE(request: NextRequest) {
     } else {
       return NextResponse.json(
         { error: 'Key or prefix is required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +70,7 @@ export async function DELETE(request: NextRequest) {
     console.error('Delete cache error:', error);
     return NextResponse.json(
       { error: 'Failed to delete cache' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

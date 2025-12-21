@@ -77,7 +77,7 @@ const updateListeners = new Set<(hasUpdates: boolean) => void>();
  * @param forceRefresh 是否强制刷新，跳过缓存时间检查
  */
 export async function checkWatchingUpdates(
-  forceRefresh = false
+  forceRefresh = false,
 ): Promise<void> {
   try {
     const currentTime = Date.now();
@@ -141,7 +141,7 @@ export async function checkWatchingUpdates(
         const updateInfo = await checkSingleRecordUpdate(
           record,
           videoId,
-          sourceName
+          sourceName,
         );
 
         // 使用从 checkSingleRecordUpdate 返回的 protectedTotalEpisodes（已经包含了保护机制）
@@ -245,7 +245,7 @@ export async function checkWatchingUpdates(
       window.dispatchEvent(
         new CustomEvent(WATCHING_UPDATES_EVENT, {
           detail: { hasUpdates: hasAnyUpdates, updatedCount },
-        })
+        }),
       );
     }
   } catch (error) {
@@ -260,7 +260,7 @@ export async function checkWatchingUpdates(
 async function checkSingleRecordUpdate(
   record: PlayRecord,
   videoId: string,
-  storageSourceName?: string
+  storageSourceName?: string,
 ): Promise<{
   hasUpdate: boolean;
   hasContinueWatching: boolean;
@@ -281,7 +281,7 @@ async function checkSingleRecordUpdate(
         const matchedSource = sources.find(
           (source: any) =>
             source.key === record.source_name ||
-            source.name === record.source_name
+            source.name === record.source_name,
         );
 
         if (matchedSource) {
@@ -311,12 +311,12 @@ async function checkSingleRecordUpdate(
     // 获取观看时的原始总集数（不会被自动更新影响）
     const recordKey = generateStorageKey(
       storageSourceName || record.source_name,
-      videoId
+      videoId,
     );
     const originalTotalEpisodes = await getOriginalEpisodes(
       record,
       videoId,
-      recordKey
+      recordKey,
     );
 
     // 检查新集数更新：API返回的集数比当前播放记录的总集数多
@@ -327,7 +327,7 @@ async function checkSingleRecordUpdate(
     const protectedTotalEpisodes = Math.max(
       latestEpisodes,
       originalTotalEpisodes,
-      record.total_episodes
+      record.total_episodes,
     );
 
     // 2. 继续观看提醒：用户还没看完现有集数（使用保护后的集数）
@@ -339,7 +339,7 @@ async function checkSingleRecordUpdate(
     // 如果API返回的集数少于原始记录的集数，说明可能是API缓存问题
     if (latestEpisodes < originalTotalEpisodes) {
       console.warn(
-        `${record.title} API返回集数(${latestEpisodes})少于原始记录(${originalTotalEpisodes})，可能是API缓存问题`
+        `${record.title} API返回集数(${latestEpisodes})少于原始记录(${originalTotalEpisodes})，可能是API缓存问题`,
       );
     }
 
@@ -376,7 +376,7 @@ async function checkSingleRecordUpdate(
 async function getOriginalEpisodes(
   record: PlayRecord,
   videoId: string,
-  recordKey: string
+  recordKey: string,
 ): Promise<number> {
   // 🔑 关键修复：不信任内存中的 original_episodes（可能来自缓存）
   // 始终从数据库重新读取最新的 original_episodes
@@ -397,7 +397,7 @@ async function getOriginalEpisodes(
   // 备用方案：如果数据库读取失败，使用内存中的值
   if (record.original_episodes && record.original_episodes > 0) {
     console.log(
-      `📚 使用内存中的原始集数: ${record.title} = ${record.original_episodes}集 (当前播放记录: ${record.total_episodes}集)`
+      `📚 使用内存中的原始集数: ${record.title} = ${record.original_episodes}集 (当前播放记录: ${record.total_episodes}集)`,
     );
     return record.original_episodes;
   }
@@ -410,7 +410,7 @@ async function getOriginalEpisodes(
     record.total_episodes > 0
   ) {
     console.log(
-      `⚠️ ${record.title} 缺少原始集数，使用当前值 ${record.total_episodes}集（不写入数据库）`
+      `⚠️ ${record.title} 缺少原始集数，使用当前值 ${record.total_episodes}集（不写入数据库）`,
     );
     return record.total_episodes;
   }
@@ -480,7 +480,7 @@ function cacheWatchingUpdates(data: WatchingUpdate): void {
     } else {
       localStorage.setItem(
         WATCHING_UPDATES_CACHE_KEY,
-        JSON.stringify(cacheData)
+        JSON.stringify(cacheData),
       );
     }
   } catch (error) {
@@ -492,7 +492,7 @@ function cacheWatchingUpdates(data: WatchingUpdate): void {
  * 订阅更新通知
  */
 export function subscribeToWatchingUpdates(
-  callback: (hasUpdates: boolean) => void
+  callback: (hasUpdates: boolean) => void,
 ): () => void {
   updateListeners.add(callback);
 
@@ -524,9 +524,12 @@ export function setupPeriodicUpdateCheck(intervalMinutes = 30): () => void {
   checkWatchingUpdates();
 
   // 设置定期检查
-  const intervalId = setInterval(() => {
-    checkWatchingUpdates();
-  }, intervalMinutes * 60 * 1000);
+  const intervalId = setInterval(
+    () => {
+      checkWatchingUpdates();
+    },
+    intervalMinutes * 60 * 1000,
+  );
 
   // 返回清理函数
   return () => {
@@ -635,7 +638,7 @@ export function markUpdatesAsViewed(): void {
         window.dispatchEvent(
           new CustomEvent(WATCHING_UPDATES_EVENT, {
             detail: { hasUpdates: false, updatedCount: 0 },
-          })
+          }),
         );
       }
     }
@@ -666,7 +669,7 @@ export function clearWatchingUpdates(): void {
       window.dispatchEvent(
         new CustomEvent(WATCHING_UPDATES_EVENT, {
           detail: { hasUpdates: false, updatedCount: 0 },
-        })
+        }),
       );
     }
   } catch (error) {
@@ -699,7 +702,7 @@ export function forceClearWatchingUpdatesCache(): void {
  */
 export async function checkVideoUpdate(
   sourceName: string,
-  videoId: string
+  videoId: string,
 ): Promise<void> {
   try {
     const recordsObj = await getAllPlayRecords();
@@ -713,7 +716,7 @@ export async function checkVideoUpdate(
     const updateInfo = await checkSingleRecordUpdate(
       targetRecord,
       videoId,
-      sourceName
+      sourceName,
     );
 
     if (updateInfo.hasUpdate) {
@@ -729,7 +732,7 @@ export async function checkVideoUpdate(
  * 订阅新集数更新事件（来自Alpha版本）
  */
 export function subscribeToWatchingUpdatesEvent(
-  callback: (hasUpdates: boolean, updatedCount: number) => void
+  callback: (hasUpdates: boolean, updatedCount: number) => void,
 ): () => void {
   if (typeof window === 'undefined') {
     return () => void 0;
@@ -742,13 +745,13 @@ export function subscribeToWatchingUpdatesEvent(
 
   window.addEventListener(
     WATCHING_UPDATES_EVENT,
-    handleUpdate as EventListener
+    handleUpdate as EventListener,
   );
 
   return () => {
     window.removeEventListener(
       WATCHING_UPDATES_EVENT,
-      handleUpdate as EventListener
+      handleUpdate as EventListener,
     );
   };
 }

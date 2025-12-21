@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行设备管理',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (!securityConfig.enableDeviceBinding) {
       return NextResponse.json(
         { error: '未启用设备绑定功能' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,13 +82,13 @@ export async function POST(request: NextRequest) {
     }
 
     const userTokenInfo = securityConfig.userTokens.find(
-      (t) => t.username === username && t.enabled
+      (t) => t.username === username && t.enabled,
     );
 
     if (!userTokenInfo) {
       return NextResponse.json(
         { error: '用户未启用Token验证' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -96,18 +96,18 @@ export async function POST(request: NextRequest) {
     if (!userTokenInfo.devices || !Array.isArray(userTokenInfo.devices)) {
       return NextResponse.json(
         { error: '用户没有绑定任何设备' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const deviceExists = userTokenInfo.devices.some(
-      (d) => d.deviceId === deviceId
+      (d) => d.deviceId === deviceId,
     );
 
     if (!deviceExists) {
       return NextResponse.json(
         { error: '设备不存在或无权操作' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userTokenInfo = securityConfig.userTokens.find(
-      (t) => t.username === username && t.enabled
+      (t) => t.username === username && t.enabled,
     );
 
     if (!userTokenInfo) {
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

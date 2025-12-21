@@ -13,12 +13,12 @@ import { getCandidates, getSpiderJar } from '@/lib/spiderJar';
 function filterSourcesByUserPermissions(
   sources: any[],
   user: { username: string; enabledApis?: string[]; tags?: string[] },
-  tagsConfig: any[]
+  tagsConfig: any[],
 ): any[] {
   // 如果用户有直接指定的enabledApis，优先使用
   if (user.enabledApis && user.enabledApis.length > 0) {
     return sources.filter(
-      (source) => !source.disabled && user.enabledApis!.includes(source.key)
+      (source) => !source.disabled && user.enabledApis!.includes(source.key),
     );
   }
 
@@ -42,7 +42,7 @@ function filterSourcesByUserPermissions(
     // 如果用户组有权限限制，则过滤源站
     if (allowedApis.size > 0) {
       return sources.filter(
-        (source) => !source.disabled && allowedApis.has(source.key)
+        (source) => !source.disabled && allowedApis.has(source.key),
       );
     }
   }
@@ -67,7 +67,7 @@ function getBaseUrl(request: NextRequest): string {
 async function checkRateLimit(
   ip: string,
   limit = 60,
-  windowMs = 60000
+  windowMs = 60000,
 ): Promise<boolean> {
   const now = Date.now();
   const windowStart = Math.floor(now / windowMs) * windowMs; // 对齐到时间窗口开始
@@ -272,7 +272,7 @@ async function getCachedConfig() {
 async function getCachedCategories(
   sourceApi: string,
   sourceName: string,
-  user?: { username: string; tags?: string[] }
+  user?: { username: string; tags?: string[] },
 ): Promise<string[]> {
   const now = Date.now();
   const cacheKey = `${sourceApi}|${sourceName}`;
@@ -326,7 +326,7 @@ async function getCachedCategories(
             if (hasYellowFilterExemption) {
               shouldApplyFilter = false;
               console.log(
-                `[TVBox] 用户 ${user.username} 属于有权访问18+内容的用户组，跳过过滤`
+                `[TVBox] 用户 ${user.username} 属于有权访问18+内容的用户组，跳过过滤`,
               );
             }
           }
@@ -339,12 +339,12 @@ async function getCachedCategories(
               categories = categories.filter((category: string) => {
                 const lowerCategory = category.toLowerCase();
                 return !yellowWords.some((word: string) =>
-                  lowerCategory.includes(word.toLowerCase())
+                  lowerCategory.includes(word.toLowerCase()),
                 );
               });
               if (categories.length !== originalCount) {
                 console.log(
-                  `[TVBox] 过滤分类: ${sourceName} 从 ${originalCount} 个分类过滤到 ${categories.length} 个`
+                  `[TVBox] 过滤分类: ${sourceName} 从 ${originalCount} 个分类过滤到 ${categories.length} 个`,
                 );
               }
             }
@@ -361,14 +361,14 @@ async function getCachedCategories(
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
         console.warn(
-          `[TVBox] 获取源站 ${sourceName} 分类超时(5s)，使用默认分类`
+          `[TVBox] 获取源站 ${sourceName} 分类超时(5s)，使用默认分类`,
         );
       } else if (
         error.message.includes('JSON') ||
         error.message.includes('parse')
       ) {
         console.warn(
-          `[TVBox] 源站 ${sourceName} 返回的分类数据格式错误，使用默认分类`
+          `[TVBox] 源站 ${sourceName} 返回的分类数据格式错误，使用默认分类`,
         );
       } else if (
         error.message.includes('ENOTFOUND') ||
@@ -377,12 +377,12 @@ async function getCachedCategories(
         console.warn(`[TVBox] 无法连接到源站 ${sourceName}，使用默认分类`);
       } else {
         console.warn(
-          `[TVBox] 获取源站 ${sourceName} 分类失败: ${error.message}，使用默认分类`
+          `[TVBox] 获取源站 ${sourceName} 分类失败: ${error.message}，使用默认分类`,
         );
       }
     } else {
       console.warn(
-        `[TVBox] 获取源站 ${sourceName} 分类失败（未知错误），使用默认分类`
+        `[TVBox] 获取源站 ${sourceName} 分类失败（未知错误），使用默认分类`,
       );
     }
   }
@@ -401,7 +401,7 @@ async function getCachedCategories(
       shouldApplyFilter = !(await hasSpecialFeaturePermission(
         user.username,
         'disable-yellow-filter',
-        config
+        config,
       ));
     }
 
@@ -411,7 +411,7 @@ async function getCachedCategories(
         defaultCategories = defaultCategories.filter((category: string) => {
           const lowerCategory = category.toLowerCase();
           return !yellowWords.some((word: string) =>
-            lowerCategory.includes(word.toLowerCase())
+            lowerCategory.includes(word.toLowerCase()),
           );
         });
       }
@@ -419,7 +419,7 @@ async function getCachedCategories(
       console.log(
         `[TVBox] 用户 ${
           user?.username || '匿名'
-        } 的用户组无需18+过滤（默认分类）`
+        } 的用户组无需18+过滤（默认分类）`,
       );
     }
   }
@@ -470,7 +470,7 @@ export async function GET(request: NextRequest) {
               const deviceId = getDeviceIdFromRequest(request);
 
               const device = userTokenInfo.devices.find(
-                (d: any) => d.deviceId === deviceId
+                (d: any) => d.deviceId === deviceId,
               );
 
               if (!device) {
@@ -486,7 +486,7 @@ export async function GET(request: NextRequest) {
                       error: 'Device not authorized',
                       hint: `设备未授权，已达到最大设备数量限制 (${maxDevices}台)，请联系管理员`,
                     },
-                    { status: 403 }
+                    { status: 403 },
                   );
                 }
 
@@ -549,7 +549,7 @@ export async function GET(request: NextRequest) {
                       error: 'Device binding failed',
                       hint: '设备绑定失败，请重试',
                     },
-                    { status: 500 }
+                    { status: 500 },
                   );
                 }
               }
@@ -574,7 +574,7 @@ export async function GET(request: NextRequest) {
             error: 'Invalid token. Please add ?token=YOUR_TOKEN to the URL',
             hint: '请在URL中添加 ?token=你的密钥 参数',
           },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -633,7 +633,7 @@ export async function GET(request: NextRequest) {
             error: `Access denied for IP: ${clientIP}`,
             hint: '该IP地址不在白名单中',
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }
@@ -663,7 +663,7 @@ export async function GET(request: NextRequest) {
             error: 'Rate limit exceeded',
             hint: `访问频率超限，每分钟最多${rateLimit}次请求`,
           },
-          { status: 429 }
+          { status: 429 },
         );
       }
     }
@@ -676,14 +676,14 @@ export async function GET(request: NextRequest) {
     if (sourceConfigs.length === 0) {
       return NextResponse.json(
         { error: '没有配置任何视频源' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     // 过滤掉被禁用的源站和没有API地址的源站
     let enabledSources = sourceConfigs.filter(
       (source: any) =>
-        !source.disabled && source.api && source.api.trim() !== ''
+        !source.disabled && source.api && source.api.trim() !== '',
     );
 
     // 根据用户权限进一步过滤源站（如果用户信息存在）
@@ -693,7 +693,7 @@ export async function GET(request: NextRequest) {
     // 优先使用Token验证时获取的用户名
     if (tokenUsername) {
       const user = config.UserConfig.Users.find(
-        (u: any) => u.username === tokenUsername
+        (u: any) => u.username === tokenUsername,
       );
 
       if (user) {
@@ -702,13 +702,13 @@ export async function GET(request: NextRequest) {
         enabledSources = filterSourcesByUserPermissions(
           enabledSources,
           user,
-          config.UserConfig.Tags || []
+          config.UserConfig.Tags || [],
         );
 
         console.log(
           `[TVBox] 使用Token用户: ${tokenUsername}, 用户组: ${
             user.tags?.join(', ') || '无'
-          }, 过滤后源站数: ${enabledSources.length}`
+          }, 过滤后源站数: ${enabledSources.length}`,
         );
       }
     } else {
@@ -717,7 +717,7 @@ export async function GET(request: NextRequest) {
 
       if (userAuthInfo && userAuthInfo.username) {
         const user = config.UserConfig.Users.find(
-          (u: any) => u.username === userAuthInfo.username
+          (u: any) => u.username === userAuthInfo.username,
         );
 
         if (user) {
@@ -726,13 +726,13 @@ export async function GET(request: NextRequest) {
           enabledSources = filterSourcesByUserPermissions(
             enabledSources,
             user,
-            config.UserConfig.Tags || []
+            config.UserConfig.Tags || [],
           );
 
           console.log(
             `[TVBox] 使用Cookie用户: ${userAuthInfo.username}, 用户组: ${
               user.tags?.join(', ') || '无'
-            }, 过滤后源站数: ${enabledSources.length}`
+            }, 过滤后源站数: ${enabledSources.length}`,
           );
         }
       }
@@ -863,7 +863,7 @@ export async function GET(request: NextRequest) {
 
           // 使用缓存获取源站分类（提高性能）
           const categories = await categoriesLimiter.run(async () =>
-            getCachedCategories(source.api, source.name, currentUser)
+            getCachedCategories(source.api, source.name, currentUser),
           );
 
           return {
@@ -884,7 +884,7 @@ export async function GET(request: NextRequest) {
             timeout: siteTimeout, // 超时时间
             retry: siteRetry, // 重试次数
           };
-        })
+        }),
       ),
 
       // 解析源配置（添加一些常用的解析源）
@@ -1007,7 +1007,7 @@ export async function GET(request: NextRequest) {
       // 直播源（合并所有启用的直播源为一个，解决TVBox多源限制）
       lives: (() => {
         const enabledLives = (config.LiveConfig || []).filter(
-          (live: any) => !live.disabled
+          (live: any) => !live.disabled,
         );
         if (enabledLives.length === 0) return [];
 
@@ -1130,7 +1130,7 @@ export async function GET(request: NextRequest) {
       console.warn(
         `[Spider] 远程 jar 获取失败，使用本地代理: ${
           finalSpiderUrl.split(';')[0]
-        }`
+        }`,
       );
     }
 
@@ -1311,7 +1311,7 @@ export async function GET(request: NextRequest) {
         error: 'TVBox配置生成失败',
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

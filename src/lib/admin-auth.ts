@@ -8,7 +8,7 @@ export type AdminRole = 'owner' | 'admin';
 
 async function resolveRoleFromConfig(
   config: AdminConfig,
-  username: string
+  username: string,
 ): Promise<AdminRole | null> {
   if (username === process.env.USERNAME) {
     return 'owner';
@@ -23,7 +23,7 @@ async function resolveRoleFromConfig(
 }
 
 export async function getAdminRoleFromRequest(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<AdminRole | null> {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo) {

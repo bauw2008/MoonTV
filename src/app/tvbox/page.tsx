@@ -11,10 +11,11 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { UnifiedVideoItem } from '@/lib/types';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
@@ -40,6 +41,7 @@ interface VideoItem {
   year?: string;
   desc?: string;
   type_name?: string;
+  type?: string; // 内容类型，由 TypeInferenceService 推断
   douban_id?: number;
   rate?: string;
   inferredType?: 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama';
@@ -324,7 +326,7 @@ function CategoryFilter({
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
       React.SetStateAction<{ left: number; width: number }>
-    >
+    >,
   ) => {
     if (
       activeIndex >= 0 &&
@@ -353,7 +355,7 @@ function CategoryFilter({
     options: Category[],
     activeValue: number | null,
     onChange: (value: number) => void,
-    isPrimary = false
+    isPrimary = false,
   ) => {
     const containerRef = isPrimary
       ? primaryContainerRef
@@ -407,7 +409,7 @@ function CategoryFilter({
   const getSecondaryCategories = (primaryId: number | null) => {
     if (primaryId === 0) return []; // “全部”不显示二级分类
     return categories.secondary_categories.filter(
-      (cat) => cat.type_pid === primaryId
+      (cat) => cat.type_pid === primaryId,
     ); // 获取对应二级分类
   };
 
@@ -415,33 +417,33 @@ function CategoryFilter({
   const secondaryOptions = useMemo(
     () =>
       selectedPrimary === 0 ? [] : getSecondaryCategories(selectedPrimary),
-    [selectedPrimary, categories.secondary_categories, getSecondaryCategories]
+    [selectedPrimary, categories.secondary_categories, getSecondaryCategories],
   );
 
   // ------------------- 初始化/更新指示器 -------------------
   useEffect(() => {
     const options = categories.primary_categories;
     const activeIndex = options.findIndex(
-      (cat) => cat.type_id === selectedPrimary
+      (cat) => cat.type_id === selectedPrimary,
     );
     updateIndicatorPosition(
       activeIndex >= 0 ? activeIndex : 0,
       primaryContainerRef,
       primaryButtonRefs,
-      setPrimaryIndicatorStyle
+      setPrimaryIndicatorStyle,
     );
   }, [categories.primary_categories, selectedPrimary]);
 
   useEffect(() => {
     const activeIndex = secondaryOptions.findIndex(
-      (cat) => cat.type_id === selectedSecondary
+      (cat) => cat.type_id === selectedSecondary,
     );
     if (secondaryOptions.length > 0) {
       updateIndicatorPosition(
         activeIndex >= 0 ? activeIndex : 0,
         secondaryContainerRef,
         secondaryButtonRefs,
-        setSecondaryIndicatorStyle
+        setSecondaryIndicatorStyle,
       );
     }
   }, [secondaryOptions, selectedSecondary]);
@@ -458,7 +460,7 @@ function CategoryFilter({
             categories.primary_categories || [],
             selectedPrimary,
             onPrimaryChange,
-            true
+            true,
           )}
         </div>
       </div>
@@ -474,7 +476,7 @@ function CategoryFilter({
               secondaryOptions,
               selectedSecondary,
               onSecondaryChange,
-              false
+              false,
             )}
           </div>
         </div>
@@ -591,7 +593,8 @@ function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
     rate: v.rate?.toString() || '',
     year: v.year || '',
     episodes: v.episodes?.length || 0,
-    type: v.inferredType || 'tv', // 直接使用服务端推断的类型
+    type:
+      (v.type as 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama') || 'tv', // 使用API推断的类型
     source: v.source,
     videoId: v.id,
     source_name: v.source_name,
@@ -623,11 +626,9 @@ export default function TVBoxPage() {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [fromCache, setFromCache] = useState(false);
 
-  // 返回顶部按钮显示状态
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
   const loadingRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const virtualGridRef = useRef<any>(null);
   const hasMore = currentPage < totalPages;
   const lastSourceRef = useRef<string>('');
 
@@ -647,33 +648,9 @@ export default function TVBoxPage() {
     }
   };
 
-  // ==================== 返回顶部功能 ====================
-  const getScrollTop = () => {
-    return document.body.scrollTop || document.documentElement.scrollTop || 0;
-  };
-
-  const handleScroll = () => {
-    const scrollTop = getScrollTop();
-    setShowBackToTop(scrollTop > 300);
-  };
-
-  const scrollToTop = () => {
-    try {
-      document.body.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    } catch (error) {
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    }
-  };
-
-  useEffect(() => {
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-    };
+  // 稳定的加载更多回调函数
+  const handleLoadMore = useCallback(() => {
+    setCurrentPage((prev) => prev + 1);
   }, []);
 
   // ==================== 滚动加载更多（非虚拟化模式） ====================
@@ -688,7 +665,7 @@ export default function TVBoxPage() {
           setCurrentPage((prev) => prev + 1);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(loadingRef.current);
@@ -797,7 +774,7 @@ export default function TVBoxPage() {
             const shouldSelectFirst =
               selectedPrimary === null ||
               !newCategories.primary_categories.some(
-                (cat) => cat.type_id === selectedPrimary
+                (cat) => cat.type_id === selectedPrimary,
               );
 
             if (
@@ -809,18 +786,18 @@ export default function TVBoxPage() {
 
               // 自动选中第一个二级分类（如果有）
               const secondaries = newCategories.secondary_categories.filter(
-                (cat) => cat.type_pid === firstCategory.type_id
+                (cat) => cat.type_pid === firstCategory.type_id,
               );
               setSelectedSecondary(
-                secondaries.length > 0 ? secondaries[0].type_id : 0
+                secondaries.length > 0 ? secondaries[0].type_id : 0,
               );
             } else if (selectedPrimary && selectedPrimary > 0) {
               // 如果一级分类存在但二级分类不存在，重置二级分类
               const secondaries = newCategories.secondary_categories.filter(
-                (cat) => cat.type_pid === selectedPrimary
+                (cat) => cat.type_pid === selectedPrimary,
               );
               setSelectedSecondary(
-                secondaries.length > 0 ? secondaries[0].type_id : 0
+                secondaries.length > 0 ? secondaries[0].type_id : 0,
               );
             }
           }
@@ -868,7 +845,7 @@ export default function TVBoxPage() {
     setFromCache(false);
 
     const secondaries = categories.secondary_categories.filter(
-      (cat) => cat.type_pid === id
+      (cat) => cat.type_pid === id,
     );
     setSelectedSecondary(secondaries.length > 0 ? secondaries[0].type_id : 0);
   };
@@ -1025,16 +1002,15 @@ export default function TVBoxPage() {
           </div>
         )}
 
-        
-
         {/* 内容展示 */}
         {useVirtualization ? (
           <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
             <VirtualVideoGrid
+              ref={virtualGridRef}
               videos={videos}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
-              onLoadMore={() => setCurrentPage((prev) => prev + 1)}
+              onLoadMore={handleLoadMore}
               loading={loading}
             />
           </div>
@@ -1063,7 +1039,7 @@ export default function TVBoxPage() {
       </div>
 
       {/* 侧边工具栏 */}
-      <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col gap-3'>
+      <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col-reverse gap-3'>
         {/* 虚拟滑动开关 */}
         <div className='relative group/switch'>
           <label className='flex items-center justify-center cursor-pointer'>
@@ -1077,48 +1053,32 @@ export default function TVBoxPage() {
               <div className='w-7 h-7 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl transition-all duration-300 peer-checked:from-gradient-to-br peer-checked:from-blue-500 peer-checked:to-purple-600 shadow-md hover:shadow-lg'></div>
               {/* 状态图标 */}
               <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                <svg className={`w-4 h-4 transition-all duration-300 ${useVirtualization ? 'text-white scale-100' : 'text-gray-500 scale-90'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className={`w-4 h-4 transition-all duration-300 ${useVirtualization ? 'text-white scale-100' : 'text-gray-500 scale-90'}`}
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M13 10V3L4 14h7v7l9-11h-7z'
+                  />
                 </svg>
               </div>
             </div>
           </label>
           {/* 优化的提示 */}
           <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/switch:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
-            <span className='font-medium'>{useVirtualization ? '虚拟滑动' : '标准滑动'}</span>
+            <span className='font-medium'>
+              {useVirtualization ? '虚拟滑动' : '标准滑动'}
+            </span>
             <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
           </div>
         </div>
 
-        {/* 返回顶部按钮 */}
-        <button
-          onClick={scrollToTop}
-          className={`relative group/top bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl w-7 h-7 text-gray-600 dark:text-gray-300 transition-all duration-300 shadow-md hover:shadow-lg hover:from-gradient-to-br hover:from-blue-500 hover:to-purple-600 hover:text-white flex items-center justify-center ${
-            showBackToTop
-              ? 'opacity-100 translate-y-0 pointer-events-auto scale-100'
-              : 'opacity-0 translate-y-3 pointer-events-none scale-95'
-          }`}
-          aria-label='返回顶部'
-        >
-          <svg
-            className='w-4 h-4 transition-transform duration-300 group-hover/top:-translate-y-0.5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M5 15l7-7 7 7'
-            />
-          </svg>
-          {/* 提示 */}
-          <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/top:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
-            <span className='font-medium'>返回顶部</span>
-            <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
-          </div>
-        </button>
+        <BackToTopButton virtualGridRef={virtualGridRef} />
       </div>
     </PageLayout>
   );

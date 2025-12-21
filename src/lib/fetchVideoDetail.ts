@@ -31,7 +31,7 @@ export async function fetchVideoDetail({
       const exactMatch = searchData.find(
         (item: SearchResult) =>
           item.source.toString() === source.toString() &&
-          item.id.toString() === id.toString()
+          item.id.toString() === id.toString(),
       );
       if (exactMatch) {
         return exactMatch;

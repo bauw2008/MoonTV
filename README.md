@@ -281,6 +281,7 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 [MIT](LICENSE) © 2025 Vidora & Contributors
 
 ## 致谢
+
 - [MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV) — 原始项目仓库
 - [MoonTV](https://github.com/SzeMeng76/LunaTV) — 隐藏的小黄人
 - [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目脚手架

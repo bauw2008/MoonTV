@@ -56,7 +56,7 @@ async function getCache(key: string): Promise<any | null> {
 async function setCache(
   key: string,
   data: any,
-  expireSeconds: number
+  expireSeconds: number,
 ): Promise<void> {
   try {
     console.log(`🔄 TMDB缓存设置: ${key}`);
@@ -114,7 +114,7 @@ async function cleanExpiredCache(): Promise<void> {
 
       if (keysToRemove.length > 0) {
         console.log(
-          `LocalStorage 清理了 ${keysToRemove.length} 个过期的TMDB缓存项`
+          `LocalStorage 清理了 ${keysToRemove.length} 个过期的TMDB缓存项`,
         );
       }
     }
@@ -134,7 +134,7 @@ export function getTMDBCacheStats(): {
   }
 
   const keys = Object.keys(localStorage).filter((key) =>
-    key.startsWith('tmdb-')
+    key.startsWith('tmdb-'),
   );
   const byType: Record<string, number> = {};
   let totalSize = 0;
@@ -161,7 +161,7 @@ export function clearTMDBCache(): void {
   if (typeof localStorage === 'undefined') return;
 
   const keys = Object.keys(localStorage).filter((key) =>
-    key.startsWith('tmdb-')
+    key.startsWith('tmdb-'),
   );
   keys.forEach((key) => localStorage.removeItem(key));
   console.log(`清理了 ${keys.length} 个TMDB缓存项`);

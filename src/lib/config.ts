@@ -79,7 +79,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
   // 合并文件中的源信息
   const apiSitesFromFile = Object.entries(fileConfig.api_site || []);
   const currentApiSites = new Map(
-    (adminConfig.SourceConfig || []).map((s) => [s.key, s])
+    (adminConfig.SourceConfig || []).map((s) => [s.key, s]),
   );
 
   apiSitesFromFile.forEach(([key, site]) => {
@@ -117,7 +117,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
   // 覆盖 CustomCategories
   const customCategoriesFromFile = fileConfig.custom_category || [];
   const currentCustomCategories = new Map(
-    (adminConfig.CustomCategories || []).map((c) => [c.query + c.type, c])
+    (adminConfig.CustomCategories || []).map((c) => [c.query + c.type, c]),
   );
 
   customCategoriesFromFile.forEach((category) => {
@@ -141,7 +141,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
 
   // 检查现有 CustomCategories 是否在 fileConfig.custom_category 中，如果不在则标记为 custom
   const customCategoriesFromFileKeys = new Set(
-    customCategoriesFromFile.map((c) => c.query + c.type)
+    customCategoriesFromFile.map((c) => c.query + c.type),
   );
   currentCustomCategories.forEach((category) => {
     if (!customCategoriesFromFileKeys.has(category.query + category.type)) {
@@ -155,7 +155,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
   // 合并直播源配置
   const livesFromFile = Object.entries(fileConfig.lives || []);
   const currentLives = new Map(
-    (adminConfig.LiveConfig || []).map((l) => [l.key, l])
+    (adminConfig.LiveConfig || []).map((l) => [l.key, l]),
   );
   livesFromFile.forEach(([key, site]) => {
     const existingLive = currentLives.get(key);
@@ -204,7 +204,7 @@ async function getInitConfig(
     URL: '',
     AutoUpdate: false,
     LastCheck: '',
-  }
+  },
 ): Promise<AdminConfig> {
   let cfgFile: ConfigFileStruct;
   try {
@@ -423,7 +423,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   // 创建默认用户组（如果不存在）
   const defaultGroupName = '默认';
   const defaultGroupExists = adminConfig.UserConfig.Tags.some(
-    (tag) => tag.name === defaultGroupName
+    (tag) => tag.name === defaultGroupName,
   );
 
   if (!defaultGroupExists) {
@@ -440,7 +440,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     console.log(
       `[Config] 已创建默认用户组，包含 ${
         availableSources.length
-      } 个视频源权限: ${availableSources.join(', ') || '无'}`
+      } 个视频源权限: ${availableSources.join(', ') || '无'}`,
     );
   }
 
@@ -559,10 +559,10 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   });
   // 过滤站长
   const originOwnerCfg = adminConfig.UserConfig.Users.find(
-    (u) => u.username === ownerUser
+    (u) => u.username === ownerUser,
   );
   adminConfig.UserConfig.Users = adminConfig.UserConfig.Users.filter(
-    (user) => user.username !== ownerUser
+    (user) => user.username !== ownerUser,
   );
   // 其他用户不得拥有 owner 权限
   adminConfig.UserConfig.Users.forEach((user) => {
@@ -598,7 +598,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       }
       seenCustomCategoryKeys.add(category.query + category.type);
       return true;
-    }
+    },
   );
 
   // 直播源去重
@@ -634,7 +634,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
 
   // 为每个用户创建独立的Token（如果不存在），保证Token长期有效
   const existingUsernames = new Set(
-    adminConfig.TVBoxSecurityConfig.userTokens.map((t) => t.username)
+    adminConfig.TVBoxSecurityConfig.userTokens.map((t) => t.username),
   );
   adminConfig.UserConfig.Users.forEach((user) => {
     if (!existingUsernames.has(user.username)) {
@@ -650,7 +650,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       // 如果用户已存在，保持其现有Token不变
       // 只更新禁用状态和用户信息，不重新生成Token
       const existingToken = adminConfig.TVBoxSecurityConfig?.userTokens?.find(
-        (t) => t.username === user.username
+        (t) => t.username === user.username,
       );
       if (existingToken) {
         // 保持Token不变，只确保enabled状态正确
@@ -663,8 +663,8 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   adminConfig.TVBoxSecurityConfig.userTokens =
     adminConfig.TVBoxSecurityConfig.userTokens.filter((token) =>
       adminConfig.UserConfig.Users.some(
-        (user) => user.username === token.username
-      )
+        (user) => user.username === token.username,
+      ),
     );
 
   return adminConfig;
@@ -683,7 +683,7 @@ export async function resetConfig() {
   }
   const adminConfig = await getInitConfig(
     originConfig.ConfigFile,
-    originConfig.ConfigSubscribtion
+    originConfig.ConfigSubscribtion,
   );
   cachedConfig = adminConfig;
   await db.saveAdminConfig(adminConfig);
@@ -733,7 +733,7 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
       const tagConfig = config.UserConfig.Tags?.find((t) => t.name === tagName);
       if (tagConfig && tagConfig.enabledApis) {
         tagConfig.enabledApis.forEach((apiKey) =>
-          enabledApisFromTags.add(apiKey)
+          enabledApisFromTags.add(apiKey),
         );
       }
     });
@@ -763,7 +763,7 @@ export async function setCachedConfig(config: AdminConfig) {
 export async function hasSpecialFeaturePermission(
   username: string,
   feature: 'ai-recommend' | 'youtube-search' | 'disable-yellow-filter',
-  providedConfig?: AdminConfig
+  providedConfig?: AdminConfig,
 ): Promise<boolean> {
   try {
     // 站长默认拥有所有权限
@@ -774,7 +774,7 @@ export async function hasSpecialFeaturePermission(
     // 使用提供的配置或获取新配置
     const config = providedConfig || (await getConfig());
     const userConfig = config.UserConfig.Users.find(
-      (u) => u.username === username
+      (u) => u.username === username,
     );
 
     // 如果用户不在配置中，检查是否是新注册用户
@@ -803,7 +803,7 @@ export async function hasSpecialFeaturePermission(
     ) {
       for (const tagName of userConfig.tags) {
         const tagConfig = config.UserConfig.Tags.find(
-          (t) => t.name === tagName
+          (t) => t.name === tagName,
         );
         if (
           tagConfig &&

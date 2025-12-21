@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getYellowWords } from '@/lib/yellow';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
           'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
           'Netlify-Vary': 'query',
         },
-      }
+      },
     );
   }
 
@@ -42,12 +43,12 @@ export async function GET(request: NextRequest) {
     Promise.race([
       searchFromApi(site, query),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000)
+        setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
       ),
     ]).catch((err) => {
       console.warn(`搜索失败 ${site.name}:`, err.message);
       return []; // 返回空数组而不是抛出错误
-    })
+    }),
   );
 
   try {
@@ -63,15 +64,19 @@ export async function GET(request: NextRequest) {
         return !yellowWords.some((word: string) => typeName.includes(word));
       });
     }
+
+    // 使用统一类型推断服务预处理搜索结果
+    const processedResults = TypeInferenceService.inferBatch(flattenedResults);
+
     const cacheTime = await getCacheTime();
 
-    if (flattenedResults.length === 0) {
+    if (processedResults.length === 0) {
       // no cache if empty
       return NextResponse.json({ results: [] }, { status: 200 });
     }
 
     return NextResponse.json(
-      { results: flattenedResults },
+      { results: processedResults },
       {
         headers: {
           'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
@@ -79,7 +84,7 @@ export async function GET(request: NextRequest) {
           'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
           'Netlify-Vary': 'query',
         },
-      }
+      },
     );
   } catch (error) {
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });

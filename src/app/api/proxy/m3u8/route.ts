@@ -110,14 +110,14 @@ export async function GET(request: Request) {
             'Content-Type': 'text/plain',
             'Access-Control-Allow-Origin': '*',
           },
-        }
+        },
       );
     }
 
     const contentType = response.headers.get('Content-Type') || '';
     const contentLength = parseInt(
       response.headers.get('Content-Length') || '0',
-      10
+      10,
     );
 
     // 检查内容是否为 M3U8
@@ -147,26 +147,26 @@ export async function GET(request: Request) {
         m3u8Content,
         baseUrl,
         request,
-        allowCORS
+        allowCORS,
       );
 
       const headers = new Headers();
       headers.set(
         'Content-Type',
-        contentType || 'application/vnd.apple.mpegurl'
+        contentType || 'application/vnd.apple.mpegurl',
       );
       headers.set('Access-Control-Allow-Origin', '*');
       headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
       headers.set(
         'Access-Control-Allow-Headers',
-        'Content-Type, Range, Origin, Accept, User-Agent'
+        'Content-Type, Range, Origin, Accept, User-Agent',
       );
       headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       headers.set('Pragma', 'no-cache');
       headers.set('Expires', '0');
       headers.set(
         'Access-Control-Expose-Headers',
-        'Content-Length, Content-Range, Content-Type'
+        'Content-Length, Content-Range, Content-Type',
       );
       headers.set('Content-Length', modifiedContent.length.toString());
 
@@ -183,21 +183,21 @@ export async function GET(request: Request) {
     const responseHeaders = new Headers();
     responseHeaders.set(
       'Content-Type',
-      response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl'
+      response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl',
     );
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set(
       'Access-Control-Allow-Methods',
-      'GET, POST, OPTIONS, HEAD'
+      'GET, POST, OPTIONS, HEAD',
     );
     responseHeaders.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Range, Origin, Accept, User-Agent'
+      'Content-Type, Range, Origin, Accept, User-Agent',
     );
     responseHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     responseHeaders.set(
       'Access-Control-Expose-Headers',
-      'Content-Length, Content-Range, Content-Type'
+      'Content-Length, Content-Range, Content-Type',
     );
 
     // 复制原始响应的相关头部
@@ -239,7 +239,7 @@ export async function GET(request: Request) {
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Network connection failed' },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -252,7 +252,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     clearTimeout(timeoutId);
@@ -274,8 +274,8 @@ export async function GET(request: Request) {
         `M3U8 Proxy Stats - Requests: ${stats.requests}, Errors: ${
           stats.errors
         }, Avg Response Time: ${stats.avgResponseTime.toFixed(
-          2
-        )}ms, Total Bytes: ${(stats.totalBytes / 1024 / 1024).toFixed(2)}MB`
+          2,
+        )}ms, Total Bytes: ${(stats.totalBytes / 1024 / 1024).toFixed(2)}MB`,
       );
     }
   }
@@ -285,7 +285,7 @@ function rewriteM3U8Content(
   content: string,
   baseUrl: string,
   req: Request,
-  allowCORS: boolean
+  allowCORS: boolean,
 ) {
   // 从 referer 头提取协议信息
   const referer = req.headers.get('referer');
@@ -370,7 +370,7 @@ function rewriteM3U8Content(
           let resolvedUrl = resolveUrl(baseUrl, nextLine);
           resolvedUrl = substituteVariables(resolvedUrl, variables);
           const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(
-            resolvedUrl
+            resolvedUrl,
           )}`;
           rewrittenLines.push(proxyUrl);
         } else {
@@ -416,7 +416,7 @@ const VARIABLE_REPLACEMENT_REGEX = /\{\$([a-zA-Z0-9-_]+)\}/g;
 
 function substituteVariables(
   text: string,
-  variables: Map<string, string>
+  variables: Map<string, string>,
 ): string {
   if (variables.size === 0) {
     return text;
@@ -433,14 +433,14 @@ function substituteVariables(
         return variableReference; // 保持原始引用如果变量未定义
       }
       return variableValue;
-    }
+    },
   );
 }
 
 // 处理变量定义
 function processDefineVariables(
   line: string,
-  variables: Map<string, string>
+  variables: Map<string, string>,
 ): string {
   const nameMatch = line.match(/NAME="([^"]+)"/);
   const valueMatch = line.match(/VALUE="([^"]+)"/);
@@ -456,7 +456,7 @@ function rewriteMapUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -466,7 +466,7 @@ function rewriteMapUri(
     }
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
     const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-      resolvedUrl
+      resolvedUrl,
     )}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
@@ -477,7 +477,7 @@ function rewriteKeyUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -496,7 +496,7 @@ function rewriteMediaUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -518,7 +518,7 @@ function rewriteMediaUri(
     try {
       const resolvedUrl = resolveUrl(baseUrl, originalUri);
       const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(
-        resolvedUrl
+        resolvedUrl,
       )}`;
       return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
     } catch (error) {
@@ -537,7 +537,7 @@ function rewritePartUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -547,7 +547,7 @@ function rewritePartUri(
     }
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
     const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-      resolvedUrl
+      resolvedUrl,
     )}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
@@ -559,7 +559,7 @@ function rewriteContentSteeringUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const serverUriMatch = line.match(/SERVER-URI="([^"]+)"/);
   if (serverUriMatch) {
@@ -579,7 +579,7 @@ function rewriteSessionDataUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -589,7 +589,7 @@ function rewriteSessionDataUri(
     }
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
     const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-      resolvedUrl
+      resolvedUrl,
     )}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
@@ -601,7 +601,7 @@ function rewriteSessionKeyUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -621,11 +621,11 @@ function rewriteDateRangeUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   // SCTE-35 或其他可能包含 URI 的属性
   const uriMatches = Array.from(
-    line.matchAll(/([A-Z-]+)="([^"]*(?:https?:\/\/|\/)[^"]*)"/g)
+    line.matchAll(/([A-Z-]+)="([^"]*(?:https?:\/\/|\/)[^"]*)"/g),
   );
   let result = line;
 
@@ -639,11 +639,11 @@ function rewriteDateRangeUri(
       try {
         const resolvedUrl = resolveUrl(baseUrl, uri);
         const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-          resolvedUrl
+          resolvedUrl,
         )}`;
         result = result.replace(
           fullMatch,
-          fullMatch.replace(originalUri, proxyUrl)
+          fullMatch.replace(originalUri, proxyUrl),
         );
       } catch (error) {
         // 保持原始 URI 如果解析失败
@@ -659,7 +659,7 @@ function rewritePreloadHintUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -677,15 +677,15 @@ function rewritePreloadHintUri(
       let proxyUrl: string;
       if (type === 'PART') {
         proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-          resolvedUrl
+          resolvedUrl,
         )}`;
       } else if (type === 'MAP') {
         proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-          resolvedUrl
+          resolvedUrl,
         )}`;
       } else {
         proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(
-          resolvedUrl
+          resolvedUrl,
         )}`;
       }
 
@@ -705,7 +705,7 @@ function rewriteRenditionReportUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
@@ -717,7 +717,7 @@ function rewriteRenditionReportUri(
     try {
       const resolvedUrl = resolveUrl(baseUrl, originalUri);
       const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(
-        resolvedUrl
+        resolvedUrl,
       )}`;
       return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
     } catch (error) {
@@ -735,7 +735,7 @@ function rewriteServerControlUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   // EXT-X-SERVER-CONTROL 通常不包含 URI，但为了完整性保留此函数
   // 如果将来有包含 URI 的扩展，可以在此处理
@@ -747,7 +747,7 @@ function rewriteSkipUri(
   line: string,
   baseUrl: string,
   proxyBase: string,
-  variables?: Map<string, string>
+  variables?: Map<string, string>,
 ): string {
   // EXT-X-SKIP 不包含 URI，只包含 SKIPPED-SEGMENTS 等属性
   // 保持原样返回

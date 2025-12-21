@@ -84,7 +84,7 @@ async function checkParserHealth(parser: Parser): Promise<boolean> {
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
-      parser.timeout || 5000
+      parser.timeout || 5000,
     );
 
     const response = await fetch(parseUrl, {
@@ -107,7 +107,7 @@ async function checkParserHealth(parser: Parser): Promise<boolean> {
 // 获取可用的解析器（优先返回活跃状态的解析器）
 function getAvailableParsers(platform: string): Parser[] {
   const filtered = PARSERS.filter(
-    (parser) => parser.platforms.includes(platform) || platform === 'unknown'
+    (parser) => parser.platforms.includes(platform) || platform === 'unknown',
   );
 
   // 按优先级和状态排序：active > unknown > inactive，同级别按priority排序
@@ -258,7 +258,7 @@ export async function GET(request: NextRequest) {
               'Access-Control-Allow-Headers': 'Content-Type',
               'Cache-Control': 'public, max-age=300',
             },
-          }
+          },
         );
     }
   } catch (error) {
@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
         error: '视频解析服务异常',
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

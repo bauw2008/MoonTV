@@ -253,7 +253,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                     action.disabled
                       ? 'opacity-50 cursor-not-allowed'
                       : `${getActionHoverColor(
-                          action.color
+                          action.color,
                         )} active:scale-[0.98]`
                   }
                 `}

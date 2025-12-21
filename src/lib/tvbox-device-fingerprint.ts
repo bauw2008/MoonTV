@@ -101,7 +101,7 @@ function getOSInfo(userAgent: string): string {
 export function verifyDeviceFingerprint(
   storedFingerprint: DeviceFingerprint,
   currentDeviceInfo: DeviceInfo,
-  currentIP?: string
+  currentIP?: string,
 ): boolean {
   // 生成当前设备的指纹ID
   const currentDeviceId = generateDeviceId(currentDeviceInfo);
@@ -128,7 +128,7 @@ export function verifyDeviceFingerprint(
  */
 export function getCurrentDeviceFingerprint(
   ipAddress?: string,
-  username?: string
+  username?: string,
 ): DeviceFingerprint {
   const deviceInfo = getDeviceInfo();
   const deviceId = generateDeviceId(deviceInfo);
@@ -148,7 +148,7 @@ export function getCurrentDeviceFingerprint(
  */
 export function isDeviceLimitExceeded(
   currentDevices: DeviceFingerprint[],
-  maxDevices: number
+  maxDevices: number,
 ): boolean {
   return currentDevices.length >= maxDevices;
 }
@@ -159,11 +159,11 @@ export function isDeviceLimitExceeded(
 export function addDeviceBinding(
   currentDevices: DeviceFingerprint[],
   newDevice: DeviceFingerprint,
-  maxDevices: number
+  maxDevices: number,
 ): DeviceFingerprint[] {
   // 检查设备是否已存在
   const existingIndex = currentDevices.findIndex(
-    (device) => device.deviceId === newDevice.deviceId
+    (device) => device.deviceId === newDevice.deviceId,
   );
 
   let updatedDevices = [...currentDevices];
@@ -193,7 +193,7 @@ export function addDeviceBinding(
  */
 export function removeDeviceBinding(
   currentDevices: DeviceFingerprint[],
-  deviceId: string
+  deviceId: string,
 ): DeviceFingerprint[] {
   return currentDevices.filter((device) => device.deviceId !== deviceId);
 }
@@ -203,7 +203,7 @@ export function removeDeviceBinding(
  */
 export function isDeviceBound(
   currentDevices: DeviceFingerprint[],
-  deviceId: string
+  deviceId: string,
 ): boolean {
   return currentDevices.some((device) => device.deviceId === deviceId);
 }

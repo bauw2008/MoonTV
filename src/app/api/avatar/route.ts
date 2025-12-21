@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if (sizeInBytes > 2 * 1024 * 1024) {
       return NextResponse.json(
         { error: '图片大小不能超过2MB' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

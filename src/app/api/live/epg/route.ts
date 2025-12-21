@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (!tvgId) {
       return NextResponse.json(
         { error: '缺少频道tvg-id参数' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

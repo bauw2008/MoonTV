@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     const timeSinceLastRequest = now - lastRequestTime;
     if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
       await new Promise((resolve) =>
-        setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+        setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest),
       );
     }
     lastRequestTime = Date.now();
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: '获取豆瓣详情失败', details: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -104,25 +104,25 @@ function parseDoubanDetails(html: string, id: string) {
   try {
     // 提取基本信息
     const titleMatch = html.match(
-      /<h1[^>]*>[\s\S]*?<span[^>]*property="v:itemreviewed"[^>]*>([^<]+)<\/span>/
+      /<h1[^>]*>[\s\S]*?<span[^>]*property="v:itemreviewed"[^>]*>([^<]+)<\/span>/,
     );
     const title = titleMatch ? titleMatch[1].trim() : '';
 
     // 提取海报
     const posterMatch = html.match(
-      /<a[^>]*class="nbgnbg"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/
+      /<a[^>]*class="nbgnbg"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/,
     );
     const poster = posterMatch ? posterMatch[1] : '';
 
     // 提取评分
     const ratingMatch = html.match(
-      /<strong[^>]*class="ll rating_num"[^>]*property="v:average">([^<]+)<\/strong>/
+      /<strong[^>]*class="ll rating_num"[^>]*property="v:average">([^<]+)<\/strong>/,
     );
     const rate = ratingMatch ? ratingMatch[1] : '';
 
     // 提取年份
     const yearMatch = html.match(
-      /<span[^>]*class="year">[(]([^)]+)[)]<\/span>/
+      /<span[^>]*class="year">[(]([^)]+)[)]<\/span>/,
     );
     const year = yearMatch ? yearMatch[1] : '';
 
@@ -133,7 +133,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 导演：<span class='pl'>导演</span>: <span class='attrs'><a href="..." rel="v:directedBy">刘家成</a></span>
     const directorMatch = html.match(
-      /<span class=['"]pl['"]>导演<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/
+      /<span class=['"]pl['"]>导演<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/,
     );
     if (directorMatch) {
       const directorLinks = directorMatch[1].match(/<a[^>]*>([^<]+)<\/a>/g);
@@ -149,7 +149,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 编剧：<span class='pl'>编剧</span>: <span class='attrs'><a href="...">王贺</a></span>
     const writerMatch = html.match(
-      /<span class=['"]pl['"]>编剧<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/
+      /<span class=['"]pl['"]>编剧<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/,
     );
     if (writerMatch) {
       const writerLinks = writerMatch[1].match(/<a[^>]*>([^<]+)<\/a>/g);
@@ -165,7 +165,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 主演：<span class='pl'>主演</span>: <span class='attrs'><a href="..." rel="v:starring">杨幂</a> / <a href="...">欧豪</a> / ...</span>
     const castMatch = html.match(
-      /<span class=['"]pl['"]>主演<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/
+      /<span class=['"]pl['"]>主演<\/span>:\s*<span class=['"]attrs['"]>(.*?)<\/span>/,
     );
     if (castMatch) {
       const castLinks = castMatch[1].match(/<a[^>]*>([^<]+)<\/a>/g);
@@ -181,13 +181,13 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 提取类型
     const genreMatches = html.match(
-      /<span[^>]*property="v:genre">([^<]+)<\/span>/g
+      /<span[^>]*property="v:genre">([^<]+)<\/span>/g,
     );
     const genres = genreMatches
       ? genreMatches
           .map((match) => {
             const result = match.match(
-              /<span[^>]*property="v:genre">([^<]+)<\/span>/
+              /<span[^>]*property="v:genre">([^<]+)<\/span>/,
             );
             return result ? result[1] : '';
           })
@@ -196,7 +196,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 提取制片国家/地区
     const countryMatch = html.match(
-      /<span[^>]*class="pl">制片国家\/地区:<\/span>([^<]+)/
+      /<span[^>]*class="pl">制片国家\/地区:<\/span>([^<]+)/,
     );
     const countries = countryMatch
       ? countryMatch[1]
@@ -208,7 +208,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 提取语言
     const languageMatch = html.match(
-      /<span[^>]*class="pl">语言:<\/span>([^<]+)/
+      /<span[^>]*class="pl">语言:<\/span>([^<]+)/,
     );
     const languages = languageMatch
       ? languageMatch[1]
@@ -223,14 +223,14 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 首播信息：<span class="pl">首播:</span> <span property="v:initialReleaseDate" content="2025-08-13(中国大陆)">2025-08-13(中国大陆)</span>
     const firstAiredMatch = html.match(
-      /<span class="pl">首播:<\/span>\s*<span[^>]*property="v:initialReleaseDate"[^>]*content="([^"]*)"[^>]*>([^<]*)<\/span>/
+      /<span class="pl">首播:<\/span>\s*<span[^>]*property="v:initialReleaseDate"[^>]*content="([^"]*)"[^>]*>([^<]*)<\/span>/,
     );
     if (firstAiredMatch) {
       first_aired = firstAiredMatch[1]; // 使用content属性的值
     } else {
       // 如果没有首播，尝试上映日期 - 可能有多个日期，取第一个
       const releaseDateMatch = html.match(
-        /<span class="pl">上映日期:<\/span>\s*<span[^>]*property="v:initialReleaseDate"[^>]*content="([^"]*)"[^>]*>([^<]*)<\/span>/
+        /<span class="pl">上映日期:<\/span>\s*<span[^>]*property="v:initialReleaseDate"[^>]*content="([^"]*)"[^>]*>([^<]*)<\/span>/,
       );
       if (releaseDateMatch) {
         first_aired = releaseDateMatch[1];
@@ -239,7 +239,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 提取集数（仅剧集有）
     const episodesMatch = html.match(
-      /<span[^>]*class="pl">集数:<\/span>([^<]+)/
+      /<span[^>]*class="pl">集数:<\/span>([^<]+)/,
     );
     const episodes = episodesMatch
       ? parseInt(episodesMatch[1].trim()) || undefined
@@ -251,7 +251,7 @@ function parseDoubanDetails(html: string, id: string) {
 
     // 先尝试提取剧集的单集片长
     const singleEpisodeDurationMatch = html.match(
-      /<span[^>]*class="pl">单集片长:<\/span>([^<]+)/
+      /<span[^>]*class="pl">单集片长:<\/span>([^<]+)/,
     );
     if (singleEpisodeDurationMatch) {
       episode_length =
@@ -259,7 +259,7 @@ function parseDoubanDetails(html: string, id: string) {
     } else {
       // 如果没有单集片长，尝试提取电影的总片长
       const movieDurationMatch = html.match(
-        /<span[^>]*class="pl">片长:<\/span>([^<]+)/
+        /<span[^>]*class="pl">片长:<\/span>([^<]+)/,
       );
       if (movieDurationMatch) {
         movie_duration = parseInt(movieDurationMatch[1].trim()) || undefined;

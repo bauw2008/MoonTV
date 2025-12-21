@@ -456,7 +456,7 @@ export const ThemeSettingsPanel: React.FC<{
       const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
       localStorage.setItem(
         'themeSettings',
-        JSON.stringify(settingsWithoutImage)
+        JSON.stringify(settingsWithoutImage),
       );
     }
   };
@@ -464,7 +464,7 @@ export const ThemeSettingsPanel: React.FC<{
   const generateGradients = (
     hue: number,
     saturation: number,
-    lightness: number
+    lightness: number,
   ) => {
     // 特殊处理纯净简约（默认）- 真正的透明琉璃效果
     if (hue === 0 && saturation === 0 && lightness === 100) {
@@ -485,23 +485,23 @@ export const ThemeSettingsPanel: React.FC<{
     // 浅色模式使用更亮的颜色和更高的饱和度
     const lightColor1 = `hsl(${hue}, ${Math.min(
       saturation + 20,
-      100
+      100,
     )}%, ${Math.min(lightness + 15, 95)}%)`;
     const lightColor2 = `hsl(${analogousHue1}, ${Math.min(
       saturation + 15,
-      100
+      100,
     )}%, ${Math.min(lightness + 10, 95)}%)`;
     const lightColor3 = `hsl(${complementaryHue}, ${Math.min(
       saturation + 10,
-      100
+      100,
     )}%, ${Math.min(lightness + 5, 95)}%)`;
     const lightColor4 = `hsl(${analogousHue2}, ${Math.min(
       saturation + 15,
-      100
+      100,
     )}%, ${Math.min(lightness + 10, 95)}%)`;
     const lightColor5 = `hsl(${triadicHue1}, ${Math.min(
       saturation + 20,
-      100
+      100,
     )}%, ${Math.min(lightness + 15, 95)}%)`;
 
     const lightGradient = `linear-gradient(135deg, ${lightColor1} 0%, ${lightColor2} 25%, ${lightColor3} 50%, ${lightColor4} 75%, ${lightColor5} 100%)`;
@@ -509,23 +509,23 @@ export const ThemeSettingsPanel: React.FC<{
     // 深色模式使用更深的颜色和更高的饱和度
     const darkColor1 = `hsl(${hue}, ${Math.min(
       saturation + 25,
-      100
+      100,
     )}%, ${Math.max(lightness - 30, 10)}%)`;
     const darkColor2 = `hsl(${triadicHue2}, ${Math.min(
       saturation + 20,
-      100
+      100,
     )}%, ${Math.max(lightness - 20, 15)}%)`;
     const darkColor3 = `hsl(${complementaryHue}, ${Math.min(
       saturation + 15,
-      100
+      100,
     )}%, ${Math.max(lightness - 25, 10)}%)`;
     const darkColor4 = `hsl(${analogousHue1}, ${Math.min(
       saturation + 20,
-      100
+      100,
     )}%, ${Math.max(lightness - 15, 15)}%)`;
     const darkColor5 = `hsl(${triadicHue1}, ${Math.min(
       saturation + 25,
-      100
+      100,
     )}%, ${Math.max(lightness - 35, 10)}%)`;
 
     const darkGradient = `linear-gradient(135deg, ${darkColor1} 0%, ${darkColor2} 25%, ${darkColor3} 50%, ${darkColor4} 75%, ${darkColor5} 100%)`;
@@ -576,11 +576,11 @@ export const ThemeSettingsPanel: React.FC<{
       // 移除动态效果类
       document.body.classList.remove(
         'subtle-gradient-animation',
-        'breathing-animation'
+        'breathing-animation',
       );
       document.documentElement.classList.remove(
         'subtle-gradient-animation',
-        'breathing-animation'
+        'breathing-animation',
       );
 
       // 优先级处理：图片背景 > 预设渐变 > 自定义背景色
@@ -604,7 +604,7 @@ export const ThemeSettingsPanel: React.FC<{
 
         root.style.setProperty(
           '--bg-gradient',
-          `url(${settings.backgroundImage})`
+          `url(${settings.backgroundImage})`,
         );
 
         // 移除琉璃通透模式的类
@@ -718,7 +718,7 @@ export const ThemeSettingsPanel: React.FC<{
           // 其他预设渐变
           const gradientWithOpacity = addOpacityToGradient(
             currentGradient,
-            themeOpacityValue
+            themeOpacityValue,
           );
 
           // 如果启用了动态背景且强度大于0，添加动画效果
@@ -734,7 +734,7 @@ export const ThemeSettingsPanel: React.FC<{
               'strong-gradient-animation',
               'breathing-animation',
               'strong-breathing-animation',
-              'ultra-strong-animation'
+              'ultra-strong-animation',
             );
 
             // 添加动态背景启用类
@@ -783,7 +783,7 @@ export const ThemeSettingsPanel: React.FC<{
               'strong-gradient-animation',
               'breathing-animation',
               'strong-breathing-animation',
-              'ultra-strong-animation'
+              'ultra-strong-animation',
             );
           }
 
@@ -808,14 +808,14 @@ export const ThemeSettingsPanel: React.FC<{
         const generatedGradients = generateGradients(
           settings.hue,
           settings.saturation,
-          settings.lightness
+          settings.lightness,
         );
         const currentGradient = isDarkMode
           ? generatedGradients.darkGradient
           : generatedGradients.lightGradient;
         const gradientWithOpacity = addOpacityToGradient(
           currentGradient,
-          themeOpacityValue
+          themeOpacityValue,
         );
 
         // 如果启用了动态背景且强度大于0，添加动画效果
@@ -831,7 +831,7 @@ export const ThemeSettingsPanel: React.FC<{
             'strong-gradient-animation',
             'breathing-animation',
             'strong-breathing-animation',
-            'ultra-strong-animation'
+            'ultra-strong-animation',
           );
 
           // 添加动态背景启用类
@@ -874,7 +874,7 @@ export const ThemeSettingsPanel: React.FC<{
           }
 
           console.log(
-            `Applied custom dynamic effects: intensity=${settings.dynamicIntensity}%, animation=${animationClass}`
+            `Applied custom dynamic effects: intensity=${settings.dynamicIntensity}%, animation=${animationClass}`,
           );
         } else {
           // 如果没有启用动态背景，移除所有动态背景类
@@ -884,7 +884,7 @@ export const ThemeSettingsPanel: React.FC<{
             'strong-gradient-animation',
             'breathing-animation',
             'strong-breathing-animation',
-            'ultra-strong-animation'
+            'ultra-strong-animation',
           );
         }
 
@@ -901,7 +901,7 @@ export const ThemeSettingsPanel: React.FC<{
         root.style.setProperty('--bg-gradient', gradientWithOpacity);
         console.log(
           'Applied custom gradient with dynamic effects:',
-          gradientWithOpacity
+          gradientWithOpacity,
         );
 
         // 移除琉璃通透模式的类
@@ -916,11 +916,11 @@ export const ThemeSettingsPanel: React.FC<{
       root.style.setProperty('--nav-menu-color', settings.navigationMenuColor);
       root.style.setProperty(
         '--section-title-color',
-        settings.sectionTitleColor
+        settings.sectionTitleColor,
       );
       root.style.setProperty(
         '--home-favorites-color',
-        settings.homeFavoritesColor
+        settings.homeFavoritesColor,
       );
 
       // 强制触发重绘，确保主题应用生效
@@ -942,7 +942,7 @@ export const ThemeSettingsPanel: React.FC<{
         (match, prefix, currentAlpha) => {
           const newAlpha = parseFloat(currentAlpha) * opacity;
           return `rgba(${prefix}${newAlpha})`;
-        }
+        },
       );
     } else if (gradient.includes('rgb')) {
       // 如果是rgb，则转换为rgba并添加透明度
@@ -950,7 +950,7 @@ export const ThemeSettingsPanel: React.FC<{
         /rgb\((\s*\d+\s*,\s*\d+\s*,\s*\d+\s*)\)/g,
         (match, colorValues) => {
           return `rgba(${colorValues} ${opacity})`;
-        }
+        },
       );
     } else if (gradient.includes('#')) {
       // 如果是十六进制颜色，则转换为rgba并添加透明度
@@ -1106,7 +1106,7 @@ export const ThemeSettingsPanel: React.FC<{
   };
 
   const handleBackgroundImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -1278,7 +1278,7 @@ export const ThemeSettingsPanel: React.FC<{
             root.style.setProperty('--bg-gradient', 'transparent');
 
             console.log(
-              'Glass effect created with proper layer structure and animated content'
+              'Glass effect created with proper layer structure and animated content',
             );
           };
 
@@ -1308,7 +1308,7 @@ export const ThemeSettingsPanel: React.FC<{
           // 其他预设渐变
           const gradientWithOpacity = addOpacityToGradient(
             currentGradient,
-            themeOpacityValue
+            themeOpacityValue,
           );
 
           document.body.style.background = gradientWithOpacity;
@@ -1353,7 +1353,7 @@ export const ThemeSettingsPanel: React.FC<{
       gradientOptions.find(
         (option) =>
           option.light === settings.lightGradient &&
-          option.dark === settings.darkGradient
+          option.dark === settings.darkGradient,
       )?.name || '自定义'
     );
   };
@@ -1555,7 +1555,7 @@ export const ThemeSettingsPanel: React.FC<{
                         ? generateGradients(
                             settings.hue,
                             settings.saturation,
-                            settings.lightness
+                            settings.lightness,
                           ).lightGradient
                         : settings.lightGradient,
                     }}
@@ -1573,7 +1573,7 @@ export const ThemeSettingsPanel: React.FC<{
                         ? generateGradients(
                             settings.hue,
                             settings.saturation,
-                            settings.lightness
+                            settings.lightness,
                           ).darkGradient
                         : settings.darkGradient,
                     }}

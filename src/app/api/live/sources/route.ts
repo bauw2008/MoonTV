@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // 过滤出所有非 disabled 的直播源
     const liveSources = (config.LiveConfig || []).filter(
-      (source) => !source.disabled
+      (source) => !source.disabled,
     );
 
     return NextResponse.json({

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       // 管理员
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (!user || user.role !== 'admin' || user.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       console.error('保存18+词汇配置到数据库失败:', error);
       return NextResponse.json(
         { error: '保存配置到数据库失败' },
-        { status: 500 }
+        { status: 500 },
       );
     }
     clearConfigCache(); // 清除配置缓存
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     console.error('更新过滤词配置失败:', error);
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         error: '更新过滤词配置失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

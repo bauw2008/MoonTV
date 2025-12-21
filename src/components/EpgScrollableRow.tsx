@@ -53,7 +53,7 @@ export default function EpgScrollableRow({
   const scrollToCurrentProgram = () => {
     if (containerRef.current) {
       const currentProgramIndex = programs.findIndex((program) =>
-        isCurrentlyPlaying(program)
+        isCurrentlyPlaying(program),
       );
       if (currentProgramIndex !== -1) {
         const programElement = containerRef.current.children[
@@ -101,7 +101,7 @@ export default function EpgScrollableRow({
     const timer = setTimeout(() => {
       // 初始化当前正在播放的节目索引
       const initialPlayingIndex = programs.findIndex((program) =>
-        isCurrentlyPlaying(program)
+        isCurrentlyPlaying(program),
       );
       setCurrentPlayingIndex(initialPlayingIndex);
       scrollToCurrentProgram();
@@ -235,10 +235,10 @@ export default function EpgScrollableRow({
                   isPlaying
                     ? 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30'
                     : isFinishedProgram
-                    ? 'bg-gray-300/50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
-                    : isUpcomingProgram
-                    ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30'
-                    : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'bg-gray-300/50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
+                      : isUpcomingProgram
+                        ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30'
+                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {/* 时间显示在顶部 */}
@@ -248,10 +248,10 @@ export default function EpgScrollableRow({
                       isPlaying
                         ? 'text-green-600 dark:text-green-400'
                         : isFinishedProgram
-                        ? 'text-gray-500 dark:text-gray-400'
-                        : isUpcomingProgram
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-300'
+                          ? 'text-gray-500 dark:text-gray-400'
+                          : isUpcomingProgram
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     {formatTime(program.start)}
@@ -267,10 +267,10 @@ export default function EpgScrollableRow({
                     isPlaying
                       ? 'text-green-900 dark:text-green-100'
                       : isFinishedProgram
-                      ? 'text-gray-600 dark:text-gray-400'
-                      : isUpcomingProgram
-                      ? 'text-blue-900 dark:text-blue-100'
-                      : 'text-gray-900 dark:text-gray-100'
+                        ? 'text-gray-600 dark:text-gray-400'
+                        : isUpcomingProgram
+                          ? 'text-blue-900 dark:text-blue-100'
+                          : 'text-gray-900 dark:text-gray-100'
                   }`}
                   style={{
                     display: '-webkit-box',

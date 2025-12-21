@@ -60,7 +60,7 @@ function cleanupExpiredCache() {
   // 如果缓存仍然过大，删除最老的条目
   if (logoCache.size > MAX_CACHE_SIZE) {
     const entries = Array.from(logoCache.entries()).sort(
-      (a, b) => a[1].timestamp - b[1].timestamp
+      (a, b) => a[1].timestamp - b[1].timestamp,
     );
     const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
     toDelete.forEach(([key]) => logoCache.delete(key));
@@ -75,7 +75,7 @@ function cleanupExpiredCache() {
 // 检测图片格式和大小
 function validateImageResponse(
   contentType: string | null,
-  contentLength: number
+  contentLength: number,
 ): { isValid: boolean; reason?: string } {
   if (!contentType) {
     return { isValid: true }; // 允许没有 content-type 的响应
@@ -91,7 +91,7 @@ function validateImageResponse(
     'image/vnd.microsoft.icon',
   ];
   const isValidType = validTypes.some((type) =>
-    contentType.toLowerCase().includes(type)
+    contentType.toLowerCase().includes(type),
   );
 
   if (!isValidType) {
@@ -204,7 +204,7 @@ export async function GET(request: Request) {
         {
           error: `Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`,
         },
-        { status: imageResponse.status >= 500 ? 500 : imageResponse.status }
+        { status: imageResponse.status >= 500 ? 500 : imageResponse.status },
       );
     }
 
@@ -212,7 +212,7 @@ export async function GET(request: Request) {
       imageResponse.headers.get('content-type') || 'image/jpeg';
     const contentLength = parseInt(
       imageResponse.headers.get('content-length') || '0',
-      10
+      10,
     );
     const etag = imageResponse.headers.get('ETag');
 
@@ -227,7 +227,7 @@ export async function GET(request: Request) {
       logoStats.errors++;
       return NextResponse.json(
         { error: 'Image response has no body' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -261,7 +261,7 @@ export async function GET(request: Request) {
     headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
     headers.set(
       'Cache-Control',
-      'public, max-age=604800, s-maxage=604800, immutable'
+      'public, max-age=604800, s-maxage=604800, immutable',
     ); // 7天缓存
     headers.set('X-Cache', 'MISS');
     headers.set('Content-Length', imageData.byteLength.toString());
@@ -287,14 +287,14 @@ export async function GET(request: Request) {
     if (error.name === 'AbortError') {
       return NextResponse.json(
         { error: 'Image request timeout' },
-        { status: 408 }
+        { status: 408 },
       );
     }
 
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Network connection failed' },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -307,7 +307,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     clearTimeout(timeoutId);
@@ -325,7 +325,7 @@ export async function GET(request: Request) {
           logoStats.errors
         }, Avg Time: ${logoStats.avgResponseTime.toFixed(2)}ms, Cache Size: ${
           logoCache.size
-        }, Total: ${(logoStats.totalBytes / 1024 / 1024).toFixed(2)}MB`
+        }, Total: ${(logoStats.totalBytes / 1024 / 1024).toFixed(2)}MB`,
       );
     }
   }

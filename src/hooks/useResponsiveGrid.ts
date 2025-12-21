@@ -8,7 +8,7 @@ interface GridDimensions {
 }
 
 export const useResponsiveGrid = (
-  containerRef?: React.RefObject<HTMLElement>
+  containerRef?: React.RefObject<HTMLElement>,
 ): GridDimensions => {
   const [dimensions, setDimensions] = useState<GridDimensions>({
     columnCount: 3,
@@ -38,19 +38,25 @@ export const useResponsiveGrid = (
       let columnCount: number;
 
       // 响应式列数计算
-      if (containerWidth >= 1536) columnCount = 8; // 2xl
-      else if (containerWidth >= 1280) columnCount = 7; // xl
-      else if (containerWidth >= 1024) columnCount = 6; // lg
-      else if (containerWidth >= 768) columnCount = 5; // md
-      else if (containerWidth >= 640) columnCount = 4; // sm
-      else if (containerWidth >= 475) columnCount = 3; // xs
+      if (containerWidth >= 1536)
+        columnCount = 8; // 2xl
+      else if (containerWidth >= 1280)
+        columnCount = 7; // xl
+      else if (containerWidth >= 1024)
+        columnCount = 6; // lg
+      else if (containerWidth >= 768)
+        columnCount = 5; // md
+      else if (containerWidth >= 640)
+        columnCount = 4; // sm
+      else if (containerWidth >= 475)
+        columnCount = 3; // xs
       else columnCount = 2; // mobile
 
       // 计算项目尺寸
       const gap = columnCount > 3 ? 0 : 8; // 大屏更大间距
       const totalGapWidth = gap * (columnCount - 1);
       const itemWidth = Math.floor(
-        (containerWidth - totalGapWidth) / columnCount
+        (containerWidth - totalGapWidth) / columnCount,
       );
 
       // 根据海报比例计算高度 (2:3) + 标题和来源信息高度
@@ -65,13 +71,13 @@ export const useResponsiveGrid = (
         containerWidth,
       });
     },
-    [containerRef]
+    [containerRef],
   );
 
   useLayoutEffect(() => {
     console.log(
       'useResponsiveGrid effect - containerRef.current:',
-      !!containerRef?.current
+      !!containerRef?.current,
     );
 
     // 使用递归重试机制
@@ -85,7 +91,7 @@ export const useResponsiveGrid = (
       if (!containerRef?.current) {
         if (retryCount < maxRetries) {
           console.log(
-            `containerRef not ready, retry ${retryCount}/${maxRetries}...`
+            `containerRef not ready, retry ${retryCount}/${maxRetries}...`,
           );
           setTimeout(setupObserver, 10);
         } else {
@@ -108,7 +114,7 @@ export const useResponsiveGrid = (
       if (element.offsetWidth === 0) {
         if (retryCount < maxRetries) {
           console.log(
-            `Element width is 0, retry ${retryCount}/${maxRetries}...`
+            `Element width is 0, retry ${retryCount}/${maxRetries}...`,
           );
           setTimeout(setupObserver, 10);
         } else {

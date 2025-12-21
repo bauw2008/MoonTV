@@ -36,7 +36,7 @@ const YouTubeVideoCard = ({ video }: YouTubeVideoCardProps) => {
   const handleOpenInNewTab = () => {
     window.open(
       `https://www.youtube.com/watch?v=${video.id.videoId}`,
-      '_blank'
+      '_blank',
     );
   };
 

@@ -98,7 +98,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   const fetchRemoteChangelog = async () => {
     try {
       const response = await fetch(
-        'https://raw.githubusercontent.com/bauw2008/Vidora/refs/heads/main/CHANGELOG'
+        'https://raw.githubusercontent.com/bauw2008/Vidora/refs/heads/main/CHANGELOG',
       );
       if (response.ok) {
         const content = await response.text();
@@ -110,14 +110,14 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           const latest = parsed[0];
           setLatestVersion(latest.version);
           setIsHasUpdate(
-            compareVersions(latest.version) === UpdateStatus.HAS_UPDATE
+            compareVersions(latest.version) === UpdateStatus.HAS_UPDATE,
           );
         }
       } else {
         console.error(
           '获取远程变更日志失败:',
           response.status,
-          response.statusText
+          response.statusText,
         );
       }
     } catch (error) {
@@ -138,7 +138,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
       // 匹配版本行: ## [X.Y.Z] - YYYY-MM-DD
       const versionMatch = trimmedLine.match(
-        /^## \[([\d.]+)\] - (\d{4}-\d{2}-\d{2})$/
+        /^## \[([\d.]+)\] - (\d{4}-\d{2}-\d{2})$/,
       );
       if (versionMatch) {
         if (currentVersion) {
@@ -197,7 +197,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   const renderChangelogEntry = (
     entry: ChangelogEntry | RemoteChangelogEntry,
     isCurrentVersion = false,
-    isRemote = false
+    isRemote = false,
   ) => {
     const isUpdate = isRemote && hasUpdate && entry.version === latestVersion;
 
@@ -208,8 +208,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           isCurrentVersion
             ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
             : isUpdate
-            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
+              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+              : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
         }`}
       >
         {/* 版本标题 */}
@@ -459,7 +459,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                       .filter((entry) => {
                         // 找到第一个本地版本，过滤掉本地已有的版本
                         const localVersions = changelog.map(
-                          (local) => local.version
+                          (local) => local.version,
                         );
                         return !localVersions.includes(entry.version);
                       })
@@ -566,8 +566,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                   renderChangelogEntry(
                     entry,
                     entry.version === CURRENT_VERSION,
-                    false
-                  )
+                    false,
+                  ),
                 )}
               </div>
             </div>

@@ -42,8 +42,8 @@ function VersionDisplay() {
             updateStatus === UpdateStatus.HAS_UPDATE
               ? 'text-yellow-600 dark:text-yellow-400'
               : updateStatus === UpdateStatus.NO_UPDATE
-              ? 'text-green-600 dark:text-green-400'
-              : ''
+                ? 'text-green-600 dark:text-green-400'
+                : ''
           }`}
         >
           {updateStatus === UpdateStatus.HAS_UPDATE && (

@@ -4,7 +4,7 @@
 export function calculatePagination(
   totalItems: number,
   currentPage: number,
-  pageSize = 24
+  pageSize = 24,
 ): { totalPages: number; start: number; end: number } {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const start = (currentPage - 1) * pageSize;

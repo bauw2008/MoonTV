@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import PageLayout from '@/components/PageLayout';
 
 export default function ReleaseCalendarPage() {
@@ -37,11 +38,8 @@ export default function ReleaseCalendarPage() {
 
   // 视图模式
   const [viewMode, setViewMode] = useState<'grid' | 'timeline' | 'calendar'>(
-    'grid'
+    'grid',
   );
-
-  // 返回顶部按钮状态
-  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // 日历视图的当前月份
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
@@ -138,7 +136,7 @@ export default function ReleaseCalendarPage() {
 
   // 前端过滤逻辑
   const applyClientSideFilters = (
-    data: ReleaseCalendarResult
+    data: ReleaseCalendarResult,
   ): ReleaseCalendarResult => {
     return applyClientSideFiltersWithParams(data, filters);
   };
@@ -146,37 +144,37 @@ export default function ReleaseCalendarPage() {
   // 前端过滤逻辑（可以指定过滤参数）
   const applyClientSideFiltersWithParams = (
     data: ReleaseCalendarResult,
-    filterParams: typeof filters
+    filterParams: typeof filters,
   ): ReleaseCalendarResult => {
     let filteredItems = [...data.items];
 
     if (filterParams.type) {
       filteredItems = filteredItems.filter(
-        (item) => item.type === filterParams.type
+        (item) => item.type === filterParams.type,
       );
     }
 
     if (filterParams.region && filterParams.region !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.region.includes(filterParams.region!)
+        item.region.includes(filterParams.region!),
       );
     }
 
     if (filterParams.genre && filterParams.genre !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.genre.includes(filterParams.genre!)
+        item.genre.includes(filterParams.genre!),
       );
     }
 
     if (filterParams.dateFrom) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate >= filterParams.dateFrom!
+        (item) => item.releaseDate >= filterParams.dateFrom!,
       );
     }
 
     if (filterParams.dateTo) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate <= filterParams.dateTo!
+        (item) => item.releaseDate <= filterParams.dateTo!,
       );
     }
 
@@ -189,7 +187,7 @@ export default function ReleaseCalendarPage() {
           item.director
             .toLowerCase()
             .includes(filterParams.search.toLowerCase()) ||
-          item.actors.toLowerCase().includes(filterParams.search.toLowerCase())
+          item.actors.toLowerCase().includes(filterParams.search.toLowerCase()),
       );
     }
 
@@ -247,7 +245,7 @@ export default function ReleaseCalendarPage() {
       // 直接使用重置后的过滤条件，而不是依赖state（state更新是异步的）
       const filteredData = applyClientSideFiltersWithParams(
         allData,
-        resetFiltersState
+        resetFiltersState,
       );
       setData(filteredData);
     } else {
@@ -277,41 +275,6 @@ export default function ReleaseCalendarPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  // 监听滚动事件以显示/隐藏返回顶部按钮
-  useEffect(() => {
-    const getScrollTop = () => {
-      return document.body.scrollTop || document.documentElement.scrollTop || 0;
-    };
-
-    // 滚动事件处理
-    const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
-    };
-
-    // 监听 body 元素的滚动事件（参考play-stats页面的实现方式）
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // 返回顶部功能
-  const scrollToTop = () => {
-    try {
-      // 根据play-stats页面的实现，真正的滚动容器是 document.body
-      document.body.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    } catch (e) {
-      // 降级方案
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    }
-  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -597,8 +560,8 @@ export default function ReleaseCalendarPage() {
                         self.findIndex(
                           (t) =>
                             t.title === item.title &&
-                            t.director === item.director
-                        )
+                            t.director === item.director,
+                        ),
                     );
                     return uniqueCurrentItems;
                   })().map((item) => {
@@ -765,7 +728,7 @@ export default function ReleaseCalendarPage() {
                             >
                               {day}
                             </div>
-                          )
+                          ),
                         )}
                       </div>
 
@@ -778,16 +741,16 @@ export default function ReleaseCalendarPage() {
                           const firstDay = new Date(
                             currentYear,
                             currentMonth,
-                            1
+                            1,
                           );
                           const lastDay = new Date(
                             currentYear,
                             currentMonth + 1,
-                            0
+                            0,
                           );
                           const startDate = new Date(firstDay);
                           startDate.setDate(
-                            startDate.getDate() - firstDay.getDay()
+                            startDate.getDate() - firstDay.getDay(),
                           );
 
                           const days = [];
@@ -801,16 +764,16 @@ export default function ReleaseCalendarPage() {
                             for (let day = 0; day < 7; day++) {
                               // 避免时区问题，使用本地日期格式
                               const dateStr = `${current.getFullYear()}-${String(
-                                current.getMonth() + 1
+                                current.getMonth() + 1,
                               ).padStart(2, '0')}-${String(
-                                current.getDate()
+                                current.getDate(),
                               ).padStart(2, '0')}`;
                               const isCurrentMonth =
                                 current.getMonth() === currentMonth;
                               const isToday =
                                 current.toDateString() === today.toDateString();
                               const dayItems = allItems.filter(
-                                (item) => item.releaseDate === dateStr
+                                (item) => item.releaseDate === dateStr,
                               );
                               // 去重：按title和director去重
                               const uniqueDayItems = dayItems.filter(
@@ -819,8 +782,8 @@ export default function ReleaseCalendarPage() {
                                   self.findIndex(
                                     (t) =>
                                       t.title === item.title &&
-                                      t.director === item.director
-                                  )
+                                      t.director === item.director,
+                                  ),
                               );
 
                               days.push(
@@ -846,8 +809,8 @@ export default function ReleaseCalendarPage() {
                                       isToday
                                         ? 'text-blue-600 dark:text-blue-400'
                                         : !isCurrentMonth
-                                        ? 'text-gray-400'
-                                        : 'text-gray-900 dark:text-white'
+                                          ? 'text-gray-400'
+                                          : 'text-gray-900 dark:text-white'
                                     }`}
                                   >
                                     {current.getDate()}
@@ -887,7 +850,7 @@ export default function ReleaseCalendarPage() {
                                       </button>
                                     )}
                                   </div>
-                                </div>
+                                </div>,
                               );
 
                               current.setDate(current.getDate() + 1);
@@ -909,7 +872,7 @@ export default function ReleaseCalendarPage() {
                         const lastDay = new Date(
                           currentYear,
                           currentMonth + 1,
-                          0
+                          0,
                         );
 
                         // 使用全部数据而不是分页数据
@@ -921,14 +884,14 @@ export default function ReleaseCalendarPage() {
 
                         while (current <= lastDay) {
                           const dateStr = `${current.getFullYear()}-${String(
-                            current.getMonth() + 1
+                            current.getMonth() + 1,
                           ).padStart(2, '0')}-${String(
-                            current.getDate()
+                            current.getDate(),
                           ).padStart(2, '0')}`;
                           const isToday =
                             current.toDateString() === today.toDateString();
                           const dayItems = allItems.filter(
-                            (item) => item.releaseDate === dateStr
+                            (item) => item.releaseDate === dateStr,
                           );
                           // 去重：按title和director去重
                           const uniqueDayItems = dayItems.filter(
@@ -937,8 +900,8 @@ export default function ReleaseCalendarPage() {
                               self.findIndex(
                                 (t) =>
                                   t.title === item.title &&
-                                  t.director === item.director
-                              )
+                                  t.director === item.director,
+                              ),
                           );
 
                           if (uniqueDayItems.length > 0) {
@@ -1029,7 +992,7 @@ export default function ReleaseCalendarPage() {
                                 ))}
                               </div>
                             </div>
-                          )
+                          ),
                         );
                       })()}
                     </div>
@@ -1039,14 +1002,14 @@ export default function ReleaseCalendarPage() {
                   {(() => {
                     const today = new Date();
                     const todayStr = `${today.getFullYear()}-${String(
-                      today.getMonth() + 1
+                      today.getMonth() + 1,
                     ).padStart(2, '0')}-${String(today.getDate()).padStart(
                       2,
-                      '0'
+                      '0',
                     )}`;
                     const allItems = data?.items || [];
                     const todayItems = allItems.filter(
-                      (item) => item.releaseDate === todayStr
+                      (item) => item.releaseDate === todayStr,
                     );
 
                     // 去重：按title和director去重
@@ -1056,8 +1019,8 @@ export default function ReleaseCalendarPage() {
                         self.findIndex(
                           (t) =>
                             t.title === item.title &&
-                            t.director === item.director
-                        )
+                            t.director === item.director,
+                        ),
                     );
 
                     if (uniqueTodayItems.length > 0) {
@@ -1108,22 +1071,25 @@ export default function ReleaseCalendarPage() {
 
                   <div className='space-y-8'>
                     {Object.entries(
-                      (data?.items || []).reduce((acc, item) => {
-                        const date = item.releaseDate;
-                        if (!acc[date]) acc[date] = [];
-                        acc[date].push(item);
-                        return acc;
-                      }, {} as Record<string, ReleaseCalendarItem[]>)
+                      (data?.items || []).reduce(
+                        (acc, item) => {
+                          const date = item.releaseDate;
+                          if (!acc[date]) acc[date] = [];
+                          acc[date].push(item);
+                          return acc;
+                        },
+                        {} as Record<string, ReleaseCalendarItem[]>,
+                      ),
                     )
                       .sort(([a], [b]) => a.localeCompare(b))
                       .map(([date, items], index) => {
                         const today = new Date();
                         const currentDate = new Date(date);
                         const todayStr = `${today.getFullYear()}-${String(
-                          today.getMonth() + 1
+                          today.getMonth() + 1,
                         ).padStart(2, '0')}-${String(today.getDate()).padStart(
                           2,
-                          '0'
+                          '0',
                         )}`;
                         const isToday = date === todayStr;
                         const isPast = currentDate < today && !isToday;
@@ -1136,8 +1102,8 @@ export default function ReleaseCalendarPage() {
                             self.findIndex(
                               (t) =>
                                 t.title === item.title &&
-                                t.director === item.director
-                            )
+                                t.director === item.director,
+                            ),
                         );
 
                         return (
@@ -1148,8 +1114,8 @@ export default function ReleaseCalendarPage() {
                                 isToday
                                   ? 'bg-red-500 animate-pulse shadow-lg shadow-red-500/50'
                                   : isPast
-                                  ? 'bg-gray-400'
-                                  : 'bg-blue-500 shadow-lg shadow-blue-500/30'
+                                    ? 'bg-gray-400'
+                                    : 'bg-blue-500 shadow-lg shadow-blue-500/30'
                               }`}
                             >
                               {isToday && (
@@ -1165,8 +1131,8 @@ export default function ReleaseCalendarPage() {
                                 isToday
                                   ? 'border-red-500 ring-2 ring-red-500/20'
                                   : isPast
-                                  ? 'border-gray-300 dark:border-gray-600 opacity-75'
-                                  : 'border-blue-200 dark:border-blue-800'
+                                    ? 'border-gray-300 dark:border-gray-600 opacity-75'
+                                    : 'border-blue-200 dark:border-blue-800'
                               }`}
                             >
                               {/* 日期头部 */}
@@ -1175,8 +1141,8 @@ export default function ReleaseCalendarPage() {
                                   isToday
                                     ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-800'
                                     : isPast
-                                    ? 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
-                                    : 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800'
+                                      ? 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                                      : 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800'
                                 }`}
                               >
                                 <div className='flex items-center justify-between'>
@@ -1186,8 +1152,8 @@ export default function ReleaseCalendarPage() {
                                         isToday
                                           ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                                           : isPast
-                                          ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                                          : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                            ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                            : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                                       }`}
                                     >
                                       <Calendar className='w-5 h-5' />
@@ -1198,8 +1164,8 @@ export default function ReleaseCalendarPage() {
                                           isToday
                                             ? 'text-red-800 dark:text-red-300'
                                             : isPast
-                                            ? 'text-gray-700 dark:text-gray-300'
-                                            : 'text-blue-800 dark:text-blue-300'
+                                              ? 'text-gray-700 dark:text-gray-300'
+                                              : 'text-blue-800 dark:text-blue-300'
                                         }`}
                                       >
                                         {formatDate(date)}
@@ -1366,30 +1332,10 @@ export default function ReleaseCalendarPage() {
             </>
           )}
 
-          {/* 返回顶部悬浮按钮 */}
-          <button
-            onClick={scrollToTop}
-            className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-8 h-8 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 transition-all duration-200 ease-in-out flex items-center justify-center ${
-              showBackToTop
-                ? 'opacity-70 translate-y-0 pointer-events-auto hover:opacity-90'
-                : 'opacity-0 translate-y-3 pointer-events-none'
-            }`}
-            aria-label='返回顶部'
-          >
-            <svg
-              className='w-6 h-6'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={3}
-                d='M5 15l7-7 7 7'
-              />
-            </svg>
-          </button>
+          {/* 侧边工具栏 */}
+          <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col-reverse gap-3'>
+            <BackToTopButton />
+          </div>
         </div>
       </div>
     </PageLayout>

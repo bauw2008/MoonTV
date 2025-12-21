@@ -43,7 +43,7 @@ export async function fetchDoubanData<T>(url: string): Promise<T> {
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
     await new Promise((resolve) =>
-      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest),
     );
   }
   lastRequestTime = Date.now();
@@ -93,7 +93,7 @@ export async function fetchDoubanHtml(url: string): Promise<string> {
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
     await new Promise((resolve) =>
-      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest),
     );
   }
   lastRequestTime = Date.now();

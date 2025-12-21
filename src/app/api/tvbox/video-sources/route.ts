@@ -7,12 +7,12 @@ import { getConfig } from '@/lib/config';
 function filterSourcesByUserPermissions(
   sources: any[],
   user: { enabledApis?: string[]; tags?: string[] },
-  tagsConfig: any[]
+  tagsConfig: any[],
 ): any[] {
   // 如果用户有直接指定的enabledApis，优先使用
   if (user.enabledApis && user.enabledApis.length > 0) {
     return sources.filter(
-      (source) => !source.disabled && user.enabledApis!.includes(source.key)
+      (source) => !source.disabled && user.enabledApis!.includes(source.key),
     );
   }
 
@@ -36,7 +36,7 @@ function filterSourcesByUserPermissions(
     // 如果用户组有权限限制，则过滤源站
     if (allowedApis.size > 0) {
       return sources.filter(
-        (source) => !source.disabled && allowedApis.has(source.key)
+        (source) => !source.disabled && allowedApis.has(source.key),
       );
     }
   }
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     // 获取用户信息
     const user = config.UserConfig.Users.find(
-      (u) => u.username === authInfo.username
+      (u) => u.username === authInfo.username,
     );
 
     if (!user) {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const availableSites = filterSourcesByUserPermissions(
       config.SourceConfig || [],
       user,
-      config.UserConfig.Tags || []
+      config.UserConfig.Tags || [],
     );
 
     // 如果没有可用源站，返回空结果
@@ -82,14 +82,17 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const sources = availableSites.reduce((acc, site) => {
-      acc[site.key] = {
-        api: site.api,
-        name: site.name,
-        detail: site.detail,
-      };
-      return acc;
-    }, {} as Record<string, { api: string; name: string; detail?: string }>);
+    const sources = availableSites.reduce(
+      (acc, site) => {
+        acc[site.key] = {
+          api: site.api,
+          name: site.name,
+          detail: site.detail,
+        };
+        return acc;
+      },
+      {} as Record<string, { api: string; name: string; detail?: string }>,
+    );
 
     return NextResponse.json({
       ...sources,

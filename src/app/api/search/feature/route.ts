@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         tmdbActorSearchEnabled: false,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

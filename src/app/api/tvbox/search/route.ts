@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const hasYellowFilterPermission = await hasSpecialFeaturePermission(
       authInfo.username,
       'disable-yellow-filter',
-      config
+      config,
     );
 
     // 过滤18+内容：当全局禁用18+过滤关闭时，且用户没有禁用18+过滤权限时进行过滤
@@ -76,10 +76,10 @@ export async function GET(request: NextRequest) {
 
         // 同时检查 type_name 和 title 字段
         const matchedTypeWord = yellowWords.find((word: string) =>
-          typeName.includes(word)
+          typeName.includes(word),
         );
         const matchedTitleWord = yellowWords.find((word: string) =>
-          title.includes(word)
+          title.includes(word),
         );
         const shouldFilter = !!matchedTypeWord || !!matchedTitleWord;
 
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     // 计算分页
     const { totalPages, start, end } = calculatePagination(
       filteredResults.length,
-      page
+      page,
     );
     const paginatedResults = filteredResults.slice(start, end);
 

@@ -85,7 +85,7 @@ export class DatabaseCacheManager {
           if (typeof storage.withRetry === 'function' && storage.client?.keys) {
             // 方式1：使用 withRetry
             allCacheKeys = await storage.withRetry(() =>
-              storage.client.keys('cache:*')
+              storage.client.keys('cache:*'),
             );
           } else if (storage.client?.keys) {
             // 方式2：直接调用 client.keys
@@ -105,7 +105,7 @@ export class DatabaseCacheManager {
         console.log('🔍 使用KVRocks/标准Redis方式获取键...');
         if (typeof storage.withRetry === 'function' && storage.client?.keys) {
           allCacheKeys = await storage.withRetry(() =>
-            storage.client.keys('cache:*')
+            storage.client.keys('cache:*'),
           );
         } else {
           console.warn('❌ KVRocks/Redis存储没有withRetry或client.keys方法');
@@ -120,7 +120,7 @@ export class DatabaseCacheManager {
 
       console.log(
         `📊 数据库中找到 ${allCacheKeys.length} 个缓存键:`,
-        allCacheKeys.slice(0, 5)
+        allCacheKeys.slice(0, 5),
       );
 
       if (allCacheKeys.length === 0) {
@@ -136,7 +136,7 @@ export class DatabaseCacheManager {
           if (typeof storage.withRetry === 'function' && storage.client?.mget) {
             // 方式1：使用 withRetry
             values = (await storage.withRetry(() =>
-              storage.client.mget(allCacheKeys)
+              storage.client.mget(allCacheKeys),
             )) as any[];
           } else if (storage.client?.mget) {
             // 方式2：直接调用 client.mget
@@ -153,7 +153,7 @@ export class DatabaseCacheManager {
                   storage.client?.get
                 ) {
                   value = await storage.withRetry(() =>
-                    storage.client.get(key)
+                    storage.client.get(key),
                   );
                 } else if (storage.client?.get) {
                   value = await storage.client.get(key);
@@ -173,7 +173,7 @@ export class DatabaseCacheManager {
         // KVRocks/标准Redis (带重试机制) - 保持不变
         if (typeof storage.withRetry === 'function' && storage.client?.mGet) {
           values = await storage.withRetry(() =>
-            storage.client.mGet(allCacheKeys)
+            storage.client.mGet(allCacheKeys),
           );
         } else {
           console.warn('KVRocks/Redis没有mGet方法，使用逐个获取');
@@ -263,8 +263,8 @@ export class DatabaseCacheManager {
 
       console.log(
         `✅ Redis缓存统计完成: 总计 ${stats.total.count} 项, ${formatBytes(
-          stats.total.size
-        )}`
+          stats.total.size,
+        )}`,
       );
       return stats;
     } catch (error) {
@@ -320,7 +320,7 @@ export class DatabaseCacheManager {
           key.startsWith('tvbox-') ||
           key.startsWith('search-') ||
           key.startsWith('cache-') ||
-          key === 'lunatv_danmu_cache'
+          key === 'lunatv_danmu_cache',
       );
 
       console.log(`📊 localStorage中找到 ${keys.length} 个相关缓存键`);
@@ -385,7 +385,7 @@ export class DatabaseCacheManager {
 
   // 清理指定类型的缓存
   static async clearCacheByType(
-    type: 'douban' | 'tmdb' | 'danmu' | 'netdisk' | 'youtube' | 'tvbox'
+    type: 'douban' | 'tmdb' | 'danmu' | 'netdisk' | 'youtube' | 'tvbox',
   ): Promise<number> {
     let clearedCount = 0;
 
@@ -400,7 +400,7 @@ export class DatabaseCacheManager {
           // 清理localStorage中的TMDB缓存（兜底）
           if (typeof localStorage !== 'undefined') {
             const keys = Object.keys(localStorage).filter((key) =>
-              key.startsWith('tmdb-')
+              key.startsWith('tmdb-'),
             );
             keys.forEach((key) => {
               localStorage.removeItem(key);
@@ -419,14 +419,14 @@ export class DatabaseCacheManager {
           // 清理localStorage中的网盘缓存（兜底）
           if (typeof localStorage !== 'undefined') {
             const keys = Object.keys(localStorage).filter((key) =>
-              key.startsWith('netdisk-search')
+              key.startsWith('netdisk-search'),
             );
             keys.forEach((key) => {
               localStorage.removeItem(key);
               clearedCount++;
             });
             console.log(
-              `🗑️ localStorage中清理了 ${keys.length} 个网盘搜索缓存项`
+              `🗑️ localStorage中清理了 ${keys.length} 个网盘搜索缓存项`,
             );
           }
           console.log('🗑️ 网盘搜索缓存清理完成');
@@ -436,14 +436,14 @@ export class DatabaseCacheManager {
           // 清理localStorage中的YouTube缓存（兜底）
           if (typeof localStorage !== 'undefined') {
             const keys = Object.keys(localStorage).filter((key) =>
-              key.startsWith('youtube-search')
+              key.startsWith('youtube-search'),
             );
             keys.forEach((key) => {
               localStorage.removeItem(key);
               clearedCount++;
             });
             console.log(
-              `🗑️ localStorage中清理了 ${keys.length} 个YouTube搜索缓存项`
+              `🗑️ localStorage中清理了 ${keys.length} 个YouTube搜索缓存项`,
             );
           }
           console.log('🗑️ YouTube搜索缓存清理完成');
@@ -454,7 +454,7 @@ export class DatabaseCacheManager {
           // 清理localStorage中的TVBox缓存（兜底）
           if (typeof localStorage !== 'undefined') {
             const keys = Object.keys(localStorage).filter(
-              (key) => key.startsWith('tvbox-') || key.startsWith('tvbox:')
+              (key) => key.startsWith('tvbox-') || key.startsWith('tvbox:'),
             );
             keys.forEach((key) => {
               localStorage.removeItem(key);

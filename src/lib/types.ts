@@ -14,6 +14,7 @@ export interface PlayRecord {
   save_time: number; // 记录保存时间（时间戳）
   search_title: string; // 搜索时使用的标题
   remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
+  type?: string; // 内容类型，从URL参数获取
 }
 
 // 收藏数据结构
@@ -36,7 +37,7 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
@@ -75,8 +76,6 @@ export interface IStorage {
   getAdminConfig(): Promise<AdminConfig | null>;
   setAdminConfig(config: AdminConfig): Promise<void>;
 
-  
-
   // 数据清理相关
   clearAllData(): Promise<void>;
 
@@ -94,14 +93,14 @@ export interface IStorage {
     userName: string,
     source: string,
     id: string,
-    watchTime: number
+    watchTime: number,
   ): Promise<void>;
 
   // 登入统计相关
   updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void>;
 }
 
@@ -118,6 +117,7 @@ export interface SearchResult {
   year: string;
   desc?: string;
   type_name?: string;
+  type?: string; // 内容类型，由 TypeInferenceService 推断
   douban_id?: number;
   remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
 }
@@ -156,6 +156,7 @@ export interface DoubanItem {
   poster: string;
   rate: string;
   year: string;
+  type?: string; // 内容类型，由页面设置
   // 详细信息字段
   directors?: string[];
   screenwriters?: string[];

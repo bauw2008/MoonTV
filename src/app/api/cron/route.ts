@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     isRunning = false;
@@ -105,7 +105,7 @@ async function refreshAllLiveChannels() {
       } catch (error) {
         console.error(
           `刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`,
-          error
+          error,
         );
         liveInfo.channelNumber = 0;
       }
@@ -194,7 +194,7 @@ async function refreshRecordAndFavorites() {
     const getDetail = async (
       source: string,
       id: string,
-      fallbackTitle: string
+      fallbackTitle: string,
     ): Promise<SearchResult | null> => {
       const key = `${source}+${id}`;
       let promise = detailCache.get(key);
@@ -262,7 +262,7 @@ async function refreshRecordAndFavorites() {
                 original_episodes: record.original_episodes,
               });
               console.log(
-                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`
+                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`,
               );
             }
 
@@ -282,7 +282,7 @@ async function refreshRecordAndFavorites() {
       try {
         let favorites = await db.getAllFavorites(user);
         favorites = Object.fromEntries(
-          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live')
+          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live'),
         );
         const totalFavorites = Object.keys(favorites).length;
         let processedFavorites = 0;
@@ -313,7 +313,7 @@ async function refreshRecordAndFavorites() {
                 search_title: fav.search_title,
               });
               console.log(
-                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`
+                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`,
               );
             }
 
@@ -357,7 +357,7 @@ async function cleanupInactiveUsers() {
     const inactiveUserDays = config.UserConfig?.InactiveUserDays ?? 7;
 
     console.log(
-      `📋 清理配置: 启用=${autoCleanupEnabled}, 保留天数=${inactiveUserDays}`
+      `📋 清理配置: 启用=${autoCleanupEnabled}, 保留天数=${inactiveUserDays}`,
     );
 
     if (!autoCleanupEnabled) {
@@ -402,13 +402,13 @@ async function cleanupInactiveUsers() {
         const isOldEnough = userCreatedAt < cutoffTime;
         console.log(
           `  ⏰ 时间检查: 注册于 ${new Date(
-            userCreatedAt
-          ).toISOString()}, 是否超过${inactiveUserDays}天: ${isOldEnough}`
+            userCreatedAt,
+          ).toISOString()}, 是否超过${inactiveUserDays}天: ${isOldEnough}`,
         );
 
         if (!isOldEnough) {
           console.log(
-            `  ✅ 保留用户 ${user.username}: 注册时间不足${inactiveUserDays}天`
+            `  ✅ 保留用户 ${user.username}: 注册时间不足${inactiveUserDays}天`,
           );
           continue;
         }
@@ -420,7 +420,7 @@ async function cleanupInactiveUsers() {
           userExists = (await Promise.race([
             db.checkUserExist(user.username),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('checkUserExist超时')), 5000)
+              setTimeout(() => reject(new Error('checkUserExist超时')), 5000),
             ),
           ])) as boolean;
           console.log(`  📝 用户存在状态: ${userExists}`);
@@ -431,7 +431,7 @@ async function cleanupInactiveUsers() {
 
         if (!userExists) {
           console.log(
-            `  ⚠️ 用户 ${user.username} 在配置中存在但数据库中不存在，跳过处理`
+            `  ⚠️ 用户 ${user.username} 在配置中存在但数据库中不存在，跳过处理`,
           );
           continue;
         }
@@ -443,7 +443,7 @@ async function cleanupInactiveUsers() {
           userStats = (await Promise.race([
             db.getUserPlayStat(user.username),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('getUserPlayStat超时')), 5000)
+              setTimeout(() => reject(new Error('getUserPlayStat超时')), 5000),
             ),
           ])) as {
             lastPlayTime: number;
@@ -475,10 +475,10 @@ async function cleanupInactiveUsers() {
             : `最后登入时间过久: ${new Date(lastLoginTime).toISOString()}`;
           console.log(
             `🗑️ 删除非活跃用户: ${user.username} (注册于: ${new Date(
-              userCreatedAt
+              userCreatedAt,
             ).toISOString()}, 登入次数: ${
               userStats.loginCount || 0
-            }, 原因: ${deleteReason}, 阈值: ${inactiveUserDays}天)`
+            }, 原因: ${deleteReason}, 阈值: ${inactiveUserDays}天)`,
           );
 
           // 从数据库删除用户数据
@@ -486,7 +486,7 @@ async function cleanupInactiveUsers() {
 
           // 从配置中移除用户
           const userIndex = config.UserConfig.Users.findIndex(
-            (u) => u.username === user.username
+            (u) => u.username === user.username,
           );
           if (userIndex !== -1) {
             config.UserConfig.Users.splice(userIndex, 1);
@@ -636,8 +636,8 @@ async function optimizeActiveUserLevels() {
               userStats.loginCount > 10000
                 ? '10000+'
                 : userStats.loginCount > 1000
-                ? `${Math.floor(userStats.loginCount / 1000)}k+`
-                : userStats.loginCount.toString(),
+                  ? `${Math.floor(userStats.loginCount / 1000)}k+`
+                  : userStats.loginCount.toString(),
             lastLevelUpdate: new Date().toISOString(),
           };
 
@@ -646,7 +646,7 @@ async function optimizeActiveUserLevels() {
           optimizedCount++;
 
           console.log(
-            `🎯 用户等级: ${user} -> ${userLevel.icon} ${userLevel.name} (登录${userStats.loginCount}次)`
+            `🎯 用户等级: ${user} -> ${userLevel.icon} ${userLevel.name} (登录${userStats.loginCount}次)`,
           );
         }
       } catch (err) {

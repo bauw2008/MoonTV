@@ -48,7 +48,7 @@ export interface AIRecommendHistory {
  * 发送AI推荐请求
  */
 export async function sendAIRecommendMessage(
-  messages: AIMessage[]
+  messages: AIMessage[],
 ): Promise<AIChatResponse> {
   const response = await fetch('/api/ai-recommend', {
     method: 'POST',
@@ -71,7 +71,7 @@ export async function sendAIRecommendMessage(
         error: errorData.error || 'AI推荐请求失败',
         details: errorData.details,
         status: errorData.status || response.status,
-      })
+      }),
     );
   }
 
@@ -201,7 +201,7 @@ export function extractMovieTitles(content: string): string[] {
         // 过滤掉一些非影视作品的内容
         if (
           !title.match(
-            /^(推荐|电影|电视剧|综艺|动漫|年|导演|主演|类型|简介|评分)$/
+            /^(推荐|电影|电视剧|综艺|动漫|年|导演|主演|类型|简介|评分)$/,
           )
         ) {
           titles.add(title);
@@ -220,7 +220,7 @@ export function extractMovieTitles(content: string): string[] {
  */
 export function formatAIResponseWithLinks(
   content: string,
-  _onTitleClick?: (title: string) => void
+  _onTitleClick?: (title: string) => void,
 ): string {
   let formatted = content;
 
@@ -232,19 +232,19 @@ export function formatAIResponseWithLinks(
     // 替换《片名》格式 - 只添加样式，不添加点击
     formatted = formatted.replace(
       new RegExp(`《${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}》`, 'g'),
-      `<span class="text-blue-600 dark:text-blue-400 font-medium">《${title}》</span>`
+      `<span class="text-blue-600 dark:text-blue-400 font-medium">《${title}》</span>`,
     );
 
     // 替换"片名"格式
     formatted = formatted.replace(
       new RegExp(`"${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'),
-      `<span class="text-blue-600 dark:text-blue-400 font-medium">"${title}"</span>`
+      `<span class="text-blue-600 dark:text-blue-400 font-medium">"${title}"</span>`,
     );
 
     // 替换【片名】格式
     formatted = formatted.replace(
       new RegExp(`【${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}】`, 'g'),
-      `<span class="text-blue-600 dark:text-blue-400 font-medium">【${title}】</span>`
+      `<span class="text-blue-600 dark:text-blue-400 font-medium">【${title}】</span>`,
     );
   });
 
@@ -252,33 +252,33 @@ export function formatAIResponseWithLinks(
   // 处理标题
   formatted = formatted.replace(
     /^### (.*$)/gim,
-    '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h3>'
+    '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h3>',
   );
   formatted = formatted.replace(
     /^## (.*$)/gim,
-    '<h2 class="text-xl font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h2>'
+    '<h2 class="text-xl font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h2>',
   );
   formatted = formatted.replace(
     /^# (.*$)/gim,
-    '<h1 class="text-2xl font-bold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h1>'
+    '<h1 class="text-2xl font-bold mt-4 mb-2 text-gray-900 dark:text-gray-100">$1</h1>',
   );
 
   // 处理粗体
   formatted = formatted.replace(
     /\*\*(.*?)\*\*/g,
-    '<strong class="font-semibold text-gray-900 dark:text-gray-100">$1</strong>'
+    '<strong class="font-semibold text-gray-900 dark:text-gray-100">$1</strong>',
   );
 
   // 处理数字列表 - 先匹配整行包括换行符
   formatted = formatted.replace(
     /^\d+[.、]\s*(.*?)(?=\n|$)/gim,
-    '<div class="ml-4 text-gray-800 dark:text-gray-200">• $1</div>'
+    '<div class="ml-4 text-gray-800 dark:text-gray-200">• $1</div>',
   );
 
   // 处理普通列表 - 先匹配整行包括换行符
   formatted = formatted.replace(
     /^[-•]\s*(.*?)(?=\n|$)/gim,
-    '<div class="ml-4 text-gray-800 dark:text-gray-200">• $1</div>'
+    '<div class="ml-4 text-gray-800 dark:text-gray-200">• $1</div>',
   );
 
   // 清理列表项之间多余的换行符
@@ -308,7 +308,7 @@ const elementHandlers = new WeakMap<HTMLElement, (e: Event) => void>();
  */
 export function addMovieTitleClickListeners(
   element: HTMLElement,
-  onTitleClick: (title: string) => void
+  onTitleClick: (title: string) => void,
 ): void {
   // 移除之前的监听器
   const existingHandler = elementHandlers.get(element);
@@ -322,7 +322,7 @@ export function addMovieTitleClickListeners(
 
     // 查找最近的具有movie-title类的元素
     const movieTitleEl = target.closest(
-      '.movie-title[data-title]'
+      '.movie-title[data-title]',
     ) as HTMLElement;
     if (movieTitleEl) {
       e.preventDefault();

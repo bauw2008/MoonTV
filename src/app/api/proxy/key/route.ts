@@ -60,7 +60,7 @@ function cleanupExpiredCache() {
   // 如果缓存仍然过大，删除最老的条目
   if (keyCache.size > MAX_CACHE_SIZE) {
     const entries = Array.from(keyCache.entries()).sort(
-      (a, b) => a[1].timestamp - b[1].timestamp
+      (a, b) => a[1].timestamp - b[1].timestamp,
     );
     const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
     toDelete.forEach(([key]) => keyCache.delete(key));
@@ -174,7 +174,7 @@ export async function GET(request: Request) {
         {
           error: `Failed to fetch key: ${response.status} ${response.statusText}`,
         },
-        { status: response.status >= 500 ? 500 : response.status }
+        { status: response.status >= 500 ? 500 : response.status },
       );
     }
 
@@ -221,14 +221,14 @@ export async function GET(request: Request) {
     if (error.name === 'AbortError') {
       return NextResponse.json(
         { error: 'Key request timeout' },
-        { status: 408 }
+        { status: 408 },
       );
     }
 
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Network connection failed' },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -241,7 +241,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     clearTimeout(timeoutId);
@@ -259,7 +259,7 @@ export async function GET(request: Request) {
           keyStats.errors
         }, Avg Time: ${keyStats.avgResponseTime.toFixed(2)}ms, Cache Size: ${
           keyCache.size
-        }, Total: ${(keyStats.totalBytes / 1024).toFixed(2)}KB`
+        }, Total: ${(keyStats.totalBytes / 1024).toFixed(2)}KB`,
       );
     }
   }

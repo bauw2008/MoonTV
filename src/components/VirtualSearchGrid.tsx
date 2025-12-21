@@ -18,7 +18,7 @@ const Grid = dynamic(
     loading: () => (
       <div className='animate-pulse h-96 bg-gray-200 dark:bg-gray-800 rounded-lg' />
     ),
-  }
+  },
 );
 
 import { SearchResult } from '@/lib/types';
@@ -76,7 +76,7 @@ export const VirtualSearchGrid = React.forwardRef<
       getGroupRef,
       computeGroupStats,
     },
-    ref
+    ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<any>(null); // Grid ref for imperative scroll
@@ -102,7 +102,7 @@ export const VirtualSearchGrid = React.forwardRef<
       const urls: string[] = [];
       const itemsToPreload = currentData.slice(
         displayItemCount,
-        Math.min(displayItemCount + 20, totalItemCount)
+        Math.min(displayItemCount + 20, totalItemCount),
       );
 
       itemsToPreload.forEach((item) => {
@@ -174,7 +174,7 @@ export const VirtualSearchGrid = React.forwardRef<
       // 模拟异步加载
       setTimeout(() => {
         setVisibleItemCount((prev) =>
-          Math.min(prev + LOAD_MORE_BATCH_SIZE, totalItemCount)
+          Math.min(prev + LOAD_MORE_BATCH_SIZE, totalItemCount),
         );
         setIsLoadingMore(false);
       }, 100);
@@ -196,13 +196,13 @@ export const VirtualSearchGrid = React.forwardRef<
             } catch (error) {
               console.debug(
                 'Grid scroll to top error (safe to ignore):',
-                error
+                error,
               );
             }
           }
         },
       }),
-      []
+      [],
     );
 
     // 网格行数计算
@@ -248,7 +248,7 @@ export const VirtualSearchGrid = React.forwardRef<
           const year = group[0]?.year || 'unknown';
           const { episodes, source_names, douban_id } =
             cellComputeGroupStats(group);
-          const type = episodes === 1 ? 'movie' : 'tv';
+          const type = group[0]?.type || 'tv'; // 使用API推断的类型
 
           // 如果该聚合第一次出现，写入初始统计
           if (!cellGroupStatsRef.current.has(mapKey)) {
@@ -298,14 +298,14 @@ export const VirtualSearchGrid = React.forwardRef<
                 }
                 year={searchItem.year}
                 from='search'
-                type={searchItem.episodes.length > 1 ? 'tv' : 'movie'}
+                type={searchItem.type || 'tv'}
                 remarks={searchItem.remarks}
               />
             </div>
           );
         }
       },
-      []
+      [],
     );
 
     return (
@@ -403,7 +403,7 @@ export const VirtualSearchGrid = React.forwardRef<
           )}
       </div>
     );
-  }
+  },
 );
 
 VirtualSearchGrid.displayName = 'VirtualSearchGrid';

@@ -33,7 +33,7 @@ function triggerGlobalError(message: string) {
     window.dispatchEvent(
       new CustomEvent('globalError', {
         detail: { message },
-      })
+      }),
     );
   }
 }
@@ -221,7 +221,7 @@ class HybridCacheManager {
    */
   private isCacheValid<T>(
     cache: CacheData<T>,
-    cacheType?: 'playRecords'
+    cacheType?: 'playRecords',
   ): boolean {
     const now = Date.now();
     const expireTime =
@@ -330,8 +330,6 @@ class HybridCacheManager {
     userCache.searchHistory = this.createCacheData(data);
     this.saveUserCache(username, userCache);
   }
-
-  
 
   /**
    * 获取缓存的用户统计数据
@@ -449,7 +447,7 @@ class HybridCacheManager {
    */
   private isDoubanCacheValid<T>(
     cache: CacheData<T>,
-    type: 'details' | 'lists'
+    type: 'details' | 'lists',
   ): boolean {
     return false; // 始终返回false，强制使用新的缓存系统
   }
@@ -492,7 +490,7 @@ class HybridCacheManager {
     type: string,
     tag: string,
     pageStart: number,
-    pageSize: number
+    pageSize: number,
   ): string {
     return `${type}:${tag}:${pageStart}:${pageSize}`;
   }
@@ -518,7 +516,7 @@ const cacheManager = HybridCacheManager.getInstance();
  */
 async function handleDatabaseOperationFailure(
   dataType: 'playRecords' | 'favorites' | 'searchHistory',
-  error: any
+  error: any,
 ): Promise<void> {
   console.error(`数据库操作失败 (${dataType}):`, error);
   triggerGlobalError(`数据库操作失败`);
@@ -529,16 +527,14 @@ async function handleDatabaseOperationFailure(
 
     switch (dataType) {
       case 'playRecords':
-        freshData = await fetchFromApi<Record<string, PlayRecord>>(
-          `/api/playrecords`
-        );
+        freshData =
+          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
         cacheManager.cachePlayRecords(freshData);
         eventName = 'playRecordsUpdated';
         break;
       case 'favorites':
-        freshData = await fetchFromApi<Record<string, Favorite>>(
-          `/api/favorites`
-        );
+        freshData =
+          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
         cacheManager.cacheFavorites(freshData);
         eventName = 'favoritesUpdated';
         break;
@@ -553,7 +549,7 @@ async function handleDatabaseOperationFailure(
     window.dispatchEvent(
       new CustomEvent(eventName, {
         detail: freshData,
-      })
+      }),
     );
   } catch (refreshErr) {
     console.error(`刷新${dataType}缓存失败:`, refreshErr);
@@ -572,7 +568,7 @@ if (typeof window !== 'undefined') {
  */
 async function fetchWithAuth(
   url: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<Response> {
   const res = await fetch(url, options);
   if (!res.ok) {
@@ -634,7 +630,7 @@ export function generateStorageKey(source: string, id: string): string {
 async function checkShouldUpdateOriginalEpisodes(
   existingRecord: PlayRecord,
   newRecord: PlayRecord,
-  recordKey: string
+  recordKey: string,
 ): Promise<{ shouldUpdate: boolean; latestTotalEpisodes: number }> {
   // 🔑 关键修复：从数据库读取最新的 original_episodes，不信任缓存中的值
   let originalEpisodes =
@@ -656,14 +652,14 @@ async function checkShouldUpdateOriginalEpisodes(
         // 🔧 自动修复：如果 original_episodes 大于当前 total_episodes，说明之前存错了
         if (originalEpisodes > freshRecord.total_episodes) {
           console.warn(
-            `⚠️ 检测到错误数据：original_episodes(${originalEpisodes}) > total_episodes(${freshRecord.total_episodes})，自动修正为 ${freshRecord.total_episodes}`
+            `⚠️ 检测到错误数据：original_episodes(${originalEpisodes}) > total_episodes(${freshRecord.total_episodes})，自动修正为 ${freshRecord.total_episodes}`,
           );
           originalEpisodes = freshRecord.total_episodes;
           freshRecord.original_episodes = freshRecord.total_episodes;
         }
 
         console.log(
-          `📚 从数据库读取到最新 original_episodes: ${existingRecord.title} (${recordKey}) = ${originalEpisodes}集`
+          `📚 从数据库读取到最新 original_episodes: ${existingRecord.title} (${recordKey}) = ${originalEpisodes}集`,
         );
       } else {
         console.warn(`⚠️ 数据库中未找到记录: ${recordKey}`);
@@ -685,7 +681,7 @@ async function checkShouldUpdateOriginalEpisodes(
         newRecord.index
       }集，原始${originalEpisodes}集 (${
         hasWatchedBeyondOriginal ? '观看时间不足' : '未超过原始集数'
-      })`
+      })`,
     );
     return {
       shouldUpdate: false,
@@ -695,16 +691,16 @@ async function checkShouldUpdateOriginalEpisodes(
 
   // 用户看了超过原始集数的集数，获取最新的 total_episodes
   console.log(
-    `🔍 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），从数据库获取最新集数...`
+    `🔍 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），从数据库获取最新集数...`,
   );
 
   try {
     const latestTotalEpisodes = Math.max(
       freshRecord.total_episodes,
-      originalEpisodes
+      originalEpisodes,
     );
     console.log(
-      `✓ 应更新原始集数: ${existingRecord.title} - 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），数据库最新集数${freshRecord.total_episodes}集 → 更新原始集数为${latestTotalEpisodes}集`
+      `✓ 应更新原始集数: ${existingRecord.title} - 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），数据库最新集数${freshRecord.total_episodes}集 → 更新原始集数为${latestTotalEpisodes}集`,
     );
 
     return { shouldUpdate: true, latestTotalEpisodes };
@@ -726,7 +722,7 @@ async function checkShouldUpdateOriginalEpisodes(
  * @param forceRefresh 是否强制从服务器获取最新数据（跳过缓存）
  */
 export async function getAllPlayRecords(
-  forceRefresh = false
+  forceRefresh = false,
 ): Promise<Record<string, PlayRecord>> {
   // 服务器端渲染阶段直接返回空，交由客户端 useEffect 再行请求
   if (typeof window === 'undefined') {
@@ -739,15 +735,14 @@ export async function getAllPlayRecords(
     if (forceRefresh) {
       try {
         console.log('🔄 强制刷新播放记录，跳过缓存直接从API获取');
-        const freshData = await fetchFromApi<Record<string, PlayRecord>>(
-          `/api/playrecords`
-        );
+        const freshData =
+          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
         cacheManager.cachePlayRecords(freshData);
         // 触发数据更新事件
         window.dispatchEvent(
           new CustomEvent('playRecordsUpdated', {
             detail: freshData,
-          })
+          }),
         );
         return freshData;
       } catch (err) {
@@ -773,7 +768,7 @@ export async function getAllPlayRecords(
             window.dispatchEvent(
               new CustomEvent('playRecordsUpdated', {
                 detail: freshData,
-              })
+              }),
             );
           }
         })
@@ -786,9 +781,8 @@ export async function getAllPlayRecords(
     } else {
       // 缓存为空，直接从 API 获取并缓存
       try {
-        const freshData = await fetchFromApi<Record<string, PlayRecord>>(
-          `/api/playrecords`
-        );
+        const freshData =
+          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
         cacheManager.cachePlayRecords(freshData);
         return freshData;
       } catch (err) {
@@ -818,7 +812,7 @@ export async function getAllPlayRecords(
 export async function savePlayRecord(
   source: string,
   id: string,
-  record: PlayRecord
+  record: PlayRecord,
 ): Promise<void> {
   const key = generateStorageKey(source, id);
 
@@ -836,7 +830,7 @@ export async function savePlayRecord(
       // 使用现有记录的 original_episodes
       record.original_episodes = existingRecord.original_episodes;
       console.log(
-        `✓ 使用现有原始集数: ${key} = ${existingRecord.original_episodes}集`
+        `✓ 使用现有原始集数: ${key} = ${existingRecord.original_episodes}集`,
       );
     } else {
       // 首次保存或旧数据补充：使用当前 total_episodes
@@ -844,7 +838,7 @@ export async function savePlayRecord(
       console.log(
         `✓ 设置原始集数: ${key} = ${record.total_episodes}集 ${
           existingRecord ? '(补充旧数据)' : '(首次保存)'
-        }`
+        }`,
       );
     }
   }
@@ -857,14 +851,14 @@ export async function savePlayRecord(
     const updateResult = await checkShouldUpdateOriginalEpisodes(
       existingRecord,
       record,
-      key
+      key,
     );
     if (updateResult.shouldUpdate) {
       record.original_episodes = updateResult.latestTotalEpisodes;
       // 🔑 同时更新 total_episodes 为最新值
       record.total_episodes = updateResult.latestTotalEpisodes;
       console.log(
-        `✓ 更新原始集数: ${key} = ${existingRecord.original_episodes}集 -> ${updateResult.latestTotalEpisodes}集（用户已观看新集数）`
+        `✓ 更新原始集数: ${key} = ${existingRecord.original_episodes}集 -> ${updateResult.latestTotalEpisodes}集（用户已观看新集数）`,
       );
 
       // 🔑 标记需要清除缓存（在数据库更新成功后执行）
@@ -883,7 +877,7 @@ export async function savePlayRecord(
     window.dispatchEvent(
       new CustomEvent('playRecordsUpdated', {
         detail: cachedRecords,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -906,18 +900,17 @@ export async function savePlayRecord(
           cacheManager.forceRefreshPlayRecordsCache(true);
 
           // 🔧 优化：立即获取最新数据并更新缓存，触发更新事件
-          const freshData = await fetchFromApi<Record<string, PlayRecord>>(
-            `/api/playrecords`
-          );
+          const freshData =
+            await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
           cacheManager.cachePlayRecords(freshData);
           window.dispatchEvent(
             new CustomEvent('playRecordsUpdated', {
               detail: freshData,
-            })
+            }),
           );
 
           console.log(
-            '✅ 数据库更新成功，已清除 watching-updates 和播放记录缓存，并刷新最新数据'
+            '✅ 数据库更新成功，已清除 watching-updates 和播放记录缓存，并刷新最新数据',
           );
           delete (record as any)._shouldClearCache;
         } catch (cacheError) {
@@ -927,16 +920,15 @@ export async function savePlayRecord(
         // 🔧 优化：即使没有 _shouldClearCache 标志，也要从服务器同步最新数据以确保缓存一致性
         // 特别是对于 kvrocks 等需要实时同步的场景
         try {
-          const freshData = await fetchFromApi<Record<string, PlayRecord>>(
-            `/api/playrecords`
-          );
+          const freshData =
+            await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedRecords) !== JSON.stringify(freshData)) {
             cacheManager.cachePlayRecords(freshData);
             window.dispatchEvent(
               new CustomEvent('playRecordsUpdated', {
                 detail: freshData,
-              })
+              }),
             );
             console.log('✅ 播放记录已同步最新数据');
           }
@@ -963,7 +955,7 @@ export async function savePlayRecord(
             };
             await saveFavorite(source, id, updatedFavorite);
             console.log(
-              `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`
+              `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`,
             );
           }
         } catch (favError) {
@@ -992,7 +984,7 @@ export async function savePlayRecord(
     window.dispatchEvent(
       new CustomEvent('playRecordsUpdated', {
         detail: allRecords,
-      })
+      }),
     );
 
     // 异步更新用户统计数据（不阻塞主流程）
@@ -1013,7 +1005,7 @@ export async function savePlayRecord(
           };
           await saveFavorite(source, id, updatedFavorite);
           console.log(
-            `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`
+            `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`,
           );
         }
       } catch (favError) {
@@ -1034,7 +1026,7 @@ export async function savePlayRecord(
  */
 export async function deletePlayRecord(
   source: string,
-  id: string
+  id: string,
 ): Promise<void> {
   const key = generateStorageKey(source, id);
 
@@ -1049,7 +1041,7 @@ export async function deletePlayRecord(
     window.dispatchEvent(
       new CustomEvent('playRecordsUpdated', {
         detail: cachedRecords,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1078,7 +1070,7 @@ export async function deletePlayRecord(
     window.dispatchEvent(
       new CustomEvent('playRecordsUpdated', {
         detail: allRecords,
-      })
+      }),
     );
   } catch (err) {
     console.error('删除播放记录失败:', err);
@@ -1115,7 +1107,7 @@ export async function getSearchHistory(): Promise<string[]> {
             window.dispatchEvent(
               new CustomEvent('searchHistoryUpdated', {
                 detail: freshData,
-              })
+              }),
             );
           }
         })
@@ -1176,7 +1168,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('searchHistoryUpdated', {
         detail: newHistory,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1208,7 +1200,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('searchHistoryUpdated', {
         detail: newHistory,
-      })
+      }),
     );
   } catch (err) {
     console.error('保存搜索历史失败:', err);
@@ -1230,7 +1222,7 @@ export async function clearSearchHistory(): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('searchHistoryUpdated', {
         detail: [],
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1250,7 +1242,7 @@ export async function clearSearchHistory(): Promise<void> {
   window.dispatchEvent(
     new CustomEvent('searchHistoryUpdated', {
       detail: [],
-    })
+    }),
   );
 }
 
@@ -1273,7 +1265,7 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('searchHistoryUpdated', {
         detail: newHistory,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1282,7 +1274,7 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
         `/api/searchhistory?keyword=${encodeURIComponent(trimmed)}`,
         {
           method: 'DELETE',
-        }
+        },
       );
     } catch (err) {
       await handleDatabaseOperationFailure('searchHistory', err);
@@ -1300,7 +1292,7 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('searchHistoryUpdated', {
         detail: newHistory,
-      })
+      }),
     );
   } catch (err) {
     console.error('删除搜索历史失败:', err);
@@ -1336,7 +1328,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
             window.dispatchEvent(
               new CustomEvent('favoritesUpdated', {
                 detail: freshData,
-              })
+              }),
             );
           }
         })
@@ -1349,9 +1341,8 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
     } else {
       // 缓存为空，直接从 API 获取并缓存
       try {
-        const freshData = await fetchFromApi<Record<string, Favorite>>(
-          `/api/favorites`
-        );
+        const freshData =
+          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
         cacheManager.cacheFavorites(freshData);
         return freshData;
       } catch (err) {
@@ -1381,7 +1372,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
 export async function saveFavorite(
   source: string,
   id: string,
-  favorite: Favorite
+  favorite: Favorite,
 ): Promise<void> {
   const key = generateStorageKey(source, id);
 
@@ -1396,7 +1387,7 @@ export async function saveFavorite(
     window.dispatchEvent(
       new CustomEvent('favoritesUpdated', {
         detail: cachedFavorites,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1429,7 +1420,7 @@ export async function saveFavorite(
     window.dispatchEvent(
       new CustomEvent('favoritesUpdated', {
         detail: allFavorites,
-      })
+      }),
     );
   } catch (err) {
     console.error('保存收藏失败:', err);
@@ -1444,7 +1435,7 @@ export async function saveFavorite(
  */
 export async function deleteFavorite(
   source: string,
-  id: string
+  id: string,
 ): Promise<void> {
   const key = generateStorageKey(source, id);
 
@@ -1459,7 +1450,7 @@ export async function deleteFavorite(
     window.dispatchEvent(
       new CustomEvent('favoritesUpdated', {
         detail: cachedFavorites,
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1488,7 +1479,7 @@ export async function deleteFavorite(
     window.dispatchEvent(
       new CustomEvent('favoritesUpdated', {
         detail: allFavorites,
-      })
+      }),
     );
   } catch (err) {
     console.error('删除收藏失败:', err);
@@ -1503,7 +1494,7 @@ export async function deleteFavorite(
  */
 export async function isFavorited(
   source: string,
-  id: string
+  id: string,
 ): Promise<boolean> {
   const key = generateStorageKey(source, id);
 
@@ -1522,7 +1513,7 @@ export async function isFavorited(
             window.dispatchEvent(
               new CustomEvent('favoritesUpdated', {
                 detail: freshData,
-              })
+              }),
             );
           }
         })
@@ -1535,9 +1526,8 @@ export async function isFavorited(
     } else {
       // 缓存为空，直接从 API 获取并缓存
       try {
-        const freshData = await fetchFromApi<Record<string, Favorite>>(
-          `/api/favorites`
-        );
+        const freshData =
+          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
         cacheManager.cacheFavorites(freshData);
         return !!freshData[key];
       } catch (err) {
@@ -1567,7 +1557,7 @@ export async function clearAllPlayRecords(): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('playRecordsUpdated', {
         detail: {},
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1590,7 +1580,7 @@ export async function clearAllPlayRecords(): Promise<void> {
   window.dispatchEvent(
     new CustomEvent('playRecordsUpdated', {
       detail: {},
-    })
+    }),
   );
 }
 
@@ -1608,7 +1598,7 @@ export async function clearAllFavorites(): Promise<void> {
     window.dispatchEvent(
       new CustomEvent('favoritesUpdated', {
         detail: {},
-      })
+      }),
     );
 
     // 异步同步到数据库
@@ -1631,7 +1621,7 @@ export async function clearAllFavorites(): Promise<void> {
   window.dispatchEvent(
     new CustomEvent('favoritesUpdated', {
       detail: {},
-    })
+    }),
   );
 }
 
@@ -1678,19 +1668,18 @@ export async function refreshAllCache(): Promise<void> {
 
   try {
     // 并行刷新所有数据
-    const [playRecords, favorites, searchHistory] =
-      await Promise.allSettled([
-        fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`),
-        fetchFromApi<Record<string, Favorite>>(`/api/favorites`),
-        fetchFromApi<string[]>(`/api/searchhistory`),
-      ]);
+    const [playRecords, favorites, searchHistory] = await Promise.allSettled([
+      fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`),
+      fetchFromApi<Record<string, Favorite>>(`/api/favorites`),
+      fetchFromApi<string[]>(`/api/searchhistory`),
+    ]);
 
     if (playRecords.status === 'fulfilled') {
       cacheManager.cachePlayRecords(playRecords.value);
       window.dispatchEvent(
         new CustomEvent('playRecordsUpdated', {
           detail: playRecords.value,
-        })
+        }),
       );
     }
 
@@ -1699,7 +1688,7 @@ export async function refreshAllCache(): Promise<void> {
       window.dispatchEvent(
         new CustomEvent('favoritesUpdated', {
           detail: favorites.value,
-        })
+        }),
       );
     }
 
@@ -1708,7 +1697,7 @@ export async function refreshAllCache(): Promise<void> {
       window.dispatchEvent(
         new CustomEvent('searchHistoryUpdated', {
           detail: searchHistory.value,
-        })
+        }),
       );
     }
   } catch (err) {
@@ -1770,7 +1759,7 @@ export type CacheUpdateEvent =
  */
 export function subscribeToDataUpdates<T>(
   eventType: CacheUpdateEvent,
-  callback: (data: T) => void
+  callback: (data: T) => void,
 ): () => void {
   if (typeof window === 'undefined') {
     return () => {};
@@ -1796,11 +1785,7 @@ export async function preloadUserData(): Promise<void> {
 
   // 检查是否已有有效缓存，避免重复请求
   const status = getCacheStatus();
-  if (
-    status.hasPlayRecords &&
-    status.hasFavorites &&
-    status.hasSearchHistory
-  ) {
+  if (status.hasPlayRecords && status.hasFavorites && status.hasSearchHistory) {
     return;
   }
 
@@ -1812,14 +1797,6 @@ export async function preloadUserData(): Promise<void> {
 }
 
 // ---------------- 跳过片头片尾配置相关 API ----------------
-
-
-
-
-
-
-
-
 
 // ---- 豆瓣数据缓存导出函数 ----
 
@@ -1853,7 +1830,7 @@ export function getDoubanListCache(
   type: string,
   tag: string,
   pageStart: number,
-  pageSize: number
+  pageSize: number,
 ): any | null {
   return null; // 不再使用本地缓存
 }
@@ -1871,7 +1848,7 @@ export function setDoubanListCache(
   tag: string,
   pageStart: number,
   pageSize: number,
-  data: any
+  data: any,
 ): void {
   // 不再使用本地缓存
 }
@@ -1899,17 +1876,17 @@ export function calculateRegistrationDays(startDate: number): number {
   const firstDay = new Date(
     firstDate.getFullYear(),
     firstDate.getMonth(),
-    firstDate.getDate()
+    firstDate.getDate(),
   );
   const currentDay = new Date(
     currentDate.getFullYear(),
     currentDate.getMonth(),
-    currentDate.getDate()
+    currentDate.getDate(),
   );
 
   // 计算自然日差值并加1
   const daysDiff = Math.floor(
-    (currentDay.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24)
+    (currentDay.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24),
   );
   return daysDiff + 1;
 }
@@ -1941,7 +1918,7 @@ export async function getUserStats(forceRefresh = false): Promise<UserStats> {
               window.dispatchEvent(
                 new CustomEvent('userStatsUpdated', {
                   detail: freshData,
-                })
+                }),
               );
             }
           })
@@ -2007,20 +1984,23 @@ async function calculateStatsFromLocalData(): Promise<UserStats> {
 
     const totalWatchTime = records.reduce(
       (sum, record) => sum + record.play_time,
-      0
+      0,
     );
     const totalMovies = new Set(
-      records.map((r) => `${r.title}_${r.source_name}_${r.year}`)
+      records.map((r) => `${r.title}_${r.source_name}_${r.year}`),
     ).size;
     const firstWatchDate = Math.min(...records.map((r) => r.save_time));
     const lastPlayTime = Math.max(...records.map((r) => r.save_time));
     const totalPlays = records.length;
 
     // 计算最常观看的来源
-    const sourceCounts = records.reduce((acc, record) => {
-      acc[record.source_name] = (acc[record.source_name] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const sourceCounts = records.reduce(
+      (acc, record) => {
+        acc[record.source_name] = (acc[record.source_name] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
     const mostWatchedSource =
       Object.entries(sourceCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || '';
 
@@ -2101,7 +2081,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
     // 获取上次播放进度和更新时间
     const lastProgress = parseInt(localStorage.getItem(lastProgressKey) || '0');
     const lastUpdateTime = parseInt(
-      localStorage.getItem(lastUpdateTimeKey) || '0'
+      localStorage.getItem(lastUpdateTimeKey) || '0',
     );
 
     // 计算观看时间增量
@@ -2116,8 +2096,8 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
     ) {
       console.log(
         `跳过统计数据更新: 时间间隔过短 (${Math.floor(
-          timeSinceLastUpdate / 1000
-        )}s) 且进度无变化`
+          timeSinceLastUpdate / 1000,
+        )}s) 且进度无变化`,
       );
       return;
     }
@@ -2132,12 +2112,12 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
         // 超过5分钟认为是快进
         watchTimeIncrement = Math.min(
           watchTimeIncrement,
-          Math.floor(timeSinceLastUpdate / 1000) + 60
+          Math.floor(timeSinceLastUpdate / 1000) + 60,
         );
         console.log(
           `检测到快进操作: ${record.title} 第${record.index}集 - 进度增加: ${
             record.play_time - lastProgress
-          }s, 限制增量为: ${watchTimeIncrement}s`
+          }s, 限制增量为: ${watchTimeIncrement}s`,
         );
       }
     } else if (record.play_time < lastProgress) {
@@ -2146,13 +2126,13 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
         // 1分钟以上认为是重新开始观看
         watchTimeIncrement = Math.min(record.play_time, 60); // 重新观看最多给60秒增量
         console.log(
-          `检测到重新观看: ${record.title} 第${record.index}集 - 当前进度: ${record.play_time}s, 上次进度: ${lastProgress}s`
+          `检测到重新观看: ${record.title} 第${record.index}集 - 当前进度: ${record.play_time}s, 上次进度: ${lastProgress}s`,
         );
       } else {
         // 短时间内的回退，可能是快退操作，不给增量
         watchTimeIncrement = 0;
         console.log(
-          `检测到快退操作: ${record.title} 第${record.index}集 - 不计入观看时间`
+          `检测到快退操作: ${record.title} 第${record.index}集 - 不计入观看时间`,
         );
       }
     } else {
@@ -2161,22 +2141,22 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
         // 30秒以上认为有观看时间
         watchTimeIncrement = Math.min(
           Math.floor(timeSinceLastUpdate / 1000),
-          60
+          60,
         ); // 最多1分钟
         console.log(
-          `检测到暂停后继续: ${record.title} 第${record.index}集 - 使用增量: ${watchTimeIncrement}s`
+          `检测到暂停后继续: ${record.title} 第${record.index}集 - 使用增量: ${watchTimeIncrement}s`,
         );
       }
     }
 
     console.log(
-      `观看时间增量计算: ${record.title} 第${record.index}集 - 增量: ${watchTimeIncrement}s`
+      `观看时间增量计算: ${record.title} 第${record.index}集 - 增量: ${watchTimeIncrement}s`,
     );
 
     // 只要有观看时间增量就更新统计数据
     if (watchTimeIncrement > 0) {
       console.log(
-        `发送统计数据更新请求: 增量 ${watchTimeIncrement}s, movieKey: ${movieKey}`
+        `发送统计数据更新请求: 增量 ${watchTimeIncrement}s, movieKey: ${movieKey}`,
       );
 
       // 数据库存储模式：发送到服务器更新
@@ -2211,7 +2191,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
               window.dispatchEvent(
                 new CustomEvent('userStatsUpdated', {
                   detail: responseData.userStats,
-                })
+                }),
               );
             }
           } else {
@@ -2240,8 +2220,8 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           const playRecords = await getAllPlayRecords();
           const uniqueMovies = new Set(
             Object.values(playRecords).map(
-              (r) => `${r.title}_${r.source_name}_${r.year}`
-            )
+              (r) => `${r.title}_${r.source_name}_${r.year}`,
+            ),
           );
           updatedStats.totalMovies = uniqueMovies.size;
 
@@ -2256,7 +2236,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           window.dispatchEvent(
             new CustomEvent('userStatsUpdated', {
               detail: updatedStats,
-            })
+            }),
           );
 
           console.log(`本地统计数据已更新: 增量 ${watchTimeIncrement}s`);
@@ -2314,7 +2294,7 @@ export async function clearUserStats(): Promise<void> {
           registrationDays: 0,
           lastLoginTime: 0,
         },
-      })
+      }),
     );
   } catch (error) {
     console.error('清除用户统计数据失败:', error);

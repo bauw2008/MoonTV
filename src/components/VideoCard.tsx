@@ -31,7 +31,6 @@ import {
 import { isSeriesCompleted, processImageUrl } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import MobileActionSheet from '@/components/MobileActionSheet';
 
 export interface VideoCardProps {
@@ -89,7 +88,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       remarks,
       priority = false,
     }: VideoCardProps,
-    ref
+    ref,
   ) {
     const router = useRouter();
     const [favorited, setFavorited] = useState(false);
@@ -97,18 +96,18 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const [imageLoaded, setImageLoaded] = useState(false); // 图片加载状态
     const [showMobileActions, setShowMobileActions] = useState(false);
     const [searchFavorited, setSearchFavorited] = useState<boolean | null>(
-      null
+      null,
     ); // 搜索结果的收藏状态
 
     // 可外部修改的可控字段
     const [dynamicEpisodes, setDynamicEpisodes] = useState<number | undefined>(
-      episodes
+      episodes,
     );
     const [dynamicSourceNames, setDynamicSourceNames] = useState<
       string[] | undefined
     >(source_names);
     const [dynamicDoubanId, setDynamicDoubanId] = useState<number | undefined>(
-      douban_id
+      douban_id,
     );
 
     useEffect(() => {
@@ -140,18 +139,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const actualEpisodes = dynamicEpisodes;
     const actualYear = year;
     const actualQuery = query || '';
-    const actualSearchType =
-      type ||
-      (isAggregate
-        ? actualEpisodes && actualEpisodes === 1
-          ? 'movie'
-          : 'tv'
-        : '');
+    const actualSearchType = type || 'tv';
 
-    // 获取收藏状态（搜索结果页面不检查）
+    // 获取收藏状态
     useEffect(() => {
-      if (from === 'douban' || from === 'search' || !actualSource || !actualId)
-        return;
+      if (from === 'douban' || !actualSource || !actualId) return;
 
       const fetchFavoriteStatus = async () => {
         try {
@@ -172,7 +164,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           // 检查当前项目是否在新的收藏列表中
           const isNowFavorited = !!newFavorites[storageKey];
           setFavorited(isNowFavorited);
-        }
+        },
       );
 
       return unsubscribe;
@@ -230,7 +222,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         actualEpisodes,
         favorited,
         searchFavorited,
-      ]
+      ],
     );
 
     const handleDeleteRecord = useCallback(
@@ -245,7 +237,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           throw new Error('删除播放记录失败');
         }
       },
-      [from, actualSource, actualId, onDelete]
+      [from, actualSource, actualId, onDelete],
     );
 
     const handleClick = useCallback(() => {
@@ -272,7 +264,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         // 直播内容跳转到直播页面
         const url = `/live?source=${actualSource.replace(
           'live_',
-          ''
+          '',
         )}&id=${actualId.replace('live_', '')}`;
         router.push(url);
       } else if (
@@ -289,7 +281,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         router.push(url);
       } else if (actualSource && actualId) {
         const url = `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
-          actualTitle
+          actualTitle,
         )}${actualYear ? `&year=${actualYear}` : ''}${doubanIdParam}${
           isAggregate ? '&prefer=true' : ''
         }${
@@ -322,7 +314,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       ) {
         try {
           const response = await fetch(
-            `/api/detail?source=${actualSource}&id=${actualId}`
+            `/api/detail?source=${actualSource}&id=${actualId}`,
           );
           if (response.ok) {
             const detailData = await response.json();
@@ -343,7 +335,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         // 直播内容跳转到直播页面
         const url = `/live?source=${actualSource.replace(
           'live_',
-          ''
+          '',
         )}&id=${actualId.replace('live_', '')}`;
         window.open(url, '_blank');
       } else if (
@@ -360,7 +352,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         window.open(url, '_blank');
       } else if (actualSource && actualId) {
         const url = `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
-          actualTitle
+          actualTitle,
         )}${actualYear ? `&year=${actualYear}` : ''}${doubanIdParam}${
           isAggregate ? '&prefer=true' : ''
         }${
@@ -699,7 +691,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             />
 
             {/* 骨架屏 */}
-            {!isLoading && <ImagePlaceholder aspectRatio='aspect-[2/3]' />}
+            {!isLoading && (
+              <div className='skeleton-shine aspect-[2/3] w-full rounded-lg' />
+            )}
             {/* 图片 */}
             <Image
               src={processImageUrl(actualPoster)}
@@ -1094,7 +1088,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                         const maxDisplayCount = 6; // 最多显示6个
                         const displaySources = sortedSources.slice(
                           0,
-                          maxDisplayCount
+                          maxDisplayCount,
                         );
                         const hasMore = sortedSources.length > maxDisplayCount;
                         const remainingCount =
@@ -1354,7 +1348,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         />
       </>
     );
-  }
+  },
 );
 
 export default memo(VideoCard);

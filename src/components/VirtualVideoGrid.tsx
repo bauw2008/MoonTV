@@ -18,7 +18,7 @@ const Grid = dynamic(
     loading: () => (
       <div className='animate-pulse h-96 bg-gray-200 dark:bg-gray-800 rounded-lg' />
     ),
-  }
+  },
 );
 
 import { UnifiedVideoItem } from '@/lib/types';
@@ -51,7 +51,7 @@ export const VirtualVideoGrid = React.forwardRef<
 >(
   (
     { videos, hasMore, isLoadingMore, onLoadMore, loading, isBangumi = false },
-    ref
+    ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<any>(null);
@@ -70,7 +70,7 @@ export const VirtualVideoGrid = React.forwardRef<
       const urls: string[] = [];
       const itemsToPreload = videos.slice(
         displayItemCount,
-        Math.min(displayItemCount + 20, totalItemCount)
+        Math.min(displayItemCount + 20, totalItemCount),
       );
 
       itemsToPreload.forEach((item) => {
@@ -123,11 +123,11 @@ export const VirtualVideoGrid = React.forwardRef<
         setVisibleItemCount((prev) => {
           const newCount = Math.min(
             prev + LOAD_MORE_BATCH_SIZE,
-            totalItemCount
+            totalItemCount,
           );
 
           if (newCount >= totalItemCount * 0.8 && hasMore && !isLoadingMore) {
-            onLoadMore();
+            setTimeout(() => onLoadMore(), 0);
           }
 
           return newCount;
@@ -157,13 +157,13 @@ export const VirtualVideoGrid = React.forwardRef<
             } catch (error) {
               console.debug(
                 'Grid scroll to top error (safe to ignore):',
-                error
+                error,
               );
             }
           }
         },
       }),
-      []
+      [],
     );
 
     const rowCount = Math.ceil(displayItemCount / columnCount);
@@ -212,7 +212,7 @@ export const VirtualVideoGrid = React.forwardRef<
           </div>
         );
       },
-      []
+      [],
     );
 
     const skeletonData = Array.from({ length: 25 }, (_, index) => index);
@@ -419,7 +419,7 @@ export const VirtualVideoGrid = React.forwardRef<
           )}
       </div>
     );
-  }
+  },
 );
 
 VirtualVideoGrid.displayName = 'VirtualVideoGrid';

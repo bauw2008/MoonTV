@@ -121,7 +121,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
 
   const genres = contentType === 'movie' ? MOVIE_GENRES : TV_GENRES;
   const sortOptions = SORT_OPTIONS.filter(
-    (option) => !option.tvOnly || contentType === 'tv'
+    (option) => !option.tvOnly || contentType === 'tv',
   );
 
   const updateFilter = useCallback((key: keyof TMDBFilterState, value: any) => {
@@ -207,7 +207,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                   onChange={(e) =>
                     updateFilter(
                       'startYear',
-                      e.target.value ? parseInt(e.target.value) : undefined
+                      e.target.value ? parseInt(e.target.value) : undefined,
                     )
                   }
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -221,7 +221,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                   onChange={(e) =>
                     updateFilter(
                       'endYear',
-                      e.target.value ? parseInt(e.target.value) : undefined
+                      e.target.value ? parseInt(e.target.value) : undefined,
                     )
                   }
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -244,7 +244,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                   onChange={(e) =>
                     updateFilter(
                       'minRating',
-                      e.target.value ? parseFloat(e.target.value) : undefined
+                      e.target.value ? parseFloat(e.target.value) : undefined,
                     )
                   }
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -259,7 +259,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                   onChange={(e) =>
                     updateFilter(
                       'maxRating',
-                      e.target.value ? parseFloat(e.target.value) : undefined
+                      e.target.value ? parseFloat(e.target.value) : undefined,
                     )
                   }
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -282,7 +282,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                 onChange={(e) =>
                   updateFilter(
                     'minPopularity',
-                    e.target.value ? parseFloat(e.target.value) : undefined
+                    e.target.value ? parseFloat(e.target.value) : undefined,
                   )
                 }
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -302,7 +302,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                 onChange={(e) =>
                   updateFilter(
                     'minVoteCount',
-                    e.target.value ? parseInt(e.target.value) : undefined
+                    e.target.value ? parseInt(e.target.value) : undefined,
                   )
                 }
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -323,7 +323,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                   onChange={(e) =>
                     updateFilter(
                       'minEpisodeCount',
-                      e.target.value ? parseInt(e.target.value) : undefined
+                      e.target.value ? parseInt(e.target.value) : undefined,
                     )
                   }
                   className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -348,7 +348,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                         'genreIds',
                         isSelected
                           ? current.filter((id) => id !== genre.id)
-                          : [...current, genre.id]
+                          : [...current, genre.id],
                       );
                     }}
                     className={`px-2 py-1 text-xs rounded-md border transition-colors ${
@@ -379,7 +379,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                         'languages',
                         isSelected
                           ? current.filter((code) => code !== lang.code)
-                          : [...current, lang.code]
+                          : [...current, lang.code],
                       );
                     }}
                     className={`px-2 py-1 text-xs rounded-md border transition-colors ${
@@ -449,7 +449,7 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
                 onChange={(e) =>
                   updateFilter(
                     'limit',
-                    e.target.value ? parseInt(e.target.value) : undefined
+                    e.target.value ? parseInt(e.target.value) : undefined,
                   )
                 }
                 className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'

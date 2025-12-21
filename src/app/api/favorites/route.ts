@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       if (!source || !id) {
         return NextResponse.json(
           { error: 'Invalid key format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       const fav = await db.getFavorite(authInfo.username, source, id);
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     console.error('获取收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     if (!key || !favorite) {
       return NextResponse.json(
         { error: 'Missing key or favorite' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     if (!favorite.title || !favorite.source_name) {
       return NextResponse.json(
         { error: 'Invalid favorite data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     if (!source || !id) {
       return NextResponse.json(
         { error: 'Invalid key format' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     console.error('保存收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -153,7 +153,7 @@ export async function DELETE(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -173,7 +173,7 @@ export async function DELETE(request: NextRequest) {
       if (!source || !id) {
         return NextResponse.json(
           { error: 'Invalid key format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       await db.deleteFavorite(username, source, id);
@@ -184,7 +184,7 @@ export async function DELETE(request: NextRequest) {
         Object.keys(all).map(async (k) => {
           const [s, i] = k.split('+');
           if (s && i) await db.deleteFavorite(username, s, i);
-        })
+        }),
       );
     }
 
@@ -193,7 +193,7 @@ export async function DELETE(request: NextRequest) {
     console.error('删除收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

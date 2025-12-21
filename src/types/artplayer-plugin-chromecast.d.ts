@@ -5,7 +5,7 @@ declare module '@/lib/artplayer-plugin-chromecast' {
     url?: string;
     mimeType?: string;
     onStateChange?: (
-      state: 'connected' | 'connecting' | 'disconnected' | 'disconnecting'
+      state: 'connected' | 'connecting' | 'disconnected' | 'disconnecting',
     ) => void;
     onCastAvailable?: (available: boolean) => void;
     onCastStart?: () => void;
@@ -19,7 +19,7 @@ declare module '@/lib/artplayer-plugin-chromecast' {
   }
 
   function artplayerPluginChromecast(
-    options?: ChromecastPluginOptions
+    options?: ChromecastPluginOptions,
   ): (art: any) => Promise<ChromecastPlugin>;
   export default artplayerPluginChromecast;
 }

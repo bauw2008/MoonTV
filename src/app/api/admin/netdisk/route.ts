@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行管理员配置',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (typeof netDiskConfig.enabled !== 'boolean') {
       return NextResponse.json(
         { error: 'Invalid enabled value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: 'Invalid pansouUrl value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: 'Invalid timeout value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!Array.isArray(netDiskConfig.enabledCloudTypes)) {
       return NextResponse.json(
         { error: 'Invalid enabledCloudTypes value' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       if (!validCloudTypes.includes(type)) {
         return NextResponse.json(
           { error: `Invalid cloud type: ${type}` },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     if (username !== process.env.USERNAME) {
       // 管理员
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (!user || user.role !== 'admin' || user.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     console.error('Save netdisk config error:', error);
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

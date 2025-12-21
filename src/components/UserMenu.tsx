@@ -71,7 +71,7 @@ export const UserMenu: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const [showLiveSetting, setShowLiveSetting] = useState(false);
   const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
-    null
+    null,
   );
   const [hasUnreadUpdates, setHasUnreadUpdates] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
@@ -215,7 +215,7 @@ export const UserMenu: React.FC = () => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedAggregateSearch = localStorage.getItem(
-        'defaultAggregateSearch'
+        'defaultAggregateSearch',
       );
       if (savedAggregateSearch !== null) {
         setDefaultAggregateSearch(JSON.parse(savedAggregateSearch));
@@ -240,7 +240,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyType = localStorage.getItem(
-        'doubanImageProxyType'
+        'doubanImageProxyType',
       );
       const defaultDoubanImageProxyType =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'direct';
@@ -251,7 +251,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyUrl = localStorage.getItem(
-        'doubanImageProxyUrl'
+        'doubanImageProxyUrl',
       );
       const defaultDoubanImageProxyUrl =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
@@ -283,7 +283,7 @@ export const UserMenu: React.FC = () => {
 
       // 读取追剧提醒开关设置（默认开启）
       const savedEnableWatchingUpdates = localStorage.getItem(
-        'enableWatchingUpdates'
+        'enableWatchingUpdates',
       );
       if (savedEnableWatchingUpdates !== null) {
         setEnableWatchingUpdates(JSON.parse(savedEnableWatchingUpdates));
@@ -323,7 +323,7 @@ export const UserMenu: React.FC = () => {
         // 检测是否有新更新（只检查新剧集更新，不包括继续观看）
         if (updates && (updates.updatedCount || 0) > 0) {
           const lastViewed = parseInt(
-            localStorage.getItem('watchingUpdatesLastViewed') || '0'
+            localStorage.getItem('watchingUpdatesLastViewed') || '0',
           );
           const currentTime = Date.now();
 
@@ -387,7 +387,7 @@ export const UserMenu: React.FC = () => {
             // 计算未读回复数量和新留言数量
             let unreadCount = 0;
             const lastViewedMessages = parseInt(
-              localStorage.getItem('lastViewedMessages') || '0'
+              localStorage.getItem('lastViewedMessages') || '0',
             );
 
             comments.forEach((comment: any) => {
@@ -522,7 +522,7 @@ export const UserMenu: React.FC = () => {
         // 重新计算未读状态
         if (updates && (updates.updatedCount || 0) > 0) {
           const lastViewed = parseInt(
-            localStorage.getItem('watchingUpdatesLastViewed') || '0'
+            localStorage.getItem('watchingUpdatesLastViewed') || '0',
           );
           const currentTime = Date.now();
           const hasNewUpdates =
@@ -620,7 +620,7 @@ export const UserMenu: React.FC = () => {
   const fetchUserAvatar = async (username: string) => {
     try {
       const response = await fetch(
-        `/api/avatar?user=${encodeURIComponent(username)}`
+        `/api/avatar?user=${encodeURIComponent(username)}`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -651,7 +651,7 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleAvatarSelected = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -681,7 +681,7 @@ export const UserMenu: React.FC = () => {
   // 生成裁剪后的图片
   const getCroppedImage = async (
     image: HTMLImageElement,
-    crop: PixelCrop
+    crop: PixelCrop,
   ): Promise<string> => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -719,7 +719,7 @@ export const UserMenu: React.FC = () => {
       0,
       0,
       outputSize,
-      outputSize
+      outputSize,
     );
 
     return new Promise((resolve) => {
@@ -732,7 +732,7 @@ export const UserMenu: React.FC = () => {
           }
         },
         'image/jpeg',
-        0.9
+        0.9,
       );
     });
   };
@@ -767,7 +767,7 @@ export const UserMenu: React.FC = () => {
 
       const croppedImageBase64 = await getCroppedImage(
         imageRef.current,
-        completedCrop
+        completedCrop,
       );
 
       // 上传到服务器
@@ -1093,8 +1093,8 @@ export const UserMenu: React.FC = () => {
                     (authInfo?.role || 'user') === 'owner'
                       ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/40 dark:to-yellow-900/60 dark:text-yellow-300 hover:from-yellow-200 hover:to-yellow-300 dark:hover:from-yellow-800/60 dark:hover:to-yellow-800/80'
                       : (authInfo?.role || 'user') === 'admin'
-                      ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900/40 dark:to-blue-900/60 dark:text-blue-300 hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800/60 dark:hover:to-blue-800/80'
-                      : 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/40 dark:to-green-900/60 dark:text-green-300 hover:from-green-200 hover:to-green-300 dark:hover:from-green-800/60 dark:hover:to-green-800/80'
+                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900/40 dark:to-blue-900/60 dark:text-blue-300 hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800/60 dark:hover:to-blue-800/80'
+                        : 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/40 dark:to-green-900/60 dark:text-green-300 hover:from-green-200 hover:to-green-300 dark:hover:from-green-800/60 dark:hover:to-green-800/80'
                   }`}
                 >
                   {getRoleText(authInfo?.role || 'user')}
@@ -1299,8 +1299,8 @@ export const UserMenu: React.FC = () => {
                       updateStatus === UpdateStatus.HAS_UPDATE
                         ? 'bg-yellow-500'
                         : updateStatus === UpdateStatus.NO_UPDATE
-                        ? 'bg-green-400'
-                        : ''
+                          ? 'bg-green-400'
+                          : ''
                     }`}
                   ></div>
                 )}
@@ -1390,7 +1390,7 @@ export const UserMenu: React.FC = () => {
                 >
                   {
                     doubanDataSourceOptions.find(
-                      (option) => option.value === doubanDataSource
+                      (option) => option.value === doubanDataSource,
                     )?.label
                   }
                 </button>
@@ -1439,7 +1439,7 @@ export const UserMenu: React.FC = () => {
                     onClick={() =>
                       window.open(
                         getThanksInfo(doubanDataSource)!.url,
-                        '_blank'
+                        '_blank',
                       )
                     }
                     className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
@@ -1493,14 +1493,14 @@ export const UserMenu: React.FC = () => {
                   type='button'
                   onClick={() =>
                     setIsDoubanImageProxyDropdownOpen(
-                      !isDoubanImageProxyDropdownOpen
+                      !isDoubanImageProxyDropdownOpen,
                     )
                   }
                   className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
                 >
                   {
                     doubanImageProxyTypeOptions.find(
-                      (option) => option.value === doubanImageProxyType
+                      (option) => option.value === doubanImageProxyType,
                     )?.label
                   }
                 </button>
@@ -1549,7 +1549,7 @@ export const UserMenu: React.FC = () => {
                     onClick={() =>
                       window.open(
                         getThanksInfo(doubanImageProxyType)!.url,
-                        '_blank'
+                        '_blank',
                       )
                     }
                     className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
@@ -1918,7 +1918,7 @@ export const UserMenu: React.FC = () => {
             {/* 有新集数的剧集 */}
             {watchingUpdates &&
               watchingUpdates.updatedSeries.filter(
-                (series) => series.hasNewEpisode
+                (series) => series.hasNewEpisode,
               ).length > 0 && (
                 <div>
                   <div className='flex items-center gap-2 mb-4'>
@@ -1930,7 +1930,7 @@ export const UserMenu: React.FC = () => {
                       <span className='text-sm text-red-500 font-medium'>
                         {
                           watchingUpdates.updatedSeries.filter(
-                            (series) => series.hasNewEpisode
+                            (series) => series.hasNewEpisode,
                           ).length
                         }
                         部剧集有更新
@@ -2167,7 +2167,7 @@ export const UserMenu: React.FC = () => {
               </div>
             </div>
           </>,
-          document.body
+          document.body,
         )}
 
       {/* 版本面板 */}

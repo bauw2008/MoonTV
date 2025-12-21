@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import BackToTopButton from '@/components/BackToTopButton';
+
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
   getDoubanCategories,
@@ -35,8 +37,7 @@ function DoubanPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // 返回顶部按钮显示状态
-  const [showBackToTop, setShowBackToTop] = useState(false);
+
   // VirtualDoubanGrid ref for scroll control
   const virtualGridRef = useRef<VirtualDoubanGridRef>(null);
 
@@ -153,43 +154,6 @@ function DoubanPageClient() {
     return () => clearTimeout(timer);
   }, []); // 只在组件挂载时执行一次
 
-  // 监听滚动位置，控制返回顶部按钮显示
-  useEffect(() => {
-    // 获取滚动位置的函数 - 专门针对 body 滚动
-    const getScrollTop = () => {
-      return document.body.scrollTop || 0;
-    };
-
-    // 使用 requestAnimationFrame 持续检测滚动位置
-    let isRunning = false;
-    const checkScrollPosition = () => {
-      if (!isRunning) return;
-
-      const scrollTop = getScrollTop();
-      const shouldShow = scrollTop > 300;
-      setShowBackToTop(shouldShow);
-
-      requestAnimationFrame(checkScrollPosition);
-    };
-
-    // 启动持续检测
-    isRunning = true;
-    checkScrollPosition();
-
-    // 监听 body 元素的滚动事件
-    const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
-    };
-
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      isRunning = false;
-      document.body.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
   // type变化时立即重置selectorsReady（最高优先级）
   useEffect(() => {
     setSelectorsReady(false);
@@ -201,7 +165,7 @@ function DoubanPageClient() {
     if (type === 'custom' && customCategories.length > 0) {
       // 自定义分类模式：优先选择 movie，如果没有 movie 则选择 tv
       const types = Array.from(
-        new Set(customCategories.map((cat) => cat.type))
+        new Set(customCategories.map((cat) => cat.type)),
       );
       if (types.length > 0) {
         // 优先选择 movie，如果没有 movie 则选择 tv
@@ -215,7 +179,7 @@ function DoubanPageClient() {
 
         // 设置选中类型的第一个分类的 query 作为二级选择
         const firstCategory = customCategories.find(
-          (cat) => cat.type === selectedType
+          (cat) => cat.type === selectedType,
         );
         if (firstCategory) {
           setSecondarySelection(firstCategory.query);
@@ -283,7 +247,7 @@ function DoubanPageClient() {
         multiLevelSelection: Record<string, string>;
         selectedWeekday: string;
         currentPage: number;
-      }
+      },
     ) => {
       return (
         snapshot1.type === snapshot2.type &&
@@ -295,7 +259,7 @@ function DoubanPageClient() {
           JSON.stringify(snapshot2.multiLevelSelection)
       );
     },
-    []
+    [],
   );
 
   // 生成API请求参数的辅助函数
@@ -321,7 +285,7 @@ function DoubanPageClient() {
         pageStart,
       };
     },
-    [type, primarySelection, secondarySelection]
+    [type, primarySelection, secondarySelection],
   );
 
   // 防抖的数据加载函数
@@ -350,7 +314,7 @@ function DoubanPageClient() {
         // 自定义分类模式：根据选中的一级和二级选项获取对应的分类
         const selectedCategory = customCategories.find(
           (cat) =>
-            cat.type === primarySelection && cat.query === secondarySelection
+            cat.type === primarySelection && cat.query === secondarySelection,
         );
 
         if (selectedCategory) {
@@ -366,7 +330,7 @@ function DoubanPageClient() {
       } else if (type === 'anime' && primarySelection === '每日放送') {
         const calendarData = await GetBangumiCalendarData();
         const weekdayData = calendarData.find(
-          (item) => item.weekday.en === selectedWeekday
+          (item) => item.weekday.en === selectedWeekday,
         );
         if (weekdayData) {
           data = {
@@ -464,7 +428,24 @@ function DoubanPageClient() {
             JSON.stringify(currentSnapshot.multiLevelSelection);
 
         if (keyParamsMatch) {
-          setDoubanData(data.list);
+          // 固定分类映射
+          const getTypeFromPageType = (pageType: string): string => {
+            const typeMap: Record<string, string> = {
+              movie: 'movie',
+              tv: 'tv',
+              'short-drama': 'shortdrama',
+              show: 'variety',
+              anime: 'anime',
+            };
+            return typeMap[pageType] || '';
+          };
+
+          setDoubanData(
+            data.list.map((item: DoubanItem) => ({
+              ...item,
+              type: getTypeFromPageType(type),
+            })),
+          );
           setHasMore(data.list.length !== 0);
           setLoading(false);
         } else {
@@ -547,7 +528,7 @@ function DoubanPageClient() {
             const selectedCategory = customCategories.find(
               (cat) =>
                 cat.type === primarySelection &&
-                cat.query === secondarySelection
+                cat.query === secondarySelection,
             );
 
             if (selectedCategory) {
@@ -638,7 +619,7 @@ function DoubanPageClient() {
             });
           } else {
             data = await getDoubanCategories(
-              getRequestParams(currentPage * 25)
+              getRequestParams(currentPage * 25),
             );
           }
 
@@ -657,7 +638,25 @@ function DoubanPageClient() {
                 JSON.stringify(currentSnapshot.multiLevelSelection);
 
             if (keyParamsMatch) {
-              setDoubanData((prev) => [...prev, ...data.list]);
+              // 固定分类映射
+              const getTypeFromPageType = (pageType: string): string => {
+                const typeMap: Record<string, string> = {
+                  movie: 'movie',
+                  tv: 'tv',
+                  'short-drama': 'shortdrama',
+                  show: 'variety',
+                  anime: 'anime',
+                };
+                return typeMap[pageType] || '';
+              };
+
+              setDoubanData((prev) => [
+                ...prev,
+                ...data.list.map((item: DoubanItem) => ({
+                  ...item,
+                  type: getTypeFromPageType(type),
+                })),
+              ]);
               setHasMore(data.list.length !== 0);
             } else {
               console.log('关键参数不一致，不执行任何操作，避免设置过期数据');
@@ -707,7 +706,7 @@ function DoubanPageClient() {
           setCurrentPage((prev) => prev + 1);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(loadingRef.current);
@@ -745,7 +744,7 @@ function DoubanPageClient() {
         // 如果是自定义分类模式，同时更新一级和二级选择器
         if (type === 'custom' && customCategories.length > 0) {
           const firstCategory = customCategories.find(
-            (cat) => cat.type === value
+            (cat) => cat.type === value,
           );
           if (firstCategory) {
             // 批量更新状态，避免多次触发数据加载
@@ -769,7 +768,7 @@ function DoubanPageClient() {
         }
       }
     },
-    [primarySelection, type, customCategories]
+    [primarySelection, type, customCategories],
   );
 
   const handleSecondaryChange = useCallback(
@@ -785,7 +784,7 @@ function DoubanPageClient() {
         setSecondarySelection(value);
       }
     },
-    [secondarySelection]
+    [secondarySelection],
   );
 
   const handleMultiLevelChange = useCallback(
@@ -793,7 +792,7 @@ function DoubanPageClient() {
       // 比较两个对象是否相同，忽略顺序
       const isEqual = (
         obj1: Record<string, string>,
-        obj2: Record<string, string>
+        obj2: Record<string, string>,
       ) => {
         const keys1 = Object.keys(obj1).sort();
         const keys2 = Object.keys(obj2).sort();
@@ -816,7 +815,7 @@ function DoubanPageClient() {
       setIsLoadingMore(false);
       setMultiLevelValues(values);
     },
-    [multiLevelValues]
+    [multiLevelValues],
   );
 
   const handleWeekdayChange = useCallback((weekday: string) => {
@@ -835,14 +834,14 @@ function DoubanPageClient() {
     return type === 'movie'
       ? '电影'
       : type === 'tv'
-      ? '电视剧'
-      : type === 'anime'
-      ? '动漫'
-      : type === 'show'
-      ? '综艺'
-      : type === 'short-drama'
-      ? '短剧'
-      : '其他';
+        ? '电视剧'
+        : type === 'anime'
+          ? '动漫'
+          : type === 'show'
+            ? '综艺'
+            : type === 'short-drama'
+              ? '短剧'
+              : '其他';
   };
 
   const getPageDescription = () => {
@@ -862,25 +861,6 @@ function DoubanPageClient() {
     const queryString = params.toString();
     const activePath = `/douban${queryString ? `?${queryString}` : ''}`;
     return activePath;
-  };
-
-  // 返回顶部功能 - 同时滚动页面和重置虚拟列表
-  const scrollToTop = () => {
-    try {
-      // 1. 滚动页面到顶部
-      document.body.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-
-      // 2. 重置虚拟列表到第一项
-      if (virtualGridRef.current) {
-        virtualGridRef.current.scrollToTop();
-      }
-    } catch (error) {
-      // 如果平滑滚动完全失败，使用立即滚动
-      document.body.scrollTop = 0;
-    }
   };
 
   return (
@@ -934,8 +914,6 @@ function DoubanPageClient() {
               </div>
             </div>
           )}
-
-          
         </div>
 
         {/* 内容展示区域 */}
@@ -972,15 +950,7 @@ function DoubanPageClient() {
                           douban_id={Number(item.id)}
                           rate={item.rate}
                           year={item.year}
-                          type={
-                            type === 'movie'
-                              ? 'movie'
-                              : type === 'short-drama'
-                              ? 'shortdrama'
-                              : type === 'show'
-                              ? 'variety'
-                              : ''
-                          }
+                          type={item.type}
                           isBangumi={
                             type === 'anime' && primarySelection === '每日放送'
                           }
@@ -1144,7 +1114,7 @@ function DoubanPageClient() {
       </div>
 
       {/* 侧边工具栏 */}
-      <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col gap-3'>
+      <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col-reverse gap-3'>
         {/* 虚拟滑动开关 */}
         <div className='relative group/switch'>
           <label className='flex items-center justify-center cursor-pointer'>
@@ -1158,48 +1128,32 @@ function DoubanPageClient() {
               <div className='w-7 h-7 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl transition-all duration-300 peer-checked:from-gradient-to-br peer-checked:from-blue-500 peer-checked:to-purple-600 shadow-md hover:shadow-lg'></div>
               {/* 状态图标 */}
               <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-                <svg className={`w-4 h-4 transition-all duration-300 ${useVirtualization ? 'text-white scale-100' : 'text-gray-500 scale-90'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className={`w-4 h-4 transition-all duration-300 ${useVirtualization ? 'text-white scale-100' : 'text-gray-500 scale-90'}`}
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M13 10V3L4 14h7v7l9-11h-7z'
+                  />
                 </svg>
               </div>
             </div>
           </label>
           {/* 优化的提示 */}
           <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/switch:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
-            <span className='font-medium'>{useVirtualization ? '虚拟滑动' : '标准滑动'}</span>
+            <span className='font-medium'>
+              {useVirtualization ? '虚拟滑动' : '标准滑动'}
+            </span>
             <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
           </div>
         </div>
 
-        {/* 返回顶部按钮 */}
-        <button
-          onClick={scrollToTop}
-          className={`relative group/top bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl w-7 h-7 text-gray-600 dark:text-gray-300 transition-all duration-300 shadow-md hover:shadow-lg hover:from-gradient-to-br hover:from-blue-500 hover:to-purple-600 hover:text-white flex items-center justify-center ${
-            showBackToTop
-              ? 'opacity-100 translate-y-0 pointer-events-auto scale-100'
-              : 'opacity-0 translate-y-3 pointer-events-none scale-95'
-          }`}
-          aria-label='返回顶部'
-        >
-          <svg
-            className='w-4 h-4 transition-transform duration-300 group-hover/top:-translate-y-0.5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M5 15l7-7 7 7'
-            />
-          </svg>
-          {/* 提示 */}
-          <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/top:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
-            <span className='font-medium'>返回顶部</span>
-            <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
-          </div>
-        </button>
+        <BackToTopButton virtualGridRef={virtualGridRef} />
       </div>
     </PageLayout>
   );

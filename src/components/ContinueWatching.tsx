@@ -31,7 +31,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
-    null
+    null,
   );
   const [enableWatchingUpdates, setEnableWatchingUpdates] = useState(true);
 
@@ -45,7 +45,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
     // 按 save_time 降序排序（最新的在前面）
     const sortedRecords = recordsArray.sort(
-      (a, b) => b.save_time - a.save_time
+      (a, b) => b.save_time - a.save_time,
     );
 
     setPlayRecords(sortedRecords);
@@ -74,13 +74,13 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       'playRecordsUpdated',
       (newRecords: Record<string, PlayRecord>) => {
         updatePlayRecords(newRecords);
-      }
+      },
     );
 
     // 读取追剧提醒开关设置
     if (typeof window !== 'undefined') {
       const savedEnableWatchingUpdates = localStorage.getItem(
-        'enableWatchingUpdates'
+        'enableWatchingUpdates',
       );
       if (savedEnableWatchingUpdates !== null) {
         setEnableWatchingUpdates(JSON.parse(savedEnableWatchingUpdates));
@@ -146,7 +146,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       (newRecords: Record<string, PlayRecord>) => {
         console.log('ContinueWatching: 收到播放记录更新事件，立即同步数据');
         updatePlayRecords(newRecords);
-      }
+      },
     );
 
     // 订阅watching updates事件
@@ -181,7 +181,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   // 检查播放记录是否有新集数更新
   const getNewEpisodesCount = (
-    record: PlayRecord & { key: string }
+    record: PlayRecord & { key: string },
   ): number => {
     if (!watchingUpdates || !watchingUpdates.updatedSeries) return 0;
 
@@ -192,7 +192,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       (series) =>
         series.sourceKey === source &&
         series.videoId === id &&
-        series.hasNewEpisode
+        series.hasNewEpisode,
     );
 
     return matchedSeries ? matchedSeries.newEpisodes || 0 : 0;
@@ -200,7 +200,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   // 获取最新的总集数
   const getLatestTotalEpisodes = (
-    record: PlayRecord & { key: string }
+    record: PlayRecord & { key: string },
   ): number => {
     if (!watchingUpdates || !watchingUpdates.updatedSeries)
       return record.total_episodes;
@@ -209,7 +209,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
     // 在watchingUpdates中查找匹配的剧集
     const matchedSeries = watchingUpdates.updatedSeries.find(
-      (series) => series.sourceKey === source && series.videoId === id
+      (series) => series.sourceKey === source && series.videoId === id,
     );
 
     return matchedSeries && matchedSeries.totalEpisodes
@@ -277,10 +277,12 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
                       from='playrecord'
                       onDelete={() =>
                         setPlayRecords((prev) =>
-                          prev.filter((r) => r.key !== record.key)
+                          prev.filter((r) => r.key !== record.key),
                         )
                       }
-                      type={latestTotalEpisodes > 1 ? 'tv' : ''}
+                      type={
+                        record.type || (latestTotalEpisodes > 1 ? 'tv' : '')
+                      }
                       remarks={record.remarks}
                       priority={index < 4}
                     />

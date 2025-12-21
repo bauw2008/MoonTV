@@ -16,7 +16,7 @@ export class ClientCache {
   static async set(
     key: string,
     data: any,
-    expireSeconds?: number
+    expireSeconds?: number,
   ): Promise<void> {
     try {
       const response = await fetch('/api/cache', {
@@ -41,7 +41,7 @@ export class ClientCache {
         `/api/cache?key=${encodeURIComponent(key)}`,
         {
           method: 'DELETE',
-        }
+        },
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

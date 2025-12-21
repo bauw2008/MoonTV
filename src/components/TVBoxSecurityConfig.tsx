@@ -269,7 +269,7 @@ const TVBoxSecurityConfig = ({
         enableDeviceBinding: securitySettings.enableDeviceBinding,
         maxDevices: securitySettings.maxDevices,
         currentDevices: securitySettings.userTokens.flatMap(
-          (user) => user.devices
+          (user) => user.devices,
         ),
         userTokens: securitySettings.userTokens,
       };
@@ -279,11 +279,11 @@ const TVBoxSecurityConfig = ({
         securitySettings.userTokens.map((t) => ({
           username: t.username,
           token: t.token.substring(0, 8) + '...',
-        }))
+        })),
       );
       console.log(
         '[TVBoxSecurity] 保存设备数量设置:',
-        securitySettings.maxDevices
+        securitySettings.maxDevices,
       );
 
       const response = await fetch('/api/admin/tvbox-security', {
@@ -329,7 +329,7 @@ const TVBoxSecurityConfig = ({
     if (!isValidIPOrCIDR(newIP.trim())) {
       showMessage(
         'error',
-        '请输入有效的IP地址或CIDR格式 (例如: 192.168.1.100 或 192.168.1.0/24)'
+        '请输入有效的IP地址或CIDR格式 (例如: 192.168.1.100 或 192.168.1.0/24)',
       );
       return;
     }
@@ -376,7 +376,7 @@ const TVBoxSecurityConfig = ({
       const currentUsername = authInfo?.username;
       if (currentUsername) {
         const userToken = securitySettings.userTokens.find(
-          (t) => t.username === currentUsername && t.enabled
+          (t) => t.username === currentUsername && t.enabled,
         );
         if (userToken && userToken.token) {
           params.append('token', userToken.token);
@@ -408,7 +408,7 @@ const TVBoxSecurityConfig = ({
         const currentUsername = authInfo?.username;
         if (currentUsername) {
           const userToken = securitySettings.userTokens.find(
-            (t) => t.username === currentUsername && t.enabled
+            (t) => t.username === currentUsername && t.enabled,
           );
           if (userToken) {
             diagnoseUrl += `?token=${encodeURIComponent(userToken.token)}`;
@@ -432,7 +432,7 @@ const TVBoxSecurityConfig = ({
     } catch (error) {
       showMessage(
         'error',
-        '诊断失败：' + (error instanceof Error ? error.message : '未知错误')
+        '诊断失败：' + (error instanceof Error ? error.message : '未知错误'),
       );
     } finally {
       setIsDiagnosing(false);
@@ -462,7 +462,7 @@ const TVBoxSecurityConfig = ({
 
       if (data.success) {
         setJarRefreshMsg(
-          `✓ JAR 缓存已刷新 (${data.jar_status.source.split('/').pop()})`
+          `✓ JAR 缓存已刷新 (${data.jar_status.source.split('/').pop()})`,
         );
         // 如果当前有诊断结果，重新诊断
         if (diagnoseResult) {
@@ -533,12 +533,12 @@ const TVBoxSecurityConfig = ({
     // 生成当前设备的指纹，使用当前登录用户
     const currentDevice = getCurrentDeviceFingerprint(
       '192.168.1.100',
-      currentUsername
+      currentUsername,
     );
 
     // 检查是否已绑定
     const isAlreadyBound = securitySettings.currentDevices.some(
-      (device) => device.deviceId === currentDevice.deviceId
+      (device) => device.deviceId === currentDevice.deviceId,
     );
 
     if (isAlreadyBound) {
@@ -548,7 +548,7 @@ const TVBoxSecurityConfig = ({
       const updatedDevices = addDeviceBinding(
         securitySettings.currentDevices,
         currentDevice,
-        securitySettings.maxDevices
+        securitySettings.maxDevices,
       );
 
       setSecuritySettings((prev) => ({
@@ -833,8 +833,8 @@ const TVBoxSecurityConfig = ({
                                 securitySettings.maxDevices
                                   ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
                                   : userToken.devices.length === 0
-                                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
-                                  : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                                    ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
                               }`}
                             >
                               {userToken.devices.length}/
@@ -891,7 +891,7 @@ const TVBoxSecurityConfig = ({
                                     securitySettings.userTokens.map((t) =>
                                       t.username === userToken.username
                                         ? { ...t, token: generateToken() }
-                                        : t
+                                        : t,
                                     );
                                   setSecuritySettings((prev) => ({
                                     ...prev,
@@ -899,7 +899,7 @@ const TVBoxSecurityConfig = ({
                                   }));
                                   showMessage(
                                     'success',
-                                    `${userToken.username}的Token已重新生成`
+                                    `${userToken.username}的Token已重新生成`,
                                   );
                                 }}
                                 className='text-xs px-2 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded transition-colors'
@@ -913,7 +913,7 @@ const TVBoxSecurityConfig = ({
                                     securitySettings.userTokens.map((user) =>
                                       user.username === userToken.username
                                         ? { ...user, enabled: !user.enabled }
-                                        : user
+                                        : user,
                                     );
                                   setSecuritySettings((prev) => ({
                                     ...prev,
@@ -923,7 +923,7 @@ const TVBoxSecurityConfig = ({
                                     'success',
                                     `${userToken.username}的Token已${
                                       userToken.enabled ? '禁用' : '启用'
-                                    }`
+                                    }`,
                                   );
                                 }}
                                 className={`text-xs px-2 py-1 rounded transition-colors ${
@@ -943,11 +943,12 @@ const TVBoxSecurityConfig = ({
                                   const currentDevice =
                                     getCurrentDeviceFingerprint(
                                       undefined,
-                                      userToken.username
+                                      userToken.username,
                                     );
                                   const isAlreadyBound = userToken.devices.some(
                                     (device) =>
-                                      device.deviceId === currentDevice.deviceId
+                                      device.deviceId ===
+                                      currentDevice.deviceId,
                                   );
 
                                   if (isAlreadyBound) {
@@ -961,10 +962,10 @@ const TVBoxSecurityConfig = ({
                                               devices: addDeviceBinding(
                                                 t.devices,
                                                 currentDevice,
-                                                securitySettings.maxDevices
+                                                securitySettings.maxDevices,
                                               ),
                                             }
-                                          : t
+                                          : t,
                                       );
                                     setSecuritySettings((prev) => ({
                                       ...prev,
@@ -1017,12 +1018,12 @@ const TVBoxSecurityConfig = ({
                     <span className='text-xs text-gray-500 dark:text-gray-400'>
                       {securitySettings.userTokens.reduce(
                         (total, user) => total + user.devices.length,
-                        0
+                        0,
                       )}{' '}
                       台设备
                     </span>
                     {securitySettings.userTokens.some(
-                      (user) => user.devices.length > 0
+                      (user) => user.devices.length > 0,
                     ) && (
                       <button
                         onClick={() => {
@@ -1030,7 +1031,7 @@ const TVBoxSecurityConfig = ({
                             (user) => ({
                               ...user,
                               devices: [],
-                            })
+                            }),
                           );
                           setSecuritySettings((prev) => ({
                             ...prev,
@@ -1046,7 +1047,7 @@ const TVBoxSecurityConfig = ({
                 </div>
 
                 {securitySettings.userTokens.some(
-                  (user) => user.devices.length > 0
+                  (user) => user.devices.length > 0,
                 ) ? (
                   <div className='overflow-x-auto'>
                     <table className='w-full text-sm'>
@@ -1091,7 +1092,7 @@ const TVBoxSecurityConfig = ({
                               </td>
                               <td className='py-3 px-4 text-gray-600 dark:text-gray-400 whitespace-nowrap'>
                                 {new Date(device.bindTime).toLocaleString(
-                                  'zh-CN'
+                                  'zh-CN',
                                 )}
                               </td>
                               <td className='py-3 px-4'>
@@ -1111,10 +1112,10 @@ const TVBoxSecurityConfig = ({
                                                   ...user,
                                                   devices: removeDeviceBinding(
                                                     user.devices,
-                                                    device.deviceId
+                                                    device.deviceId,
                                                   ),
                                                 }
-                                              : user
+                                              : user,
                                         );
                                       setSecuritySettings((prev) => ({
                                         ...prev,
@@ -1136,7 +1137,7 @@ const TVBoxSecurityConfig = ({
                                                   ...user,
                                                   enabled: !user.enabled,
                                                 }
-                                              : user
+                                              : user,
                                         );
                                       setSecuritySettings((prev) => ({
                                         ...prev,
@@ -1146,7 +1147,7 @@ const TVBoxSecurityConfig = ({
                                         'success',
                                         `${userToken.username}的Token已${
                                           userToken.enabled ? '禁用' : '启用'
-                                        }`
+                                        }`,
                                       );
                                     }}
                                     className={`text-xs px-2 py-1 rounded transition-colors ${
@@ -1165,7 +1166,7 @@ const TVBoxSecurityConfig = ({
                                 </div>
                               </td>
                             </tr>
-                          ))
+                          )),
                         )}
                       </tbody>
                     </table>
@@ -1270,7 +1271,7 @@ const TVBoxSecurityConfig = ({
                           | 'standard'
                           | 'safe'
                           | 'fast'
-                          | 'yingshicang'
+                          | 'yingshicang',
                       )
                     }
                     className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -1296,7 +1297,7 @@ const TVBoxSecurityConfig = ({
                           | 'standard'
                           | 'safe'
                           | 'fast'
-                          | 'yingshicang'
+                          | 'yingshicang',
                       )
                     }
                     className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -1322,7 +1323,7 @@ const TVBoxSecurityConfig = ({
                           | 'standard'
                           | 'safe'
                           | 'fast'
-                          | 'yingshicang'
+                          | 'yingshicang',
                       )
                     }
                     className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -1348,7 +1349,7 @@ const TVBoxSecurityConfig = ({
                           | 'standard'
                           | 'safe'
                           | 'fast'
-                          | 'yingshicang'
+                          | 'yingshicang',
                       )
                     }
                     className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -1367,10 +1368,10 @@ const TVBoxSecurityConfig = ({
                 {configMode === 'standard'
                   ? '包含完整配置（IJK优化、广告过滤、DoH等），推荐使用'
                   : configMode === 'safe'
-                  ? '仅包含核心配置，遇到TVBox兼容性问题时使用'
-                  : configMode === 'fast'
-                  ? '优化切换体验，移除可能导致卡顿的配置'
-                  : '专为影视仓优化，包含播放规则和兼容性修复'}
+                    ? '仅包含核心配置，遇到TVBox兼容性问题时使用'
+                    : configMode === 'fast'
+                      ? '优化切换体验，移除可能导致卡顿的配置'
+                      : '专为影视仓优化，包含播放规则和兼容性修复'}
               </p>
             </div>
           </div>
@@ -1591,8 +1592,8 @@ const TVBoxSecurityConfig = ({
                           smartHealthResult.reachability.health_score >= 75
                             ? 'text-green-600 dark:text-green-400'
                             : smartHealthResult.reachability.health_score >= 50
-                            ? 'text-yellow-600 dark:text-yellow-400'
-                            : 'text-red-600 dark:text-red-400'
+                              ? 'text-yellow-600 dark:text-yellow-400'
+                              : 'text-red-600 dark:text-red-400'
                         }`}
                       >
                         {smartHealthResult.reachability.health_score}
@@ -1601,8 +1602,8 @@ const TVBoxSecurityConfig = ({
                         {smartHealthResult.status.overall === 'excellent'
                           ? '优秀'
                           : smartHealthResult.status.overall === 'good'
-                          ? '良好'
-                          : '需关注'}
+                            ? '良好'
+                            : '需关注'}
                       </div>
                     </div>
                   </div>
@@ -1699,8 +1700,8 @@ const TVBoxSecurityConfig = ({
                     jarFixResult.status.network_quality === 'good'
                       ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
                       : jarFixResult.status.network_quality === 'fair'
-                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
-                      : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
+                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
                   }`}
                 >
                   <div className='flex items-center justify-between'>
@@ -1718,15 +1719,15 @@ const TVBoxSecurityConfig = ({
                         jarFixResult.status.network_quality === 'good'
                           ? 'text-green-600 dark:text-green-400'
                           : jarFixResult.status.network_quality === 'fair'
-                          ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-red-600 dark:text-red-400'
+                            ? 'text-yellow-600 dark:text-yellow-400'
+                            : 'text-red-600 dark:text-red-400'
                       }`}
                     >
                       {jarFixResult.status.network_quality === 'good'
                         ? '优秀'
                         : jarFixResult.status.network_quality === 'fair'
-                        ? '良好'
-                        : '较差'}
+                          ? '良好'
+                          : '较差'}
                     </div>
                   </div>
                 </div>
@@ -1784,7 +1785,7 @@ const TVBoxSecurityConfig = ({
                               <span className='flex-shrink-0 mt-1'>•</span>
                               <span>{rec}</span>
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
@@ -1806,7 +1807,7 @@ const TVBoxSecurityConfig = ({
                               <span className='flex-shrink-0 mt-1'>•</span>
                               <span>{rec}</span>
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
@@ -1828,7 +1829,7 @@ const TVBoxSecurityConfig = ({
                               <span className='flex-shrink-0 mt-1'>•</span>
                               <span>{rec}</span>
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
@@ -2041,7 +2042,7 @@ const TVBoxSecurityConfig = ({
                       <div className='text-xs text-gray-600 dark:text-gray-400'>
                         最后修改:{' '}
                         {new Date(
-                          diagnoseResult.spiderLastModified
+                          diagnoseResult.spiderLastModified,
                         ).toLocaleString('zh-CN')}
                       </div>
                     )}
@@ -2077,7 +2078,7 @@ const TVBoxSecurityConfig = ({
                           <div>
                             • 真实大小:{' '}
                             {Math.round(
-                              (diagnoseResult as any).spider_real_size / 1024
+                              (diagnoseResult as any).spider_real_size / 1024,
                             )}
                             KB
                           </div>
@@ -2128,7 +2129,7 @@ const TVBoxSecurityConfig = ({
                               >
                                 {idx + 1}. {candidate}
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                       </div>

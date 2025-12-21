@@ -61,10 +61,10 @@ export class CalendarCacheManager {
         // KVRocks/标准Redis
         if (storage.withRetry && storage.client?.set) {
           await storage.withRetry(() =>
-            storage.client.set(CALENDAR_DATA_KEY, dataStr)
+            storage.client.set(CALENDAR_DATA_KEY, dataStr),
           );
           await storage.withRetry(() =>
-            storage.client.set(CALENDAR_TIME_KEY, timestamp)
+            storage.client.set(CALENDAR_TIME_KEY, timestamp),
           );
         } else if (storage.client?.set) {
           await storage.client.set(CALENDAR_DATA_KEY, dataStr);
@@ -118,10 +118,10 @@ export class CalendarCacheManager {
         // KVRocks/标准Redis
         if (storage.withRetry && storage.client?.get) {
           dataStr = await storage.withRetry(() =>
-            storage.client.get(CALENDAR_DATA_KEY)
+            storage.client.get(CALENDAR_DATA_KEY),
           );
           timeStr = await storage.withRetry(() =>
-            storage.client.get(CALENDAR_TIME_KEY)
+            storage.client.get(CALENDAR_TIME_KEY),
           );
         } else if (storage.client?.get) {
           dataStr = await storage.client.get(CALENDAR_DATA_KEY);
@@ -143,8 +143,8 @@ export class CalendarCacheManager {
       if (age >= CACHE_DURATION) {
         console.log(
           `⏰ 数据库中的日历缓存已过期，年龄: ${Math.round(
-            age / 1000 / 60 / 60
-          )} 小时`
+            age / 1000 / 60 / 60,
+          )} 小时`,
         );
         await this.clearCalendarData(); // 清理过期数据
         return null;
@@ -169,7 +169,7 @@ export class CalendarCacheManager {
       }
 
       console.log(
-        `✅ 从数据库读取日历缓存，缓存年龄: ${Math.round(age / 1000 / 60)} 分钟`
+        `✅ 从数据库读取日历缓存，缓存年龄: ${Math.round(age / 1000 / 60)} 分钟`,
       );
       return data;
     } catch (error) {
@@ -243,7 +243,7 @@ export class CalendarCacheManager {
       } else if (storageType === 'kvrocks' || storageType === 'redis') {
         if (storage.withRetry && storage.client?.get) {
           timeStr = await storage.withRetry(() =>
-            storage.client.get(CALENDAR_TIME_KEY)
+            storage.client.get(CALENDAR_TIME_KEY),
           );
         } else if (storage.client?.get) {
           timeStr = await storage.client.get(CALENDAR_TIME_KEY);

@@ -26,9 +26,10 @@ interface Reply {
 // 删除回复（仅管理员）
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; replyId: string } }
+  { params }: { params: Promise<{ id: string; replyId: string }> },
 ) {
   try {
+    const { id, replyId } = await params;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return new Response(JSON.stringify({ success: false, error: '未登录' }), {
@@ -41,12 +42,11 @@ export async function DELETE(
     if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
       return new Response(
         JSON.stringify({ success: false, error: '权限不足' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
-    const commentId = params.id;
-    const replyId = params.replyId;
+    const commentId = id;
 
     // 获取现有评论
     const commentsData = await db.getCache('message_board_comments');
@@ -57,18 +57,18 @@ export async function DELETE(
     if (!comment) {
       return new Response(
         JSON.stringify({ success: false, error: '评论不存在' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     // 查找并删除回复
     const replyIndex = comment.replies.findIndex(
-      (reply) => reply.id === replyId
+      (reply) => reply.id === replyId,
     );
     if (replyIndex === -1) {
       return new Response(
         JSON.stringify({ success: false, error: '回复不存在' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -83,13 +83,13 @@ export async function DELETE(
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('删除回复失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '删除回复失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }

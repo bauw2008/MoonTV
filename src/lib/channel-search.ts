@@ -113,7 +113,7 @@ function getEditDistance(str1: string, str2: string): number {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
           matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
+          matrix[i - 1][j] + 1, // deletion
         );
       }
     }
@@ -151,7 +151,7 @@ export function isSameChannel(name1: string, name2: string): boolean {
  * @returns 聚合后的频道列表
  */
 export function aggregateChannels(
-  channelsWithSource: SearchChannelResult[]
+  channelsWithSource: SearchChannelResult[],
 ): AggregatedChannel[] {
   const aggregatedChannels: AggregatedChannel[] = [];
   const processedChannels = new Set<string>();
@@ -226,7 +226,7 @@ export function aggregateChannels(
  */
 export function searchChannels(
   channels: AggregatedChannel[],
-  searchQuery: string
+  searchQuery: string,
 ): AggregatedChannel[] {
   if (!searchQuery.trim()) {
     return channels;
@@ -270,7 +270,7 @@ export function searchChannels(
       // 5. 相似度匹配（低阈值，用于模糊搜索）
       const similarity = calculateSimilarity(
         normalizedDisplayName,
-        normalizedQuery
+        normalizedQuery,
       );
       return similarity > 0.3;
     })
@@ -304,12 +304,12 @@ export function highlightMatch(text: string, searchQuery: string): string {
   const query = searchQuery.toLowerCase();
   const regex = new RegExp(
     `(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-    'gi'
+    'gi',
   );
 
   return text.replace(
     regex,
-    '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>'
+    '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>',
   );
 }
 
@@ -321,7 +321,7 @@ export function highlightMatch(text: string, searchQuery: string): string {
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
@@ -339,8 +339,8 @@ export function debounce<T extends (...args: any[]) => any>(
 export async function getAllChannelsAcrossSources(
   liveSources: LiveSource[],
   getCachedLiveChannels: (
-    key: string
-  ) => Promise<{ channels: LiveChannel[] } | null>
+    key: string,
+  ) => Promise<{ channels: LiveChannel[] } | null>,
 ): Promise<SearchChannelResult[]> {
   const allChannels: SearchChannelResult[] = [];
 

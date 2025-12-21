@@ -55,7 +55,7 @@ const CONFIG_CACHE_TTL = 60 * 1000; // 1分钟
 export async function generateTVBoxCacheKey(
   source: string,
   type: 'videos' | 'search' | 'categories',
-  params?: Record<string, string | number | undefined>
+  params?: Record<string, string | number | undefined>,
 ): Promise<string> {
   // 使用缓存的配置，避免频繁调用getConfig
   let disableYellowFilter = 'filter';
@@ -110,7 +110,7 @@ function getDirectVideoData(videos: VideoItem[]): VideoItem[] {
 export async function getTVBoxVideoCache(
   source: string,
   category?: string,
-  page?: number
+  page?: number,
 ): Promise<TVBoxVideoCacheData | null> {
   try {
     const cacheKey = await generateTVBoxCacheKey(source, 'videos', {
@@ -143,7 +143,7 @@ export async function getTVBoxVideoCache(
       `[CACHE-GET] 获取缓存失败: ${source} - 分类: ${
         category || '全部'
       } - 页码: ${page}`,
-      error
+      error,
     );
     return null;
   }
@@ -153,7 +153,7 @@ export async function getTVBoxVideoCache(
  * 获取TVBox分类结构缓存数据
  */
 export async function getTVBoxCategoryCache(
-  source: string
+  source: string,
 ): Promise<TVBoxCategoryCacheData | null> {
   try {
     const cacheKey = await generateTVBoxCacheKey(source, 'categories');
@@ -189,14 +189,14 @@ export async function getTVBoxCategoryCache(
 export async function getTVBoxCache(
   source: string,
   type: 'videos' | 'search' | 'categories',
-  params?: Record<string, string | number | undefined>
+  params?: Record<string, string | number | undefined>,
 ): Promise<TVBoxCacheData | null> {
   try {
     if (type === 'videos') {
       const videoCache = await getTVBoxVideoCache(
         source,
         params?.category?.toString(),
-        params?.page ? Number(params.page) : undefined
+        params?.page ? Number(params.page) : undefined,
       );
       if (!videoCache) return null;
 
@@ -249,7 +249,7 @@ export async function setTVBoxVideoCache(
   data: { list: VideoItem[]; pagecount?: number },
   category?: string,
   page?: number,
-  isHotData = false
+  isHotData = false,
 ): Promise<void> {
   try {
     // 验证输入数据
@@ -292,7 +292,7 @@ export async function setTVBoxCategoryCache(
     primary_categories: CategoryItem[];
     secondary_categories: CategoryItem[];
     category_map: Record<number, CategoryItem>;
-  }
+  },
 ): Promise<void> {
   try {
     // 验证输入数据
@@ -327,7 +327,7 @@ export async function setTVBoxCache(
   source: string,
   type: 'videos' | 'search' | 'categories',
   data: TVBoxCacheData,
-  params?: Record<string, string | number | undefined>
+  params?: Record<string, string | number | undefined>,
 ): Promise<void> {
   try {
     if (type === 'videos') {
@@ -340,7 +340,7 @@ export async function setTVBoxCache(
         { list: data.list, pagecount: data.pagecount },
         params?.category?.toString(),
         params?.page ? Number(params.page) : undefined,
-        isHotData
+        isHotData,
       );
 
       if (data.categories) {
@@ -368,7 +368,7 @@ export async function setTVBoxCache(
  */
 export async function clearTVBoxCache(
   source?: string,
-  type?: 'videos' | 'search' | 'categories'
+  type?: 'videos' | 'search' | 'categories',
 ): Promise<number> {
   let clearedCount = 0;
 

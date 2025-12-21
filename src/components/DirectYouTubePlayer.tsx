@@ -44,11 +44,11 @@ const getVideoThumbnail = (videoId: string): string => {
 
 // 获取YouTube视频信息（使用公开的oEmbed API）
 const getVideoInfo = async (
-  videoId: string
+  videoId: string,
 ): Promise<{ title: string; author_name: string } | null> => {
   try {
     const response = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
     );
     if (response.ok) {
       const data = await response.json();
@@ -177,8 +177,8 @@ const DirectYouTubePlayer = ({ className = '' }: DirectYouTubePlayerProps) => {
               isValidUrl === false
                 ? 'border-red-300 focus:ring-red-500 bg-red-50 dark:bg-red-900/10 dark:border-red-600'
                 : isValidUrl === true
-                ? 'border-green-300 focus:ring-green-500 bg-green-50 dark:bg-green-900/10 dark:border-green-600'
-                : 'border-gray-300 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600'
+                  ? 'border-green-300 focus:ring-green-500 bg-green-50 dark:bg-green-900/10 dark:border-green-600'
+                  : 'border-gray-300 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600'
             } dark:text-gray-100 dark:placeholder-gray-400`}
             disabled={isLoading}
           />

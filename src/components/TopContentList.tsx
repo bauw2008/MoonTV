@@ -53,10 +53,10 @@ export default function TopContentList({
                     index === 0
                       ? 'text-yellow-600'
                       : index === 1
-                      ? 'text-gray-500'
-                      : index === 2
-                      ? 'text-amber-600'
-                      : 'text-gray-400'
+                        ? 'text-gray-500'
+                        : index === 2
+                          ? 'text-amber-600'
+                          : 'text-gray-400'
                   }`}
                 >
                   #{index + 1}
@@ -79,10 +79,10 @@ export default function TopContentList({
                       index === 0
                         ? 'bg-yellow-500'
                         : index === 1
-                        ? 'bg-gray-400'
-                        : index === 2
-                        ? 'bg-amber-500'
-                        : 'bg-blue-500'
+                          ? 'bg-gray-400'
+                          : index === 2
+                            ? 'bg-amber-500'
+                            : 'bg-blue-500'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />

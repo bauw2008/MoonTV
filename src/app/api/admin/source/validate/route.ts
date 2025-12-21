@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         try {
           // 构建搜索URL，只获取第一页
           const searchUrl = `${site.api}?ac=videolist&wd=${encodeURIComponent(
-            searchKeyword
+            searchKeyword,
           )}`;
 
           // 设置超时控制

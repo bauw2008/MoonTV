@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   if (pageLimit < 1 || pageLimit > 100) {
     return NextResponse.json(
       { error: 'limit 必须在 1-100 之间' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     for (let p = 0; p < pages; p++) {
       const results = await fetchDoubanShortDrama(
         pageStart + p * pageLimit,
-        pageLimit
+        pageLimit,
       );
       allResults.push(...results);
 
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
         error: '获取豆瓣短剧数据失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
 /** 爬取豆瓣短剧标签页 */
 async function fetchDoubanShortDrama(
   start: number,
-  limit: number
+  limit: number,
 ): Promise<ShortDramaItem[]> {
   const url = `https://www.douban.com/tag/%E7%9F%AD%E5%89%A7/movie?start=${start}`;
 
@@ -153,7 +153,7 @@ async function fetchDoubanShortDrama(
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
     await new Promise((resolve) =>
-      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+      setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest),
     );
   }
   lastRequestTime = Date.now();

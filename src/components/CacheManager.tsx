@@ -124,7 +124,7 @@ export default function CacheManager() {
       !confirm(
         `确定要清理${
           CACHE_TYPES.find((t) => t.key === type)?.name || type
-        }缓存吗？`
+        }缓存吗？`,
       )
     ) {
       return;
@@ -151,7 +151,7 @@ export default function CacheManager() {
           window.dispatchEvent(
             new CustomEvent('globalSuccess', {
               detail: { message },
-            })
+            }),
           );
         }
       } else {
@@ -173,7 +173,7 @@ export default function CacheManager() {
   const clearAllCache = async () => {
     if (
       !confirm(
-        '⚠️ 确定要清理所有缓存吗？这将清除豆瓣、弹幕、网盘搜索、YouTube、TMDB搜索等所有缓存数据。'
+        '⚠️ 确定要清理所有缓存吗？这将清除豆瓣、弹幕、网盘搜索、YouTube、TMDB搜索等所有缓存数据。',
       )
     ) {
       return;

@@ -110,7 +110,7 @@ export default function NetDiskSearchResults({
     [key: string]: boolean;
   }>({});
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
@@ -143,8 +143,8 @@ export default function NetDiskSearchResults({
     results && filterMode === 'selected' && selectedFilter.length > 0
       ? Object.fromEntries(
           Object.entries(results).filter(([type]) =>
-            selectedFilter.includes(type)
-          )
+            selectedFilter.includes(type),
+          ),
         )
       : results;
 
@@ -159,7 +159,7 @@ export default function NetDiskSearchResults({
   // 切换筛选标签
   const toggleFilterTag = (type: string) => {
     setSelectedFilter((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
@@ -720,7 +720,7 @@ export default function NetDiskSearchResults({
                                   onClick={() =>
                                     copyToClipboard(
                                       link.password,
-                                      `pwd-${linkKey}`
+                                      `pwd-${linkKey}`,
                                     )
                                   }
                                   className={`p-1 transition-colors ${

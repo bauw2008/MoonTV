@@ -12,7 +12,7 @@ const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 // 内容类型到搜索关键词的映射
 const getContentTypeQuery = (
   originalQuery: string,
-  contentType: string
+  contentType: string,
 ): string => {
   if (contentType === 'all') return originalQuery;
 
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     const hasPermission = await hasSpecialFeaturePermission(
       username,
       'youtube-search',
-      config
+      config,
     );
     if (!hasPermission) {
       return NextResponse.json(
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
             Pragma: 'no-cache',
             'Surrogate-Control': 'no-store',
           },
-        }
+        },
       );
     }
     const youtubeConfig = config.YouTubeConfig;
@@ -178,15 +178,16 @@ export async function GET(request: NextRequest) {
             Pragma: 'no-cache',
             'Surrogate-Control': 'no-store',
           },
-        }
+        },
       );
     }
 
     const maxResults = Math.min(
       parseInt(
-        searchParams.get('maxResults') || String(youtubeConfig.maxResults || 25)
+        searchParams.get('maxResults') ||
+          String(youtubeConfig.maxResults || 25),
       ),
-      50
+      50,
     );
 
     // YouTube搜索缓存：60分钟（因为YouTube内容更新频率相对较低）
@@ -199,7 +200,7 @@ export async function GET(request: NextRequest) {
     const cacheKey = `youtube-search-${youtubeConfig.enabled}-${
       youtubeConfig.enableDemo
     }-${maxResults}-${encodeURIComponent(
-      query
+      query,
     )}-${contentType}-${order}-${enabledRegionsStr}-${enabledCategoriesStr}`;
 
     console.log(`🔍 检查YouTube搜索缓存: ${cacheKey}`);
@@ -244,8 +245,8 @@ export async function GET(request: NextRequest) {
         if (filterKeywords.length > 0) {
           filteredResults = filteredResults.filter((video) =>
             filterKeywords.some((keyword) =>
-              video.snippet.title.toLowerCase().includes(keyword)
-            )
+              video.snippet.title.toLowerCase().includes(keyword),
+            ),
           );
         }
       }
@@ -275,7 +276,7 @@ export async function GET(request: NextRequest) {
       try {
         await db.setCache(cacheKey, responseData, YOUTUBE_CACHE_TIME);
         console.log(
-          `💾 YouTube搜索演示结果已缓存(数据库): "${query}" - ${responseData.videos.length} 个结果, TTL: ${YOUTUBE_CACHE_TIME}s`
+          `💾 YouTube搜索演示结果已缓存(数据库): "${query}" - ${responseData.videos.length} 个结果, TTL: ${YOUTUBE_CACHE_TIME}s`,
         );
       } catch (cacheError) {
         console.warn('YouTube搜索缓存保存失败:', cacheError);
@@ -353,7 +354,7 @@ export async function GET(request: NextRequest) {
           success: false,
           error: errorMessage,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -371,14 +372,14 @@ export async function GET(request: NextRequest) {
     try {
       await db.setCache(cacheKey, responseData, YOUTUBE_CACHE_TIME);
       console.log(
-        `💾 YouTube搜索API结果已缓存(数据库): "${query}" - ${responseData.videos.length} 个结果, TTL: ${YOUTUBE_CACHE_TIME}s`
+        `💾 YouTube搜索API结果已缓存(数据库): "${query}" - ${responseData.videos.length} 个结果, TTL: ${YOUTUBE_CACHE_TIME}s`,
       );
     } catch (cacheError) {
       console.warn('YouTube搜索缓存保存失败:', cacheError);
     }
 
     console.log(
-      `✅ YouTube搜索完成: "${query}" - ${responseData.videos.length} 个结果`
+      `✅ YouTube搜索完成: "${query}" - ${responseData.videos.length} 个结果`,
     );
     return NextResponse.json(responseData);
   } catch (error) {
@@ -407,7 +408,7 @@ export async function GET(request: NextRequest) {
       const fallbackCacheKey = `youtube-search-fallback-${query}`;
       await db.setCache(fallbackCacheKey, fallbackData, 5 * 60); // 5分钟
       console.log(
-        `💾 YouTube搜索备用结果已缓存(数据库): "${query}" - ${fallbackData.videos.length} 个结果, TTL: 5分钟`
+        `💾 YouTube搜索备用结果已缓存(数据库): "${query}" - ${fallbackData.videos.length} 个结果, TTL: 5分钟`,
       );
     } catch (cacheError) {
       console.warn('YouTube搜索备用缓存保存失败:', cacheError);

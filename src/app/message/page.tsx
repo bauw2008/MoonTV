@@ -117,7 +117,7 @@ export default function MessageBoard() {
         setLoadingMore(false);
       }
     },
-    [showError]
+    [showError],
   );
 
   const [selectedCategory, setSelectedCategory] = useState<
@@ -216,7 +216,7 @@ export default function MessageBoard() {
         `/api/message/${commentId}/reply/${replyId}`,
         {
           method: 'DELETE',
-        }
+        },
       );
 
       if (response.ok) {
@@ -350,7 +350,7 @@ export default function MessageBoard() {
       return comments;
     }
     return comments.filter(
-      (comment) => comment.category === selectedCategoryFilter
+      (comment) => comment.category === selectedCategoryFilter,
     );
   }, [comments, selectedCategoryFilter]);
 
@@ -911,13 +911,13 @@ export default function MessageBoard() {
                                           {/* 删除按钮 - 仅管理员可见 */}
                                           {authInfo?.role &&
                                             ['owner', 'admin'].includes(
-                                              authInfo.role
+                                              authInfo.role,
                                             ) && (
                                               <button
                                                 onClick={() =>
                                                   handleDeleteReply(
                                                     comment.id,
-                                                    reply.id
+                                                    reply.id,
                                                   )
                                                 }
                                                 disabled={
@@ -1175,7 +1175,7 @@ export default function MessageBoard() {
                         onClick={() => {
                           if (
                             confirm(
-                              '确定要清空所有留言和回复吗？此操作不可恢复！'
+                              '确定要清空所有留言和回复吗？此操作不可恢复！',
                             )
                           ) {
                             handleClearAllComments();

@@ -24,6 +24,7 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { getDoubanCategories } from '@/lib/douban.client';
+
 import { DoubanItem } from '@/lib/types';
 
 import AIRecommendModal from '@/components/AIRecommendModal';
@@ -103,7 +104,14 @@ function HomeClient() {
 
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [favoriteFilter, setFavoriteFilter] = useState<
-    'all' | 'movie' | 'tv' | 'anime' | 'shortdrama' | 'live' | 'variety'
+    | 'all'
+    | 'movie'
+    | 'tv'
+    | 'anime'
+    | 'shortdrama'
+    | 'live'
+    | 'variety'
+    | 'documentary'
   >('all');
   const [favoriteSortBy, setFavoriteSortBy] = useState<
     'recent' | 'title' | 'rating'
@@ -138,7 +146,7 @@ function HomeClient() {
             '获取热门电影失败:',
             moviesData.status === 'rejected'
               ? moviesData.reason
-              : '数据格式错误'
+              : '数据格式错误',
           );
         }
 
@@ -153,7 +161,7 @@ function HomeClient() {
             '获取热门剧集失败:',
             tvShowsData.status === 'rejected'
               ? tvShowsData.reason
-              : '数据格式错误'
+              : '数据格式错误',
           );
         }
 
@@ -168,7 +176,7 @@ function HomeClient() {
             '获取热门综艺失败:',
             varietyShowsData.status === 'rejected'
               ? varietyShowsData.reason
-              : '数据格式错误'
+              : '数据格式错误',
           );
         }
 
@@ -183,7 +191,7 @@ function HomeClient() {
             'Bangumi接口失败或返回数据格式错误:',
             bangumiCalendarData.status === 'rejected'
               ? bangumiCalendarData.reason
-              : '数据格式错误'
+              : '数据格式错误',
           );
           setBangumiCalendarData([]);
         }
@@ -213,6 +221,8 @@ function HomeClient() {
         const playRecord = allPlayRecords[key];
         const currentEpisode = playRecord?.index;
 
+        const itemType = fav?.type;
+
         return {
           id,
           source,
@@ -224,7 +234,7 @@ function HomeClient() {
           currentEpisode,
           search_title: fav?.search_title,
           origin: fav?.origin,
-          type: fav?.type,
+          type: itemType,
         } as FavoriteItem;
       });
     setFavoriteItems(sorted);
@@ -246,7 +256,7 @@ function HomeClient() {
       'favoritesUpdated',
       (newFavorites: Record<string, any>) => {
         updateFavoriteItems(newFavorites);
-      }
+      },
     );
 
     return unsubscribe;
@@ -429,6 +439,11 @@ function HomeClient() {
                     { key: 'shortdrama' as const, label: '短剧', icon: '🎭' },
                     { key: 'live' as const, label: '直播', icon: '📡' },
                     { key: 'variety' as const, label: '综艺', icon: '🎪' },
+                    {
+                      key: 'documentary' as const,
+                      label: '纪录片',
+                      icon: '📽️',
+                    },
                   ].map(({ key, label, icon }) => (
                     <button
                       key={key}
@@ -502,11 +517,16 @@ function HomeClient() {
                     });
                   } else if (favoriteFilter === 'live') {
                     filtered = favoriteItems.filter(
-                      (item) => item.origin === 'live'
+                      (item) => item.origin === 'live',
                     );
                   } else if (favoriteFilter === 'variety') {
                     filtered = favoriteItems.filter((item) => {
                       if (item.type) return item.type === 'variety';
+                      return false;
+                    });
+                  } else if (favoriteFilter === 'documentary') {
+                    filtered = favoriteItems.filter((item) => {
+                      if (item.type) return item.type === 'documentary';
                       return false;
                     });
                   }
@@ -514,7 +534,7 @@ function HomeClient() {
                   // 排序
                   if (favoriteSortBy === 'title') {
                     filtered = [...filtered].sort((a, b) =>
-                      a.title.localeCompare(b.title, 'zh-CN')
+                      a.title.localeCompare(b.title, 'zh-CN'),
                     );
                   }
                   // 'recent' 已经在 updateFavoriteItems 中按 save_time 排序了
@@ -699,7 +719,7 @@ function HomeClient() {
                         // 找到当前星期对应的番剧数据
                         const todayAnimes =
                           bangumiCalendarData.find(
-                            (item) => item.weekday.en === currentWeekday
+                            (item) => item.weekday.en === currentWeekday,
                           )?.items || [];
 
                         return todayAnimes.map((anime, index) => (
@@ -721,6 +741,7 @@ function HomeClient() {
                               douban_id={anime.id}
                               rate={anime.rating?.score?.toFixed(1) || ''}
                               year={anime.air_date?.split('-')?.[0] || ''}
+                              type='anime'
                               isBangumi={true}
                             />
                           </div>

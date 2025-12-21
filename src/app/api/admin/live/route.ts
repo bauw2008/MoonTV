@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         if (config.LiveConfig.some((l) => l.key === key)) {
           return NextResponse.json(
             { error: '直播源 key 已存在' },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         if (liveSource.from === 'config') {
           return NextResponse.json(
             { error: '不能删除配置文件中的直播源' },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         if (editSource.from === 'config') {
           return NextResponse.json(
             { error: '不能编辑配置文件中的直播源' },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         if (!Array.isArray(order)) {
           return NextResponse.json(
             { error: '排序数据格式错误' },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -182,12 +182,12 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store', // 不缓存结果
         },
-      }
+      },
     );
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '操作失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

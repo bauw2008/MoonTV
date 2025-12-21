@@ -41,7 +41,7 @@ export default function TVBoxConfigPage() {
     'standard' | 'safe' | 'fast' | 'yingshicang'
   >('standard');
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig | null>(
-    null
+    null,
   );
   const [siteName, setSiteName] = useState('Vidora');
   const [loading, setLoading] = useState(true);
@@ -111,7 +111,7 @@ export default function TVBoxConfigPage() {
         return false;
       }
     },
-    [fetchDevices, fetchSecurityConfig]
+    [fetchDevices, fetchSecurityConfig],
   );
 
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function TVBoxConfigPage() {
                                   securityConfig.userTokens.find(
                                     (t) =>
                                       t.username === currentUsername &&
-                                      t.enabled
+                                      t.enabled,
                                   );
                                 if (userToken) {
                                   return `${userToken.devices.length}/${securityConfig.maxDevices}`;
@@ -364,7 +364,7 @@ export default function TVBoxConfigPage() {
                           confirm(
                             `确定要解绑设备 "${
                               device.deviceInfo || '未知设备'
-                            }" 吗？`
+                            }" 吗？`,
                           )
                         ) {
                           unbindDevice(device.deviceId);
@@ -501,10 +501,10 @@ export default function TVBoxConfigPage() {
               {configMode === 'standard'
                 ? '📊 包含 IJK 优化、DoH DNS、广告过滤，适合日常使用'
                 : configMode === 'safe'
-                ? '🔒 仅核心配置，TVBox 兼容性问题时使用'
-                : configMode === 'fast'
-                ? '⚡ 优化切换速度，移除超时配置，减少卡顿和 SSL 错误'
-                : '🎬 专为影视仓优化，包含播放规则和兼容性修复'}
+                  ? '🔒 仅核心配置，TVBox 兼容性问题时使用'
+                  : configMode === 'fast'
+                    ? '⚡ 优化切换速度，移除超时配置，减少卡顿和 SSL 错误'
+                    : '🎬 专为影视仓优化，包含播放规则和兼容性修复'}
             </p>
           </div>
 

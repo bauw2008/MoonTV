@@ -18,7 +18,7 @@ export interface ShortDramaSearchParams {
  * 现在返回标准的 DoubanResult 格式
  */
 export async function getShortDramaData(
-  params: ShortDramaSearchParams = {}
+  params: ShortDramaSearchParams = {},
 ): Promise<DoubanResult> {
   const searchParams = new URLSearchParams();
 

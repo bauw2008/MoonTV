@@ -108,7 +108,7 @@ export default function artplayerPluginChromecast(option) {
                     updateCastButton('connected');
                     break;
                 }
-              }
+              },
             );
 
             // Listen for cast state changes
@@ -128,14 +128,14 @@ export default function artplayerPluginChromecast(option) {
                     option.onCastAvailable?.(true);
                     break;
                 }
-              }
+              },
             );
 
             isCastInitialized = true;
             resolve();
           } catch (error) {
             reject(
-              new Error(`Cast API initialization failed: ${error.message}`)
+              new Error(`Cast API initialization failed: ${error.message}`),
             );
           }
         } else {
@@ -167,7 +167,7 @@ export default function artplayerPluginChromecast(option) {
     const url = option.url || art.option.url;
     const mediaInfo = new window.chrome.cast.media.MediaInfo(
       url,
-      option.mimeType || getMimeType(url)
+      option.mimeType || getMimeType(url),
     );
     const request = new window.chrome.cast.media.LoadRequest(mediaInfo);
     session
@@ -241,7 +241,7 @@ export default function artplayerPluginChromecast(option) {
     // 如果不是Chrome浏览器或者是iOS，直接返回空插件，不添加任何控件
     if (!isChrome || isIOS) {
       console.log(
-        '❌ Chromecast plugin: Browser not supported, skipping control addition'
+        '❌ Chromecast plugin: Browser not supported, skipping control addition',
       );
       return {
         name: 'artplayerPluginChromecast',
@@ -251,7 +251,7 @@ export default function artplayerPluginChromecast(option) {
     }
 
     console.log(
-      '✅ Chromecast plugin: Adding control button for supported browser'
+      '✅ Chromecast plugin: Adding control button for supported browser',
     );
 
     art.controls.add({

@@ -418,7 +418,7 @@ const YouTubeConfig = ({ config, refreshConfig }: YouTubeConfigProps) => {
                     <input
                       type='checkbox'
                       checked={youtubeSettings.enabledRegions.includes(
-                        region.code
+                        region.code,
                       )}
                       onChange={() => toggleRegion(region.code)}
                       className='rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500'
@@ -445,7 +445,7 @@ const YouTubeConfig = ({ config, refreshConfig }: YouTubeConfigProps) => {
                     <input
                       type='checkbox'
                       checked={youtubeSettings.enabledCategories.includes(
-                        category
+                        category,
                       )}
                       onChange={() => toggleCategory(category)}
                       className='rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500'

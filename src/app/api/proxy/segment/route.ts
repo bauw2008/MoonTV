@@ -91,7 +91,7 @@ export async function GET(request: Request) {
         {
           error: `Failed to fetch segment: ${response.status} ${response.statusText}`,
         },
-        { status: response.status >= 500 ? 500 : response.status }
+        { status: response.status >= 500 ? 500 : response.status },
       );
     }
 
@@ -109,12 +109,12 @@ export async function GET(request: Request) {
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
     headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Range, Origin, Accept, User-Agent'
+      'Content-Type, Range, Origin, Accept, User-Agent',
     );
     headers.set('Accept-Ranges', 'bytes');
     headers.set(
       'Access-Control-Expose-Headers',
-      'Content-Length, Content-Range, Content-Type, Accept-Ranges'
+      'Content-Length, Content-Range, Content-Type, Accept-Ranges',
     );
     headers.set('Cache-Control', 'public, max-age=300'); // 5分钟缓存
 
@@ -134,7 +134,7 @@ export async function GET(request: Request) {
 
     const _contentLength = parseInt(
       response?.headers.get('content-length') || '0',
-      10
+      10,
     );
     let bytesTransferred = 0;
 
@@ -249,7 +249,7 @@ export async function GET(request: Request) {
         size(chunk) {
           return chunk ? chunk.byteLength : 0;
         },
-      }
+      },
     );
 
     return new Response(stream, { headers });
@@ -279,14 +279,14 @@ export async function GET(request: Request) {
     if (error.name === 'AbortError') {
       return NextResponse.json(
         { error: 'Segment request timeout' },
-        { status: 408 }
+        { status: 408 },
       );
     }
 
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Network connection failed' },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -299,7 +299,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     clearTimeout(timeoutId);
@@ -318,7 +318,7 @@ export async function GET(request: Request) {
           segmentStats.totalBytes /
           1024 /
           1024
-        ).toFixed(2)}MB`
+        ).toFixed(2)}MB`,
       );
     }
   }

@@ -59,7 +59,7 @@ export const useLongPress = ({
         onLongPress();
       }, longPressDelay);
     },
-    [onLongPress, longPressDelay]
+    [onLongPress, longPressDelay],
   );
 
   const handleMove = useCallback(
@@ -68,7 +68,7 @@ export const useLongPress = ({
 
       const distance = Math.sqrt(
         Math.pow(clientX - startPosition.current.x, 2) +
-          Math.pow(clientY - startPosition.current.y, 2)
+          Math.pow(clientY - startPosition.current.y, 2),
       );
 
       // 如果移动距离超过阈值，取消长按
@@ -77,7 +77,7 @@ export const useLongPress = ({
         isActive.current = false;
       }
     },
-    [clearTimer, moveThreshold]
+    [clearTimer, moveThreshold],
   );
 
   const handleEnd = useCallback(() => {
@@ -116,7 +116,7 @@ export const useLongPress = ({
       const touch = e.touches[0];
       handleStart(touch.clientX, touch.clientY, !!isButton);
     },
-    [handleStart]
+    [handleStart],
   );
 
   const onTouchMove = useCallback(
@@ -124,7 +124,7 @@ export const useLongPress = ({
       const touch = e.touches[0];
       handleMove(touch.clientX, touch.clientY);
     },
-    [handleMove]
+    [handleMove],
   );
 
   const onTouchEnd = useCallback(
@@ -134,7 +134,7 @@ export const useLongPress = ({
       e.stopPropagation();
       handleEnd();
     },
-    [handleEnd]
+    [handleEnd],
   );
 
   return {

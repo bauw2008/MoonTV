@@ -51,7 +51,7 @@ export const initDB = (): Promise<IDBDatabase> => {
  * 存储背景图片到 IndexedDB
  */
 export const storeBackgroundImage = async (
-  imageData: string
+  imageData: string,
 ): Promise<string> => {
   try {
     const database = await initDB();
@@ -141,7 +141,7 @@ export const deleteBackgroundImage = async (): Promise<void> => {
  * 清理过期的图片数据（可选）
  */
 export const cleanupOldImages = async (
-  maxAge: number = 30 * 24 * 60 * 60 * 1000
+  maxAge: number = 30 * 24 * 60 * 60 * 1000,
 ): Promise<void> => {
   try {
     const database = await initDB();

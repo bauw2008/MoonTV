@@ -58,12 +58,12 @@ export default function TVBoxConfigPage() {
     'standard' | 'safe' | 'yingshicang'
   >('standard');
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<DiagnoseResult | null>(
-    null
+    null,
   );
 
   // 获取安全配置（使用普通用户可访问的接口）
@@ -247,7 +247,7 @@ export default function TVBoxConfigPage() {
                   checked={configMode === 'standard'}
                   onChange={(e) =>
                     setConfigMode(
-                      e.target.value as 'standard' | 'safe' | 'yingshicang'
+                      e.target.value as 'standard' | 'safe' | 'yingshicang',
                     )
                   }
                   className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -269,7 +269,7 @@ export default function TVBoxConfigPage() {
                   checked={configMode === 'safe'}
                   onChange={(e) =>
                     setConfigMode(
-                      e.target.value as 'standard' | 'safe' | 'yingshicang'
+                      e.target.value as 'standard' | 'safe' | 'yingshicang',
                     )
                   }
                   className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -291,7 +291,7 @@ export default function TVBoxConfigPage() {
                   checked={configMode === 'yingshicang'}
                   onChange={(e) =>
                     setConfigMode(
-                      e.target.value as 'standard' | 'safe' | 'yingshicang'
+                      e.target.value as 'standard' | 'safe' | 'yingshicang',
                     )
                   }
                   className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
@@ -310,8 +310,8 @@ export default function TVBoxConfigPage() {
               {configMode === 'standard'
                 ? '包含完整配置（IJK优化、广告过滤、DoH等），推荐使用'
                 : configMode === 'safe'
-                ? '仅包含核心配置，遇到TVBox兼容性问题时使用'
-                : '专为影视仓优化，包含播放规则和兼容性修复'}
+                  ? '仅包含核心配置，遇到TVBox兼容性问题时使用'
+                  : '专为影视仓优化，包含播放规则和兼容性修复'}
             </p>
           </div>
 

@@ -31,9 +31,10 @@ function generateId() {
 // 删除评论（仅管理员）
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return new Response(JSON.stringify({ success: false, error: '未登录' }), {
@@ -46,24 +47,22 @@ export async function DELETE(
     if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
       return new Response(
         JSON.stringify({ success: false, error: '权限不足' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
-    const commentId = params.id;
+    // 获取评论ID（已在上面解构）
 
     // 获取现有评论
     const commentsData = await db.getCache('message_board_comments');
     const comments: Comment[] = commentsData || [];
 
     // 查找并删除评论
-    const commentIndex = comments.findIndex(
-      (comment) => comment.id === commentId
-    );
+    const commentIndex = comments.findIndex((comment) => comment.id === id);
     if (commentIndex === -1) {
       return new Response(
         JSON.stringify({ success: false, error: '评论不存在' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -78,13 +77,13 @@ export async function DELETE(
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('删除评论失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '删除评论失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }

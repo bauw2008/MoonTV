@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
       return new Response(
         JSON.stringify({ success: false, error: '权限不足' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -30,13 +30,13 @@ export async function POST(request: NextRequest) {
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     );
   } catch (error) {
     console.error('清空评论失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '清空评论失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }

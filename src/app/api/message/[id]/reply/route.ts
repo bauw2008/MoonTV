@@ -5,14 +5,14 @@ import { db } from '@/lib/db';
 
 // 获取用户角色的辅助函数
 async function getUserRole(
-  username: string
+  username: string,
 ): Promise<'owner' | 'admin' | 'user'> {
   try {
     // 获取管理员配置
     const adminConfig = await db.getAdminConfig();
     if (adminConfig && adminConfig.UserConfig && adminConfig.UserConfig.Users) {
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (user) {
         return user.role;
@@ -29,7 +29,7 @@ async function getUserRole(
 
 // 计算用户留言数量的辅助函数
 function calculateUserCommentCounts(
-  comments: Comment[]
+  comments: Comment[],
 ): Record<string, number> {
   const userCommentCounts: Record<string, number> = {};
 
@@ -81,9 +81,10 @@ function generateId() {
 // 发布回复
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo?.username) {
       return new Response(JSON.stringify({ success: false, error: '未登录' }), {
@@ -97,11 +98,11 @@ export async function POST(
     if (!content || content.trim().length === 0) {
       return new Response(
         JSON.stringify({ success: false, error: '回复内容不能为空' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
-    const commentId = params.id;
+    const commentId = id;
 
     // 获取现有评论
     const commentsData = await db.getCache('message_board_comments');
@@ -112,7 +113,7 @@ export async function POST(
     if (!comment) {
       return new Response(
         JSON.stringify({ success: false, error: '评论不存在' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
@@ -166,7 +167,7 @@ export async function POST(
     console.error('发布回复失败:', error);
     return new Response(
       JSON.stringify({ success: false, error: '发布回复失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 }

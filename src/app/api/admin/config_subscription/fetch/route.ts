@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       return NextResponse.json(
         { error: '权限不足，只有站长可以拉取配置订阅' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { error: `请求失败: ${response.status} ${response.statusText}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
