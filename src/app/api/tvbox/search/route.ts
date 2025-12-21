@@ -26,16 +26,19 @@ export async function GET(request: NextRequest) {
     const keyword = url.searchParams.get('keyword') || '';
     const page = parseInt(url.searchParams.get('page') || '1');
 
-    if (!source)
+    if (!source) {
       return NextResponse.json({ error: '缺少 source 参数' }, { status: 400 });
+    }
 
-    if (!keyword.trim())
+    if (!keyword.trim()) {
       return NextResponse.json({ error: '缺少 keyword 参数' }, { status: 400 });
+    }
 
     const availableSites = await getAvailableApiSites(authInfo.username);
     const site = availableSites.find((s) => s.key === source);
-    if (!site)
+    if (!site) {
       return NextResponse.json({ error: '视频源不存在' }, { status: 404 });
+    }
 
     // 尝试从缓存获取数据
     const cacheParams = {

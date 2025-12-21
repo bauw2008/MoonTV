@@ -22,7 +22,9 @@ let memoryLastCheckTime = 0;
 
 // 检测存储模式
 const STORAGE_TYPE = (() => {
-  if (typeof window === 'undefined') return 'localstorage';
+  if (typeof window === 'undefined') {
+    return 'localstorage';
+  }
   const raw = (window as any).RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
   return raw;
 })();
@@ -76,26 +78,35 @@ const updateListeners = new Set<(hasUpdates: boolean) => void>();
  * 真实API调用检查用户的播放记录，检测是否有新集数更新
  * @param forceRefresh 是否强制刷新，跳过缓存时间检查
  */
+// 添加全局请求锁，防止并发请求
+let isChecking = false;
+let lastCheckTime = 0;
+
 export async function checkWatchingUpdates(
   forceRefresh = false,
 ): Promise<void> {
+  // 防止并发请求
+  if (isChecking && !forceRefresh) {
+    return;
+  }
+
+  const currentTime = Date.now();
+  const CHECK_INTERVAL = 30 * 60 * 1000; // 30分钟
+
+  // 如果不是强制刷新且距离上次检查不足30分钟，直接返回
+  if (
+    !forceRefresh &&
+    lastCheckTime &&
+    currentTime - lastCheckTime < CHECK_INTERVAL
+  ) {
+    return;
+  }
+
+  // 设置检查锁
+  isChecking = true;
+  lastCheckTime = currentTime;
+
   try {
-    const currentTime = Date.now();
-
-    // 检查缓存是否有效（除非强制刷新）
-    if (!forceRefresh) {
-      const lastCheckTime =
-        STORAGE_TYPE !== 'localstorage'
-          ? memoryLastCheckTime
-          : parseInt(localStorage.getItem(LAST_CHECK_TIME_KEY) || '0');
-
-      if (currentTime - lastCheckTime < CACHE_DURATION) {
-        const cached = getCachedWatchingUpdates();
-        notifyListeners(cached);
-        return;
-      }
-    }
-
     forceRefreshPlayRecordsCache(true);
 
     // 获取用户的播放记录（强制刷新）
@@ -251,6 +262,9 @@ export async function checkWatchingUpdates(
   } catch (error) {
     console.error('检查追番更新失败:', error);
     notifyListeners(false);
+  } finally {
+    // 释放检查锁
+    isChecking = false;
   }
 }
 
@@ -294,7 +308,21 @@ async function checkSingleRecordUpdate(
 
     // 使用映射后的key调用API（API已默认不缓存，确保集数信息实时更新）
     const apiUrl = `/api/detail?source=${sourceKey}&id=${videoId}`;
-    const response = await fetch(apiUrl);
+    let response;
+    try {
+      response = await fetch(apiUrl);
+    } catch (fetchError) {
+      // 网络错误或 fetch 失败，返回默认值
+      console.warn('Failed to fetch detail data:', fetchError);
+      return {
+        hasUpdate: false,
+        hasContinueWatching: false,
+        newEpisodes: 0,
+        remainingEpisodes: 0,
+        latestEpisodes: record.total_episodes,
+      };
+    }
+
     if (!response.ok) {
       return {
         hasUpdate: false,
@@ -441,7 +469,9 @@ export function getCachedWatchingUpdates(): boolean {
   try {
     // 🔧 优化：非 localStorage 模式使用内存缓存
     if (STORAGE_TYPE !== 'localstorage') {
-      if (!memoryWatchingUpdatesCache) return false;
+      if (!memoryWatchingUpdatesCache) {
+        return false;
+      }
       const isExpired =
         Date.now() - memoryWatchingUpdatesCache.timestamp > CACHE_DURATION;
       return isExpired ? false : memoryWatchingUpdatesCache.hasUpdates;
@@ -449,7 +479,9 @@ export function getCachedWatchingUpdates(): boolean {
 
     // localStorage 模式
     const cached = localStorage.getItem(WATCHING_UPDATES_CACHE_KEY);
-    if (!cached) return false;
+    if (!cached) {
+      return false;
+    }
 
     const data: WatchingUpdatesCache = JSON.parse(cached);
     const isExpired = Date.now() - data.timestamp > CACHE_DURATION;

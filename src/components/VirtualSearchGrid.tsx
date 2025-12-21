@@ -108,10 +108,14 @@ export const VirtualSearchGrid = React.forwardRef<
       itemsToPreload.forEach((item) => {
         if (viewMode === 'agg') {
           const [, group] = item as [string, SearchResult[]];
-          if (group[0]?.poster) urls.push(group[0].poster);
+          if (group[0]?.poster) {
+            urls.push(group[0].poster);
+          }
         } else {
           const searchItem = item as SearchResult;
-          if (searchItem.poster) urls.push(searchItem.poster);
+          if (searchItem.poster) {
+            urls.push(searchItem.poster);
+          }
         }
       });
 
@@ -167,7 +171,9 @@ export const VirtualSearchGrid = React.forwardRef<
 
     // 加载更多项目
     const loadMoreItems = useCallback(() => {
-      if (isLoadingMore || !hasNextPage) return;
+      if (isLoadingMore || !hasNextPage) {
+        return;
+      }
 
       setIsLoadingMore(true);
 

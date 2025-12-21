@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 
@@ -79,11 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 验证数据格式
-    if (
-      !importData.data ||
-      !importData.data.adminConfig ||
-      !importData.data.userData
-    ) {
+    if (!importData.data?.adminConfig || !importData.data.userData) {
       return NextResponse.json({ error: '备份文件格式无效' }, { status: 400 });
     }
 

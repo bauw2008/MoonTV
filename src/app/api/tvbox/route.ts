@@ -34,7 +34,7 @@ function filterSourcesByUserPermissions(
 
     user.tags.forEach((tagName) => {
       const tag = tagsConfig.find((t) => t.name === tagName);
-      if (tag && tag.enabledApis) {
+      if (tag?.enabledApis) {
         tag.enabledApis.forEach((api: string) => allowedApis.add(api));
       }
     });
@@ -55,7 +55,9 @@ function filterSourcesByUserPermissions(
 function getBaseUrl(request: NextRequest): string {
   // 优先使用环境变量 SITE_BASE（如果用户设置了）
   const envBase = (process.env.SITE_BASE || '').trim().replace(/\/$/, '');
-  if (envBase) return envBase;
+  if (envBase) {
+    return envBase;
+  }
 
   // Fallback：使用原有逻辑（完全保留）
   const host = request.headers.get('host') || 'localhost:3000';
@@ -168,7 +170,9 @@ function getDeviceIdFromRequest(request: NextRequest): string {
 
 // 私网地址判断
 function isPrivateHost(host: string): boolean {
-  if (!host) return true;
+  if (!host) {
+    return true;
+  }
   const lower = host.toLowerCase();
   return (
     lower.startsWith('localhost') ||
@@ -315,11 +319,7 @@ async function getCachedCategories(
             const tagsConfig = config.UserConfig?.Tags || [];
             const hasYellowFilterExemption = user.tags.some((tagName) => {
               const tag = tagsConfig.find((t: any) => t.name === tagName);
-              return (
-                tag &&
-                tag.enabledApis &&
-                tag.enabledApis.includes('disable-yellow-filter')
-              );
+              return tag?.enabledApis?.includes('disable-yellow-filter');
             });
 
             // 如果有豁免权限，则不应用过滤器
@@ -604,7 +604,9 @@ export async function GET(request: NextRequest) {
 
       const isAllowed = securityConfig.allowedIPs.some((allowedIP: string) => {
         const trimmedIP = allowedIP.trim();
-        if (trimmedIP === '*') return true;
+        if (trimmedIP === '*') {
+          return true;
+        }
 
         // 支持CIDR格式检查
         if (trimmedIP.includes('/')) {
@@ -760,7 +762,9 @@ export async function GET(request: NextRequest) {
             const url = api.toLowerCase().trim();
 
             // CSP 源（插件源，优先判断）
-            if (url.startsWith('csp_')) return 3;
+            if (url.startsWith('csp_')) {
+              return 3;
+            }
 
             // XML 采集接口 - 更精确匹配
             if (
@@ -806,8 +810,12 @@ export async function GET(request: NextRequest) {
             try {
               const obj = JSON.parse(detail);
               if (obj) {
-                if (obj.type !== undefined) type = obj.type;
-                if (obj.api) source.api = obj.api;
+                if (obj.type !== undefined) {
+                  type = obj.type;
+                }
+                if (obj.api) {
+                  source.api = obj.api;
+                }
                 // 🔑 关键修复：强制忽略 ext 字段
                 // 原因：很多源的 ext 是网站首页 URL（如 http://caiji.dyttzyapi.com）
                 // Box-main 会访问这个 URL 并把返回的 HTML 当作 extend 参数传给 API，导致无数据
@@ -816,7 +824,9 @@ export async function GET(request: NextRequest) {
                 // }
                 if (obj.jar) {
                   siteJar = obj.jar;
-                  if (!globalSpiderJar) globalSpiderJar = obj.jar;
+                  if (!globalSpiderJar) {
+                    globalSpiderJar = obj.jar;
+                  }
                 }
               }
             } catch {
@@ -1009,7 +1019,9 @@ export async function GET(request: NextRequest) {
         const enabledLives = (config.LiveConfig || []).filter(
           (live: any) => !live.disabled,
         );
-        if (enabledLives.length === 0) return [];
+        if (enabledLives.length === 0) {
+          return [];
+        }
 
         // 如果只有一个源，直接返回
         if (enabledLives.length === 1) {
@@ -1143,11 +1155,11 @@ export async function GET(request: NextRequest) {
           finalSpiderUrl = globalSpiderJar;
           console.log(`[Spider] 使用用户自定义 jar: ${globalSpiderJar}`);
         } else {
-          console.warn(`[Spider] 用户配置的jar是私网地址，使用自动选择结果`);
+          console.warn('[Spider] 用户配置的jar是私网地址，使用自动选择结果');
         }
       } catch {
         // URL解析失败，使用自动选择结果
-        console.warn(`[Spider] 用户配置的jar解析失败，使用自动选择结果`);
+        console.warn('[Spider] 用户配置的jar解析失败，使用自动选择结果');
       }
     }
 

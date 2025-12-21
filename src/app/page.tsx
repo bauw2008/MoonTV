@@ -24,7 +24,6 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { getDoubanCategories } from '@/lib/douban.client';
-
 import { DoubanItem } from '@/lib/types';
 
 import AIRecommendModal from '@/components/AIRecommendModal';
@@ -242,7 +241,9 @@ function HomeClient() {
 
   // 当切换到收藏夹时加载收藏数据
   useEffect(() => {
-    if (activeTab !== 'favorites') return;
+    if (activeTab !== 'favorites') {
+      return;
+    }
 
     const loadFavorites = async () => {
       const allFavorites = await getAllFavorites();
@@ -291,7 +292,8 @@ function HomeClient() {
               <button
                 onClick={() => setShowAIRecommendModal(true)}
                 style={{
-                  background: `linear-gradient(to right, var(--nav-menu-color, #3b82f6), var(--nav-menu-hover-color, #8b5cf6))`,
+                  background:
+                    'linear-gradient(to right, var(--nav-menu-color, #3b82f6), var(--nav-menu-hover-color, #8b5cf6))',
                 }}
                 className='relative flex items-center justify-center space-x-1.5 px-3 py-1.5 text-white rounded-full font-medium transition-all transform hover:scale-105 shadow-lg hover:shadow-xl group overflow-hidden hover:opacity-90 min-w-[80px] sm:min-w-[90px] flex-shrink-0'
                 title='AI影视推荐'
@@ -300,7 +302,8 @@ function HomeClient() {
                 <div
                   className='absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 animate-ping'
                   style={{
-                    background: `linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))`,
+                    background:
+                      'linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))',
                   }}
                 ></div>
 
@@ -308,7 +311,8 @@ function HomeClient() {
                 <div
                   className='absolute inset-0 rounded-full opacity-20 animate-pulse'
                   style={{
-                    background: `linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))`,
+                    background:
+                      'linear-gradient(to right, var(--nav-menu-pulse-color, #60a5fa), var(--nav-menu-hover-pulse-color, #a855f7))',
                   }}
                 ></div>
 
@@ -349,26 +353,40 @@ function HomeClient() {
                     total: favoriteItems.length,
                     movie: favoriteItems.filter((item) => {
                       // 优先用 type 字段判断
-                      if (item.type) return item.type === 'movie';
+                      if (item.type) {
+                        return item.type === 'movie';
+                      }
                       // 向后兼容：没有 type 时用 episodes 判断
-                      if (item.source === 'bangumi') return false; // 排除动漫
-                      if (item.origin === 'live') return false; // 排除直播
+                      if (item.source === 'bangumi') {
+                        return false;
+                      } // 排除动漫
+                      if (item.origin === 'live') {
+                        return false;
+                      } // 排除直播
                       // 排除短剧（Vidora短剧来自豆瓣，episodes通常为1）
                       // 这里无法通过source判断，只能依赖type字段
                       return item.episodes === 1;
                     }).length,
                     tv: favoriteItems.filter((item) => {
                       // 优先用 type 字段判断
-                      if (item.type) return item.type === 'tv';
+                      if (item.type) {
+                        return item.type === 'tv';
+                      }
                       // 向后兼容：没有 type 时用 episodes 判断
-                      if (item.source === 'bangumi') return false; // 排除动漫
-                      if (item.origin === 'live') return false; // 排除直播
+                      if (item.source === 'bangumi') {
+                        return false;
+                      } // 排除动漫
+                      if (item.origin === 'live') {
+                        return false;
+                      } // 排除直播
                       // vod 来源：按集数判断
                       return item.episodes > 1;
                     }).length,
                     anime: favoriteItems.filter((item) => {
                       // 优先用 type 字段判断
-                      if (item.type) return item.type === 'anime';
+                      if (item.type) {
+                        return item.type === 'anime';
+                      }
                       // 向后兼容：用 source 判断
                       return item.source === 'bangumi';
                     }).length,
@@ -380,7 +398,9 @@ function HomeClient() {
                       .length,
                     variety: favoriteItems.filter((item) => {
                       // 优先用 type 字段判断
-                      if (item.type) return item.type === 'variety';
+                      if (item.type) {
+                        return item.type === 'variety';
+                      }
                       // 向后兼容：暂无 fallback
                       return false;
                     }).length,
@@ -494,21 +514,35 @@ function HomeClient() {
                   let filtered = favoriteItems;
                   if (favoriteFilter === 'movie') {
                     filtered = favoriteItems.filter((item) => {
-                      if (item.type) return item.type === 'movie';
-                      if (item.source === 'bangumi') return false;
-                      if (item.origin === 'live') return false;
+                      if (item.type) {
+                        return item.type === 'movie';
+                      }
+                      if (item.source === 'bangumi') {
+                        return false;
+                      }
+                      if (item.origin === 'live') {
+                        return false;
+                      }
                       return item.episodes === 1;
                     });
                   } else if (favoriteFilter === 'tv') {
                     filtered = favoriteItems.filter((item) => {
-                      if (item.type) return item.type === 'tv';
-                      if (item.source === 'bangumi') return false;
-                      if (item.origin === 'live') return false;
+                      if (item.type) {
+                        return item.type === 'tv';
+                      }
+                      if (item.source === 'bangumi') {
+                        return false;
+                      }
+                      if (item.origin === 'live') {
+                        return false;
+                      }
                       return item.episodes > 1;
                     });
                   } else if (favoriteFilter === 'anime') {
                     filtered = favoriteItems.filter((item) => {
-                      if (item.type) return item.type === 'anime';
+                      if (item.type) {
+                        return item.type === 'anime';
+                      }
                       return item.source === 'bangumi';
                     });
                   } else if (favoriteFilter === 'shortdrama') {
@@ -521,12 +555,16 @@ function HomeClient() {
                     );
                   } else if (favoriteFilter === 'variety') {
                     filtered = favoriteItems.filter((item) => {
-                      if (item.type) return item.type === 'variety';
+                      if (item.type) {
+                        return item.type === 'variety';
+                      }
                       return false;
                     });
                   } else if (favoriteFilter === 'documentary') {
                     filtered = favoriteItems.filter((item) => {
-                      if (item.type) return item.type === 'documentary';
+                      if (item.type) {
+                        return item.type === 'documentary';
+                      }
                       return false;
                     });
                   }

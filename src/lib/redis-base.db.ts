@@ -207,7 +207,9 @@ export abstract class BaseRedisStorage implements IStorage {
     const keys: string[] = await this.withRetry(() =>
       this.client.keys(pattern),
     );
-    if (keys.length === 0) return {};
+    if (keys.length === 0) {
+      return {};
+    }
     const values = await this.withRetry(() => this.client.mGet(keys));
     const result: Record<string, PlayRecord> = {};
     keys.forEach((fullKey: string, idx: number) => {
@@ -253,7 +255,9 @@ export abstract class BaseRedisStorage implements IStorage {
     const keys: string[] = await this.withRetry(() =>
       this.client.keys(pattern),
     );
-    if (keys.length === 0) return {};
+    if (keys.length === 0) {
+      return {};
+    }
     const values = await this.withRetry(() => this.client.mGet(keys));
     const result: Record<string, Favorite> = {};
     keys.forEach((fullKey: string, idx: number) => {
@@ -287,7 +291,9 @@ export abstract class BaseRedisStorage implements IStorage {
     const stored = await this.withRetry(() =>
       this.client.get(this.userPwdKey(userName)),
     );
-    if (stored === null) return false;
+    if (stored === null) {
+      return false;
+    }
     // 确保比较时都是字符串类型
     return ensureString(stored) === password;
   }
@@ -554,7 +560,9 @@ export abstract class BaseRedisStorage implements IStorage {
       const val = await this.withRetry(() =>
         this.client.get(this.cacheKey(key)),
       );
-      if (!val) return null;
+      if (!val) {
+        return null;
+      }
 
       // 智能处理返回值：兼容不同Redis客户端的行为
       if (typeof val === 'string') {

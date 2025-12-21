@@ -6,8 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import BackToTopButton from '@/components/BackToTopButton';
-
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
   getDoubanCategories,
@@ -17,6 +15,7 @@ import {
 import { getShortDramaData } from '@/lib/short-drama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
@@ -69,17 +68,33 @@ function DoubanPageClient() {
 
   // 选择器状态 - 完全独立，不依赖URL参数
   const [primarySelection, setPrimarySelection] = useState<string>(() => {
-    if (type === 'movie') return '热门';
-    if (type === 'tv' || type === 'show') return '最近热门';
-    if (type === 'anime') return '每日放送';
-    if (type === 'short-drama') return '热门';
+    if (type === 'movie') {
+      return '热门';
+    }
+    if (type === 'tv' || type === 'show') {
+      return '最近热门';
+    }
+    if (type === 'anime') {
+      return '每日放送';
+    }
+    if (type === 'short-drama') {
+      return '热门';
+    }
     return '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
-    if (type === 'movie') return '全部';
-    if (type === 'tv') return 'tv';
-    if (type === 'show') return 'show';
-    if (type === 'short-drama') return '全部';
+    if (type === 'movie') {
+      return '全部';
+    }
+    if (type === 'tv') {
+      return 'tv';
+    }
+    if (type === 'show') {
+      return 'show';
+    }
+    if (type === 'short-drama') {
+      return '全部';
+    }
     return '全部';
   });
 
@@ -797,7 +812,9 @@ function DoubanPageClient() {
         const keys1 = Object.keys(obj1).sort();
         const keys2 = Object.keys(obj2).sort();
 
-        if (keys1.length !== keys2.length) return false;
+        if (keys1.length !== keys2.length) {
+          return false;
+        }
 
         return keys1.every((key) => obj1[key] === obj2[key]);
       };
@@ -856,7 +873,9 @@ function DoubanPageClient() {
 
   const getActivePath = () => {
     const params = new URLSearchParams();
-    if (type) params.set('type', type);
+    if (type) {
+      params.set('type', type);
+    }
 
     const queryString = params.toString();
     const activePath = `/douban${queryString ? `?${queryString}` : ''}`;

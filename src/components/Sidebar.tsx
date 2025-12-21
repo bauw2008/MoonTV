@@ -198,24 +198,31 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
   useEffect(() => {
     const items: any[] = [];
 
-    if (menuConfig.showMovies)
+    if (menuConfig.showMovies) {
       items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
-    if (menuConfig.showTVShows)
+    }
+    if (menuConfig.showTVShows) {
       items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
-    if (menuConfig.showShortDrama)
+    }
+    if (menuConfig.showShortDrama) {
       items.push({
         icon: PlayCircle,
         label: '短剧',
         href: '/douban?type=short-drama',
       });
-    if (menuConfig.showAnime)
+    }
+    if (menuConfig.showAnime) {
       items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
-    if (menuConfig.showVariety)
+    }
+    if (menuConfig.showVariety) {
       items.push({ icon: Clover, label: '综艺', href: '/douban?type=show' });
-    if (menuConfig.showLive)
+    }
+    if (menuConfig.showLive) {
       items.push({ icon: Radio, label: '直播', href: '/live' });
-    if (menuConfig.showTvbox)
+    }
+    if (menuConfig.showTvbox) {
       items.push({ icon: Box, label: '盒子', href: '/tvbox' });
+    }
 
     const runtimeConfig = (window as any).RUNTIME_CONFIG;
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
@@ -262,7 +269,9 @@ const Sidebar = ({ onToggle, activePath = '/' }: SidebarProps) => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem('sidebarCollapsed', JSON.stringify(newState));
-    if (typeof window !== 'undefined') window.__sidebarCollapsed = newState;
+    if (typeof window !== 'undefined') {
+      window.__sidebarCollapsed = newState;
+    }
     onToggle?.(newState);
   }, [isCollapsed, onToggle]);
 

@@ -48,7 +48,9 @@ export default function SkipController({
 
   // 时间格式转换函数
   const timeToSeconds = useCallback((timeStr: string): number => {
-    if (!timeStr || timeStr.trim() === '') return 0;
+    if (!timeStr || timeStr.trim() === '') {
+      return 0;
+    }
 
     // 支持多种格式: "2:10", "2:10.5", "130", "130.5"
     if (timeStr.includes(':')) {
@@ -83,7 +85,9 @@ export default function SkipController({
   // 自动跳过逻辑
   const handleAutoSkip = useCallback(
     (segment: SkipSegment) => {
-      if (!artPlayerRef.current) return;
+      if (!artPlayerRef.current) {
+        return;
+      }
 
       // 如果是片尾且开启了自动下一集，直接跳转下一集
       if (

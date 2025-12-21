@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
   // 检查用户权限
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       const user = adminConfig.UserConfig.Users.find(
         (u) => u.username === username,
       );
-      if (!user || user.role !== 'admin' || user.banned) {
+      if (user?.role !== 'admin' || user.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
       }
     }
@@ -204,15 +204,21 @@ export async function POST(request: NextRequest) {
 
 // 验证IP地址或CIDR格式的辅助函数
 function isValidIPOrCIDR(ip: string): boolean {
-  if (!ip || typeof ip !== 'string') return false;
+  if (!ip || typeof ip !== 'string') {
+    return false;
+  }
 
   // 允许通配符
-  if (ip.trim() === '*') return true;
+  if (ip.trim() === '*') {
+    return true;
+  }
 
   // 基本的IP地址正则表达式
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
 
-  if (!ipRegex.test(ip)) return false;
+  if (!ipRegex.test(ip)) {
+    return false;
+  }
 
   const [ipPart, maskPart] = ip.split('/');
   const parts = ipPart.split('.');

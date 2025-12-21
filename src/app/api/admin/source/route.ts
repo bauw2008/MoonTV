@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const username = authInfo.username;
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       const userEntry = adminConfig.UserConfig.Users.find(
         (u) => u.username === username,
       );
-      if (!userEntry || userEntry.role !== 'admin' || userEntry.banned) {
+      if (userEntry?.role !== 'admin' || userEntry.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
       }
     }
@@ -98,31 +98,37 @@ export async function POST(request: NextRequest) {
       }
       case 'disable': {
         const { key } = body as { key?: string };
-        if (!key)
+        if (!key) {
           return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
+        }
         const entry = adminConfig.SourceConfig.find((s) => s.key === key);
-        if (!entry)
+        if (!entry) {
           return NextResponse.json({ error: '源不存在' }, { status: 404 });
+        }
         entry.disabled = true;
         break;
       }
       case 'enable': {
         const { key } = body as { key?: string };
-        if (!key)
+        if (!key) {
           return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
+        }
         const entry = adminConfig.SourceConfig.find((s) => s.key === key);
-        if (!entry)
+        if (!entry) {
           return NextResponse.json({ error: '源不存在' }, { status: 404 });
+        }
         entry.disabled = false;
         break;
       }
       case 'delete': {
         const { key } = body as { key?: string };
-        if (!key)
+        if (!key) {
           return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
+        }
         const idx = adminConfig.SourceConfig.findIndex((s) => s.key === key);
-        if (idx === -1)
+        if (idx === -1) {
           return NextResponse.json({ error: '源不存在' }, { status: 404 });
+        }
         const entry = adminConfig.SourceConfig[idx];
         if (entry.from === 'config') {
           return NextResponse.json({ error: '该源不可删除' }, { status: 400 });
@@ -244,7 +250,9 @@ export async function POST(request: NextRequest) {
         });
         // 未在 order 中的保持原顺序
         adminConfig.SourceConfig.forEach((item) => {
-          if (map.has(item.key)) newList.push(item);
+          if (map.has(item.key)) {
+            newList.push(item);
+          }
         });
         adminConfig.SourceConfig = newList;
         break;

@@ -86,7 +86,9 @@ export default function TVBoxConfigPage() {
   }, [fetchSecurityConfig]);
 
   const getConfigUrl = useCallback(() => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === 'undefined') {
+      return '';
+    }
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
 

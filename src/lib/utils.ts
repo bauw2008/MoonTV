@@ -43,7 +43,9 @@ const isWebKit = /WebKit/i.test(userAgent);
 
 // 设备性能等级估算
 const getDevicePerformanceLevel = (): 'low' | 'medium' | 'high' => {
-  if (typeof navigator === 'undefined') return 'medium';
+  if (typeof navigator === 'undefined') {
+    return 'medium';
+  }
 
   // 基于硬件并发数判断
   const cores = navigator.hardwareConcurrency || 4;
@@ -99,7 +101,9 @@ function getDoubanImageProxyConfig(): {
  * 处理图片 URL，如果设置了图片代理则使用代理
  */
 export function processImageUrl(originalUrl: string): string {
-  if (!originalUrl) return originalUrl;
+  if (!originalUrl) {
+    return originalUrl;
+  }
 
   // 处理 manmankan 图片防盗链
   if (originalUrl.includes('manmankan.com')) {
@@ -286,7 +290,9 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       const cleanup = () => {
         clearTimeout(timeout);
         try {
-          if (hls) hls.destroy();
+          if (hls) {
+            hls.destroy();
+          }
         } catch (e) {
           console.warn('HLS cleanup error:', e);
         }
@@ -353,12 +359,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       });
 
       hls.on(Hls.Events.FRAG_LOADED, (event: any, data: any) => {
-        if (
-          fragmentStartTime > 0 &&
-          data &&
-          data.payload &&
-          !hasSpeedCalculated
-        ) {
+        if (fragmentStartTime > 0 && data?.payload && !hasSpeedCalculated) {
           const loadTime = performance.now() - fragmentStartTime;
           const size = data.payload.byteLength || 0;
 
@@ -393,9 +394,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
         // v1.6.13 特殊处理：时间戳错误也不应该导致测速失败
         if (
           data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
-          data.err &&
-          data.err.message &&
-          data.err.message.includes('timestamp')
+          data.err?.message?.includes('timestamp')
         ) {
           console.log('测速中遇到时间戳错误，v1.6.13已修复，继续测速');
           return;
@@ -422,7 +421,9 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
 }
 
 export function cleanHtmlTags(text: string): string {
-  if (!text) return '';
+  if (!text) {
+    return '';
+  }
 
   const cleanedText = text
     .replace(/<[^>]+>/g, '\n') // 将 HTML 标签替换为换行
@@ -441,7 +442,9 @@ export function cleanHtmlTags(text: string): string {
  * @returns 是否已完结
  */
 export function isSeriesCompleted(remarks?: string): boolean {
-  if (!remarks) return false;
+  if (!remarks) {
+    return false;
+  }
 
   // 匹配规则：
   // - "完结" 或 "已完结"

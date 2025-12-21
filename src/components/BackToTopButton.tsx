@@ -1,4 +1,3 @@
-import { ChevronUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 // 虚拟网格引用接口

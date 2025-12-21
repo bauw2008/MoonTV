@@ -65,7 +65,9 @@ export default function TVBoxConfigPage() {
   }, []);
 
   const fetchDevices = useCallback(async () => {
-    if (!securityConfig?.enableDeviceBinding) return;
+    if (!securityConfig?.enableDeviceBinding) {
+      return;
+    }
 
     try {
       setDevicesLoading(true);
@@ -125,7 +127,9 @@ export default function TVBoxConfigPage() {
   }, [securityConfig?.enableDeviceBinding, fetchDevices]);
 
   const getConfigUrl = useCallback(() => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === 'undefined') {
+      return '';
+    }
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
 

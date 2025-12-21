@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 'use client';
 
@@ -168,8 +168,12 @@ function SourceSelector({
                 className='flex-1 h-12 px-3 bg-transparent text-gray-900 dark:text-gray-100 border-0 outline-none focus:ring-0 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500'
                 style={{ boxShadow: 'none' }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSearch();
-                  if (e.key === 'Escape') handleClearSearch();
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                  if (e.key === 'Escape') {
+                    handleClearSearch();
+                  }
                 }}
                 autoFocus
               />
@@ -407,7 +411,9 @@ function CategoryFilter({
 
   // ------------------- 获取二级分类 -------------------
   const getSecondaryCategories = (primaryId: number | null) => {
-    if (primaryId === 0) return []; // “全部”不显示二级分类
+    if (primaryId === 0) {
+      return [];
+    } // “全部”不显示二级分类
     return categories.secondary_categories.filter(
       (cat) => cat.type_pid === primaryId,
     ); // 获取对应二级分类
@@ -495,7 +501,9 @@ function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
     <div className='flex justify-center items-center space-x-2 mt-8'>
@@ -655,9 +663,15 @@ export default function TVBoxPage() {
 
   // ==================== 滚动加载更多（非虚拟化模式） ====================
   useEffect(() => {
-    if (useVirtualization) return;
-    if (!hasMore || isLoadingMore || loading) return;
-    if (!loadingRef.current) return;
+    if (useVirtualization) {
+      return;
+    }
+    if (!hasMore || isLoadingMore || loading) {
+      return;
+    }
+    if (!loadingRef.current) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -672,7 +686,9 @@ export default function TVBoxPage() {
     observerRef.current = observer;
 
     return () => {
-      if (observerRef.current) observerRef.current.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
   }, [hasMore, isLoadingMore, loading, useVirtualization]);
 
@@ -682,7 +698,9 @@ export default function TVBoxPage() {
       try {
         setSourcesLoading(true);
         const res = await fetch('/api/tvbox/video-sources');
-        if (!res.ok) throw new Error('获取视频源失败');
+        if (!res.ok) {
+          throw new Error('获取视频源失败');
+        }
         const data = await res.json();
         const arraySources = Object.entries(data)
           .map(([key, value]: any) => ({
@@ -713,7 +731,9 @@ export default function TVBoxPage() {
 
   // ==================== 加载视频列表 ====================
   useEffect(() => {
-    if (!selectedSource) return;
+    if (!selectedSource) {
+      return;
+    }
 
     const fetchContent = async () => {
       setIsLoadingMore(currentPage > 1);
@@ -741,7 +761,9 @@ export default function TVBoxPage() {
         }
 
         const res = await fetch(apiUrl);
-        if (!res.ok) throw new Error('加载视频失败');
+        if (!res.ok) {
+          throw new Error('加载视频失败');
+        }
 
         const data: ApiResponse & { fromCache?: boolean } = await res.json();
 
@@ -866,7 +888,9 @@ export default function TVBoxPage() {
   };
 
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > totalPages) {
+      return;
+    }
     setCurrentPage(page);
     setFromCache(false);
     window.scrollTo(0, 0);

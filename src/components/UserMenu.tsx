@@ -32,11 +32,11 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 import {
-  type WatchingUpdate,
   checkWatchingUpdates,
   getCachedWatchingUpdates,
   getDetailedWatchingUpdates,
   subscribeToWatchingUpdatesEvent,
+  type WatchingUpdate,
 } from '@/lib/watching-updates';
 
 import { ThemeSettingsPanel } from './ThemeSettingsPanel';
@@ -654,7 +654,9 @@ export const UserMenu: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // 验证文件是图片且小于 2MB
     if (!file.type.startsWith('image/')) {
@@ -760,7 +762,9 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleConfirmCrop = async () => {
-    if (!completedCrop || !imageRef.current || !authInfo?.username) return;
+    if (!completedCrop || !imageRef.current || !authInfo?.username) {
+      return;
+    }
 
     try {
       setIsUploadingAvatar(true);

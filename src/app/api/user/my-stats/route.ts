@@ -8,7 +8,9 @@ import { db } from '@/lib/db';
 
 // 计算注册天数
 function calculateRegistrationDays(startDate: number): number {
-  if (!startDate || startDate <= 0) return 0;
+  if (!startDate || startDate <= 0) {
+    return 0;
+  }
 
   const firstDate = new Date(startDate);
   const currentDate = new Date();
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
   try {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -145,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -233,7 +235,7 @@ export async function PUT(request: NextRequest) {
 
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -334,7 +336,7 @@ export async function DELETE(request: NextRequest) {
   try {
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

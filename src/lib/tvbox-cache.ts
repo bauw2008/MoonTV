@@ -198,7 +198,9 @@ export async function getTVBoxCache(
         params?.category?.toString(),
         params?.page ? Number(params.page) : undefined,
       );
-      if (!videoCache) return null;
+      if (!videoCache) {
+        return null;
+      }
 
       // 获取分类数据
       const categoryCache = await getTVBoxCategoryCache(source);
@@ -253,12 +255,7 @@ export async function setTVBoxVideoCache(
 ): Promise<void> {
   try {
     // 验证输入数据
-    if (
-      !data ||
-      !data.list ||
-      !Array.isArray(data.list) ||
-      data.list.length === 0
-    ) {
+    if (!data?.list || !Array.isArray(data.list) || data.list.length === 0) {
       return;
     }
 
@@ -297,8 +294,7 @@ export async function setTVBoxCategoryCache(
   try {
     // 验证输入数据
     if (
-      !data ||
-      !data.primary_categories ||
+      !data?.primary_categories ||
       !data.secondary_categories ||
       !data.category_map
     ) {

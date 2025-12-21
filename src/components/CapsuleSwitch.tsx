@@ -82,7 +82,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
             left: `${indicatorStyle.left}px`,
             width: `${indicatorStyle.width}px`,
             opacity: indicatorStyle.opacity,
-            background: `linear-gradient(135deg, var(--home-favorites-color, #3b82f6) 0%, color-mix(in srgb, var(--home-favorites-color, #3b82f6) 70%, rgba(168, 85, 247, 0.8)) 30%, color-mix(in srgb, var(--home-favorites-color, #3b82f6) 50%, rgba(139, 92, 246, 0.9)) 70%, var(--home-favorites-color, #3b82f6) 100%)`,
+            background:
+              'linear-gradient(135deg, var(--home-favorites-color, #3b82f6) 0%, color-mix(in srgb, var(--home-favorites-color, #3b82f6) 70%, rgba(168, 85, 247, 0.8)) 30%, color-mix(in srgb, var(--home-favorites-color, #3b82f6) 50%, rgba(139, 92, 246, 0.9)) 70%, var(--home-favorites-color, #3b82f6) 100%)',
             boxShadow:
               '0 4px 16px color-mix(in srgb, var(--home-favorites-color, #3b82f6) 50%, transparent), 0 2px 8px rgba(168, 85, 247, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
           }}
@@ -94,7 +95,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
           <div
             className='absolute inset-0 rounded-full opacity-20'
             style={{
-              background: `radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%)`,
+              background:
+                'radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%)',
             }}
           />
         </div>
@@ -123,7 +125,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
               <div
                 className='absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'
                 style={{
-                  background: `linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 20%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.15) 80%, transparent 100%)`,
+                  background:
+                    'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 20%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.15) 80%, transparent 100%)',
                 }}
               />
             )}

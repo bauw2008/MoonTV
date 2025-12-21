@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
 
 'use client';
 
@@ -133,7 +133,9 @@ function PlayPageClient() {
   const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const v = localStorage.getItem('enable_blockad');
-      if (v !== null) return v === 'true';
+      if (v !== null) {
+        return v === 'true';
+      }
     }
     return true;
   });
@@ -147,7 +149,9 @@ function PlayPageClient() {
     () => {
       if (typeof window !== 'undefined') {
         const v = localStorage.getItem('enable_external_danmu');
-        if (v !== null) return v === 'true';
+        if (v !== null) {
+          return v === 'true';
+        }
       }
       return false; // 默认关闭外部弹幕
     },
@@ -351,7 +355,9 @@ function PlayPageClient() {
       const cacheKey = `${DANMU_CACHE_KEY_PREFIX}-${key}`;
       // 优先从统一存储获取
       const cached = await ClientCache.get(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        return cached;
+      }
 
       // 兜底：从localStorage获取（兼容性）
       if (typeof localStorage !== 'undefined') {
@@ -483,7 +489,9 @@ function PlayPageClient() {
       const cacheKey = `bangumi-details-${id}`;
       // 优先从统一存储获取
       const cached = await ClientCache.get(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        return cached;
+      }
 
       // 兜底：从localStorage获取（兼容性）
       if (typeof localStorage !== 'undefined') {
@@ -746,7 +754,9 @@ function PlayPageClient() {
 
   // 网盘搜索函数
   const handleNetDiskSearch = async (query: string) => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      return;
+    }
 
     setNetdiskLoading(true);
     setNetdiskError(null);
@@ -780,7 +790,9 @@ function PlayPageClient() {
   const preferBestSource = async (
     sources: SearchResult[],
   ): Promise<SearchResult> => {
-    if (sources.length === 1) return sources[0];
+    if (sources.length === 1) {
+      return sources[0];
+    }
 
     // 使用全局统一的设备检测结果
     const _isIPad =
@@ -819,8 +831,12 @@ function PlayPageClient() {
           return aIndex - bIndex;
         }
         // 如果只有一个在优先级列表中，优先选择它
-        if (aIndex !== -1) return -1;
-        if (bIndex !== -1) return 1;
+        if (aIndex !== -1) {
+          return -1;
+        }
+        if (bIndex !== -1) {
+          return 1;
+        }
 
         // 都不在优先级列表中，保持原始顺序
         return 0;
@@ -994,10 +1010,14 @@ function PlayPageClient() {
     const validSpeeds = successfulResults
       .map((result) => {
         const speedStr = result.testResult.loadSpeed;
-        if (speedStr === '未知' || speedStr === '测量中...') return 0;
+        if (speedStr === '未知' || speedStr === '测量中...') {
+          return 0;
+        }
 
         const match = speedStr.match(/^([\d.]+)\s*(KB\/s|MB\/s)$/);
-        if (!match) return 0;
+        if (!match) {
+          return 0;
+        }
 
         const value = parseFloat(match[1]);
         const unit = match[2];
@@ -1087,11 +1107,15 @@ function PlayPageClient() {
     // 下载速度评分 (40% 权重) - 基于最大速度线性映射
     const speedScore = (() => {
       const speedStr = testResult.loadSpeed;
-      if (speedStr === '未知' || speedStr === '测量中...') return 30;
+      if (speedStr === '未知' || speedStr === '测量中...') {
+        return 30;
+      }
 
       // 解析速度值
       const match = speedStr.match(/^([\d.]+)\s*(KB\/s|MB\/s)$/);
-      if (!match) return 30;
+      if (!match) {
+        return 30;
+      }
 
       const value = parseFloat(match[1]);
       const unit = match[2];
@@ -1106,10 +1130,14 @@ function PlayPageClient() {
     // 网络延迟评分 (20% 权重) - 基于延迟范围线性映射
     const pingScore = (() => {
       const ping = testResult.pingTime;
-      if (ping <= 0) return 0; // 无效延迟给默认分
+      if (ping <= 0) {
+        return 0;
+      } // 无效延迟给默认分
 
       // 如果所有延迟都相同，给满分
-      if (maxPing === minPing) return 100;
+      if (maxPing === minPing) {
+        return 100;
+      }
 
       // 线性映射：最低延迟=100分，最高延迟=0分
       const pingRatio = (maxPing - ping) / (maxPing - minPing);
@@ -1129,11 +1157,7 @@ function PlayPageClient() {
     detailData: SearchResult | null,
     episodeIndex: number,
   ) => {
-    if (
-      !detailData ||
-      !detailData.episodes ||
-      episodeIndex >= detailData.episodes.length
-    ) {
+    if (!detailData?.episodes || episodeIndex >= detailData.episodes.length) {
       setVideoUrl('');
       return;
     }
@@ -1149,7 +1173,9 @@ function PlayPageClient() {
    * @param url 视频URL
    */
   const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
-    if (!video || !url) return;
+    if (!video || !url) {
+      return;
+    }
     const sources = Array.from(video.getElementsByTagName('source'));
     const existed = sources.some((s) => s.src === url);
     if (!existed) {
@@ -1233,7 +1259,9 @@ function PlayPageClient() {
 
   // 定期内存检查（仅在移动设备上）
   useEffect(() => {
-    if (!isMobileGlobal) return;
+    if (!isMobileGlobal) {
+      return;
+    }
 
     const memoryCheckInterval = setInterval(() => {
       checkMemoryPressure().catch(console.error);
@@ -1334,7 +1362,9 @@ function PlayPageClient() {
    * @returns 过滤后的M3U8内容
    */
   function filterAdsFromM3U8(m3u8Content: string): string {
-    if (!m3u8Content) return '';
+    if (!m3u8Content) {
+      return '';
+    }
 
     // 按行分割M3U8内容
     const lines = m3u8Content.split('\n');
@@ -1384,7 +1414,9 @@ function PlayPageClient() {
    * @returns 格式化后的时间字符串
    */
   const formatTime = (seconds: number): string => {
-    if (seconds === 0) return '00:00';
+    if (seconds === 0) {
+      return '00:00';
+    }
 
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -1693,10 +1725,7 @@ function PlayPageClient() {
     }
 
     // 如果播放器已经存在且弹幕插件已加载，重新加载弹幕
-    if (
-      artPlayerRef.current &&
-      artPlayerRef.current.plugins?.artplayerPluginDanmuku
-    ) {
+    if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku) {
       console.log('集数变化，重新加载弹幕');
 
       // 立即清空当前弹幕，避免旧弹幕残留
@@ -2133,7 +2162,9 @@ function PlayPageClient() {
   useEffect(() => {
     // 仅在初次挂载时检查播放记录
     const initFromHistory = async () => {
-      if (!currentSource || !currentId) return;
+      if (!currentSource || !currentId) {
+        return;
+      }
 
       try {
         const allRecords = await getAllPlayRecords();
@@ -2404,7 +2435,7 @@ function PlayPageClient() {
   const handleEpisodeChange = (episodeNumber: number) => {
     if (episodeNumber >= 0 && episodeNumber < totalEpisodes) {
       // 在更换集数前保存当前播放进度
-      if (artPlayerRef.current && artPlayerRef.current.paused) {
+      if (artPlayerRef.current?.paused) {
         saveCurrentPlayProgress();
       }
       setCurrentEpisodeIndex(episodeNumber);
@@ -2448,8 +2479,9 @@ function PlayPageClient() {
     if (
       (e.target as HTMLElement).tagName === 'INPUT' ||
       (e.target as HTMLElement).tagName === 'TEXTAREA'
-    )
+    ) {
       return;
+    }
 
     // Alt + 左箭头 = 上一集
     if (e.altKey && e.key === 'ArrowLeft') {
@@ -2650,7 +2682,9 @@ function PlayPageClient() {
   // ---------------------------------------------------------------------------
   // 每当 source 或 id 变化时检查收藏状态
   useEffect(() => {
-    if (!currentSource || !currentId) return;
+    if (!currentSource || !currentId) {
+      return;
+    }
     (async () => {
       try {
         const fav = await isFavorited(currentSource, currentId);
@@ -2663,7 +2697,9 @@ function PlayPageClient() {
 
   // 监听收藏数据更新事件
   useEffect(() => {
-    if (!currentSource || !currentId) return;
+    if (!currentSource || !currentId) {
+      return;
+    }
 
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
@@ -2684,8 +2720,9 @@ function PlayPageClient() {
       !detailRef.current ||
       !currentSourceRef.current ||
       !currentIdRef.current
-    )
+    ) {
       return;
+    }
 
     try {
       if (favorited) {
@@ -2737,8 +2774,7 @@ function PlayPageClient() {
 
       // 确保选集索引有效
       if (
-        !detail ||
-        !detail.episodes ||
+        !detail?.episodes ||
         currentEpisodeIndex >= detail.episodes.length ||
         currentEpisodeIndex < 0
       ) {
@@ -3053,7 +3089,9 @@ function PlayPageClient() {
               hls.on(Hls.Events.ERROR, function (event: any, data: any) {
                 // 改进错误处理：检查数据是否存在
                 if (!data || Object.keys(data).length === 0) {
-                  console.warn('HLS Error: 收到空错误数据，可能是网络或初始化问题');
+                  console.warn(
+                    'HLS Error: 收到空错误数据，可能是网络或初始化问题',
+                  );
                   // 尝试重新加载
                   if (hls && video) {
                     try {
@@ -3064,7 +3102,7 @@ function PlayPageClient() {
                   }
                   return;
                 }
-                
+
                 console.error('HLS Error:', event, data);
                 // v1.6.13 增强：处理片段解析错误（针对initPTS修复）
                 if (data.details === Hls.ErrorDetails.FRAG_PARSING_ERROR) {
@@ -3077,9 +3115,7 @@ function PlayPageClient() {
                 // v1.6.13 增强：处理时间戳相关错误（直播回搜修复）
                 if (
                   data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
-                  data.err &&
-                  data.err.message &&
-                  data.err.message.includes('timestamp')
+                  data.err?.message?.includes('timestamp')
                 ) {
                   console.log('时间戳错误，清理缓冲区并重新加载...');
                   try {
@@ -3115,7 +3151,11 @@ function PlayPageClient() {
                       }
                       break;
                     default:
-                      console.log('无法恢复的错误类型:', data.type, data.details);
+                      console.log(
+                        '无法恢复的错误类型:',
+                        data.type,
+                        data.details,
+                      );
                       // 对于未知错误，尝试重新初始化
                       try {
                         if (video && video.src) {
@@ -3134,7 +3174,10 @@ function PlayPageClient() {
                   }
                 } else {
                   // 非致命错误，记录但不中断播放
-                  console.warn('HLS 非致命错误:', data.details || '未知错误详情');
+                  console.warn(
+                    'HLS 非致命错误:',
+                    data.details || '未知错误详情',
+                  );
                 }
               });
             },
@@ -3206,9 +3249,7 @@ function PlayPageClient() {
               click: function () {
                 // 调用跳过设置插件的 toggle 方法
                 if (
-                  artPlayerRef.current &&
-                  artPlayerRef.current.plugins &&
-                  artPlayerRef.current.plugins.artplayerPluginSkipSettings
+                  artPlayerRef.current?.plugins?.artplayerPluginSkipSettings
                 ) {
                   artPlayerRef.current.plugins.artplayerPluginSkipSettings.toggle();
                 }
@@ -3233,8 +3274,12 @@ function PlayPageClient() {
                   score += Math.min(memory / (1024 * 1024 * 1024), 1) * 0.3; // 内存权重
                   score += (isMobile ? 0.2 : 0.5) * 0.2; // 设备类型权重
 
-                  if (score > 0.7) return 'high';
-                  if (score > 0.4) return 'medium';
+                  if (score > 0.7) {
+                    return 'high';
+                  }
+                  if (score > 0.4) {
+                    return 'medium';
+                  }
                   return 'low';
                 };
 
@@ -3291,13 +3336,19 @@ function PlayPageClient() {
                     // 🧠 智能过滤器 - 激进性能优化，过滤影响性能的弹幕
                     filter: (danmu: any) => {
                       // 基础验证
-                      if (!danmu.text || !danmu.text.trim()) return false;
+                      if (!danmu.text?.trim()) {
+                        return false;
+                      }
 
                       const text = danmu.text.trim();
 
                       // 🔥 激进长度限制，减少DOM渲染负担
-                      if (text.length > 50) return false; // 从100改为50，更激进
-                      if (text.length < 2) return false; // 过短弹幕通常无意义
+                      if (text.length > 50) {
+                        return false;
+                      } // 从100改为50，更激进
+                      if (text.length < 2) {
+                        return false;
+                      } // 过短弹幕通常无意义
 
                       // 🔥 激进特殊字符过滤，避免复杂渲染
                       const specialCharCount = (
@@ -3305,12 +3356,17 @@ function PlayPageClient() {
                           /[^\u4e00-\u9fa5a-zA-Z0-9\s.,!?；，。！？]/g,
                         ) || []
                       ).length;
-                      if (specialCharCount > 5) return false; // 从10改为5，更严格
+                      if (specialCharCount > 5) {
+                        return false;
+                      } // 从10改为5，更严格
 
                       // 🔥 过滤纯数字或纯符号弹幕，减少无意义渲染
-                      if (/^\d+$/.test(text)) return false;
-                      if (/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(text))
+                      if (/^\d+$/.test(text)) {
                         return false;
+                      }
+                      if (/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(text)) {
+                        return false;
+                      }
 
                       // 🔥 过滤常见低质量弹幕，提升整体质量
                       const lowQualityPatterns = [
@@ -3324,8 +3380,9 @@ function PlayPageClient() {
                       ];
                       if (
                         lowQualityPatterns.some((pattern) => pattern.test(text))
-                      )
+                      ) {
                         return false;
+                      }
 
                       return true;
                     },
@@ -3475,7 +3532,7 @@ function PlayPageClient() {
 
             const handleFirstPlay = () => {
               setTimeout(() => {
-                if (artPlayerRef.current && artPlayerRef.current.muted) {
+                if (artPlayerRef.current?.muted) {
                   artPlayerRef.current.muted = false;
                   artPlayerRef.current.volume = lastVolumeRef.current || 0.7;
                   console.log(
@@ -3750,7 +3807,9 @@ function PlayPageClient() {
                     // 添加一次性点击监听器用于首次播放
                     let hasHandledFirstInteraction = false;
                     const handleFirstUserInteraction = async () => {
-                      if (hasHandledFirstInteraction) return;
+                      if (hasHandledFirstInteraction) {
+                        return;
+                      }
                       hasHandledFirstInteraction = true;
 
                       try {
@@ -4388,46 +4447,45 @@ function PlayPageClient() {
                           )}
 
                         {/* 制作信息从infobox提取 */}
-                        {bangumiDetails.infobox &&
-                          bangumiDetails.infobox.map(
-                            (info: any, index: number) => {
-                              if (info.key === '导演' && info.value) {
-                                const directors = Array.isArray(info.value)
-                                  ? info.value
-                                      .map((v: any) => v.v || v)
-                                      .join('、')
-                                  : info.value;
-                                return (
-                                  <div key={index}>
-                                    <span className='font-semibold text-gray-700 dark:text-gray-300'>
-                                      导演:{' '}
-                                    </span>
-                                    <span className='text-gray-600 dark:text-gray-400'>
-                                      {directors}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              if (info.key === '制作' && info.value) {
-                                const studios = Array.isArray(info.value)
-                                  ? info.value
-                                      .map((v: any) => v.v || v)
-                                      .join('、')
-                                  : info.value;
-                                return (
-                                  <div key={index}>
-                                    <span className='font-semibold text-gray-700 dark:text-gray-300'>
-                                      制作:{' '}
-                                    </span>
-                                    <span className='text-gray-600 dark:text-gray-400'>
-                                      {studios}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            },
-                          )}
+                        {bangumiDetails.infobox?.map(
+                          (info: any, index: number) => {
+                            if (info.key === '导演' && info.value) {
+                              const directors = Array.isArray(info.value)
+                                ? info.value
+                                    .map((v: any) => v.v || v)
+                                    .join('、')
+                                : info.value;
+                              return (
+                                <div key={index}>
+                                  <span className='font-semibold text-gray-700 dark:text-gray-300'>
+                                    导演:{' '}
+                                  </span>
+                                  <span className='text-gray-600 dark:text-gray-400'>
+                                    {directors}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            if (info.key === '制作' && info.value) {
+                              const studios = Array.isArray(info.value)
+                                ? info.value
+                                    .map((v: any) => v.v || v)
+                                    .join('、')
+                                : info.value;
+                              return (
+                                <div key={index}>
+                                  <span className='font-semibold text-gray-700 dark:text-gray-300'>
+                                    制作:{' '}
+                                  </span>
+                                  <span className='text-gray-600 dark:text-gray-400'>
+                                    {studios}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          },
+                        )}
 
                         {/* 播出日期 */}
                         {bangumiDetails.date && (
@@ -4443,17 +4501,16 @@ function PlayPageClient() {
 
                         {/* 标签信息 */}
                         <div className='flex flex-wrap gap-2 mt-3'>
-                          {bangumiDetails.tags &&
-                            bangumiDetails.tags
-                              .slice(0, 4)
-                              .map((tag: any, index: number) => (
-                                <span
-                                  key={index}
-                                  className='bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs'
-                                >
-                                  {tag.name}
-                                </span>
-                              ))}
+                          {bangumiDetails.tags
+                            ?.slice(0, 4)
+                            .map((tag: any, index: number) => (
+                              <span
+                                key={index}
+                                className='bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs'
+                              >
+                                {tag.name}
+                              </span>
+                            ))}
                           {bangumiDetails.total_episodes && (
                             <span className='bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs'>
                               共{bangumiDetails.total_episodes}话
@@ -4553,28 +4610,26 @@ function PlayPageClient() {
 
                         {/* 标签信息 */}
                         <div className='flex flex-wrap gap-2 mt-3'>
-                          {movieDetails.countries &&
-                            movieDetails.countries
-                              .slice(0, 2)
-                              .map((country: string, index: number) => (
-                                <span
-                                  key={index}
-                                  className='bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs'
-                                >
-                                  {country}
-                                </span>
-                              ))}
-                          {movieDetails.languages &&
-                            movieDetails.languages
-                              .slice(0, 2)
-                              .map((language: string, index: number) => (
-                                <span
-                                  key={index}
-                                  className='bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full text-xs'
-                                >
-                                  {language}
-                                </span>
-                              ))}
+                          {movieDetails.countries
+                            ?.slice(0, 2)
+                            .map((country: string, index: number) => (
+                              <span
+                                key={index}
+                                className='bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs'
+                              >
+                                {country}
+                              </span>
+                            ))}
+                          {movieDetails.languages
+                            ?.slice(0, 2)
+                            .map((language: string, index: number) => (
+                              <span
+                                key={index}
+                                className='bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full text-xs'
+                              >
+                                {language}
+                              </span>
+                            ))}
                           {movieDetails.episodes && (
                             <span className='bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs'>
                               共{movieDetails.episodes}集

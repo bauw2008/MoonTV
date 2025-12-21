@@ -6,7 +6,9 @@ import { useEffect } from 'react';
  */
 export function useImagePreload(imageUrls: string[], enabled = true) {
   useEffect(() => {
-    if (!enabled || !imageUrls.length) return;
+    if (!enabled || !imageUrls.length) {
+      return;
+    }
 
     const preloadLinks: HTMLLinkElement[] = [];
 
@@ -14,13 +16,17 @@ export function useImagePreload(imageUrls: string[], enabled = true) {
     const urlsToPreload = imageUrls.slice(0, Math.min(10, imageUrls.length));
 
     urlsToPreload.forEach((url) => {
-      if (!url) return;
+      if (!url) {
+        return;
+      }
 
       // Check if already preloaded
       const existing = document.querySelector(
         `link[rel="preload"][href="${url}"]`,
       );
-      if (existing) return;
+      if (existing) {
+        return;
+      }
 
       const link = document.createElement('link');
       link.rel = 'preload';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -58,7 +57,9 @@ const AlertModal = ({
     }
   }, [isOpen, timer, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const getIcon = () => {
     switch (type) {

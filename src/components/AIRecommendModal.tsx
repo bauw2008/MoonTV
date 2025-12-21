@@ -146,7 +146,9 @@ export default function AIRecommendModal({
 
   // 发送消息
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return;
+    if (!content.trim() || isLoading) {
+      return;
+    }
 
     const userMessage: AIMessage = {
       role: 'user',
@@ -246,7 +248,9 @@ export default function AIRecommendModal({
 
   // 不再需要为消息内容添加点击监听器，因为点击功能已移至右侧卡片
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center'>
@@ -370,7 +374,7 @@ export default function AIRecommendModal({
                       <span className='text-gray-400 dark:text-gray-500'>
                         {message.recommendations.length < 4
                           ? `显示 ${message.recommendations.length} 个推荐`
-                          : `显示前 4 个推荐`}
+                          : '显示前 4 个推荐'}
                       </span>
                     </div>
                     {message.recommendations.map((movie, index) => (

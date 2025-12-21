@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 // 缓存统计接口
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       console.log('🔍 client.keys方法:', typeof storage?.client?.keys);
       console.log('🔍 client.mget方法:', typeof storage?.client?.mget);
 
-      if (storage && storage.client) {
+      if (storage?.client) {
         try {
           console.log('🔍 测试获取所有cache:*键...');
           const allKeys = await storage.withRetry(() =>
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 // 缓存清理接口
 export async function DELETE(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -380,7 +380,9 @@ async function clearExpiredCache(): Promise<number> {
     keys.forEach((key) => {
       try {
         const data = localStorage.getItem(key);
-        if (!data) return;
+        if (!data) {
+          return;
+        }
 
         const parsed = JSON.parse(data);
 
@@ -431,7 +433,9 @@ async function clearAllCache(): Promise<number> {
 
 // 格式化字节大小
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
 
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];

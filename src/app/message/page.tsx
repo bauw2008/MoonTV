@@ -132,7 +132,9 @@ export default function MessageBoard() {
   };
 
   const handlePostComment = async () => {
-    if (!newComment.trim() || !authInfo?.username) return;
+    if (!newComment.trim() || !authInfo?.username) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/message', {
@@ -159,7 +161,9 @@ export default function MessageBoard() {
   };
 
   const handlePostReply = async (commentId: string) => {
-    if (!replyContent.trim() || !authInfo?.username) return;
+    if (!replyContent.trim() || !authInfo?.username) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/message/${commentId}/reply`, {
@@ -184,7 +188,9 @@ export default function MessageBoard() {
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) return;
+    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) {
+      return;
+    }
 
     try {
       setDeletingId(commentId);
@@ -208,7 +214,9 @@ export default function MessageBoard() {
   };
 
   const handleDeleteReply = async (commentId: string, replyId: string) => {
-    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) return;
+    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) {
+      return;
+    }
 
     try {
       setDeletingId(replyId);
@@ -235,7 +243,9 @@ export default function MessageBoard() {
   };
 
   const handleClearAllComments = async () => {
-    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) return;
+    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/message/clear', {
@@ -257,7 +267,9 @@ export default function MessageBoard() {
 
   // 处理置顶/取消置顶
   const handleTogglePin = async (commentId: string) => {
-    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) return;
+    if (!authInfo?.role || !['owner', 'admin'].includes(authInfo.role)) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/message/${commentId}/pin`, {
@@ -283,9 +295,15 @@ export default function MessageBoard() {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+    if (diff < 60000) {
+      return '刚刚';
+    }
+    if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)}分钟前`;
+    }
+    if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)}小时前`;
+    }
     return date.toLocaleDateString('zh-CN');
   };
 

@@ -208,7 +208,9 @@ export function extractMovieTitles(content: string): string[] {
         }
       }
       // 防止无限循环
-      if (!pattern.global) break;
+      if (!pattern.global) {
+        break;
+      }
     }
   });
 
@@ -345,7 +347,9 @@ export function addMovieTitleClickListeners(
  */
 export function generateChatSummary(messages: AIMessage[]): string {
   const userMessages = messages.filter((msg) => msg.role === 'user');
-  if (userMessages.length === 0) return '新对话';
+  if (userMessages.length === 0) {
+    return '新对话';
+  }
 
   const firstUserMessage = userMessages[0].content;
   if (firstUserMessage.length <= 20) {

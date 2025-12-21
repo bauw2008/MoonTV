@@ -42,7 +42,9 @@ export function getCachedSearchPage(
 ): CachedPageEntry | null {
   const key = makeSearchCacheKey(sourceKey, query, page);
   const entry = SEARCH_CACHE.get(key);
-  if (!entry) return null;
+  if (!entry) {
+    return null;
+  }
 
   // 检查是否过期
   if (entry.expiresAt <= Date.now()) {
@@ -139,7 +141,9 @@ function performCacheCleanup(): {
  * 启动自动清理定时器
  */
 function startAutoCleanup(): void {
-  if (cleanupTimer) return; // 避免重复启动
+  if (cleanupTimer) {
+    return;
+  } // 避免重复启动
 
   cleanupTimer = setInterval(() => {
     performCacheCleanup();

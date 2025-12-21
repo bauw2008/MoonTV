@@ -102,7 +102,9 @@ export default function CacheManager() {
 
     try {
       const response = await fetch('/api/admin/cache');
-      if (!response.ok) throw new Error('获取缓存统计失败');
+      if (!response.ok) {
+        throw new Error('获取缓存统计失败');
+      }
 
       const result = await response.json();
       if (result.success) {
@@ -138,7 +140,9 @@ export default function CacheManager() {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('清理缓存失败');
+      if (!response.ok) {
+        throw new Error('清理缓存失败');
+      }
 
       const result = await response.json();
       if (result.success) {

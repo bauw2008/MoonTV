@@ -27,7 +27,9 @@ const YellowFilterConfig = ({
   };
 
   const handleAddWord = () => {
-    if (!newWord.trim()) return;
+    if (!newWord.trim()) {
+      return;
+    }
 
     const trimmedWord = newWord.trim();
     if (yellowWords.includes(trimmedWord)) {
@@ -103,7 +105,9 @@ const YellowFilterConfig = ({
 
   // 切换18+过滤器开关
   const handleToggleYellowFilter = async () => {
-    if (!config) return;
+    if (!config) {
+      return;
+    }
 
     setIsLoading(true);
     try {

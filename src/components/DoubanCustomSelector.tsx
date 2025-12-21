@@ -48,8 +48,12 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     const types = Array.from(new Set(customCategories.map((cat) => cat.type)));
     // 确保电影类型排在前面
     const sortedTypes = types.sort((a, b) => {
-      if (a === 'movie' && b !== 'movie') return -1;
-      if (a !== 'movie' && b === 'movie') return 1;
+      if (a === 'movie' && b !== 'movie') {
+        return -1;
+      }
+      if (a !== 'movie' && b === 'movie') {
+        return 1;
+      }
       return 0;
     });
     return sortedTypes.map((type) => ({
@@ -60,7 +64,9 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
 
   // 根据选中的一级选项生成二级选择器选项
   const secondaryOptions = React.useMemo(() => {
-    if (!primarySelection) return [];
+    if (!primarySelection) {
+      return [];
+    }
     return customCategories
       .filter((cat) => cat.type === primarySelection)
       .map((cat) => ({

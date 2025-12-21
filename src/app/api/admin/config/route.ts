@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const username = authInfo.username;
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       result.Role = 'owner';
     } else {
       const user = config.UserConfig.Users.find((u) => u.username === username);
-      if (user && user.role === 'admin' && !user.banned) {
+      if (user?.role === 'admin' && !user.banned) {
         result.Role = 'admin';
       } else {
         return NextResponse.json(
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const username = authInfo.username;

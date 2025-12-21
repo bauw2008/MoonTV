@@ -205,13 +205,19 @@ export async function GET(request: NextRequest) {
     // 根据用户区域排序测试源
     const sortedSources = VERIFIED_JAR_SOURCES.sort((a, b) => {
       if (userRegion === 'domestic') {
-        if (a.region === 'domestic' && b.region !== 'domestic') return -1;
-        if (a.region !== 'domestic' && b.region === 'domestic') return 1;
-      } else {
-        if (a.region === 'international' && b.region !== 'international')
+        if (a.region === 'domestic' && b.region !== 'domestic') {
           return -1;
-        if (a.region !== 'international' && b.region === 'international')
+        }
+        if (a.region !== 'domestic' && b.region === 'domestic') {
           return 1;
+        }
+      } else {
+        if (a.region === 'international' && b.region !== 'international') {
+          return -1;
+        }
+        if (a.region !== 'international' && b.region === 'international') {
+          return 1;
+        }
       }
       return a.priority - b.priority;
     });

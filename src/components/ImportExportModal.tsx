@@ -44,7 +44,9 @@ export default function ImportExportModal({
     total: 0,
   });
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const handleFileSelect = async (file: File) => {
     if (!file.name.endsWith('.json')) {
@@ -439,6 +441,8 @@ export default function ImportExportModal({
   );
 
   // 使用 createPortal 渲染到 body，确保覆盖整个页面
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   return createPortal(modalContent, document.body);
 }

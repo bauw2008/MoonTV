@@ -78,7 +78,7 @@ export async function GET(request: Request) {
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
       },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore - Node.js specific option
       agent: typeof window === 'undefined' ? agent : undefined,
     });

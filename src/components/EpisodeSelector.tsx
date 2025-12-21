@@ -195,8 +195,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         !optimizationEnabled || // 若关闭测速则直接退出
         activeTab !== 'sources' ||
         availableSources.length === 0
-      )
+      ) {
         return;
+      }
 
       // 筛选出尚未测速的播放源
       const pendingSources = availableSources.filter((source) => {
@@ -204,7 +205,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         return !attemptedSourcesRef.current.has(sourceKey);
       });
 
-      if (pendingSources.length === 0) return;
+      if (pendingSources.length === 0) {
+        return;
+      }
 
       const batchSize = Math.ceil(pendingSources.length / 2);
 
@@ -566,8 +569,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     const bIsCurrent =
                       b.source?.toString() === currentSource?.toString() &&
                       b.id?.toString() === currentId?.toString();
-                    if (aIsCurrent && !bIsCurrent) return -1;
-                    if (!aIsCurrent && bIsCurrent) return 1;
+                    if (aIsCurrent && !bIsCurrent) {
+                      return -1;
+                    }
+                    if (!aIsCurrent && bIsCurrent) {
+                      return 1;
+                    }
                     return 0;
                   })
                   .map((source, index) => {

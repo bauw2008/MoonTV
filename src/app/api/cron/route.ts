@@ -450,7 +450,7 @@ async function cleanupInactiveUsers() {
             totalPlays: number;
             [key: string]: any;
           };
-          console.log(`  📈 用户统计结果:`, userStats);
+          console.log('  📈 用户统计结果:', userStats);
         } catch (err) {
           console.error(`  ❌ 获取用户统计失败: ${err}, 跳过该用户`);
           continue;
@@ -613,10 +613,14 @@ async function optimizeActiveUserLevels() {
       try {
         // 检查用户是否存在
         const userExists = await db.checkUserExist(user);
-        if (!userExists) continue;
+        if (!userExists) {
+          continue;
+        }
 
         const userStats = await db.getUserPlayStat(user);
-        if (!userStats || !userStats.loginCount) continue;
+        if (!userStats?.loginCount) {
+          continue;
+        }
 
         // 计算用户等级（所有用户都有等级）
         const userLevel = calculateUserLevel(userStats.loginCount);

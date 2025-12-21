@@ -2,7 +2,9 @@ import { db } from './db';
 
 // 格式化字节大小
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
 
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -214,7 +216,9 @@ export class DatabaseCacheManager {
       allCacheKeys.forEach((fullKey: string, idx: number) => {
         const key = fullKey.replace('cache:', ''); // 移除前缀
         const data = values[idx];
-        if (!data) return;
+        if (!data) {
+          return;
+        }
 
         // 计算数据大小 - 智能处理不同数据类型
         let size = 0;
@@ -327,7 +331,9 @@ export class DatabaseCacheManager {
 
       keys.forEach((key) => {
         const data = localStorage.getItem(key);
-        if (!data) return;
+        if (!data) {
+          return;
+        }
 
         const size = data.length;
 

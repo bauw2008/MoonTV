@@ -143,10 +143,14 @@ async function processSelectedResult(
       },
     });
 
-    if (!detailResponse.ok) return [];
+    if (!detailResponse.ok) {
+      return [];
+    }
 
     const detailData: any = await detailResponse.json();
-    if (!detailData.list || detailData.list.length === 0) return [];
+    if (!detailData.list || detailData.list.length === 0) {
+      return [];
+    }
 
     const videoInfo: any = detailData.list[0];
     console.log(`🎭 视频详情: "${videoInfo.vod_name}" (${videoInfo.vod_year})`);
@@ -257,7 +261,9 @@ async function extractPlatformUrls(
   doubanId: string,
   episode?: string | null,
 ): Promise<PlatformUrl[]> {
-  if (!doubanId) return [];
+  if (!doubanId) {
+    return [];
+  }
 
   // 添加超时控制 - 在try块外定义以便catch块使用
   const controller = new AbortController();
@@ -560,7 +566,9 @@ async function fetchDanmuFromXMLAPI(videoUrl: string): Promise<DanmuItem[]> {
           const pAttr = match[1];
           const text = match[2];
 
-          if (!pAttr || !text) continue;
+          if (!pAttr || !text) {
+            continue;
+          }
 
           // 🔥 激进预过滤: 更严格的质量控制
           const trimmedText = text.trim();
@@ -581,14 +589,18 @@ async function fetchDanmuFromXMLAPI(videoUrl: string): Promise<DanmuItem[]> {
 
           // XML格式解析
           const params = pAttr.split(',');
-          if (params.length < 4) continue;
+          if (params.length < 4) {
+            continue;
+          }
 
           const time = parseFloat(params[0]) || 0;
           const mode = parseInt(params[1]) || 0;
           const colorInt = parseInt(params[3]) || 16777215;
 
           // 时间范围和有效性检查
-          if (time < 0 || time > 86400 || !Number.isFinite(time)) continue;
+          if (time < 0 || time > 86400 || !Number.isFinite(time)) {
+            continue;
+          }
 
           // 🎯 智能分段: 按时间分段存储，便于按需加载
           const segmentIndex = Math.floor(time / SEGMENT_DURATION);
@@ -801,7 +813,9 @@ async function fetchDanmuFromAPI(videoUrl: string): Promise<DanmuItem[]> {
       return [];
     }
 
-    if (!data.danmuku || !Array.isArray(data.danmuku)) return [];
+    if (!data.danmuku || !Array.isArray(data.danmuku)) {
+      return [];
+    }
 
     // 转换为Artplayer格式
     // API返回格式: [时间, 位置, 颜色, "", 文本, "", "", "字号"]
@@ -816,9 +830,13 @@ async function fetchDanmuFromAPI(videoUrl: string): Promise<DanmuItem[]> {
 
         // 转换位置: top=1顶部, bottom=2底部, right=0滚动
         let mode = 0;
-        if (item[1] === 'top') mode = 1;
-        else if (item[1] === 'bottom') mode = 2;
-        else mode = 0; // right 或其他都是滚动
+        if (item[1] === 'top') {
+          mode = 1;
+        } else if (item[1] === 'bottom') {
+          mode = 2;
+        } else {
+          mode = 0;
+        } // right 或其他都是滚动
 
         return {
           text: text,

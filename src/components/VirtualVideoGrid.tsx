@@ -74,7 +74,9 @@ export const VirtualVideoGrid = React.forwardRef<
       );
 
       itemsToPreload.forEach((item) => {
-        if (item.poster) urls.push(item.poster);
+        if (item.poster) {
+          urls.push(item.poster);
+        }
       });
 
       return urls;
@@ -115,7 +117,9 @@ export const VirtualVideoGrid = React.forwardRef<
     const lastLoadMoreCallRef = useRef<number>(0);
 
     const loadMoreVirtualItems = useCallback(() => {
-      if (isVirtualLoadingMore) return;
+      if (isVirtualLoadingMore) {
+        return;
+      }
 
       setIsVirtualLoadingMore(true);
 

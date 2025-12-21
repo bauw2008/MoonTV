@@ -14,7 +14,6 @@ import { useEffect, useState } from 'react';
 
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
 
-import BackToTopButton from '@/components/BackToTopButton';
 import PageLayout from '@/components/PageLayout';
 
 export default function ReleaseCalendarPage() {
@@ -60,54 +59,11 @@ export default function ReleaseCalendarPage() {
     });
   };
 
-  // 清理过期缓存
-  const cleanExpiredCache = () => {
-    const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2小时
-    const now = Date.now();
-
-    // 检查release calendar缓存
-    const cacheTimeKey = 'release_calendar_all_data_time';
-    const cachedTime = localStorage.getItem(cacheTimeKey);
-
-    if (cachedTime) {
-      const age = now - parseInt(cachedTime);
-      if (age >= CACHE_DURATION) {
-        localStorage.removeItem('release_calendar_all_data');
-        localStorage.removeItem(cacheTimeKey);
-        console.log('已清理过期的发布日历缓存');
-      }
-    }
-
-    // 清理其他可能过期的缓存项
-    const keysToCheck = [
-      'upcoming_releases_cache',
-      'upcoming_releases_cache_time',
-    ];
-
-    keysToCheck.forEach((key) => {
-      if (key.endsWith('_time')) {
-        const timeStr = localStorage.getItem(key);
-        if (timeStr) {
-          const age = now - parseInt(timeStr);
-          if (age >= CACHE_DURATION) {
-            const dataKey = key.replace('_time', '');
-            localStorage.removeItem(dataKey);
-            localStorage.removeItem(key);
-            console.log(`已清理过期缓存: ${dataKey}`);
-          }
-        }
-      }
-    });
-  };
-
-  // 获取数据（简化版，移除localStorage缓存，依赖API数据库缓存）
+  // 获取数据（依赖API数据库缓存）
   const fetchData = async (reset = false) => {
     try {
       setLoading(true);
       setError(null);
-
-      // 清理过期的localStorage缓存（兼容性清理）
-      cleanExpiredCache();
 
       // 🌐 直接从API获取数据（API有数据库缓存，全局共享，24小时有效）
       console.log('🌐 正在从API获取发布日历数据...');
@@ -206,16 +162,11 @@ export default function ReleaseCalendarPage() {
     fetchData(false);
   };
 
-  // 处理刷新按钮点击（简化版，清除数据库缓存并刷新）
+  // 处理刷新按钮点击（清除数据库缓存并刷新）
   const handleRefreshClick = async () => {
     console.log('📅 刷新上映日程数据...');
 
     try {
-      // 清除遗留的localStorage缓存（兼容性清理）
-      localStorage.removeItem('release_calendar_all_data');
-      localStorage.removeItem('release_calendar_all_data_time');
-      console.log('✅ 已清除遗留的localStorage缓存');
-
       // 🔄 强制刷新（API会清除数据库缓存并重新获取）
       await fetchData(true);
       console.log('🎉 上映日程数据刷新成功！');
@@ -225,32 +176,27 @@ export default function ReleaseCalendarPage() {
   };
 
   // 重置过滤器
+
   const resetFilters = () => {
     const resetFiltersState = {
       type: '' as 'movie' | 'tv' | '',
+
       region: '',
+
       genre: '',
+
       dateFrom: '',
+
       dateTo: '',
+
       search: '',
     };
 
     setFilters(resetFiltersState);
+
     setCurrentPage(1);
 
-    // 如果有缓存数据，使用重置后的过滤条件重新应用过滤
-    const cachedData = localStorage.getItem('release_calendar_all_data');
-    if (cachedData) {
-      const allData = JSON.parse(cachedData);
-      // 直接使用重置后的过滤条件，而不是依赖state（state更新是异步的）
-      const filteredData = applyClientSideFiltersWithParams(
-        allData,
-        resetFiltersState,
-      );
-      setData(filteredData);
-    } else {
-      fetchData(false);
-    }
+    fetchData(false);
   };
 
   // 前端分页逻辑
@@ -263,7 +209,9 @@ export default function ReleaseCalendarPage() {
   // 客户端搜索过滤
   const filteredItems =
     data?.items.filter((item) => {
-      if (!filters.search) return true;
+      if (!filters.search) {
+        return true;
+      }
       const searchLower = filters.search.toLowerCase();
       return (
         item.title.toLowerCase().includes(searchLower) ||
@@ -299,8 +247,8 @@ export default function ReleaseCalendarPage() {
 
   return (
     <PageLayout activePath='/release-calendar'>
-      <div className='min-h-screen bg-transparent p-6'>
-        <div className='max-w-7xl mx-auto'>
+      <div className='min-h-screen bg-transparent px-4 py-6 md:px-6'>
+        <div className='max-w-6xl mx-auto'>
           {/* 页面标题 */}
           <div className='mb-8'>
             <div className='flex items-center gap-3 mb-4'>
@@ -315,7 +263,7 @@ export default function ReleaseCalendarPage() {
           </div>
 
           {/* 过滤器区域 */}
-          <div className='bg-transparent dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6'>
+          <div className='bg-gradient-to-br from-blue-50/90 to-indigo-100/80 dark:from-blue-900/50 dark:to-indigo-800/40 rounded-lg shadow-lg p-6 mb-6 border border-blue-200/50 dark:border-blue-700/50 backdrop-blur-sm'>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4'>
               {/* 类型过滤 */}
               <div>
@@ -528,7 +476,7 @@ export default function ReleaseCalendarPage() {
           {data && (
             <>
               {/* 统计信息 */}
-              <div className='bg-transparent dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6'>
+              <div className='bg-gradient-to-br from-green-50/90 to-emerald-100/80 dark:from-green-900/40 dark:to-emerald-800/30 rounded-lg shadow-lg p-4 mb-6 border border-green-200/50 dark:border-green-700/50 backdrop-blur-sm'>
                 <div className='flex items-center justify-between'>
                   <div className='text-sm text-gray-600 dark:text-gray-400'>
                     共找到{' '}
@@ -574,7 +522,7 @@ export default function ReleaseCalendarPage() {
                     return (
                       <div
                         key={item.id}
-                        className='group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer'
+                        className='group relative bg-gradient-to-br from-white/95 to-blue-50/90 dark:from-gray-800/90 dark:to-blue-900/40 rounded-xl shadow-lg border border-gray-200/70 dark:border-gray-700/50 overflow-hidden hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 cursor-pointer backdrop-blur-sm'
                       >
                         {/* 状态指示器 */}
                         <div className='absolute top-3 right-3 z-10'>
@@ -686,7 +634,7 @@ export default function ReleaseCalendarPage() {
               {viewMode === 'calendar' && (
                 <div className='space-y-6'>
                   {/* 日历月份导航 */}
-                  <div className='bg-transparent dark:bg-gray-800 rounded-lg shadow-sm p-4'>
+                  <div className='bg-gradient-to-br from-purple-50/90 to-pink-100/80 dark:from-purple-900/40 dark:to-pink-800/30 rounded-lg shadow-lg p-4 border border-purple-200/50 dark:border-purple-700/50 backdrop-blur-sm'>
                     <div className='flex items-center justify-between mb-4'>
                       <button
                         onClick={() => {
@@ -793,13 +741,13 @@ export default function ReleaseCalendarPage() {
                                     expandedDates.has(dateStr)
                                       ? 'min-h-[150px]'
                                       : 'min-h-[100px]'
-                                  } p-2 border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                                  } p-2 border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 hover:from-gray-50/90 hover:to-white/80 dark:hover:from-gray-700/50 dark:hover:to-gray-800/40 backdrop-blur-sm ${
                                     !isCurrentMonth
-                                      ? 'bg-gray-50 dark:bg-gray-800/50 text-gray-400'
-                                      : 'bg-transparent dark:bg-gray-800'
+                                      ? 'bg-gradient-to-br from-gray-100/90 to-gray-50/80 dark:from-gray-800/60 dark:to-gray-900/50 text-gray-400'
+                                      : 'bg-gradient-to-br from-white/90 to-blue-50/80 dark:from-gray-800/80 dark:to-blue-900/40'
                                   } ${
                                     isToday
-                                      ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                      ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-100/95 to-cyan-100/90 dark:from-blue-900/60 dark:to-cyan-900/50'
                                       : ''
                                   }`}
                                 >
@@ -1036,7 +984,7 @@ export default function ReleaseCalendarPage() {
                             {uniqueTodayItems.map((item) => (
                               <div
                                 key={item.id}
-                                className='bg-transparent dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-red-100 dark:border-red-800/50'
+                                className='bg-gradient-to-br from-red-50/95 to-orange-50/90 dark:from-red-900/40 dark:to-orange-900/30 rounded-lg p-4 shadow-lg border border-red-200/50 dark:border-red-700/50 backdrop-blur-sm'
                               >
                                 <div className='flex items-center gap-2 mb-2'>
                                   {item.type === 'movie' ? (
@@ -1074,7 +1022,9 @@ export default function ReleaseCalendarPage() {
                       (data?.items || []).reduce(
                         (acc, item) => {
                           const date = item.releaseDate;
-                          if (!acc[date]) acc[date] = [];
+                          if (!acc[date]) {
+                            acc[date] = [];
+                          }
                           acc[date].push(item);
                           return acc;
                         },
@@ -1127,12 +1077,12 @@ export default function ReleaseCalendarPage() {
 
                             {/* 内容卡片 */}
                             <div
-                              className={`bg-transparent dark:bg-gray-800 rounded-xl shadow-lg border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                              className={`bg-gradient-to-br from-white/95 to-gray-50/90 dark:from-gray-800/90 dark:to-gray-900/80 rounded-xl shadow-lg border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 backdrop-blur-sm ${
                                 isToday
-                                  ? 'border-red-500 ring-2 ring-red-500/20'
+                                  ? 'border-red-500 ring-2 ring-red-500/20 bg-gradient-to-br from-red-50/95 to-orange-50/90 dark:from-red-900/40 dark:to-orange-900/30'
                                   : isPast
-                                    ? 'border-gray-300 dark:border-gray-600 opacity-75'
-                                    : 'border-blue-200 dark:border-blue-800'
+                                    ? 'border-gray-300 dark:border-gray-600 opacity-75 bg-gradient-to-br from-gray-50/95 to-gray-100/90 dark:from-gray-700/90 dark:to-gray-800/80'
+                                    : 'border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/95 to-purple-50/90 dark:from-blue-900/40 dark:to-purple-900/30'
                               }`}
                             >
                               {/* 日期头部 */}
@@ -1203,10 +1153,10 @@ export default function ReleaseCalendarPage() {
                                   {uniqueItems.map((item, itemIndex) => (
                                     <div
                                       key={`${item.id}-${itemIndex}`}
-                                      className={`group relative bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer ${
+                                      className={`group relative bg-gradient-to-br from-white/90 to-gray-50/80 dark:from-gray-700/80 dark:to-gray-800/70 rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer border border-gray-200/50 dark:border-gray-600/50 backdrop-blur-sm ${
                                         isToday
-                                          ? 'hover:bg-red-50 dark:hover:bg-red-900/10'
-                                          : 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
+                                          ? 'hover:from-red-50/90 hover:to-orange-50/80 dark:hover:from-red-900/20 dark:hover:to-orange-900/10 border-red-200/50 dark:border-red-700/50'
+                                          : 'hover:from-blue-50/90 hover:to-purple-50/80 dark:hover:from-blue-900/20 dark:hover:to-purple-900/10 border-blue-200/50 dark:border-blue-700/50'
                                       }`}
                                     >
                                       {/* 类型图标 */}
@@ -1331,11 +1281,6 @@ export default function ReleaseCalendarPage() {
               )}
             </>
           )}
-
-          {/* 侧边工具栏 */}
-          <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col-reverse gap-3'>
-            <BackToTopButton />
-          </div>
         </div>
       </div>
     </PageLayout>

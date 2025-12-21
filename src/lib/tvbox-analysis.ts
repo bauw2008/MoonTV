@@ -87,7 +87,7 @@ export async function getVideosByCategory(
 
     const data = await response.json();
 
-    if (!data || !data.list || !Array.isArray(data.list)) {
+    if (!data?.list || !Array.isArray(data.list)) {
       return { results: [], pageCount: 1 };
     }
 

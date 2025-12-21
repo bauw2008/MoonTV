@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -97,8 +97,7 @@ export async function GET(request: NextRequest) {
             // 检查结果是否有效
             let status: 'valid' | 'no_results' | 'invalid';
             if (
-              data &&
-              data.list &&
+              data?.list &&
               Array.isArray(data.list) &&
               data.list.length > 0
             ) {

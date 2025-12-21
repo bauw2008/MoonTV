@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable no-console */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime } from '@/lib/config';
@@ -76,17 +76,24 @@ export async function GET(request: NextRequest) {
 
     // 筛选逻辑
     const filteredResults = allResults.filter((result) => {
-      if (type !== 'all' && !result.types.includes(type)) return false;
-      if (region !== 'all' && result.region !== region) return false;
-      if (year !== 'all' && result.year && !matchYear(result.year, year))
+      if (type !== 'all' && !result.types.includes(type)) {
         return false;
+      }
+      if (region !== 'all' && result.region !== region) {
+        return false;
+      }
+      if (year !== 'all' && result.year && !matchYear(result.year, year)) {
+        return false;
+      }
       return true;
     });
 
     // 去重
     const seenIds = new Set<string>();
     const uniqueResults = filteredResults.filter((result) => {
-      if (seenIds.has(result.id)) return false;
+      if (seenIds.has(result.id)) {
+        return false;
+      }
       seenIds.add(result.id);
       return true;
     });
@@ -261,7 +268,9 @@ function parseShortDramaHtml(html: string): ShortDramaItem[] {
 // 简化 matchYear 函数
 function matchYear(resultYear: string, filterYear: string): boolean {
   const year = parseInt(resultYear);
-  if (!year) return false;
+  if (!year) {
+    return false;
+  }
 
   const filterYearNum = parseInt(filterYear);
   if (!isNaN(filterYearNum)) {

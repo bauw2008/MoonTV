@@ -452,11 +452,21 @@ body.dynamic-background-enabled.ultra-strong-animation::before {
 }
 
 /* 预览元素动态效果 */
-.subtle-gradient-animation { animation: subtleColorShift 15s ease infinite !important; }
-.strong-gradient-animation { animation: strongColorShift 12s ease infinite !important; }
-.breathing-animation { animation: breathingColorShift 10s ease-in-out infinite !important; }
-.strong-breathing-animation { animation: strongBreathingColorShift 6s ease-in-out infinite !important; }
-.ultra-strong-animation { animation: ultraStrongShift 4s ease infinite !important; }
+.subtle-gradient-animation {
+  animation: subtleColorShift 15s ease infinite !important;
+}
+.strong-gradient-animation {
+  animation: strongColorShift 12s ease infinite !important;
+}
+.breathing-animation {
+  animation: breathingColorShift 10s ease-in-out infinite !important;
+}
+.strong-breathing-animation {
+  animation: strongBreathingColorShift 6s ease-in-out infinite !important;
+}
+.ultra-strong-animation {
+  animation: ultraStrongShift 4s ease infinite !important;
+}
 
 /* 确保图片和视频不受滤镜动画影响 */
 img,
@@ -626,7 +636,12 @@ body {
 .glass-transparent-mode .glass-button,
 .glass-transparent-mode .modern-card,
 .glass-transparent-mode .modern-card-dark {
-  background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.08)) !important;
+  background: rgba(
+    255,
+    255,
+    255,
+    calc(var(--ui-opacity) / 100 * 0.08)
+  ) !important;
   border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.18)) !important;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, calc(var(--ui-opacity) / 100 * 0.06)),
@@ -655,7 +670,12 @@ body {
 }
 
 .glass-transparent-mode .glass-ultra {
-  background: rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.05)) !important;
+  background: rgba(
+    255,
+    255,
+    255,
+    calc(var(--ui-opacity) / 100 * 0.05)
+  ) !important;
   border: 1px solid rgba(255, 255, 255, calc(var(--ui-opacity) / 100 * 0.12)) !important;
 }
 
@@ -693,13 +713,21 @@ body {
 
 /* View Transitions API 动画 */
 @keyframes slide-from-top {
-  from { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
-  to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
 }
 
 @keyframes slide-from-bottom {
-  from { clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%); }
-  to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  from {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
 }
 
 ::view-transition-old(root),

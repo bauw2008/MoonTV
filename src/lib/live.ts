@@ -1,5 +1,3 @@
-/* eslint-disable no-constant-condition */
-
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -131,7 +129,9 @@ async function parseEpg(
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -142,7 +142,9 @@ async function parseEpg(
       // 处理完整的行
       for (const line of lines) {
         const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
+        if (!trimmedLine) {
+          continue;
+        }
 
         // 解析 <programme> 标签
         if (trimmedLine.startsWith('<programme')) {

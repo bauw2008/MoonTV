@@ -50,7 +50,9 @@ export interface AggregatedChannel {
  * @returns 标准化后的名称
  */
 export function basicNormalize(name: string): string {
-  if (!name) return '';
+  if (!name) {
+    return '';
+  }
 
   return name
     .toLowerCase()
@@ -76,13 +78,19 @@ export function basicNormalize(name: string): string {
  * @returns 相似度分数 (0-1)
  */
 export function calculateSimilarity(str1: string, str2: string): number {
-  if (str1 === str2) return 1;
-  if (!str1 || !str2) return 0;
+  if (str1 === str2) {
+    return 1;
+  }
+  if (!str1 || !str2) {
+    return 0;
+  }
 
   const longer = str1.length > str2.length ? str1 : str2;
   const shorter = str1.length > str2.length ? str2 : str1;
 
-  if (longer.length === 0) return 1;
+  if (longer.length === 0) {
+    return 1;
+  }
 
   const editDistance = getEditDistance(longer, shorter);
   return (longer.length - editDistance) / longer.length;
@@ -133,7 +141,9 @@ export function isSameChannel(name1: string, name2: string): boolean {
   const normalized2 = basicNormalize(name2);
 
   // 完全相同
-  if (normalized1 === normalized2) return true;
+  if (normalized1 === normalized2) {
+    return true;
+  }
 
   // 一个包含另一个
   if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
@@ -157,11 +167,15 @@ export function aggregateChannels(
   const processedChannels = new Set<string>();
 
   channelsWithSource.forEach((channel) => {
-    if (processedChannels.has(channel.id)) return;
+    if (processedChannels.has(channel.id)) {
+      return;
+    }
 
     // 查找所有相似的频道
     const similarChannels = channelsWithSource.filter((otherChannel) => {
-      if (processedChannels.has(otherChannel.id)) return false;
+      if (processedChannels.has(otherChannel.id)) {
+        return false;
+      }
       return isSameChannel(channel.name, otherChannel.name);
     });
 
@@ -265,7 +279,9 @@ export function searchChannels(
         );
       });
 
-      if (sourceMatch) return true;
+      if (sourceMatch) {
+        return true;
+      }
 
       // 5. 相似度匹配（低阈值，用于模糊搜索）
       const similarity = calculateSimilarity(
@@ -279,8 +295,12 @@ export function searchChannels(
       const aExactMatch = a.displayName.toLowerCase().includes(query);
       const bExactMatch = b.displayName.toLowerCase().includes(query);
 
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
+      if (aExactMatch && !bExactMatch) {
+        return -1;
+      }
+      if (!aExactMatch && bExactMatch) {
+        return 1;
+      }
 
       // 都是精确匹配或都不是，按源数量和名称排序
       if (a.sources.length !== b.sources.length) {

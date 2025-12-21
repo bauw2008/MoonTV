@@ -7,7 +7,9 @@ import YouTubeVideoCard from './YouTubeVideoCard';
 
 // YouTube URL解析工具函数
 const extractVideoId = (url: string): string | null => {
-  if (!url || typeof url !== 'string') return null;
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
 
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
@@ -32,7 +34,9 @@ const extractVideoId = (url: string): string | null => {
 
 // 验证YouTube URL格式
 const isValidYouTubeUrl = (url: string): boolean => {
-  if (!url) return false;
+  if (!url) {
+    return false;
+  }
   const videoId = extractVideoId(url);
   return videoId !== null;
 };
@@ -91,7 +95,9 @@ const DirectYouTubePlayer = ({ className = '' }: DirectYouTubePlayerProps) => {
   // 处理URL提交
   const handleUrlSubmit = async () => {
     const trimmedUrl = url.trim();
-    if (!trimmedUrl) return;
+    if (!trimmedUrl) {
+      return;
+    }
 
     const videoId = extractVideoId(trimmedUrl);
     if (!videoId) {

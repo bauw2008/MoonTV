@@ -95,8 +95,12 @@ export async function GET(request: NextRequest) {
     // 按置顶状态和时间排序
     const sortedComments = comments.sort((a, b) => {
       // 首先按置顶状态排序，置顶的在前
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
+      if (a.isPinned && !b.isPinned) {
+        return -1;
+      }
+      if (!a.isPinned && b.isPinned) {
+        return 1;
+      }
       // 然后按时间倒序排序
       return b.timestamp - a.timestamp;
     });

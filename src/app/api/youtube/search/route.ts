@@ -14,7 +14,9 @@ const getContentTypeQuery = (
   originalQuery: string,
   contentType: string,
 ): string => {
-  if (contentType === 'all') return originalQuery;
+  if (contentType === 'all') {
+    return originalQuery;
+  }
 
   const typeKeywords = {
     music: ['music', 'song', 'audio', 'MV', 'cover', 'live'],
@@ -117,7 +119,7 @@ const mockSearchResults = [
 
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -291,8 +293,8 @@ export async function GET(request: NextRequest) {
       `${YOUTUBE_API_BASE}/search?` +
       `key=${youtubeConfig.apiKey}&` +
       `q=${encodeURIComponent(enhancedQuery)}&` +
-      `part=snippet&` +
-      `type=video&` +
+      'part=snippet&' +
+      'type=video&' +
       `maxResults=${maxResults}&` +
       `order=${order}`;
 

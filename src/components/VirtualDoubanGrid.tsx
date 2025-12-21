@@ -99,7 +99,9 @@ export const VirtualDoubanGrid = React.forwardRef<
       );
 
       itemsToPreload.forEach((item) => {
-        if (item.poster) urls.push(item.poster);
+        if (item.poster) {
+          urls.push(item.poster);
+        }
       });
 
       return urls;
@@ -150,7 +152,9 @@ export const VirtualDoubanGrid = React.forwardRef<
 
     // 加载更多项目（虚拟层面）
     const loadMoreVirtualItems = useCallback(() => {
-      if (isVirtualLoadingMore) return;
+      if (isVirtualLoadingMore) {
+        return;
+      }
 
       setIsVirtualLoadingMore(true);
 

@@ -58,12 +58,7 @@ async function searchWithCache(
     }
 
     const data = await response.json();
-    if (
-      !data ||
-      !data.list ||
-      !Array.isArray(data.list) ||
-      data.list.length === 0
-    ) {
+    if (!data?.list || !Array.isArray(data.list) || data.list.length === 0) {
       // 空结果不做负缓存要求，这里不写入缓存
       return { results: [] };
     }
@@ -565,12 +560,7 @@ export async function getDetailFromApi(
 
   const data = await response.json();
 
-  if (
-    !data ||
-    !data.list ||
-    !Array.isArray(data.list) ||
-    data.list.length === 0
-  ) {
+  if (!data?.list || !Array.isArray(data.list) || data.list.length === 0) {
     throw new Error('获取到的详情内容无效');
   }
 

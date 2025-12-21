@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // 获取认证信息
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -75,11 +75,21 @@ export function generateDeviceInfoString(deviceInfo: DeviceInfo): string {
  * 从User-Agent中提取浏览器信息
  */
 function getBrowserInfo(userAgent: string): string {
-  if (userAgent.includes('Chrome')) return 'Chrome';
-  if (userAgent.includes('Firefox')) return 'Firefox';
-  if (userAgent.includes('Safari')) return 'Safari';
-  if (userAgent.includes('Edge')) return 'Edge';
-  if (userAgent.includes('Opera')) return 'Opera';
+  if (userAgent.includes('Chrome')) {
+    return 'Chrome';
+  }
+  if (userAgent.includes('Firefox')) {
+    return 'Firefox';
+  }
+  if (userAgent.includes('Safari')) {
+    return 'Safari';
+  }
+  if (userAgent.includes('Edge')) {
+    return 'Edge';
+  }
+  if (userAgent.includes('Opera')) {
+    return 'Opera';
+  }
   return 'Unknown Browser';
 }
 
@@ -87,11 +97,21 @@ function getBrowserInfo(userAgent: string): string {
  * 从User-Agent中提取操作系统信息
  */
 function getOSInfo(userAgent: string): string {
-  if (userAgent.includes('Windows')) return 'Windows';
-  if (userAgent.includes('Mac')) return 'macOS';
-  if (userAgent.includes('Linux')) return 'Linux';
-  if (userAgent.includes('Android')) return 'Android';
-  if (userAgent.includes('iOS')) return 'iOS';
+  if (userAgent.includes('Windows')) {
+    return 'Windows';
+  }
+  if (userAgent.includes('Mac')) {
+    return 'macOS';
+  }
+  if (userAgent.includes('Linux')) {
+    return 'Linux';
+  }
+  if (userAgent.includes('Android')) {
+    return 'Android';
+  }
+  if (userAgent.includes('iOS')) {
+    return 'iOS';
+  }
   return 'Unknown OS';
 }
 

@@ -578,7 +578,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   );
 
   // 使用 Portal 渲染到 document.body
-  if (!mounted || !isOpen) return null;
+  if (!mounted || !isOpen) {
+    return null;
+  }
 
   return createPortal(versionPanelContent, document.body);
 };

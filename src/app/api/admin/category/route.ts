@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const username = authInfo.username;
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       const userEntry = adminConfig.UserConfig.Users.find(
         (u) => u.username === username,
       );
-      if (!userEntry || userEntry.role !== 'admin' || userEntry.banned) {
+      if (userEntry?.role !== 'admin' || userEntry.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
       }
     }
@@ -87,16 +87,18 @@ export async function POST(request: NextRequest) {
           query?: string;
           type?: 'movie' | 'tv';
         };
-        if (!query || !type)
+        if (!query || !type) {
           return NextResponse.json(
             { error: '缺少 query 或 type 参数' },
             { status: 400 },
           );
+        }
         const entry = adminConfig.CustomCategories.find(
           (c) => c.query === query && c.type === type,
         );
-        if (!entry)
+        if (!entry) {
           return NextResponse.json({ error: '分类不存在' }, { status: 404 });
+        }
         entry.disabled = true;
         break;
       }
@@ -105,16 +107,18 @@ export async function POST(request: NextRequest) {
           query?: string;
           type?: 'movie' | 'tv';
         };
-        if (!query || !type)
+        if (!query || !type) {
           return NextResponse.json(
             { error: '缺少 query 或 type 参数' },
             { status: 400 },
           );
+        }
         const entry = adminConfig.CustomCategories.find(
           (c) => c.query === query && c.type === type,
         );
-        if (!entry)
+        if (!entry) {
           return NextResponse.json({ error: '分类不存在' }, { status: 404 });
+        }
         entry.disabled = false;
         break;
       }
@@ -123,16 +127,18 @@ export async function POST(request: NextRequest) {
           query?: string;
           type?: 'movie' | 'tv';
         };
-        if (!query || !type)
+        if (!query || !type) {
           return NextResponse.json(
             { error: '缺少 query 或 type 参数' },
             { status: 400 },
           );
+        }
         const idx = adminConfig.CustomCategories.findIndex(
           (c) => c.query === query && c.type === type,
         );
-        if (idx === -1)
+        if (idx === -1) {
           return NextResponse.json({ error: '分类不存在' }, { status: 404 });
+        }
         const entry = adminConfig.CustomCategories[idx];
         if (entry.from === 'config') {
           return NextResponse.json(
@@ -164,7 +170,9 @@ export async function POST(request: NextRequest) {
         });
         // 未在 order 中的保持原顺序
         adminConfig.CustomCategories.forEach((item) => {
-          if (map.has(`${item.query}:${item.type}`)) newList.push(item);
+          if (map.has(`${item.query}:${item.type}`)) {
+            newList.push(item);
+          }
         });
         adminConfig.CustomCategories = newList;
         break;

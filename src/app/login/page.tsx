@@ -87,7 +87,9 @@ function LoginPageClient() {
     e.preventDefault();
     setError(null);
 
-    if (!password || (shouldAskUsername && !username)) return;
+    if (!password || (shouldAskUsername && !username)) {
+      return;
+    }
 
     try {
       setLoading(true);

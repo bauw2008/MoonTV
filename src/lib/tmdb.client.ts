@@ -266,10 +266,10 @@ export async function searchTMDBActorWorks(
   );
 
   try {
-    console.log(`🔍 [TMDB] 检查是否启用...`);
+    console.log('🔍 [TMDB] 检查是否启用...');
     // 检查是否启用
     if (!(await isTMDBEnabled())) {
-      console.log(`❌ [TMDB] TMDB功能未启用`);
+      console.log('❌ [TMDB] TMDB功能未启用');
       return {
         code: 500,
         message: 'TMDB演员搜索功能未启用或API Key未配置',
@@ -278,7 +278,7 @@ export async function searchTMDBActorWorks(
       } as TMDBResult;
     }
 
-    console.log(`✅ [TMDB] TMDB功能已启用`);
+    console.log('✅ [TMDB] TMDB功能已启用');
     // 检查缓存 - 为整个搜索结果缓存
     const cacheKey = getCacheKey('actor_works', {
       actorName,
@@ -292,7 +292,7 @@ export async function searchTMDBActorWorks(
       console.log(`✅ [TMDB] 缓存命中: ${actorName}/${type}`);
       return cached;
     }
-    console.log(`❌ [TMDB] 缓存未命中，开始搜索...`);
+    console.log('❌ [TMDB] 缓存未命中，开始搜索...');
 
     console.log(`[TMDB演员搜索] 搜索演员: ${actorName}, 类型: ${type}`);
 
@@ -340,55 +340,72 @@ export async function searchTMDBActorWorks(
       const genreIds = work.genre_ids || [];
 
       // 时间筛选
-      if (filterOptions.startYear && year && year < filterOptions.startYear)
+      if (filterOptions.startYear && year && year < filterOptions.startYear) {
         return false;
-      if (filterOptions.endYear && year && year > filterOptions.endYear)
+      }
+      if (filterOptions.endYear && year && year > filterOptions.endYear) {
         return false;
+      }
 
       // 评分筛选
-      if (filterOptions.minRating && rating < filterOptions.minRating)
+      if (filterOptions.minRating && rating < filterOptions.minRating) {
         return false;
-      if (filterOptions.maxRating && rating > filterOptions.maxRating)
+      }
+      if (filterOptions.maxRating && rating > filterOptions.maxRating) {
         return false;
+      }
 
       // 人气筛选
       if (
         filterOptions.minPopularity &&
         popularity < filterOptions.minPopularity
-      )
+      ) {
         return false;
+      }
       if (
         filterOptions.maxPopularity &&
         popularity > filterOptions.maxPopularity
-      )
+      ) {
         return false;
+      }
 
       // 投票数筛选
-      if (filterOptions.minVoteCount && voteCount < filterOptions.minVoteCount)
+      if (
+        filterOptions.minVoteCount &&
+        voteCount < filterOptions.minVoteCount
+      ) {
         return false;
+      }
 
       // 参演集数筛选（TV剧）
       if (
         filterOptions.minEpisodeCount &&
         type === 'tv' &&
         episodeCount < filterOptions.minEpisodeCount
-      )
+      ) {
         return false;
+      }
 
       // 只显示有评分的
-      if (filterOptions.onlyRated && rating === 0) return false;
+      if (filterOptions.onlyRated && rating === 0) {
+        return false;
+      }
 
       // 类型筛选
       if (filterOptions.genreIds && filterOptions.genreIds.length > 0) {
         const hasMatchingGenre = filterOptions.genreIds.some((id) =>
           genreIds.includes(id),
         );
-        if (!hasMatchingGenre) return false;
+        if (!hasMatchingGenre) {
+          return false;
+        }
       }
 
       // 语言筛选
       if (filterOptions.languages && filterOptions.languages.length > 0) {
-        if (!filterOptions.languages.includes(language)) return false;
+        if (!filterOptions.languages.includes(language)) {
+          return false;
+        }
       }
 
       return true;
@@ -443,7 +460,9 @@ export async function searchTMDBActorWorks(
       // 如果主要排序字段相同，使用次要排序（评分 + 时间）
       if (compareValue === 0 && sortBy !== 'rating') {
         const ratingDiff = (b.vote_average || 0) - (a.vote_average || 0);
-        if (ratingDiff !== 0) return ratingDiff;
+        if (ratingDiff !== 0) {
+          return ratingDiff;
+        }
 
         const dateA = new Date(
           a.release_date || a.first_air_date || '1900-01-01',
@@ -508,7 +527,7 @@ export async function searchTMDBActorWorks(
 
     return result;
   } catch (error) {
-    console.error(`[TMDB演员搜索] 搜索失败:`, error);
+    console.error('[TMDB演员搜索] 搜索失败:', error);
     return {
       code: 500,
       message: `搜索失败: ${(error as Error).message}`,

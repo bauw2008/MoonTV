@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       credentials: 'same-origin',
       signal: controller.signal,
       headers: new Headers(headers),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore - Node.js specific option
       agent: typeof window === 'undefined' ? agent : undefined,
     });

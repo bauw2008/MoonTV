@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps */
 
 'use client';
 
@@ -231,7 +231,9 @@ const AlertModal = ({
     }
   }, [isOpen, timer, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const getIcon = () => {
     switch (type) {
@@ -611,12 +613,16 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleAddUserGroup = () => {
-    if (!newUserGroup.name.trim()) return;
+    if (!newUserGroup.name.trim()) {
+      return;
+    }
     handleUserGroupAction('add', newUserGroup.name, newUserGroup.enabledApis);
   };
 
   const handleEditUserGroup = () => {
-    if (!editingUserGroup?.name.trim()) return;
+    if (!editingUserGroup?.name.trim()) {
+      return;
+    }
     handleUserGroupAction(
       'edit',
       editingUserGroup.name,
@@ -642,7 +648,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleConfirmDeleteUserGroup = async () => {
-    if (!deletingUserGroup) return;
+    if (!deletingUserGroup) {
+      return;
+    }
 
     try {
       await handleUserGroupAction('delete', deletingUserGroup.name);
@@ -748,7 +756,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleAddUser = async () => {
-    if (!newUser.username || !newUser.password) return;
+    if (!newUser.username || !newUser.password) {
+      return;
+    }
     await withLoading('addUser', async () => {
       await handleUserAction(
         'add',
@@ -762,7 +772,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleChangePassword = async () => {
-    if (!changePasswordUser.username || !changePasswordUser.password) return;
+    if (!changePasswordUser.username || !changePasswordUser.password) {
+      return;
+    }
     await withLoading(
       `changePassword_${changePasswordUser.username}`,
       async () => {
@@ -809,7 +821,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleSaveUserGroups = async () => {
-    if (!selectedUserForGroup) return;
+    if (!selectedUserForGroup) {
+      return;
+    }
 
     await withLoading(
       `saveUserGroups_${selectedUserForGroup.username}`,
@@ -863,7 +877,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
 
   // 批量设置用户组
   const handleBatchSetUserGroup = async (userGroup: string) => {
-    if (selectedUsers.size === 0) return;
+    if (selectedUsers.size === 0) {
+      return;
+    }
 
     await withLoading('batchSetUserGroup', async () => {
       try {
@@ -912,7 +928,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleSaveUserApis = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser) {
+      return;
+    }
 
     await withLoading(`saveUserApis_${selectedUser.username}`, async () => {
       try {
@@ -982,7 +1000,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   };
 
   const handleConfirmDeleteUser = async () => {
-    if (!deletingUser) return;
+    if (!deletingUser) {
+      return;
+    }
 
     await withLoading(`deleteUser_${deletingUser}`, async () => {
       try {
@@ -1806,9 +1826,15 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
               const sortedUsers = [...config.UserConfig.Users].sort((a, b) => {
                 type UserInfo = (typeof config.UserConfig.Users)[number];
                 const priority = (u: UserInfo) => {
-                  if (u.username === currentUsername) return 0;
-                  if (u.role === 'owner') return 1;
-                  if (u.role === 'admin') return 2;
+                  if (u.username === currentUsername) {
+                    return 0;
+                  }
+                  if (u.role === 'owner') {
+                    return 1;
+                  }
+                  if (u.role === 'admin') {
+                    return 2;
+                  }
                   return 3;
                 };
                 return priority(a) - priority(b);
@@ -3564,7 +3590,9 @@ const VideoSourceConfig = ({
 
   const handleToggleEnable = (key: string) => {
     const target = sources.find((s) => s.key === key);
-    if (!target) return;
+    if (!target) {
+      return;
+    }
     const action = target.disabled ? 'enable' : 'disable';
     withLoading(`toggleSource_${key}`, () =>
       callSourceApi({ action, key }),
@@ -3582,7 +3610,9 @@ const VideoSourceConfig = ({
   };
 
   const handleAddSource = () => {
-    if (!newSource.name || !newSource.key || !newSource.api) return;
+    if (!newSource.name || !newSource.key || !newSource.api) {
+      return;
+    }
     withLoading('addSource', async () => {
       await callSourceApi({
         action: 'add',
@@ -3607,7 +3637,9 @@ const VideoSourceConfig = ({
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      return;
+    }
     const oldIndex = sources.findIndex((s) => s.key === active.id);
     const newIndex = sources.findIndex((s) => s.key === over.id);
     setSources((prev) => arrayMove(prev, oldIndex, newIndex));
@@ -3767,7 +3799,9 @@ const VideoSourceConfig = ({
   // 获取有效性状态显示
   const getValidationStatus = (sourceKey: string) => {
     const result = validationResults.find((r) => r.key === sourceKey);
-    if (!result) return null;
+    if (!result) {
+      return null;
+    }
 
     switch (result.status) {
       case 'validating':
@@ -4778,7 +4812,9 @@ const CategoryConfig = ({
 
   const handleToggleEnable = (query: string, type: 'movie' | 'tv') => {
     const target = categories.find((c) => c.query === query && c.type === type);
-    if (!target) return;
+    if (!target) {
+      return;
+    }
     const action = target.disabled ? 'enable' : 'disable';
     withLoading(`toggleCategory_${query}_${type}`, () =>
       callCategoryApi({ action, query, type }),
@@ -4796,7 +4832,9 @@ const CategoryConfig = ({
   };
 
   const handleAddCategory = () => {
-    if (!newCategory.query) return;
+    if (!newCategory.query) {
+      return;
+    }
 
     withLoading('addCategory', async () => {
       await callCategoryApi({
@@ -4821,7 +4859,9 @@ const CategoryConfig = ({
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      return;
+    }
     const oldIndex = categories.findIndex(
       (c) => `${c.query}:${c.type}` === active.id,
     );
@@ -6161,7 +6201,9 @@ const LiveSourceConfig = ({
 
   const handleToggleEnable = (key: string) => {
     const target = liveSources.find((s) => s.key === key);
-    if (!target) return;
+    if (!target) {
+      return;
+    }
     const action = target.disabled ? 'enable' : 'disable';
     withLoading(`toggleLiveSource_${key}`, () =>
       callLiveSourceApi({ action, key }),
@@ -6180,7 +6222,9 @@ const LiveSourceConfig = ({
 
   // 刷新直播源
   const handleRefreshLiveSources = async () => {
-    if (isRefreshing) return;
+    if (isRefreshing) {
+      return;
+    }
 
     await withLoading('refreshLiveSources', async () => {
       setIsRefreshing(true);
@@ -6213,7 +6257,9 @@ const LiveSourceConfig = ({
   };
 
   const handleAddLiveSource = () => {
-    if (!newLiveSource.name || !newLiveSource.key || !newLiveSource.url) return;
+    if (!newLiveSource.name || !newLiveSource.key || !newLiveSource.url) {
+      return;
+    }
     withLoading('addLiveSource', async () => {
       await callLiveSourceApi({
         action: 'add',
@@ -6239,8 +6285,9 @@ const LiveSourceConfig = ({
   };
 
   const handleEditLiveSource = () => {
-    if (!editingLiveSource || !editingLiveSource.name || !editingLiveSource.url)
+    if (!editingLiveSource?.name || !editingLiveSource.url) {
       return;
+    }
     withLoading('editLiveSource', async () => {
       await callLiveSourceApi({
         action: 'edit',
@@ -6262,7 +6309,9 @@ const LiveSourceConfig = ({
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      return;
+    }
     const oldIndex = liveSources.findIndex((s) => s.key === active.id);
     const newIndex = liveSources.findIndex((s) => s.key === over.id);
     setLiveSources((prev) => arrayMove(prev, oldIndex, newIndex));
@@ -7056,7 +7105,7 @@ function AdminPageClient() {
         setLoading(true);
       }
 
-      const response = await fetch(`/api/admin/config`);
+      const response = await fetch('/api/admin/config');
 
       if (!response.ok) {
         const data = (await response.json()) as any;
@@ -7098,7 +7147,7 @@ function AdminPageClient() {
   const handleConfirmResetConfig = async () => {
     await withLoading('resetConfig', async () => {
       try {
-        const response = await fetch(`/api/admin/reset`);
+        const response = await fetch('/api/admin/reset');
         if (!response.ok) {
           throw new Error(`重置失败: ${response.status}`);
         }

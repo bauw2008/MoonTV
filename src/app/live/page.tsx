@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
 
 'use client';
 
@@ -157,7 +157,9 @@ function LivePageClient() {
   const cleanEpgData = (
     programs: Array<{ start: string; end: string; title: string }>,
   ) => {
-    if (!programs || programs.length === 0) return programs;
+    if (!programs || programs.length === 0) {
+      return programs;
+    }
 
     // 获取今日日期（只考虑年月日，忽略时间）
     const today = new Date();
@@ -283,7 +285,9 @@ function LivePageClient() {
 
   // 刷新直播源
   const refreshLiveSources = async () => {
-    if (isRefreshingSource) return;
+    if (isRefreshingSource) {
+      return;
+    }
 
     setIsRefreshingSource(true);
     try {
@@ -575,7 +579,9 @@ function LivePageClient() {
   // 切换频道
   const handleChannelChange = async (channel: LiveChannel) => {
     // 如果正在切换直播源，则禁用频道切换
-    if (isSwitchingSource) return;
+    if (isSwitchingSource) {
+      return;
+    }
 
     // 首先销毁当前播放器
     cleanupPlayer();
@@ -627,7 +633,9 @@ function LivePageClient() {
 
   // 滚动到指定频道位置的函数
   const scrollToChannel = (channel: LiveChannel) => {
-    if (!channelListRef.current) return;
+    if (!channelListRef.current) {
+      return;
+    }
 
     // 使用 data 属性来查找频道元素
     const targetElement = channelListRef.current.querySelector(
@@ -697,13 +705,13 @@ function LivePageClient() {
         }
 
         // 销毁 HLS 实例
-        if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
+        if (artPlayerRef.current.video?.hls) {
           artPlayerRef.current.video.hls.destroy();
           artPlayerRef.current.video.hls = null;
         }
 
         // 销毁 FLV 实例 - 增强清理逻辑
-        if (artPlayerRef.current.video && artPlayerRef.current.video.flv) {
+        if (artPlayerRef.current.video?.flv) {
           try {
             // 先停止加载
             if (artPlayerRef.current.video.flv.unload) {
@@ -740,7 +748,9 @@ function LivePageClient() {
 
   // 确保视频源正确设置
   const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
-    if (!video || !url) return;
+    if (!video || !url) {
+      return;
+    }
     const sources = Array.from(video.getElementsByTagName('source'));
     const existed = sources.some((s) => s.src === url);
     if (!existed) {
@@ -762,7 +772,9 @@ function LivePageClient() {
   // 切换分组
   const handleGroupChange = (group: string) => {
     // 如果正在切换直播源，则禁用分组切换
-    if (isSwitchingSource) return;
+    if (isSwitchingSource) {
+      return;
+    }
 
     setSelectedGroup(group);
     const filtered = currentChannels.filter(
@@ -816,7 +828,9 @@ function LivePageClient() {
 
   // 切换收藏
   const handleToggleFavorite = async () => {
-    if (!currentSourceRef.current || !currentChannelRef.current) return;
+    if (!currentSourceRef.current || !currentChannelRef.current) {
+      return;
+    }
 
     try {
       const currentFavorited = favoritedRef.current;
@@ -878,7 +892,9 @@ function LivePageClient() {
 
   // 检查收藏状态
   useEffect(() => {
-    if (!currentSource || !currentChannel) return;
+    if (!currentSource || !currentChannel) {
+      return;
+    }
     (async () => {
       try {
         const fav = await checkIsFavorited(
@@ -895,7 +911,9 @@ function LivePageClient() {
 
   // 监听收藏数据更新事件
   useEffect(() => {
-    if (!currentSource || !currentChannel) return;
+    if (!currentSource || !currentChannel) {
+      return;
+    }
 
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
@@ -947,11 +965,15 @@ function LivePageClient() {
 
   // 当分组切换时，将激活的分组标签滚动到视口中间
   useEffect(() => {
-    if (!selectedGroup || !groupContainerRef.current) return;
+    if (!selectedGroup || !groupContainerRef.current) {
+      return;
+    }
 
     const groupKeys = Object.keys(groupedChannels);
     const groupIndex = groupKeys.indexOf(selectedGroup);
-    if (groupIndex === -1) return;
+    if (groupIndex === -1) {
+      return;
+    }
 
     const btn = groupButtonRefs.current[groupIndex];
     const container = groupContainerRef.current;
@@ -1185,9 +1207,7 @@ function LivePageClient() {
       // v1.6.13 增强：处理直播中的时间戳错误（直播回搜修复）
       if (
         data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
-        data.err &&
-        data.err.message &&
-        data.err.message.includes('timestamp')
+        data.err?.message?.includes('timestamp')
       ) {
         console.log('直播时间戳错误，利用v1.6.13修复重新加载...');
         try {
@@ -1471,8 +1491,9 @@ function LivePageClient() {
       if (
         (e.target as HTMLElement).tagName === 'INPUT' ||
         (e.target as HTMLElement).tagName === 'TEXTAREA'
-      )
+      ) {
         return;
+      }
 
       // 上箭头 = 音量+
       if (e.key === 'ArrowUp') {

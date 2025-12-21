@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     // 权限检查：仅站长可以拉取配置订阅
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

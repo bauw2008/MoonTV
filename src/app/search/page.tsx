@@ -3,7 +3,6 @@
 
 import { Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TypeInferenceService } from '@/lib/type-inference.service';
 import React, {
   startTransition,
   Suspense,
@@ -167,7 +166,9 @@ function SearchPageClient() {
       const countMap = new Map<number, number>();
       group.forEach((g) => {
         const len = g.episodes?.length || 0;
-        if (len > 0) countMap.set(len, (countMap.get(len) || 0) + 1);
+        if (len > 0) {
+          countMap.set(len, (countMap.get(len) || 0) + 1);
+        }
       });
       let max = 0;
       let res = 0;
@@ -269,16 +270,26 @@ function SearchPageClient() {
     return items.slice().sort((a, b) => {
       const aExact = (a.title || '').trim() === q;
       const bExact = (b.title || '').trim() === q;
-      if (aExact && !bExact) return -1;
-      if (!aExact && bExact) return 1;
+      if (aExact && !bExact) {
+        return -1;
+      }
+      if (!aExact && bExact) {
+        return 1;
+      }
 
       const aNum = Number.parseInt(a.year as any, 10);
       const bNum = Number.parseInt(b.year as any, 10);
       const aValid = !Number.isNaN(aNum);
       const bValid = !Number.isNaN(bNum);
-      if (aValid && !bValid) return -1;
-      if (!aValid && bValid) return 1;
-      if (aValid && bValid) return bNum - aNum; // 年份倒序
+      if (aValid && !bValid) {
+        return -1;
+      }
+      if (!aValid && bValid) {
+        return 1;
+      }
+      if (aValid && bValid) {
+        return bNum - aNum;
+      } // 年份倒序
       return 0;
     });
   };
@@ -290,15 +301,23 @@ function SearchPageClient() {
     order: 'none' | 'asc' | 'desc',
   ) => {
     // 如果是无排序状态，返回0（保持原顺序）
-    if (order === 'none') return 0;
+    if (order === 'none') {
+      return 0;
+    }
 
     // 处理空值和unknown
     const aIsEmpty = !aYear || aYear === 'unknown';
     const bIsEmpty = !bYear || bYear === 'unknown';
 
-    if (aIsEmpty && bIsEmpty) return 0;
-    if (aIsEmpty) return 1; // a 在后
-    if (bIsEmpty) return -1; // b 在后
+    if (aIsEmpty && bIsEmpty) {
+      return 0;
+    }
+    if (aIsEmpty) {
+      return 1;
+    } // a 在后
+    if (bIsEmpty) {
+      return -1;
+    } // b 在后
 
     // 都是有效年份，按数字比较
     const aNum = parseInt(aYear, 10);
@@ -376,9 +395,15 @@ function SearchPageClient() {
       if (item.source && item.source_name) {
         sourcesSet.set(item.source, item.source_name);
       }
-      if (item.title) titlesSet.add(item.title);
-      if (item.year) yearsSet.add(item.year);
-      if (item.type) typesSet.add(item.type);
+      if (item.title) {
+        titlesSet.add(item.title);
+      }
+      if (item.year) {
+        yearsSet.add(item.year);
+      }
+      if (item.type) {
+        typesSet.add(item.type);
+      }
     });
 
     const sourceOptions: { label: string; value: string }[] = [
@@ -469,10 +494,18 @@ function SearchPageClient() {
   const filteredAllResults = useMemo(() => {
     const { source, title, year, type, yearOrder } = filterAll;
     const filtered = searchResults.filter((item) => {
-      if (source !== 'all' && item.source !== source) return false;
-      if (title !== 'all' && item.title !== title) return false;
-      if (year !== 'all' && item.year !== year) return false;
-      if (type !== 'all' && item.type !== type) return false;
+      if (source !== 'all' && item.source !== source) {
+        return false;
+      }
+      if (title !== 'all' && item.title !== title) {
+        return false;
+      }
+      if (year !== 'all' && item.year !== year) {
+        return false;
+      }
+      if (type !== 'all' && item.type !== type) {
+        return false;
+      }
       return true;
     });
 
@@ -485,13 +518,19 @@ function SearchPageClient() {
     return filtered.sort((a, b) => {
       // 首先按年份排序
       const yearComp = compareYear(a.year, b.year, yearOrder);
-      if (yearComp !== 0) return yearComp;
+      if (yearComp !== 0) {
+        return yearComp;
+      }
 
       // 年份相同时，精确匹配在前
       const aExactMatch = a.title === searchQuery.trim();
       const bExactMatch = b.title === searchQuery.trim();
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
+      if (aExactMatch && !bExactMatch) {
+        return -1;
+      }
+      if (!aExactMatch && bExactMatch) {
+        return 1;
+      }
 
       // 最后按标题排序，正序时字母序，倒序时反字母序
       return yearOrder === 'asc'
@@ -509,10 +548,18 @@ function SearchPageClient() {
       const gType = group[0]?.type ?? '';
       const hasSource =
         source === 'all' ? true : group.some((item) => item.source === source);
-      if (!hasSource) return false;
-      if (title !== 'all' && gTitle !== title) return false;
-      if (year !== 'all' && gYear !== year) return false;
-      if (type !== 'all' && gType !== type) return false;
+      if (!hasSource) {
+        return false;
+      }
+      if (title !== 'all' && gTitle !== title) {
+        return false;
+      }
+      if (year !== 'all' && gYear !== year) {
+        return false;
+      }
+      if (type !== 'all' && gType !== type) {
+        return false;
+      }
       return true;
     });
 
@@ -527,13 +574,19 @@ function SearchPageClient() {
       const aYear = a[1][0].year;
       const bYear = b[1][0].year;
       const yearComp = compareYear(aYear, bYear, yearOrder);
-      if (yearComp !== 0) return yearComp;
+      if (yearComp !== 0) {
+        return yearComp;
+      }
 
       // 年份相同时，精确匹配在前
       const aExactMatch = a[1][0].title === searchQuery.trim();
       const bExactMatch = b[1][0].title === searchQuery.trim();
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
+      if (aExactMatch && !bExactMatch) {
+        return -1;
+      }
+      if (!aExactMatch && bExactMatch) {
+        return 1;
+      }
 
       // 最后按标题排序，正序时字母序，倒序时反字母序
       const aTitle = a[1][0].title;
@@ -691,10 +744,14 @@ function SearchPageClient() {
         eventSourceRef.current = es;
 
         es.onmessage = (event) => {
-          if (!event.data) return;
+          if (!event.data) {
+            return;
+          }
           try {
             const payload = JSON.parse(event.data);
-            if (currentQueryRef.current !== trimmed) return;
+            if (currentQueryRef.current !== trimmed) {
+              return;
+            }
             switch (payload.type) {
               case 'start':
                 setTotalSources(payload.totalSources || 0);
@@ -784,7 +841,9 @@ function SearchPageClient() {
         fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
           .then((response) => response.json())
           .then((data) => {
-            if (currentQueryRef.current !== trimmed) return;
+            if (currentQueryRef.current !== trimmed) {
+              return;
+            }
 
             if (data.results && Array.isArray(data.results)) {
               const activeYearOrder =
@@ -856,7 +915,9 @@ function SearchPageClient() {
     contentType = youtubeContentType,
     sortOrder = youtubeSortOrder,
   ) => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      return;
+    }
 
     setYoutubeLoading(true);
     setYoutubeError(null);
@@ -903,7 +964,9 @@ function SearchPageClient() {
 
   // 网盘搜索函数
   const handleNetDiskSearch = async (query: string) => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      return;
+    }
 
     setNetdiskLoading(true);
     setNetdiskError(null);
@@ -938,7 +1001,9 @@ function SearchPageClient() {
     type = tmdbActorType,
     filterState = tmdbFilterState,
   ) => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      return;
+    }
 
     console.log(`🚀 [前端TMDB] 开始搜索: ${query}, type=${type}`);
 
@@ -959,33 +1024,48 @@ function SearchPageClient() {
       }
 
       // 添加筛选参数
-      if (filterState.startYear)
+      if (filterState.startYear) {
         params.append('startYear', filterState.startYear.toString());
-      if (filterState.endYear)
+      }
+      if (filterState.endYear) {
         params.append('endYear', filterState.endYear.toString());
-      if (filterState.minRating)
+      }
+      if (filterState.minRating) {
         params.append('minRating', filterState.minRating.toString());
-      if (filterState.maxRating)
+      }
+      if (filterState.maxRating) {
         params.append('maxRating', filterState.maxRating.toString());
-      if (filterState.minPopularity)
+      }
+      if (filterState.minPopularity) {
         params.append('minPopularity', filterState.minPopularity.toString());
-      if (filterState.maxPopularity)
+      }
+      if (filterState.maxPopularity) {
         params.append('maxPopularity', filterState.maxPopularity.toString());
-      if (filterState.minVoteCount)
+      }
+      if (filterState.minVoteCount) {
         params.append('minVoteCount', filterState.minVoteCount.toString());
-      if (filterState.minEpisodeCount)
+      }
+      if (filterState.minEpisodeCount) {
         params.append(
           'minEpisodeCount',
           filterState.minEpisodeCount.toString(),
         );
-      if (filterState.genreIds && filterState.genreIds.length > 0)
+      }
+      if (filterState.genreIds && filterState.genreIds.length > 0) {
         params.append('genreIds', filterState.genreIds.join(','));
-      if (filterState.languages && filterState.languages.length > 0)
+      }
+      if (filterState.languages && filterState.languages.length > 0) {
         params.append('languages', filterState.languages.join(','));
-      if (filterState.onlyRated) params.append('onlyRated', 'true');
-      if (filterState.sortBy) params.append('sortBy', filterState.sortBy);
-      if (filterState.sortOrder)
+      }
+      if (filterState.onlyRated) {
+        params.append('onlyRated', 'true');
+      }
+      if (filterState.sortBy) {
+        params.append('sortBy', filterState.sortBy);
+      }
+      if (filterState.sortOrder) {
         params.append('sortOrder', filterState.sortOrder);
+      }
 
       // 调用TMDB API端点
       const response = await fetch(`/api/tmdb/actor?${params.toString()}`);
@@ -1007,7 +1087,9 @@ function SearchPageClient() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = searchQuery.trim().replace(/\s+/g, ' ');
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
 
     // 回显搜索框
     setSearchQuery(trimmed);
@@ -1236,7 +1318,9 @@ function SearchPageClient() {
                 onEnterKey={() => {
                   // 当用户按回车键时，使用搜索框的实际内容进行搜索
                   const trimmed = searchQuery.trim().replace(/\s+/g, ' ');
-                  if (!trimmed) return;
+                  if (!trimmed) {
+                    return;
+                  }
 
                   // 回显搜索框
                   setSearchQuery(trimmed);

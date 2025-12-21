@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   // 检查用户认证
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
 // 手动刷新缓存的API
 export async function POST(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
+  if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

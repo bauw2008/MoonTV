@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const authInfo = getAuthInfoFromCookie(request);
 
     // 检查用户权限
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -609,7 +609,7 @@ export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
 
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -705,7 +705,9 @@ async function searchYouTubeVideos(keywords: string[], youtubeConfig: any) {
 
   // 使用真实YouTube API
   for (const keyword of keywords) {
-    if (videos.length >= 4) break;
+    if (videos.length >= 4) {
+      break;
+    }
 
     try {
       const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');

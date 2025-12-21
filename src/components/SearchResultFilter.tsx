@@ -121,9 +121,13 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
 
   const getDisplayText = (categoryKey: SearchFilterKey) => {
     const category = categories.find((cat) => cat.key === categoryKey);
-    if (!category) return '';
+    if (!category) {
+      return '';
+    }
     const value = mergedValues[categoryKey];
-    if (!value || value === DEFAULTS[categoryKey]) return category.label;
+    if (!value || value === DEFAULTS[categoryKey]) {
+      return category.label;
+    }
     const option = category.options.find((opt) => opt.value === value);
     return option?.label || category.label;
   };
@@ -149,7 +153,9 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
       }
     };
     const handleResize = () => {
-      if (activeCategory) calculateDropdownPosition(activeCategory);
+      if (activeCategory) {
+        calculateDropdownPosition(activeCategory);
+      }
     };
     // 监听 body 滚动事件，因为该项目的滚动容器是 document.body
     document.body.addEventListener('scroll', handleScroll, { passive: true });

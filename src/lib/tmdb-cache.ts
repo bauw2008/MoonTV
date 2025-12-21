@@ -27,7 +27,9 @@ async function getCache(key: string): Promise<any | null> {
   try {
     // 优先从统一存储获取
     const cached = await ClientCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     // 兜底：从localStorage获取（兼容性）
     if (typeof localStorage !== 'undefined') {
@@ -158,7 +160,9 @@ export function getTMDBCacheStats(): {
 
 // 清理所有TMDB缓存
 export function clearTMDBCache(): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
 
   const keys = Object.keys(localStorage).filter((key) =>
     key.startsWith('tmdb-'),

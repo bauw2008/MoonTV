@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 
 import { Redis } from '@upstash/redis';
 
@@ -96,7 +96,9 @@ export class UpstashRedisStorage implements IStorage {
   ): Promise<Record<string, PlayRecord>> {
     const pattern = `u:${userName}:pr:*`;
     const keys: string[] = await withRetry(() => this.client.keys(pattern));
-    if (keys.length === 0) return {};
+    if (keys.length === 0) {
+      return {};
+    }
 
     const result: Record<string, PlayRecord> = {};
     for (const fullKey of keys) {
@@ -139,7 +141,9 @@ export class UpstashRedisStorage implements IStorage {
   async getAllFavorites(userName: string): Promise<Record<string, Favorite>> {
     const pattern = `u:${userName}:fav:*`;
     const keys: string[] = await withRetry(() => this.client.keys(pattern));
-    if (keys.length === 0) return {};
+    if (keys.length === 0) {
+      return {};
+    }
 
     const result: Record<string, Favorite> = {};
     for (const fullKey of keys) {
@@ -170,7 +174,9 @@ export class UpstashRedisStorage implements IStorage {
     const stored = await withRetry(() =>
       this.client.get(this.userPwdKey(userName)),
     );
-    if (stored === null) return false;
+    if (stored === null) {
+      return false;
+    }
     // 确保比较时都是字符串类型
     return ensureString(stored) === password;
   }
@@ -295,7 +301,9 @@ export class UpstashRedisStorage implements IStorage {
 
   async getAdminConfig(): Promise<AdminConfig | null> {
     const val = await withRetry(() => this.client.get(this.adminConfigKey()));
-    if (!val) return null;
+    if (!val) {
+      return null;
+    }
 
     // 智能兼容：自动识别 JSON 字符串或对象
     if (typeof val === 'string') {
@@ -443,7 +451,9 @@ export class UpstashRedisStorage implements IStorage {
   async getCache(key: string): Promise<any | null> {
     try {
       const val = await withRetry(() => this.client.get(this.cacheKey(key)));
-      if (!val) return null;
+      if (!val) {
+        return null;
+      }
 
       // 智能处理返回值：Upstash 可能返回字符串或已解析的对象
       if (typeof val === 'string') {
@@ -735,7 +745,7 @@ export class UpstashRedisStorage implements IStorage {
                 storedLoginStats.lastLoginTime ||
                 0,
             };
-            console.log(`[Upstash-NoRecords] 解析后的登入统计:`, loginStats);
+            console.log('[Upstash-NoRecords] 解析后的登入统计:', loginStats);
           } else {
             console.log(
               `[Upstash-NoRecords] 用户 ${userName} 没有登入统计数据`,
@@ -838,7 +848,7 @@ export class UpstashRedisStorage implements IStorage {
               storedLoginStats.lastLoginTime ||
               0,
           };
-          console.log(`[Upstash] 解析后的登入统计:`, loginStats);
+          console.log('[Upstash] 解析后的登入统计:', loginStats);
         } else {
           console.log(`[Upstash] 用户 ${userName} 没有登入统计数据`);
         }

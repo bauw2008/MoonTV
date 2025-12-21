@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { TypeInferenceService } from '@/lib/type-inference.service';
 import {
   getAvailableApiSites,
   getConfig,
@@ -13,6 +12,7 @@ import {
   getTVBoxVideoCache,
   setTVBoxVideoCache,
 } from '@/lib/tvbox-cache';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 import { getYellowWords } from '@/lib/yellow';
 
 export const dynamic = 'force-dynamic';
@@ -149,7 +149,7 @@ async function fetchSourceCategories(apiUrl: string): Promise<Category[]> {
     }
   }
 
-  console.error(`获取分类信息最终失败:`, lastError?.message);
+  console.error('获取分类信息最终失败:', lastError?.message);
   return [];
 }
 
@@ -447,7 +447,9 @@ function buildCategoryStructure(categories: Category[]): {
   const processedIds = new Set<number>();
 
   categories.forEach((cat) => {
-    if (processedIds.has(cat.type_id)) return;
+    if (processedIds.has(cat.type_id)) {
+      return;
+    }
 
     const categoryName = cat.type_name || '';
     const match = findCategoryMatch(categoryName);
@@ -511,8 +513,9 @@ export async function GET(request: NextRequest) {
     }
     const page = parseInt(url.searchParams.get('page') || '1');
 
-    if (!source)
+    if (!source) {
       return NextResponse.json({ error: '缺少 source 参数' }, { status: 400 });
+    }
 
     let availableSites;
     try {
@@ -523,8 +526,9 @@ export async function GET(request: NextRequest) {
     }
 
     const site = availableSites.find((s) => s.key === source);
-    if (!site)
+    if (!site) {
       return NextResponse.json({ error: '视频源不存在' }, { status: 404 });
+    }
 
     // 尝试从缓存获取数据
     try {

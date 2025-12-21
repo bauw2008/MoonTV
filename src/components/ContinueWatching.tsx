@@ -11,10 +11,10 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import {
-  type WatchingUpdate,
   checkWatchingUpdates,
   getDetailedWatchingUpdates,
   subscribeToWatchingUpdatesEvent,
+  type WatchingUpdate,
 } from '@/lib/watching-updates';
 
 import ScrollableRow from '@/components/ScrollableRow';
@@ -169,7 +169,9 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
 
   // 计算播放进度百分比
   const getProgress = (record: PlayRecord) => {
-    if (record.total_time === 0) return 0;
+    if (record.total_time === 0) {
+      return 0;
+    }
     return (record.play_time / record.total_time) * 100;
   };
 
@@ -183,7 +185,9 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
   const getNewEpisodesCount = (
     record: PlayRecord & { key: string },
   ): number => {
-    if (!watchingUpdates || !watchingUpdates.updatedSeries) return 0;
+    if (!watchingUpdates?.updatedSeries) {
+      return 0;
+    }
 
     const { source, id } = parseKey(record.key);
 
@@ -202,8 +206,9 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
   const getLatestTotalEpisodes = (
     record: PlayRecord & { key: string },
   ): number => {
-    if (!watchingUpdates || !watchingUpdates.updatedSeries)
+    if (!watchingUpdates?.updatedSeries) {
       return record.total_episodes;
+    }
 
     const { source, id } = parseKey(record.key);
 

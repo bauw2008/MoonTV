@@ -42,7 +42,9 @@ interface SourceTestResult {
 // 计算匹配率与示例（供顶层 testSource 复用）
 function computeMatchRate(results: SearchResult[], q: string) {
   const lowerQ = (q || '').toLowerCase();
-  if (!results || results.length === 0) return 0;
+  if (!results || results.length === 0) {
+    return 0;
+  }
   const hit = results.filter((r) =>
     (r.title || '').toLowerCase().includes(lowerQ),
   ).length;
@@ -208,7 +210,9 @@ export default function SourceTestModule() {
     }
 
     const source = sources.find((s) => s.key === sourceKey);
-    if (!source) return;
+    if (!source) {
+      return;
+    }
 
     setTestResults(
       (prev) =>
@@ -451,7 +455,9 @@ export default function SourceTestModule() {
 
     const statusWeight = (s?: SourceTestResult) => {
       // 数值越大表示越靠后（差）
-      if (!s) return 4; // 未测试
+      if (!s) {
+        return 4;
+      } // 未测试
       switch (s.status) {
         case 'success':
           return 0;
@@ -497,10 +503,15 @@ export default function SourceTestModule() {
       } else {
         const na = Number(va);
         const nb = Number(vb);
-        if (Number.isNaN(na) && Number.isNaN(nb)) cmp = 0;
-        else if (Number.isNaN(na)) cmp = 1;
-        else if (Number.isNaN(nb)) cmp = -1;
-        else cmp = na === nb ? 0 : na < nb ? -1 : 1;
+        if (Number.isNaN(na) && Number.isNaN(nb)) {
+          cmp = 0;
+        } else if (Number.isNaN(na)) {
+          cmp = 1;
+        } else if (Number.isNaN(nb)) {
+          cmp = -1;
+        } else {
+          cmp = na === nb ? 0 : na < nb ? -1 : 1;
+        }
       }
       // desc 表示大的在前（除 status 的权重外，我们已经用数值大小语义保持一致）
       return sortOrder === 'desc' ? -cmp : cmp;

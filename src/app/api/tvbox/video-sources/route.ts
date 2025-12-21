@@ -28,7 +28,7 @@ function filterSourcesByUserPermissions(
 
     user.tags.forEach((tagName) => {
       const tag = tagsConfig.find((t) => t.name === tagName);
-      if (tag && tag.enabledApis) {
+      if (tag?.enabledApis) {
         tag.enabledApis.forEach((api: string) => allowedApis.add(api));
       }
     });
@@ -51,7 +51,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: '未授权' }, { status: 401 });
     }
 

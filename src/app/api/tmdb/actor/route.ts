@@ -25,29 +25,44 @@ export async function GET(request: NextRequest) {
   // 时间筛选
   const startYear = searchParams.get('startYear');
   const endYear = searchParams.get('endYear');
-  if (startYear) filterOptions.startYear = parseInt(startYear);
-  if (endYear) filterOptions.endYear = parseInt(endYear);
+  if (startYear) {
+    filterOptions.startYear = parseInt(startYear);
+  }
+  if (endYear) {
+    filterOptions.endYear = parseInt(endYear);
+  }
 
   // 评分筛选
   const minRating = searchParams.get('minRating');
   const maxRating = searchParams.get('maxRating');
-  if (minRating) filterOptions.minRating = parseFloat(minRating);
-  if (maxRating) filterOptions.maxRating = parseFloat(maxRating);
+  if (minRating) {
+    filterOptions.minRating = parseFloat(minRating);
+  }
+  if (maxRating) {
+    filterOptions.maxRating = parseFloat(maxRating);
+  }
 
   // 人气筛选
   const minPopularity = searchParams.get('minPopularity');
   const maxPopularity = searchParams.get('maxPopularity');
-  if (minPopularity) filterOptions.minPopularity = parseFloat(minPopularity);
-  if (maxPopularity) filterOptions.maxPopularity = parseFloat(maxPopularity);
+  if (minPopularity) {
+    filterOptions.minPopularity = parseFloat(minPopularity);
+  }
+  if (maxPopularity) {
+    filterOptions.maxPopularity = parseFloat(maxPopularity);
+  }
 
   // 投票数筛选
   const minVoteCount = searchParams.get('minVoteCount');
-  if (minVoteCount) filterOptions.minVoteCount = parseInt(minVoteCount);
+  if (minVoteCount) {
+    filterOptions.minVoteCount = parseInt(minVoteCount);
+  }
 
   // 集数筛选（TV剧）
   const minEpisodeCount = searchParams.get('minEpisodeCount');
-  if (minEpisodeCount)
+  if (minEpisodeCount) {
     filterOptions.minEpisodeCount = parseInt(minEpisodeCount);
+  }
 
   // 类型筛选
   const genreIds = searchParams.get('genreIds');
@@ -66,7 +81,9 @@ export async function GET(request: NextRequest) {
 
   // 只显示有评分的
   const onlyRated = searchParams.get('onlyRated');
-  if (onlyRated === 'true') filterOptions.onlyRated = true;
+  if (onlyRated === 'true') {
+    filterOptions.onlyRated = true;
+  }
 
   // 排序
   const sortBy = searchParams.get('sortBy');
@@ -90,7 +107,9 @@ export async function GET(request: NextRequest) {
 
   // 结果限制
   const limit = searchParams.get('limit');
-  if (limit) filterOptions.limit = parseInt(limit);
+  if (limit) {
+    filterOptions.limit = parseInt(limit);
+  }
 
   // 验证参数
   if (!actorName?.trim()) {
@@ -137,22 +156,22 @@ export async function GET(request: NextRequest) {
         );
         return NextResponse.json(cachedResult);
       }
-      console.log(`❌ [TMDB API] 缓存未命中，开始搜索...`);
+      console.log('❌ [TMDB API] 缓存未命中，开始搜索...');
     } catch (cacheError) {
       console.warn('TMDB缓存检查失败:', cacheError);
     }
 
     console.log(`[TMDB演员搜索API] 搜索演员: ${actorName}, 类型: ${type}`);
-    console.log(`[TMDB演员搜索API] 筛选参数:`, filterOptions);
+    console.log('[TMDB演员搜索API] 筛选参数:', filterOptions);
 
     // 调用TMDB演员搜索函数（不使用内部缓存）
-    console.log(`[TMDB演员搜索API] 开始调用 searchTMDBActorWorks...`);
+    console.log('[TMDB演员搜索API] 开始调用 searchTMDBActorWorks...');
     const result = await searchTMDBActorWorks(
       actorName.trim(),
       type as 'movie' | 'tv',
       filterOptions,
     );
-    console.log(`[TMDB演员搜索API] searchTMDBActorWorks 调用完成`);
+    console.log('[TMDB演员搜索API] searchTMDBActorWorks 调用完成');
 
     console.log(`[TMDB演员搜索API] 搜索结果: ${result.list?.length || 0} 项`);
 

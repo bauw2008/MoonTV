@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import {
@@ -344,11 +342,18 @@ export const ThemeSettingsPanel: React.FC<{
 
   // 获取预览动画类
   const getPreviewAnimationClass = (intensity: number) => {
-    if (intensity <= 20) return 'subtle-gradient-animation';
-    if (intensity <= 40) return 'subtle-gradient-animation breathing-animation';
-    if (intensity <= 60) return 'strong-gradient-animation breathing-animation';
-    if (intensity <= 80)
+    if (intensity <= 20) {
+      return 'subtle-gradient-animation';
+    }
+    if (intensity <= 40) {
+      return 'subtle-gradient-animation breathing-animation';
+    }
+    if (intensity <= 60) {
+      return 'strong-gradient-animation breathing-animation';
+    }
+    if (intensity <= 80) {
       return 'strong-gradient-animation strong-breathing-animation';
+    }
     return 'ultra-strong-animation strong-breathing-animation';
   };
 
@@ -534,7 +539,9 @@ export const ThemeSettingsPanel: React.FC<{
   };
 
   const applyThemeSettings = () => {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     const root = document.documentElement;
 
@@ -1381,9 +1388,13 @@ export const ThemeSettingsPanel: React.FC<{
     setIsAdvancedMenuOpen(false);
   };
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return null;
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   // 设置面板内容
   const panelContent = (

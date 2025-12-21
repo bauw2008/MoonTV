@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // 验证身份和权限
     const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 

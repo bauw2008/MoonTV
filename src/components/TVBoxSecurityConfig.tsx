@@ -314,7 +314,9 @@ const TVBoxSecurityConfig = ({
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
     const parts = ip.split('/')[0].split('.');
 
-    if (!ipRegex.test(ip)) return false;
+    if (!ipRegex.test(ip)) {
+      return false;
+    }
 
     return parts.every((part) => {
       const num = parseInt(part, 10);
@@ -324,7 +326,9 @@ const TVBoxSecurityConfig = ({
 
   // 添加IP地址
   const addIP = () => {
-    if (!newIP.trim()) return;
+    if (!newIP.trim()) {
+      return;
+    }
 
     if (!isValidIPOrCIDR(newIP.trim())) {
       showMessage(

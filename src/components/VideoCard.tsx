@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps */
 
 import {
   ExternalLink,
@@ -143,7 +143,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
     // 获取收藏状态
     useEffect(() => {
-      if (from === 'douban' || !actualSource || !actualId) return;
+      if (from === 'douban' || !actualSource || !actualId) {
+        return;
+      }
 
       const fetchFavoriteStatus = async () => {
         try {
@@ -174,7 +176,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (from === 'douban' || !actualSource || !actualId) return;
+        if (from === 'douban' || !actualSource || !actualId) {
+          return;
+        }
 
         try {
           // 确定当前收藏状态
@@ -229,7 +233,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (from !== 'playrecord' || !actualSource || !actualId) return;
+        if (from !== 'playrecord' || !actualSource || !actualId) {
+          return;
+        }
         try {
           await deletePlayRecord(actualSource, actualId);
           onDelete?.();
@@ -1078,10 +1084,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                         const sortedSources = uniqueSources.sort((a, b) => {
                           const aIndex = prioritySources.indexOf(a);
                           const bIndex = prioritySources.indexOf(b);
-                          if (aIndex !== -1 && bIndex !== -1)
+                          if (aIndex !== -1 && bIndex !== -1) {
                             return aIndex - bIndex;
-                          if (aIndex !== -1) return -1;
-                          if (bIndex !== -1) return 1;
+                          }
+                          if (aIndex !== -1) {
+                            return -1;
+                          }
+                          if (bIndex !== -1) {
+                            return 1;
+                          }
                           return a.localeCompare(b);
                         });
 

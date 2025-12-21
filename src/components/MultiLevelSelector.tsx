@@ -468,7 +468,9 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   // 获取显示文本
   const getDisplayText = (categoryKey: string) => {
     const category = categories.find((cat) => cat.key === categoryKey);
-    if (!category) return '';
+    if (!category) {
+      return '';
+    }
 
     const value = values[categoryKey];
 

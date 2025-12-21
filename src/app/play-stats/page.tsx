@@ -2,21 +2,12 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { PlayRecord, PlayStatsResult, ReleaseCalendarItem } from '@/lib/types';
-import {
-  type WatchingUpdate,
-  checkWatchingUpdates,
-  forceClearWatchingUpdatesCache,
-  getCachedWatchingUpdates,
-  getDetailedWatchingUpdates,
-  markUpdatesAsViewed,
-} from '@/lib/watching-updates';
+import { PlayRecord, PlayStatsResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
-import VideoCard from '@/components/VideoCard';
 // 用户等级系统
 const USER_LEVELS = [
   {
@@ -145,23 +136,14 @@ const PlayStatsPage: React.FC = () => {
   } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
-    null,
-  );
-  const [showWatchingUpdates, setShowWatchingUpdates] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'users' | 'personal'>(
     'admin',
   ); // 新增Tab状态
-  const [upcomingReleases, setUpcomingReleases] = useState<
-    ReleaseCalendarItem[]
-  >([]);
-  const [upcomingLoading, setUpcomingLoading] = useState(false);
-  const [upcomingInitialized, setUpcomingInitialized] = useState(false);
 
   // 检查用户权限
   useEffect(() => {
     const auth = getAuthInfoFromBrowserCookie();
-    if (!auth || !auth.username) {
+    if (!auth?.username) {
       router.push('/login');
       return;
     }
@@ -173,7 +155,9 @@ const PlayStatsPage: React.FC = () => {
 
   // 时间格式化函数
   const formatTime = (seconds: number): string => {
-    if (seconds === 0) return '00:00';
+    if (seconds === 0) {
+      return '00:00';
+    }
 
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -191,10 +175,14 @@ const PlayStatsPage: React.FC = () => {
   };
 
   const formatDateTime = (timestamp: number): string => {
-    if (!timestamp) return '未知时间';
+    if (!timestamp) {
+      return '未知时间';
+    }
 
     const date = new Date(timestamp);
-    if (isNaN(date.getTime())) return '时间格式错误';
+    if (isNaN(date.getTime())) {
+      return '时间格式错误';
+    }
 
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
@@ -215,9 +203,22 @@ const PlayStatsPage: React.FC = () => {
     });
   };
 
-  // 获取管理员统计数据
+  // 获取管理员统计数据（带缓存）
   const fetchAdminStats = useCallback(async () => {
     try {
+      // 检查缓存
+      const cacheKey = 'vidora_admin_stats_cache';
+      const cachedData = localStorage.getItem(cacheKey);
+      const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setStatsData(data);
+          return; // 使用缓存数据
+        }
+      }
+
       const response = await fetch('/api/admin/play-stats');
 
       if (response.status === 401) {
@@ -232,6 +233,15 @@ const PlayStatsPage: React.FC = () => {
 
       const data = await response.json();
       setStatsData(data);
+
+      // 缓存数据
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          data,
+          timestamp: Date.now(),
+        }),
+      );
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : '获取播放统计失败';
@@ -239,9 +249,22 @@ const PlayStatsPage: React.FC = () => {
     }
   }, [router]);
 
-  // 获取用户个人统计数据
+  // 获取用户个人统计数据（带缓存）
   const fetchUserStats = useCallback(async () => {
     try {
+      // 检查缓存
+      const cacheKey = 'vidora_user_stats_cache';
+      const cachedData = localStorage.getItem(cacheKey);
+      const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setUserStats(data);
+          return; // 使用缓存数据
+        }
+      }
+
       const response = await fetch('/api/user/my-stats');
 
       if (response.status === 401) {
@@ -256,6 +279,15 @@ const PlayStatsPage: React.FC = () => {
 
       const data = await response.json();
       setUserStats(data);
+
+      // 缓存数据
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          data,
+          timestamp: Date.now(),
+        }),
+      );
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : '获取个人统计失败';
@@ -277,133 +309,39 @@ const PlayStatsPage: React.FC = () => {
     setLoading(false);
   }, [isAdmin, fetchAdminStats, fetchUserStats]);
 
-  // 清理过期缓存
-  const cleanExpiredCache = useCallback(() => {
-    const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2小时
-    const now = Date.now();
-
-    // 检查即将上映缓存
-    const cacheTimeKey = 'upcoming_releases_cache_time';
-    const cachedTime = localStorage.getItem(cacheTimeKey);
-
-    if (cachedTime) {
-      const age = now - parseInt(cachedTime);
-      if (age >= CACHE_DURATION) {
-        localStorage.removeItem('upcoming_releases_cache');
-        localStorage.removeItem(cacheTimeKey);
-        console.log('已清理过期的即将上映缓存');
-      }
-    }
-
-    // 清理其他可能过期的缓存项
-    const keysToCheck = [
-      'vidora_watching_updates',
-      'vidora_last_update_check',
-      'release_calendar_all_data',
-      'release_calendar_all_data_time',
-    ];
-
-    // 检查追番更新缓存（这个有不同的过期时间）
-    const watchingUpdateTime = localStorage.getItem('vidora_last_update_check');
-    if (watchingUpdateTime) {
-      const WATCHING_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
-      const age = now - parseInt(watchingUpdateTime);
-      if (age >= WATCHING_CACHE_DURATION) {
-        localStorage.removeItem('vidora_watching_updates');
-        localStorage.removeItem('vidora_last_update_check');
-        console.log('已清理过期的追番更新缓存');
-      }
-    }
-
-    // 检查发布日历缓存
-    keysToCheck.forEach((key) => {
-      if (key.endsWith('_time')) {
-        const timeStr = localStorage.getItem(key);
-        if (timeStr) {
-          const age = now - parseInt(timeStr);
-          if (age >= CACHE_DURATION) {
-            const dataKey = key.replace('_time', '');
-            localStorage.removeItem(dataKey);
-            localStorage.removeItem(key);
-            console.log(`已清理过期缓存: ${dataKey}`);
-          }
-        }
-      }
-    });
-  }, []);
-
-  // 获取即将上映的内容（不再使用localStorage缓存，完全依赖API数据库缓存）
-  const fetchUpcomingReleases = useCallback(async () => {
-    try {
-      setUpcomingLoading(true);
-
-      // 清理过期的localStorage缓存（兼容性清理）
-      cleanExpiredCache();
-
-      // 🌐 直接从API获取数据（API有数据库缓存，24小时有效）
-      console.log('🌐 正在从API获取即将上映数据...');
-
-      // 获取未来2周的发布内容，包含更多电影
-      const today = new Date();
-      const twoWeeks = new Date(today);
-      twoWeeks.setDate(today.getDate() + 14);
-
-      const response = await fetch(
-        `/api/release-calendar?dateFrom=${
-          today.toISOString().split('T')[0]
-        }&dateTo=${twoWeeks.toISOString().split('T')[0]}`,
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const items = data.items || [];
-        setUpcomingReleases(items);
-
-        console.log(`📊 获取到 ${items.length} 条即将上映数据`);
-      } else {
-        console.error('获取即将上映内容失败:', response.status);
-        // API失败时设置空数组，确保UI仍然显示
-        setUpcomingReleases([]);
-      }
-    } catch (error) {
-      console.error('获取即将上映内容失败:', error);
-      // 网络错误时设置空数组，确保UI仍然显示
-      setUpcomingReleases([]);
-    } finally {
-      setUpcomingLoading(false);
-      setUpcomingInitialized(true); // 标记已经初始化完成
-    }
-  }, [cleanExpiredCache]);
+  // 添加防抖变量
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 处理刷新按钮点击
   const handleRefreshClick = async () => {
-    try {
-      // 清除追番更新缓存
-      localStorage.removeItem('vidora_watching_updates');
-      localStorage.removeItem('vidora_last_update_check');
-      // 清除遗留的即将上映缓存（兼容性清理）
-      localStorage.removeItem('upcoming_releases_cache');
-      localStorage.removeItem('upcoming_releases_cache_time');
-      console.log('已清除所有localStorage缓存');
+    // 防止重复点击
+    if (isRefreshingRef.current) {
+      return;
+    }
 
-      // 🔧 优化：强制刷新追番更新，跳过缓存时间检查
-      await checkWatchingUpdates(true);
-      console.log('已重新检查追番更新');
+    // 清除之前的定时器
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+
+    isRefreshingRef.current = true;
+
+    try {
+      // 清除统计缓存
+      localStorage.removeItem('vidora_user_stats_cache');
+      localStorage.removeItem('vidora_admin_stats_cache');
+      console.log('已清除统计缓存');
 
       // 重新获取统计数据
       await fetchStats();
       console.log('已重新获取统计数据');
-
-      // 重新获取 watchingUpdates
-      const details = getDetailedWatchingUpdates();
-      setWatchingUpdates(details);
-      // 重新获取即将上映内容（API会使用数据库缓存，速度很快）
-      await fetchUpcomingReleases();
-      console.log('已重新获取即将上映内容');
     } catch (error) {
       console.error('刷新数据失败:', error);
     } finally {
       setLoading(false);
+      isRefreshingRef.current = false;
     }
   };
 
@@ -425,7 +363,9 @@ const PlayStatsPage: React.FC = () => {
     playTime: number,
     totalTime: number,
   ): number => {
-    if (!totalTime || totalTime === 0) return 0;
+    if (!totalTime || totalTime === 0) {
+      return 0;
+    }
     return Math.min(Math.round((playTime / totalTime) * 100), 100);
   };
 
@@ -456,117 +396,23 @@ const PlayStatsPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authInfo]); // ✅ 只在 authInfo 变化时调用
 
-  // 获取即将上映内容
-  useEffect(() => {
-    if (authInfo) {
-      fetchUpcomingReleases();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authInfo]); // ✅ 只在 authInfo 变化时调用
-
-  // 追番更新检查
-  useEffect(() => {
-    if (authInfo) {
-      const checkUpdates = async () => {
-        const cached = getCachedWatchingUpdates();
-        if (cached) {
-          const details = getDetailedWatchingUpdates();
-          setWatchingUpdates(details);
-        } else {
-          await checkWatchingUpdates();
-          const details = getDetailedWatchingUpdates();
-          setWatchingUpdates(details);
-        }
-      };
-
-      checkUpdates();
-
-      // 监听播放记录更新事件（修复删除记录后页面不立即更新的问题）
-      const handlePlayRecordsUpdate = () => {
-        // 🔧 优化：使用新的强制清除缓存函数
-        forceClearWatchingUpdatesCache();
-        // 🔧 优化：强制刷新追番更新状态，跳过缓存时间检查
-        checkWatchingUpdates(true).then(() => {
-          const details = getDetailedWatchingUpdates();
-          setWatchingUpdates(details);
-        });
-      };
-
-      // 监听播放记录更新事件
-      window.addEventListener('playRecordsUpdated', handlePlayRecordsUpdate);
-
-      return () => {
-        window.removeEventListener(
-          'playRecordsUpdated',
-          handlePlayRecordsUpdate,
-        );
-      };
-    }
-  }, [authInfo]);
-
-  // 处理追番更新卡片点击
-  const handleWatchingUpdatesClick = () => {
-    console.log('点击追番卡片，watchingUpdates:', watchingUpdates);
-    console.log('updatedCount:', watchingUpdates?.updatedCount);
-    console.log(
-      'continueWatchingCount:',
-      watchingUpdates?.continueWatchingCount,
-    );
-
-    if (
-      watchingUpdates &&
-      ((watchingUpdates.updatedCount || 0) > 0 ||
-        (watchingUpdates.continueWatchingCount || 0) > 0)
-    ) {
-      console.log('条件满足，显示弹窗');
-      setShowWatchingUpdates(true);
-      console.log('setShowWatchingUpdates(true) 已调用');
-
-      // 强制刷新状态
-      setTimeout(() => {
-        setShowWatchingUpdates((prev) => {
-          console.log('强制状态更新，当前值:', prev);
-          return true;
-        });
-      }, 100);
-    } else {
-      console.log('条件不满足，不显示弹窗');
-    }
-  };
-
-  // 测试函数：强制显示弹窗
-  const forceShowPopup = () => {
-    console.log('强制显示弹窗');
-    setShowWatchingUpdates(true);
-  };
-
-  // 关闭追番更新详情
-  const handleCloseWatchingUpdates = () => {
-    setShowWatchingUpdates(false);
-    markUpdatesAsViewed();
-    setWatchingUpdates((prev) =>
-      prev
-        ? {
-            ...prev,
-            hasUpdates: false,
-            updatedCount: 0,
-            continueWatchingCount: 0,
-          }
-        : null,
-    );
-  };
-
   // 格式化更新时间
   const formatLastUpdate = (timestamp: number): string => {
     const now = Date.now();
     const diff = now - timestamp;
     const minutes = Math.floor(diff / (1000 * 60));
 
-    if (minutes < 1) return '刚刚更新';
-    if (minutes < 60) return `${minutes}分钟前`;
+    if (minutes < 1) {
+      return '刚刚更新';
+    }
+    if (minutes < 60) {
+      return `${minutes}分钟前`;
+    }
 
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}小时前`;
+    if (hours < 24) {
+      return `${hours}小时前`;
+    }
 
     const days = Math.floor(hours / 24);
     return `${days}天前`;
@@ -847,7 +693,7 @@ const PlayStatsPage: React.FC = () => {
               {/* 图表区域 */}
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'>
                 {/* 近7天趋势 */}
-                <div className='p-6 bg-transparent dark:bg-transparent rounded-lg border border-gray-200 dark:border-gray-700'>
+                <div className='p-6 bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-900/40 dark:to-blue-800/30 backdrop-blur-md rounded-lg border border-blue-200/60 dark:border-blue-700/50 shadow-lg'>
                   <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4'>
                     近7天播放趋势
                   </h3>
@@ -874,7 +720,7 @@ const PlayStatsPage: React.FC = () => {
                 </div>
 
                 {/* 近7天注册趋势 */}
-                <div className='p-6 bg-transparent dark:bg-transparent rounded-lg border border-gray-200 dark:border-gray-700'>
+                <div className='p-6 bg-gradient-to-br from-green-50/80 to-green-100/60 dark:from-green-900/40 dark:to-green-800/30 backdrop-blur-md rounded-lg border border-green-200/60 dark:border-green-700/50 shadow-lg'>
                   <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4'>
                     近7天注册趋势
                   </h3>
@@ -904,7 +750,7 @@ const PlayStatsPage: React.FC = () => {
               </div>
 
               {/* 用户活跃度统计 */}
-              <div className='p-6 bg-transparent dark:bg-transparent rounded-lg border border-gray-200 dark:border-gray-700 mb-8'>
+              <div className='p-6 bg-gradient-to-br from-purple-50/80 to-purple-100/60 dark:from-purple-900/40 dark:to-purple-800/30 backdrop-blur-md rounded-lg border border-purple-200/60 dark:border-purple-700/50 shadow-lg mb-8'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4'>
                   用户活跃度统计
                 </h3>
@@ -942,7 +788,7 @@ const PlayStatsPage: React.FC = () => {
               </div>
 
               {/* 热门来源 */}
-              <div className='p-6 bg-transparent dark:bg-transparent rounded-lg border border-gray-200 dark:border-gray-700 mb-8'>
+              <div className='p-6 bg-gradient-to-br from-orange-50/80 to-orange-100/60 dark:from-orange-900/40 dark:to-orange-800/30 backdrop-blur-md rounded-lg border border-orange-200/60 dark:border-orange-700/50 shadow-lg mb-8'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-4'>
                   热门视频来源
                 </h3>
@@ -977,316 +823,360 @@ const PlayStatsPage: React.FC = () => {
                   用户统计
                 </h3>
                 <div className='space-y-4'>
-                  {statsData.userStats.map((userStat) => (
-                    <div
-                      key={userStat.username}
-                      className='border border-gray-200/30 dark:border-gray-700/30 rounded-lg overflow-hidden bg-transparent dark:bg-transparent'
-                    >
-                      {/* 用户概览行 */}
+                  {statsData.userStats.map((userStat, index) => {
+                    // 为每个用户生成不同的渐变背景
+                    const gradients = [
+                      'from-blue-50/60 to-cyan-100/40 dark:from-blue-900/30 dark:to-cyan-800/20',
+                      'from-purple-50/60 to-pink-100/40 dark:from-purple-900/30 dark:to-pink-800/20',
+                      'from-green-50/60 to-emerald-100/40 dark:from-green-900/30 dark:to-emerald-800/20',
+                      'from-orange-50/60 to-amber-100/40 dark:from-orange-900/30 dark:to-amber-800/20',
+                      'from-rose-50/60 to-pink-100/40 dark:from-rose-900/30 dark:to-pink-800/20',
+                      'from-indigo-50/60 to-violet-100/40 dark:from-indigo-900/30 dark:to-violet-800/20',
+                      'from-teal-50/60 to-cyan-100/40 dark:from-teal-900/30 dark:to-cyan-800/20',
+                    ];
+                    const gradientClass = gradients[index % gradients.length];
+
+                    return (
                       <div
-                        className='p-4 cursor-pointer hover:bg-blue-100/20 dark:hover:bg-gray-700 transition-colors border-l-4 border-transparent hover:border-blue-500'
-                        onClick={() => toggleUserExpanded(userStat.username)}
+                        key={userStat.username}
+                        className={`border border-gray-200/30 dark:border-gray-700/30 rounded-lg overflow-hidden bg-gradient-to-br ${gradientClass} backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300`}
                       >
-                        <div className='flex items-center justify-between'>
-                          <div className='flex items-center space-x-4'>
-                            <div className='flex-shrink-0 relative'>
-                              {userStat.avatar ? (
-                                <Image
-                                  src={userStat.avatar}
-                                  alt={userStat.username}
-                                  width={48}
-                                  height={48}
-                                  className='w-12 h-12 rounded-full object-cover ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-800'
-                                  onError={(e) => {
-                                    (
-                                      e.target as HTMLImageElement
-                                    ).style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md'>
-                                  <span className='text-sm font-bold text-white'>
-                                    {userStat.username.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                              {/* 用户状态指示器 */}
-                              <div
-                                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${
-                                  userStat.lastPlayTime &&
-                                  Date.now() - userStat.lastPlayTime < 86400000
-                                    ? 'bg-green-500'
-                                    : 'bg-gray-400'
-                                }`}
-                              ></div>
-                            </div>
-                            <div className='min-w-0 flex-1'>
-                              <h5 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate mb-1'>
-                                {userStat.username}
-                              </h5>
-                              {isAdmin && (
-                                <div className='md:hidden mb-1'>
-                                  <span className='text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full flex items-center space-x-1'>
-                                    <svg
-                                      className='w-3 h-3'
-                                      fill='none'
-                                      stroke='currentColor'
-                                      viewBox='0 0 24 24'
-                                    >
-                                      <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth='2'
-                                        d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                                      />
-                                      <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth='2'
-                                        d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                                      />
-                                    </svg>
-                                    <span>{userStat.loginIp || '未知IP'}</span>
-                                  </span>
-                                </div>
-                              )}
-                              <div className='hidden md:flex items-center space-x-2 mb-1'>
-                                {isAdmin && (
-                                  <span className='text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full flex items-center space-x-1'>
-                                    <svg
-                                      className='w-3 h-3'
-                                      fill='none'
-                                      stroke='currentColor'
-                                      viewBox='0 0 24 24'
-                                    >
-                                      <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth='2'
-                                        d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                                      />
-                                      <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth='2'
-                                        d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
-                                      />
-                                    </svg>
-                                    <span>{userStat.loginIp || '未知IP'}</span>
-                                  </span>
+                        {/* 用户概览行 */}
+                        <div
+                          className='p-4 cursor-pointer hover:bg-blue-100/20 dark:hover:bg-gray-700 transition-colors border-l-4 border-transparent hover:border-blue-500'
+                          onClick={() => toggleUserExpanded(userStat.username)}
+                        >
+                          <div className='flex items-center justify-between'>
+                            <div className='flex items-center space-x-4'>
+                              <div className='flex-shrink-0 relative'>
+                                {userStat.avatar ? (
+                                  <Image
+                                    src={userStat.avatar}
+                                    alt={userStat.username}
+                                    width={48}
+                                    height={48}
+                                    className='w-12 h-12 rounded-full object-cover ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-800'
+                                    onError={(e) => {
+                                      (
+                                        e.target as HTMLImageElement
+                                      ).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md'>
+                                    <span className='text-sm font-bold text-white'>
+                                      {userStat.username
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                    </span>
+                                  </div>
                                 )}
+                                {/* 用户状态指示器 */}
+                                <div
+                                  className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${
+                                    userStat.lastPlayTime &&
+                                    Date.now() - userStat.lastPlayTime <
+                                      86400000
+                                      ? 'bg-green-500'
+                                      : 'bg-gray-400'
+                                  }`}
+                                ></div>
                               </div>
-                              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                                最后播放:{' '}
-                                {userStat.lastPlayTime
-                                  ? formatDateTime(userStat.lastPlayTime)
-                                  : '从未播放'}
-                              </p>
-                              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                                注册天数: {userStat.registrationDays} 天
-                              </p>
-                              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                                最后登入:{' '}
-                                {userStat.lastLoginTime !== userStat.createdAt
-                                  ? formatDateTime(userStat.lastLoginTime)
-                                  : '注册时'}
-                              </p>
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                {(() => {
-                                  const loginCount = userStat.loginCount || 0;
-                                  const loginDisplay =
-                                    formatLoginDisplay(loginCount);
-
-                                  return (
-                                    <div className='space-y-1'>
-                                      <div className='flex items-center gap-1.5'>
-                                        <span className='text-base flex-shrink-0'>
-                                          {loginDisplay.level.icon}
-                                        </span>
-                                        <span className='font-medium text-gray-700 dark:text-gray-300 text-xs leading-tight'>
-                                          {loginDisplay.level.name}
-                                        </span>
-                                      </div>
-                                      <div className='text-xs opacity-60'>
-                                        {loginCount === 0
-                                          ? '尚未登录'
-                                          : `${loginDisplay.displayCount}次登录`}
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                              {userStat.mostWatchedSource && (
-                                <p className='text-xs text-gray-500 dark:text-gray-400'>
-                                  常用来源: {userStat.mostWatchedSource}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className='flex items-center space-x-6'>
-                            <div className='text-right'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                                {formatTime(userStat.totalWatchTime)}
-                              </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                总观看时长
-                              </div>
-                            </div>
-                            <div className='text-right'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                                {userStat.totalPlays}
-                              </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                播放次数
-                              </div>
-                            </div>
-                            <div className='text-right'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                                {formatTime(userStat.avgWatchTime)}
-                              </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                平均时长
-                              </div>
-                            </div>
-                            <div className='flex-shrink-0'>
-                              <svg
-                                className={`w-5 h-5 text-gray-400 transition-transform ${
-                                  expandedUsers.has(userStat.username)
-                                    ? 'rotate-180'
-                                    : ''
-                                }`}
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='2'
-                                  d='M19 9l-7 7-7-7'
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 展开的播放记录详情 */}
-                      {expandedUsers.has(userStat.username) && (
-                        <div className='p-4 bg-transparent dark:bg-transparent border-t border-gray-200/30 dark:border-gray-700/30'>
-                          {userStat.recentRecords.length > 0 ? (
-                            <>
-                              <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
-                                最近播放记录 (最多显示10条)
-                              </h6>
-                              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-                                {userStat.recentRecords.map((record: any) => (
-                                  <div
-                                    key={record.title + record.save_time}
-                                    className='flex items-center space-x-4 p-3 bg-transparent dark:bg-transparent rounded-lg cursor-pointer hover:bg-blue-100/20 dark:hover:bg-blue-900/20 transition-colors'
-                                    onClick={() => handlePlayRecord(record)}
-                                  >
-                                    <div className='flex-shrink-0 w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
-                                      {record.cover ? (
-                                        <Image
-                                          src={record.cover}
-                                          alt={record.title}
-                                          width={48}
-                                          height={64}
-                                          className='w-full h-full object-cover'
-                                          onError={(e) => {
-                                            (
-                                              e.target as HTMLImageElement
-                                            ).style.display = 'none';
-                                          }}
+                              <div className='min-w-0 flex-1'>
+                                <h5 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate mb-1'>
+                                  {userStat.username}
+                                </h5>
+                                {isAdmin && (
+                                  <div className='md:hidden mb-1'>
+                                    <span className='text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full flex items-center space-x-1'>
+                                      <svg
+                                        className='w-3 h-3'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
+                                      >
+                                        <path
+                                          strokeLinecap='round'
+                                          strokeLinejoin='round'
+                                          strokeWidth='2'
+                                          d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
                                         />
-                                      ) : (
-                                        <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
-                                          <svg
-                                            className='w-6 h-6'
-                                            fill='none'
-                                            stroke='currentColor'
-                                            viewBox='0 0 24 24'
-                                          >
-                                            <path
-                                              strokeLinecap='round'
-                                              strokeLinejoin='round'
-                                              strokeWidth='2'
-                                              d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
-                                            />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className='flex-1 min-w-0'>
-                                      <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                                        {record.title}
-                                      </h6>
-                                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                                        来源: {record.source_name} | 年份:{' '}
-                                        {record.year}
-                                      </p>
-                                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                                        第 {record.index} 集 / 共{' '}
-                                        {record.total_episodes} 集
-                                      </p>
-                                      <div className='mt-2'>
-                                        <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
-                                          <span>播放进度</span>
-                                          <span>
-                                            {formatTime(record.play_time)} /{' '}
-                                            {formatTime(record.total_time)} (
-                                            {getProgressPercentage(
-                                              record.play_time,
-                                              record.total_time,
-                                            )}
-                                            %)
+                                        <path
+                                          strokeLinecap='round'
+                                          strokeLinejoin='round'
+                                          strokeWidth='2'
+                                          d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
+                                        />
+                                      </svg>
+                                      <span>
+                                        {userStat.loginIp || '未知IP'}
+                                      </span>
+                                    </span>
+                                  </div>
+                                )}
+                                <div className='hidden md:flex items-center space-x-2 mb-1'>
+                                  {isAdmin && (
+                                    <span className='text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full flex items-center space-x-1'>
+                                      <svg
+                                        className='w-3 h-3'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
+                                      >
+                                        <path
+                                          strokeLinecap='round'
+                                          strokeLinejoin='round'
+                                          strokeWidth='2'
+                                          d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
+                                        />
+                                        <path
+                                          strokeLinecap='round'
+                                          strokeLinejoin='round'
+                                          strokeWidth='2'
+                                          d='M15 11a3 3 0 11-6 0 3 3 0 016 0z'
+                                        />
+                                      </svg>
+                                      <span>
+                                        {userStat.loginIp || '未知IP'}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                                  最后播放:{' '}
+                                  {userStat.lastPlayTime
+                                    ? formatDateTime(userStat.lastPlayTime)
+                                    : '从未播放'}
+                                </p>
+                                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                                  注册天数: {userStat.registrationDays} 天
+                                </p>
+                                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                                  最后登入:{' '}
+                                  {userStat.lastLoginTime !== userStat.createdAt
+                                    ? formatDateTime(userStat.lastLoginTime)
+                                    : '注册时'}
+                                </p>
+                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                  {(() => {
+                                    const loginCount = userStat.loginCount || 0;
+                                    const loginDisplay =
+                                      formatLoginDisplay(loginCount);
+
+                                    return (
+                                      <div className='space-y-1'>
+                                        <div className='flex items-center gap-1.5'>
+                                          <span className='text-base flex-shrink-0'>
+                                            {loginDisplay.level.icon}
+                                          </span>
+                                          <span className='font-medium text-gray-700 dark:text-gray-300 text-xs leading-tight'>
+                                            {loginDisplay.level.name}
                                           </span>
                                         </div>
-                                        <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
-                                          <div
-                                            className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
-                                            style={{
-                                              width: `${getProgressPercentage(
-                                                record.play_time,
-                                                record.total_time,
-                                              )}%`,
-                                            }}
-                                          ></div>
+                                        <div className='text-xs opacity-60'>
+                                          {loginCount === 0
+                                            ? '尚未登录'
+                                            : `${loginDisplay.displayCount}次登录`}
                                         </div>
                                       </div>
-                                    </div>
-                                    <div className='flex-shrink-0 text-right'>
-                                      <div className='text-xs text-gray-500 dark:text-gray-400'>
-                                        {formatDateTime(record.save_time)}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
+                                    );
+                                  })()}
+                                </div>
+                                {userStat.mostWatchedSource && (
+                                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                                    常用来源: {userStat.mostWatchedSource}
+                                  </p>
+                                )}
                               </div>
-                            </>
-                          ) : (
-                            <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                              <svg
-                                className='w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='2'
-                                  d='M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0012 15c-2.239 0-4.236.18-6.101.532C4.294 15.661 4 16.28 4 16.917V19a2 2 0 002 2h12a2 2 0 002-2v-2.083c0-.636-.293-1.256-.899-1.385A7.962 7.962 0 0012 15z'
-                                />
-                              </svg>
-                              <p>该用户暂无播放记录</p>
                             </div>
-                          )}
+                            <div className='flex items-center space-x-6'>
+                              <div className='text-right'>
+                                <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                                  {formatTime(userStat.totalWatchTime)}
+                                </div>
+                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                  总观看时长
+                                </div>
+                              </div>
+                              <div className='text-right'>
+                                <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                                  {userStat.totalPlays}
+                                </div>
+                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                  播放次数
+                                </div>
+                              </div>
+                              <div className='text-right'>
+                                <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                                  {formatTime(userStat.avgWatchTime)}
+                                </div>
+                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                  平均时长
+                                </div>
+                              </div>
+                              <div className='flex-shrink-0'>
+                                <svg
+                                  className={`w-5 h-5 text-gray-400 transition-transform ${
+                                    expandedUsers.has(userStat.username)
+                                      ? 'rotate-180'
+                                      : ''
+                                  }`}
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth='2'
+                                    d='M19 9l-7 7-7-7'
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* 展开的播放记录详情 */}
+                        {expandedUsers.has(userStat.username) && (
+                          <div className='p-4 bg-gradient-to-br from-gray-50/40 to-gray-100/20 dark:from-gray-900/20 dark:to-gray-800/10 border-t border-gray-200/30 dark:border-gray-700/30'>
+                            {userStat.recentRecords.length > 0 ? (
+                              <>
+                                <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                                  最近播放记录 (最多显示10条)
+                                </h6>
+                                <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+                                  {userStat.recentRecords.map(
+                                    (record: any, recordIndex) => {
+                                      // 为每条记录生成不同的渐变背景
+                                      const recordGradients = [
+                                        'from-slate-100/90 to-gray-200/80 dark:from-slate-800/80 dark:to-gray-700/70',
+                                        'from-zinc-100/90 to-stone-200/80 dark:from-zinc-800/80 dark:to-stone-700/70',
+                                        'from-neutral-100/90 to-gray-200/80 dark:from-neutral-800/80 dark:to-gray-700/70',
+                                        'from-stone-100/90 to-slate-200/80 dark:from-stone-800/80 dark:to-slate-700/70',
+                                        'from-gray-100/90 to-zinc-200/80 dark:from-gray-800/80 dark:to-zinc-700/70',
+                                      ];
+                                      const recordGradientClass =
+                                        recordGradients[
+                                          recordIndex % recordGradients.length
+                                        ];
+
+                                      return (
+                                        <div
+                                          key={record.title + record.save_time}
+                                          className={`flex items-center space-x-4 p-3 bg-gradient-to-r ${recordGradientClass} rounded-lg cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all duration-300 border-2 border-gray-300/60 dark:border-gray-600/80 shadow-md`}
+                                          onClick={() =>
+                                            handlePlayRecord(record)
+                                          }
+                                        >
+                                          <div className='flex-shrink-0 w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
+                                            {record.cover ? (
+                                              <Image
+                                                src={record.cover}
+                                                alt={record.title}
+                                                width={48}
+                                                height={64}
+                                                className='w-full h-full object-cover'
+                                                onError={(e) => {
+                                                  (
+                                                    e.target as HTMLImageElement
+                                                  ).style.display = 'none';
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
+                                                <svg
+                                                  className='w-6 h-6'
+                                                  fill='none'
+                                                  stroke='currentColor'
+                                                  viewBox='0 0 24 24'
+                                                >
+                                                  <path
+                                                    strokeLinecap='round'
+                                                    strokeLinejoin='round'
+                                                    strokeWidth='2'
+                                                    d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
+                                                  />
+                                                </svg>
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className='flex-1 min-w-0'>
+                                            <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                                              {record.title}
+                                            </h6>
+                                            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                              来源: {record.source_name} | 年份:{' '}
+                                              {record.year}
+                                            </p>
+                                            <p className='text-xs text-gray-500 dark:text-gray-400'>
+                                              第 {record.index} 集 / 共{' '}
+                                              {record.total_episodes} 集
+                                            </p>
+                                            <div className='mt-2'>
+                                              <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
+                                                <span>播放进度</span>
+                                                <span>
+                                                  {formatTime(record.play_time)}{' '}
+                                                  /{' '}
+                                                  {formatTime(
+                                                    record.total_time,
+                                                  )}{' '}
+                                                  (
+                                                  {getProgressPercentage(
+                                                    record.play_time,
+                                                    record.total_time,
+                                                  )}
+                                                  %)
+                                                </span>
+                                              </div>
+                                              <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
+                                                <div
+                                                  className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
+                                                  style={{
+                                                    width: `${getProgressPercentage(
+                                                      record.play_time,
+                                                      record.total_time,
+                                                    )}%`,
+                                                  }}
+                                                ></div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className='flex-shrink-0 text-right'>
+                                            <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                              {formatDateTime(record.save_time)}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    },
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+                                <svg
+                                  className='w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth='2'
+                                    d='M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0012 15c-2.239 0-4.236.18-6.101.532C4.294 15.661 4 16.28 4 16.917V19a2 2 0 002 2h12a2 2 0 002-2v-2.083c0-.636-.293-1.256-.899-1.385A7.962 7.962 0 0012 15z'
+                                  />
+                                </svg>
+                                <p>该用户暂无播放记录</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>
@@ -1353,191 +1243,6 @@ const PlayStatsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 有新集数的剧集 */}
-              {watchingUpdates &&
-                watchingUpdates.updatedSeries.filter(
-                  (series) => series.hasNewEpisode,
-                ).length > 0 && (
-                  <div className='mb-8'>
-                    <div className='flex items-center gap-2 mb-4'>
-                      <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                        有新集数
-                      </h2>
-                      <div className='flex items-center gap-1'>
-                        <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></div>
-                        <span className='text-sm text-red-500 font-medium'>
-                          {
-                            watchingUpdates.updatedSeries.filter(
-                              (series) => series.hasNewEpisode,
-                            ).length
-                          }
-                          部剧集有更新
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 移动端网格布局 */}
-                    <div className='sm:hidden'>
-                      <div className='grid grid-cols-2 gap-x-4 gap-y-8 pt-4 pb-6'>
-                        {watchingUpdates.updatedSeries
-                          .filter((series) => series.hasNewEpisode)
-                          .map((series, index) => (
-                            <div
-                              key={`new-${series.title}_${series.year}_${index}`}
-                              className='relative w-full'
-                            >
-                              <VideoCard
-                                title={series.title}
-                                poster={series.cover || ''}
-                                year={series.year}
-                                from='playrecord'
-                                progress={0}
-                                currentEpisode={series.currentEpisode}
-                                episodes={series.totalEpisodes}
-                                source={series.sourceKey}
-                                id={series.videoId}
-                                onDelete={undefined}
-                              />
-                              {/* 新集数徽章 */}
-                              <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-bounce z-50'>
-                                +{series.newEpisodes}集
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-
-                    {/* 桌面端网格布局 */}
-                    <div className='hidden sm:block'>
-                      <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-6 gap-y-10 pt-6 pb-8'>
-                        {watchingUpdates.updatedSeries
-                          .filter((series) => series.hasNewEpisode)
-                          .map((series, index) => (
-                            <div
-                              key={`new-${series.title}_${series.year}_${index}`}
-                              className='relative w-full'
-                            >
-                              <VideoCard
-                                title={series.title}
-                                poster={series.cover || ''}
-                                year={series.year}
-                                from='playrecord'
-                                progress={0}
-                                currentEpisode={series.currentEpisode}
-                                episodes={series.totalEpisodes}
-                                source={series.sourceKey}
-                                id={series.videoId}
-                                onDelete={undefined}
-                              />
-                              {/* 新集数徽章 */}
-                              <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-bounce z-50'>
-                                +{series.newEpisodes}集
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              {/* 继续观看的剧集 */}
-              {watchingUpdates &&
-                watchingUpdates.updatedSeries.filter(
-                  (series) =>
-                    series.hasContinueWatching && !series.hasNewEpisode,
-                ).length > 0 && (
-                  <div className='mb-8'>
-                    <div className='flex items-center gap-2 mb-4'>
-                      <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                        继续观看
-                      </h2>
-                      <div className='flex items-center gap-1'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse'></div>
-                        <span className='text-sm text-blue-500 font-medium'>
-                          {
-                            watchingUpdates.updatedSeries.filter(
-                              (series) =>
-                                series.hasContinueWatching &&
-                                !series.hasNewEpisode,
-                            ).length
-                          }
-                          部剧集待续看
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 移动端网格布局 */}
-                    <div className='sm:hidden'>
-                      <div className='grid grid-cols-2 gap-x-4 gap-y-8 pt-4 pb-6'>
-                        {watchingUpdates.updatedSeries
-                          .filter(
-                            (series) =>
-                              series.hasContinueWatching &&
-                              !series.hasNewEpisode,
-                          )
-                          .map((series, index) => (
-                            <div
-                              key={`continue-${series.title}_${series.year}_${index}`}
-                              className='relative w-full'
-                            >
-                              <VideoCard
-                                title={series.title}
-                                poster={series.cover || ''}
-                                year={series.year}
-                                from='playrecord'
-                                progress={0}
-                                currentEpisode={series.currentEpisode}
-                                episodes={series.totalEpisodes}
-                                source={series.sourceKey}
-                                id={series.videoId}
-                                onDelete={undefined}
-                              />
-                              {/* 继续观看徽章 */}
-                              <div className='absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse z-50'>
-                                继续看
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-
-                    {/* 桌面端网格布局 */}
-                    <div className='hidden sm:block'>
-                      <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-6 gap-y-10 pt-6 pb-8'>
-                        {watchingUpdates.updatedSeries
-                          .filter(
-                            (series) =>
-                              series.hasContinueWatching &&
-                              !series.hasNewEpisode,
-                          )
-                          .map((series, index) => (
-                            <div
-                              key={`continue-${series.title}_${series.year}_${index}`}
-                              className='relative w-full'
-                            >
-                              <VideoCard
-                                title={series.title}
-                                poster={series.cover || ''}
-                                year={series.year}
-                                from='playrecord'
-                                progress={0}
-                                currentEpisode={series.currentEpisode}
-                                episodes={series.totalEpisodes}
-                                source={series.sourceKey}
-                                id={series.videoId}
-                                onDelete={undefined}
-                              />
-                              {/* 继续观看徽章 */}
-                              <div className='absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse z-50'>
-                                继续看
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
               {/* 最近播放记录 */}
               <div>
                 <h3 className='text-xl font-bold text-gray-900 dark:text-white'>
@@ -1546,84 +1251,104 @@ const PlayStatsPage: React.FC = () => {
                 {userStats.recentRecords &&
                 userStats.recentRecords.length > 0 ? (
                   <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-                    {userStats.recentRecords.map((record: PlayRecord) => (
-                      <div
-                        key={record.title + record.save_time}
-                        className='flex items-center space-x-4 p-3 bg-transparent dark:bg-transparent rounded-lg cursor-pointer hover:bg-blue-100/20 dark:hover:bg-blue-900/20 transition-colors'
-                        onClick={() => handlePlayRecord(record)}
-                      >
-                        <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
-                          {record.cover ? (
-                            <Image
-                              src={record.cover}
-                              alt={record.title}
-                              width={64}
-                              height={80}
-                              className='w-full h-full object-cover'
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  'none';
-                              }}
-                            />
-                          ) : (
-                            <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
-                              <svg
-                                className='w-8 h-8'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='2'
-                                  d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
+                    {userStats.recentRecords.map(
+                      (record: PlayRecord, index) => {
+                        // 为每条记录生成不同的渐变背景
+                        const adminRecordGradients = [
+                          'from-blue-100/95 to-cyan-200/90 dark:from-blue-800/90 dark:to-cyan-700/85',
+                          'from-purple-100/95 to-pink-200/90 dark:from-purple-800/90 dark:to-pink-700/85',
+                          'from-green-100/95 to-emerald-200/90 dark:from-green-800/90 dark:to-emerald-700/85',
+                          'from-orange-100/95 to-amber-200/90 dark:from-orange-800/90 dark:to-amber-700/85',
+                          'from-indigo-100/95 to-violet-200/90 dark:from-indigo-800/90 dark:to-violet-700/85',
+                          'from-teal-100/95 to-cyan-200/90 dark:from-teal-800/90 dark:to-cyan-700/85',
+                        ];
+                        const gradientClass =
+                          adminRecordGradients[
+                            index % adminRecordGradients.length
+                          ];
+
+                        return (
+                          <div
+                            key={record.title + record.save_time}
+                            className={`flex items-center space-x-4 p-4 bg-gradient-to-br ${gradientClass} rounded-lg border-2 border-gray-300/90 dark:border-gray-600/95 cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm`}
+                            onClick={() => handlePlayRecord(record)}
+                          >
+                            <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
+                              {record.cover ? (
+                                <Image
+                                  src={record.cover}
+                                  alt={record.title}
+                                  width={64}
+                                  height={80}
+                                  className='w-full h-full object-cover'
+                                  onError={(e) => {
+                                    (
+                                      e.target as HTMLImageElement
+                                    ).style.display = 'none';
+                                  }}
                                 />
-                              </svg>
+                              ) : (
+                                <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
+                                  <svg
+                                    className='w-8 h-8'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                  >
+                                    <path
+                                      strokeLinecap='round'
+                                      strokeLinejoin='round'
+                                      strokeWidth='2'
+                                      d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
+                                    />
+                                  </svg>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className='flex-1 min-w-0'>
-                          <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1'>
-                            {record.title}
-                          </h6>
-                          <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                            来源: {record.source_name} | 年份: {record.year}
-                          </p>
-                          <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                            第 {record.index} 集 / 共 {record.total_episodes} 集
-                          </p>
-                          <div className='mt-2'>
-                            <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
-                              <span>播放进度</span>
-                              <span>
-                                {formatTime(record.play_time)} /{' '}
-                                {formatTime(record.total_time)} (
-                                {getProgressPercentage(
-                                  record.play_time,
-                                  record.total_time,
-                                )}
-                                %)
-                              </span>
-                            </div>
-                            <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
-                              <div
-                                className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
-                                style={{
-                                  width: `${getProgressPercentage(
-                                    record.play_time,
-                                    record.total_time,
-                                  )}%`,
-                                }}
-                              ></div>
+                            <div className='flex-1 min-w-0'>
+                              <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1'>
+                                {record.title}
+                              </h6>
+                              <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
+                                来源: {record.source_name} | 年份: {record.year}
+                              </p>
+                              <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
+                                第 {record.index} 集 / 共{' '}
+                                {record.total_episodes} 集
+                              </p>
+                              <div className='mt-2'>
+                                <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
+                                  <span>播放进度</span>
+                                  <span>
+                                    {formatTime(record.play_time)} /{' '}
+                                    {formatTime(record.total_time)} (
+                                    {getProgressPercentage(
+                                      record.play_time,
+                                      record.total_time,
+                                    )}
+                                    %)
+                                  </span>
+                                </div>
+                                <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
+                                  <div
+                                    className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
+                                    style={{
+                                      width: `${getProgressPercentage(
+                                        record.play_time,
+                                        record.total_time,
+                                      )}%`,
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                              <div className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                                {formatDateTime(record.save_time)}
+                              </div>
                             </div>
                           </div>
-                          <div className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                            {formatDateTime(record.save_time)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      },
+                    )}
                   </div>
                 ) : (
                   <div className='text-center py-12 text-gray-500 dark:text-gray-400'>
@@ -1656,33 +1381,11 @@ const PlayStatsPage: React.FC = () => {
     return (
       <PageLayout activePath='/play-stats'>
         <div className='max-w-6xl mx-auto px-4 py-8'>
-          {/* 页面标题和刷新按钮 */}
+          {/* 页面标题 */}
           <div className='mb-8'>
-            <div className='flex items-center space-x-3'>
-              <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>
-                个人统计
-              </h1>
-              <button
-                onClick={handleRefreshClick}
-                disabled={loading}
-                className='p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
-                title='刷新数据'
-              >
-                <svg
-                  className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
-                  />
-                </svg>
-              </button>
-            </div>
+            <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>
+              个人统计
+            </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-2'>
               查看您的个人播放记录和统计数据
             </p>
@@ -1777,347 +1480,107 @@ const PlayStatsPage: React.FC = () => {
                 常用来源
               </div>
             </div>
-            {/* 新集数更新 */}
-            <div
-              className={`p-4 rounded-lg border transition-all ${
-                (watchingUpdates?.updatedCount || 0) > 0
-                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                  : 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
-              }`}
-            >
-              <div
-                className={`text-2xl font-bold ${
-                  (watchingUpdates?.updatedCount || 0) > 0
-                    ? 'text-red-800 dark:text-red-300'
-                    : 'text-gray-800 dark:text-gray-300'
-                }`}
-              >
-                {watchingUpdates?.updatedCount || 0}
-              </div>
-              <div
-                className={`text-sm ${
-                  (watchingUpdates?.updatedCount || 0) > 0
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                新集数更新
-              </div>
-              {(watchingUpdates?.updatedCount || 0) > 0 && (
-                <div className='text-xs text-red-500 dark:text-red-400 mt-1'>
-                  有新集数发布！
-                </div>
-              )}
-            </div>
-
-            {/* 继续观看提醒 */}
-            <div
-              className={`p-4 rounded-lg border transition-all ${
-                (watchingUpdates?.continueWatchingCount || 0) > 0
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                  : 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800'
-              }`}
-            >
-              <div
-                className={`text-2xl font-bold ${
-                  (watchingUpdates?.continueWatchingCount || 0) > 0
-                    ? 'text-blue-800 dark:text-blue-300'
-                    : 'text-gray-800 dark:text-gray-300'
-                }`}
-              >
-                {watchingUpdates?.continueWatchingCount || 0}
-              </div>
-              <div
-                className={`text-sm ${
-                  (watchingUpdates?.continueWatchingCount || 0) > 0
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                继续观看
-              </div>
-              {(watchingUpdates?.continueWatchingCount || 0) > 0 && (
-                <div className='text-xs text-blue-500 dark:text-blue-400 mt-1'>
-                  有剧集待续看！
-                </div>
-              )}
-            </div>
           </div>
-
-          {/* 有新集数的剧集 */}
-          {watchingUpdates &&
-            watchingUpdates.updatedSeries.filter(
-              (series) => series.hasNewEpisode,
-            ).length > 0 && (
-              <div className='mb-8'>
-                <div className='flex items-center gap-2 mb-4'>
-                  <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                    有新集数
-                  </h2>
-                  <div className='flex items-center gap-1'>
-                    <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></div>
-                    <span className='text-sm text-red-500 font-medium'>
-                      {
-                        watchingUpdates.updatedSeries.filter(
-                          (series) => series.hasNewEpisode,
-                        ).length
-                      }
-                      部剧集有更新
-                    </span>
-                  </div>
-                </div>
-
-                {/* 移动端网格布局 */}
-                <div className='sm:hidden'>
-                  <div className='grid grid-cols-2 gap-x-4 gap-y-8 pt-4 pb-6'>
-                    {watchingUpdates.updatedSeries
-                      .filter((series) => series.hasNewEpisode)
-                      .map((series, index) => (
-                        <div
-                          key={`new-${series.title}_${series.year}_${index}`}
-                          className='relative w-full'
-                        >
-                          <VideoCard
-                            title={series.title}
-                            poster={series.cover || ''}
-                            year={series.year}
-                            from='playrecord'
-                            progress={0}
-                            currentEpisode={series.currentEpisode}
-                            episodes={series.totalEpisodes}
-                            source_name={series.source_name}
-                            source={series.source_name}
-                            id={`${series.title}_${series.year}`}
-                            onDelete={undefined}
-                          />
-                          {/* 新集数徽章 */}
-                          <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-bounce z-50'>
-                            +{series.newEpisodes}集
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* 桌面端网格布局 */}
-                <div className='hidden sm:block'>
-                  <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-6 gap-y-10 pt-6 pb-8'>
-                    {watchingUpdates.updatedSeries
-                      .filter((series) => series.hasNewEpisode)
-                      .map((series, index) => (
-                        <div
-                          key={`new-${series.title}_${series.year}_${index}`}
-                          className='relative w-full'
-                        >
-                          <VideoCard
-                            title={series.title}
-                            poster={series.cover || ''}
-                            year={series.year}
-                            from='playrecord'
-                            progress={0}
-                            currentEpisode={series.currentEpisode}
-                            episodes={series.totalEpisodes}
-                            source_name={series.source_name}
-                            source={series.source_name}
-                            id={`${series.title}_${series.year}`}
-                            onDelete={undefined}
-                          />
-                          {/* 新集数徽章 */}
-                          <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-bounce z-50'>
-                            +{series.newEpisodes}集
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {/* 继续观看的剧集 */}
-          {watchingUpdates &&
-            watchingUpdates.updatedSeries.filter(
-              (series) => series.hasContinueWatching && !series.hasNewEpisode,
-            ).length > 0 && (
-              <div className='mb-8'>
-                <div className='flex items-center gap-2 mb-4'>
-                  <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                    继续观看
-                  </h2>
-                  <div className='flex items-center gap-1'>
-                    <div className='w-2 h-2 bg-blue-500 rounded-full animate-pulse'></div>
-                    <span className='text-sm text-blue-500 font-medium'>
-                      {
-                        watchingUpdates.updatedSeries.filter(
-                          (series) =>
-                            series.hasContinueWatching && !series.hasNewEpisode,
-                        ).length
-                      }
-                      部剧集待续看
-                    </span>
-                  </div>
-                </div>
-
-                {/* 移动端网格布局 */}
-                <div className='sm:hidden'>
-                  <div className='grid grid-cols-2 gap-x-4 gap-y-8 pt-4 pb-6'>
-                    {watchingUpdates.updatedSeries
-                      .filter(
-                        (series) =>
-                          series.hasContinueWatching && !series.hasNewEpisode,
-                      )
-                      .map((series, index) => (
-                        <div
-                          key={`continue-${series.title}_${series.year}_${index}`}
-                          className='relative w-full'
-                        >
-                          <VideoCard
-                            title={series.title}
-                            poster={series.cover || ''}
-                            year={series.year}
-                            from='playrecord'
-                            progress={0}
-                            currentEpisode={series.currentEpisode}
-                            episodes={series.totalEpisodes}
-                            source_name={series.source_name}
-                            source={series.source_name}
-                            id={`${series.title}_${series.year}`}
-                            onDelete={undefined}
-                          />
-                          {/* 继续观看标识 */}
-                          <div className='absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50'>
-                            继续观看
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* 桌面端网格布局 */}
-                <div className='hidden sm:block'>
-                  <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-x-6 gap-y-10 pt-6 pb-8'>
-                    {watchingUpdates.updatedSeries
-                      .filter(
-                        (series) =>
-                          series.hasContinueWatching && !series.hasNewEpisode,
-                      )
-                      .map((series, index) => (
-                        <div
-                          key={`continue-${series.title}_${series.year}_${index}`}
-                          className='relative w-full'
-                        >
-                          <VideoCard
-                            title={series.title}
-                            poster={series.cover || ''}
-                            year={series.year}
-                            from='playrecord'
-                            progress={0}
-                            currentEpisode={series.currentEpisode}
-                            episodes={series.totalEpisodes}
-                            source_name={series.source_name}
-                            source={series.source_name}
-                            id={`${series.title}_${series.year}`}
-                            onDelete={undefined}
-                          />
-                          {/* 继续观看标识 */}
-                          <div className='absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50'>
-                            继续观看
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
           {/* 历史观看记录 */}
           <div>
             <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-6'>
-              {watchingUpdates &&
-              (watchingUpdates.updatedCount > 0 ||
-                watchingUpdates.continueWatchingCount > 0)
-                ? '历史观看'
-                : '观看记录'}
+              观看记录
             </h3>
             {userStats.recentRecords && userStats.recentRecords.length > 0 ? (
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-                {userStats.recentRecords.map((record: PlayRecord) => (
-                  <div
-                    key={record.title + record.save_time}
-                    className='flex items-center space-x-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
-                    onClick={() => handlePlayRecord(record)}
-                  >
-                    <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
-                      {record.cover ? (
-                        <Image
-                          src={record.cover}
-                          alt={record.title}
-                          width={64}
-                          height={80}
-                          className='w-full h-full object-cover'
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              'none';
-                          }}
-                        />
-                      ) : (
-                        <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
-                          <svg
-                            className='w-8 h-8'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className='flex-1 min-w-0'>
-                      <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1'>
-                        {record.title}
-                      </h6>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                        来源: {record.source_name} | 年份: {record.year}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                        第 {record.index} 集 / 共 {record.total_episodes} 集
-                      </p>
-                      <div className='mt-2'>
-                        <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
-                          <span>播放进度</span>
-                          <span>
-                            {formatTime(record.play_time)} /{' '}
-                            {formatTime(record.total_time)} (
-                            {getProgressPercentage(
-                              record.play_time,
-                              record.total_time,
-                            )}
-                            %)
-                          </span>
-                        </div>
-                        <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
-                          <div
-                            className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
-                            style={{
-                              width: `${getProgressPercentage(
+                {userStats.recentRecords.map((record: PlayRecord, index) => {
+                  // 为每条记录生成不同的渐变背景
+                  const recordGradients = [
+                    'from-blue-100/95 to-cyan-200/90 dark:from-blue-800/90 dark:to-cyan-700/85',
+                    'from-purple-100/95 to-pink-200/90 dark:from-purple-800/90 dark:to-pink-700/85',
+                    'from-green-100/95 to-emerald-200/90 dark:from-green-800/90 dark:to-emerald-700/85',
+                    'from-orange-100/95 to-amber-200/90 dark:from-orange-800/90 dark:to-amber-700/85',
+                    'from-indigo-100/95 to-violet-200/90 dark:from-indigo-800/90 dark:to-violet-700/85',
+                    'from-teal-100/95 to-cyan-200/90 dark:from-teal-800/90 dark:to-cyan-700/85',
+                  ];
+                  const gradientClass =
+                    recordGradients[index % recordGradients.length];
+
+                  return (
+                    <div
+                      key={record.title + record.save_time}
+                      className={`flex items-center space-x-4 p-4 bg-gradient-to-br ${gradientClass} rounded-lg border-2 border-gray-300/90 dark:border-gray-600/95 cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm`}
+                      onClick={() => handlePlayRecord(record)}
+                    >
+                      <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
+                        {record.cover ? (
+                          <Image
+                            src={record.cover}
+                            alt={record.title}
+                            width={64}
+                            height={80}
+                            className='w-full h-full object-cover'
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                'none';
+                            }}
+                          />
+                        ) : (
+                          <div className='w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500'>
+                            <svg
+                              className='w-8 h-8'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth='2'
+                                d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3'
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <h6 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1'>
+                          {record.title}
+                        </h6>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
+                          来源: {record.source_name} | 年份: {record.year}
+                        </p>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
+                          第 {record.index} 集 / 共 {record.total_episodes} 集
+                        </p>
+                        <div className='mt-2'>
+                          <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1'>
+                            <span>播放进度</span>
+                            <span>
+                              {formatTime(record.play_time)} /{' '}
+                              {formatTime(record.total_time)} (
+                              {getProgressPercentage(
                                 record.play_time,
                                 record.total_time,
-                              )}%`,
-                            }}
-                          ></div>
+                              )}
+                              %)
+                            </span>
+                          </div>
+                          <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5'>
+                            <div
+                              className='bg-blue-500 h-1.5 rounded-full transition-all duration-300'
+                              style={{
+                                width: `${getProgressPercentage(
+                                  record.play_time,
+                                  record.total_time,
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                          {formatDateTime(record.save_time)}
                         </div>
                       </div>
-                      <div className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                        {formatDateTime(record.save_time)}
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className='text-center py-12 text-gray-500 dark:text-gray-400'>

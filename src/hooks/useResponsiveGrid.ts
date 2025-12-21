@@ -38,19 +38,27 @@ export const useResponsiveGrid = (
       let columnCount: number;
 
       // 响应式列数计算
-      if (containerWidth >= 1536)
-        columnCount = 8; // 2xl
-      else if (containerWidth >= 1280)
-        columnCount = 7; // xl
-      else if (containerWidth >= 1024)
-        columnCount = 6; // lg
-      else if (containerWidth >= 768)
-        columnCount = 5; // md
-      else if (containerWidth >= 640)
-        columnCount = 4; // sm
-      else if (containerWidth >= 475)
-        columnCount = 3; // xs
-      else columnCount = 2; // mobile
+      if (containerWidth >= 1536) {
+        columnCount = 8;
+      } // 2xl
+      else if (containerWidth >= 1280) {
+        columnCount = 7;
+      } // xl
+      else if (containerWidth >= 1024) {
+        columnCount = 6;
+      } // lg
+      else if (containerWidth >= 768) {
+        columnCount = 5;
+      } // md
+      else if (containerWidth >= 640) {
+        columnCount = 4;
+      } // sm
+      else if (containerWidth >= 475) {
+        columnCount = 3;
+      } // xs
+      else {
+        columnCount = 2;
+      } // mobile
 
       // 计算项目尺寸
       const gap = columnCount > 3 ? 0 : 8; // 大屏更大间距
@@ -153,7 +161,9 @@ export const useResponsiveGrid = (
     setupObserver();
 
     return () => {
-      if (cleanup) cleanup();
+      if (cleanup) {
+        cleanup();
+      }
     };
   }, [containerRef, calculateDimensions]);
 

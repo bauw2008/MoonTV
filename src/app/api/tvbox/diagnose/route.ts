@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 
 function getBaseUrl(req: NextRequest): string {
   const envBase = (process.env.SITE_BASE || '').trim().replace(/\/$/, '');
-  if (envBase) return envBase;
+  if (envBase) {
+    return envBase;
+  }
   const proto = (req.headers.get('x-forwarded-proto') || 'https')
     .split(',')[0]
     .trim();
@@ -19,7 +21,9 @@ function getBaseUrl(req: NextRequest): string {
   )
     .split(',')[0]
     .trim();
-  if (!host) return '';
+  if (!host) {
+    return '';
+  }
   return `${proto}://${host}`;
 }
 

@@ -66,7 +66,7 @@ export default function artplayerPluginSkipSettings(
     // 智能检测是否为短剧（优先时长检测，再检查标签）
     const isShortDrama = () => {
       // 第一优先级：时长检测（最快）
-      if (art && art.duration && art.duration < 480) {
+      if (art?.duration && art.duration < 480) {
         return true; // 480秒 = 8分钟
       }
 
@@ -118,7 +118,9 @@ export default function artplayerPluginSkipSettings(
 
     // 时间格式转换函数
     const timeToSeconds = (timeStr: string): number => {
-      if (!timeStr || timeStr.trim() === '') return 0;
+      if (!timeStr || timeStr.trim() === '') {
+        return 0;
+      }
       if (timeStr.includes(':')) {
         const parts = timeStr.split(':');
         const minutes = parseInt(parts[0]) || 0;
@@ -738,7 +740,7 @@ export default function artplayerPluginSkipSettings(
 
           localStorage.setItem('skipSettings', JSON.stringify(config));
 
-          if (art && art.notice) {
+          if (art?.notice) {
             art.notice.show = '跳过设置已保存';
           }
         } catch (e) {
@@ -756,9 +758,12 @@ export default function artplayerPluginSkipSettings(
             config.endingRemaining,
             0,
           );
-          if (autoSkipCheckbox) autoSkipCheckbox.checked = config.autoSkip;
-          if (autoNextEpisodeCheckbox)
+          if (autoSkipCheckbox) {
+            autoSkipCheckbox.checked = config.autoSkip;
+          }
+          if (autoNextEpisodeCheckbox) {
             autoNextEpisodeCheckbox.checked = config.autoNextEpisode;
+          }
 
           // 重置片尾模式为剩余
           const remainingRadio = panel.querySelector(
@@ -769,7 +774,7 @@ export default function artplayerPluginSkipSettings(
             switchEndingMode('remaining');
           }
 
-          if (art && art.notice) {
+          if (art?.notice) {
             art.notice.show = '跳过设置已重置';
           }
         } catch (e) {
@@ -794,7 +799,7 @@ export default function artplayerPluginSkipSettings(
         locateOpeningBtn.addEventListener('click', () => {
           try {
             console.log('SkipSettings: 片头定位按钮点击');
-            if (art && art.currentTime !== undefined) {
+            if (art?.currentTime !== undefined) {
               console.log('SkipSettings: 当前时间', art.currentTime);
               const times = getTimeValues();
               console.log('SkipSettings: 获取到的时间值', times);
@@ -819,8 +824,7 @@ export default function artplayerPluginSkipSettings(
           try {
             console.log('SkipSettings: 片尾定位按钮点击');
             if (
-              art &&
-              art.currentTime !== undefined &&
+              art?.currentTime !== undefined &&
               art.duration &&
               panelElement
             ) {
@@ -908,7 +912,9 @@ export default function artplayerPluginSkipSettings(
 
     // 更新时间显示
     const updateTimeDisplayCurrent = () => {
-      if (!panelElement || !art) return;
+      if (!panelElement || !art) {
+        return;
+      }
 
       const currentTimeEl = panelElement.querySelector('#currentTime');
       const remainingTimeEl = panelElement.querySelector('#remainingTime');
@@ -937,7 +943,9 @@ export default function artplayerPluginSkipSettings(
         }
 
         const timeToSeconds = (timeStr: string): number => {
-          if (!timeStr || timeStr.trim() === '') return 0;
+          if (!timeStr || timeStr.trim() === '') {
+            return 0;
+          }
           if (timeStr.includes(':')) {
             const parts = timeStr.split(':');
             const minutes = parseInt(parts[0]) || 0;
@@ -999,7 +1007,9 @@ export default function artplayerPluginSkipSettings(
       endingEnd: number,
     ) => {
       try {
-        if (!panelElement) return;
+        if (!panelElement) {
+          return;
+        }
 
         const formatTime = (seconds: number): string => {
           const mins = Math.floor(seconds / 60);
@@ -1041,8 +1051,9 @@ export default function artplayerPluginSkipSettings(
           endingFirstEl.value = formatTime(endingFirst);
           console.log('SkipSettings: 设置片尾时间', endingFirstEl.value);
         }
-        if (endingEndEl)
+        if (endingEndEl) {
           endingEndEl.value = endingEnd > 0 ? formatTime(endingEnd) : '';
+        }
       } catch (e) {
         console.error('SkipSettings: 设置时间值失败', e);
       }
@@ -1050,7 +1061,9 @@ export default function artplayerPluginSkipSettings(
 
     // 显示面板
     const show = () => {
-      if (!art || !panelElement) return;
+      if (!art || !panelElement) {
+        return;
+      }
 
       // 智能检测短剧
       detectShortDrama();
@@ -1082,7 +1095,7 @@ export default function artplayerPluginSkipSettings(
       isVisible = true;
 
       // 保持工具栏显示
-      if (art.template && art.template.$controls) {
+      if (art.template?.$controls) {
         art.template.$controls.classList.add('art-control-show');
       }
 
@@ -1091,13 +1104,15 @@ export default function artplayerPluginSkipSettings(
 
     // 隐藏面板
     const hide = () => {
-      if (!panelElement) return;
+      if (!panelElement) {
+        return;
+      }
 
       panelElement.style.display = 'none';
       isVisible = false;
 
       // 恢复工具栏自动隐藏
-      if (art.template && art.template.$controls) {
+      if (art.template?.$controls) {
         art.template.$controls.classList.remove('art-control-show');
       }
     };
@@ -1209,7 +1224,7 @@ export default function artplayerPluginSkipSettings(
     document.head.appendChild(noticeStyle);
 
     // 将面板和提醒添加到播放器容器
-    if (art.template && art.template.$player) {
+    if (art.template?.$player) {
       art.template.$player.appendChild(panelElement);
       art.template.$player.appendChild(shortDramaNotice);
     } else if (art.container) {
@@ -1219,7 +1234,9 @@ export default function artplayerPluginSkipSettings(
 
     // 点击外部关闭面板
     const handleClickOutside = (e: MouseEvent) => {
-      if (!panelElement) return;
+      if (!panelElement) {
+        return;
+      }
 
       const target = e.target as Node;
       const isInPanel = panelElement!.contains(target);
@@ -1241,7 +1258,9 @@ export default function artplayerPluginSkipSettings(
     let timeUpdateInterval: NodeJS.Timeout | null = null;
 
     const startTimeUpdate = () => {
-      if (timeUpdateInterval) clearInterval(timeUpdateInterval);
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+      }
       timeUpdateInterval = setInterval(() => {
         if (isVisible) {
           updateTimeDisplayCurrent();

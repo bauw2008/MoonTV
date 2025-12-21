@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 'use client';
 
 /**
@@ -16,7 +16,7 @@
 
 import { getAuthInfoFromBrowserCookie } from './auth';
 import type { Favorite, PlayRecord } from './types';
-import { EpisodeSkipConfig, UserPlayStat } from './types';
+import { UserPlayStat } from './types';
 import { forceClearWatchingUpdatesCache } from './watching-updates';
 
 // 重新导出类型以保持API兼容性
@@ -125,7 +125,9 @@ class HybridCacheManager {
    * 获取用户缓存数据
    */
   private getUserCache(username: string): UserCacheStore {
-    if (typeof window === 'undefined') return {};
+    if (typeof window === 'undefined') {
+      return {};
+    }
 
     // 🔧 优化：Kvrocks/Upstash 模式使用内存缓存
     if (STORAGE_TYPE !== 'localstorage') {
@@ -147,7 +149,9 @@ class HybridCacheManager {
    * 保存用户缓存数据
    */
   private saveUserCache(username: string, cache: UserCacheStore): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     // 🔧 优化：Kvrocks/Upstash 模式使用内存缓存（不占用 localStorage，避免 QuotaExceededError）
     if (STORAGE_TYPE !== 'localstorage') {
@@ -249,7 +253,9 @@ class HybridCacheManager {
    */
   getCachedPlayRecords(): Record<string, PlayRecord> | null {
     const username = this.getCurrentUsername();
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
 
     const userCache = this.getUserCache(username);
     const cached = userCache.playRecords;
@@ -266,7 +272,9 @@ class HybridCacheManager {
    */
   cachePlayRecords(data: Record<string, PlayRecord>): void {
     const username = this.getCurrentUsername();
-    if (!username) return;
+    if (!username) {
+      return;
+    }
 
     const userCache = this.getUserCache(username);
     userCache.playRecords = this.createCacheData(data);
@@ -278,7 +286,9 @@ class HybridCacheManager {
    */
   getCachedFavorites(): Record<string, Favorite> | null {
     const username = this.getCurrentUsername();
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
 
     const userCache = this.getUserCache(username);
     const cached = userCache.favorites;
@@ -295,7 +305,9 @@ class HybridCacheManager {
    */
   cacheFavorites(data: Record<string, Favorite>): void {
     const username = this.getCurrentUsername();
-    if (!username) return;
+    if (!username) {
+      return;
+    }
 
     const userCache = this.getUserCache(username);
     userCache.favorites = this.createCacheData(data);
@@ -307,7 +319,9 @@ class HybridCacheManager {
    */
   getCachedSearchHistory(): string[] | null {
     const username = this.getCurrentUsername();
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
 
     const userCache = this.getUserCache(username);
     const cached = userCache.searchHistory;
@@ -324,7 +338,9 @@ class HybridCacheManager {
    */
   cacheSearchHistory(data: string[]): void {
     const username = this.getCurrentUsername();
-    if (!username) return;
+    if (!username) {
+      return;
+    }
 
     const userCache = this.getUserCache(username);
     userCache.searchHistory = this.createCacheData(data);
@@ -336,7 +352,9 @@ class HybridCacheManager {
    */
   getCachedUserStats(): UserStats | null {
     const username = this.getCurrentUsername();
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
 
     const userCache = this.getUserCache(username);
     const cached = userCache.userStats;
@@ -353,7 +371,9 @@ class HybridCacheManager {
    */
   cacheUserStats(data: UserStats): void {
     const username = this.getCurrentUsername();
-    if (!username) return;
+    if (!username) {
+      return;
+    }
 
     const userCache = this.getUserCache(username);
     userCache.userStats = this.createCacheData(data);
@@ -365,7 +385,9 @@ class HybridCacheManager {
    */
   clearUserCache(username?: string): void {
     const targetUsername = username || this.getCurrentUsername();
-    if (!targetUsername) return;
+    if (!targetUsername) {
+      return;
+    }
 
     try {
       const cacheKey = this.getUserCacheKey(targetUsername);
@@ -382,7 +404,9 @@ class HybridCacheManager {
    */
   forceRefreshPlayRecordsCache(immediate = false): void {
     const username = this.getCurrentUsername();
-    if (!username) return;
+    if (!username) {
+      return;
+    }
 
     const userCache = this.getUserCache(username);
     if (userCache.playRecords) {
@@ -403,7 +427,9 @@ class HybridCacheManager {
    * 清除所有过期缓存
    */
   clearExpiredCaches(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     try {
       const keysToRemove: string[] = [];
@@ -519,7 +545,7 @@ async function handleDatabaseOperationFailure(
   error: any,
 ): Promise<void> {
   console.error(`数据库操作失败 (${dataType}):`, error);
-  triggerGlobalError(`数据库操作失败`);
+  triggerGlobalError('数据库操作失败');
 
   try {
     let freshData: any;
@@ -528,18 +554,18 @@ async function handleDatabaseOperationFailure(
     switch (dataType) {
       case 'playRecords':
         freshData =
-          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
+          await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
         cacheManager.cachePlayRecords(freshData);
         eventName = 'playRecordsUpdated';
         break;
       case 'favorites':
         freshData =
-          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
+          await fetchFromApi<Record<string, Favorite>>('/api/favorites');
         cacheManager.cacheFavorites(freshData);
         eventName = 'favoritesUpdated';
         break;
       case 'searchHistory':
-        freshData = await fetchFromApi<string[]>(`/api/searchhistory`);
+        freshData = await fetchFromApi<string[]>('/api/searchhistory');
         cacheManager.cacheSearchHistory(freshData);
         eventName = 'searchHistoryUpdated';
         break;
@@ -570,7 +596,17 @@ async function fetchWithAuth(
   url: string,
   options?: RequestInit,
 ): Promise<Response> {
-  const res = await fetch(url, options);
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (fetchError) {
+    // 网络错误或 fetch 失败 - 静默处理，避免控制台过多警告
+    // console.debug('Network error in fetchWithAuth:', fetchError);
+    throw new Error(
+      `网络请求失败: ${fetchError instanceof Error ? fetchError.message : '未知错误'}`,
+    );
+  }
+
   if (!res.ok) {
     // 如果是 401 未授权，跳转到登录页面
     if (res.status === 401) {
@@ -736,7 +772,7 @@ export async function getAllPlayRecords(
       try {
         console.log('🔄 强制刷新播放记录，跳过缓存直接从API获取');
         const freshData =
-          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
+          await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
         cacheManager.cachePlayRecords(freshData);
         // 触发数据更新事件
         window.dispatchEvent(
@@ -759,7 +795,7 @@ export async function getAllPlayRecords(
 
     if (cachedData) {
       // 返回缓存数据，同时后台异步更新
-      fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`)
+      fetchFromApi<Record<string, PlayRecord>>('/api/playrecords')
         .then((freshData) => {
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
@@ -782,7 +818,7 @@ export async function getAllPlayRecords(
       // 缓存为空，直接从 API 获取并缓存
       try {
         const freshData =
-          await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
+          await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
         cacheManager.cachePlayRecords(freshData);
         return freshData;
       } catch (err) {
@@ -796,7 +832,9 @@ export async function getAllPlayRecords(
   // localstorage 模式
   try {
     const raw = localStorage.getItem(PLAY_RECORDS_KEY);
-    if (!raw) return {};
+    if (!raw) {
+      return {};
+    }
     return JSON.parse(raw) as Record<string, PlayRecord>;
   } catch (err) {
     console.error('读取播放记录失败:', err);
@@ -901,7 +939,7 @@ export async function savePlayRecord(
 
           // 🔧 优化：立即获取最新数据并更新缓存，触发更新事件
           const freshData =
-            await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
+            await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
           cacheManager.cachePlayRecords(freshData);
           window.dispatchEvent(
             new CustomEvent('playRecordsUpdated', {
@@ -921,7 +959,7 @@ export async function savePlayRecord(
         // 特别是对于 kvrocks 等需要实时同步的场景
         try {
           const freshData =
-            await fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`);
+            await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedRecords) !== JSON.stringify(freshData)) {
             cacheManager.cachePlayRecords(freshData);
@@ -1098,7 +1136,7 @@ export async function getSearchHistory(): Promise<string[]> {
 
     if (cachedData) {
       // 返回缓存数据，同时后台异步更新
-      fetchFromApi<string[]>(`/api/searchhistory`)
+      fetchFromApi<string[]>('/api/searchhistory')
         .then((freshData) => {
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
@@ -1120,7 +1158,7 @@ export async function getSearchHistory(): Promise<string[]> {
     } else {
       // 缓存为空，直接从 API 获取并缓存
       try {
-        const freshData = await fetchFromApi<string[]>(`/api/searchhistory`);
+        const freshData = await fetchFromApi<string[]>('/api/searchhistory');
         cacheManager.cacheSearchHistory(freshData);
         return freshData;
       } catch (err) {
@@ -1134,7 +1172,9 @@ export async function getSearchHistory(): Promise<string[]> {
   // localStorage 模式
   try {
     const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      return [];
+    }
     const arr = JSON.parse(raw) as string[];
     // 仅返回字符串数组
     return Array.isArray(arr) ? arr : [];
@@ -1151,7 +1191,9 @@ export async function getSearchHistory(): Promise<string[]> {
  */
 export async function addSearchHistory(keyword: string): Promise<void> {
   const trimmed = keyword.trim();
-  if (!trimmed) return;
+  if (!trimmed) {
+    return;
+  }
 
   // 数据库存储模式：乐观更新策略（包括 redis 和 upstash）
   if (STORAGE_TYPE !== 'localstorage') {
@@ -1187,7 +1229,9 @@ export async function addSearchHistory(keyword: string): Promise<void> {
   }
 
   // localStorage 模式
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
 
   try {
     const history = await getSearchHistory();
@@ -1227,7 +1271,7 @@ export async function clearSearchHistory(): Promise<void> {
 
     // 异步同步到数据库
     try {
-      await fetchWithAuth(`/api/searchhistory`, {
+      await fetchWithAuth('/api/searchhistory', {
         method: 'DELETE',
       });
     } catch (err) {
@@ -1237,7 +1281,9 @@ export async function clearSearchHistory(): Promise<void> {
   }
 
   // localStorage 模式
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   localStorage.removeItem(SEARCH_HISTORY_KEY);
   window.dispatchEvent(
     new CustomEvent('searchHistoryUpdated', {
@@ -1252,7 +1298,9 @@ export async function clearSearchHistory(): Promise<void> {
  */
 export async function deleteSearchHistory(keyword: string): Promise<void> {
   const trimmed = keyword.trim();
-  if (!trimmed) return;
+  if (!trimmed) {
+    return;
+  }
 
   // 数据库存储模式：乐观更新策略（包括 redis 和 upstash）
   if (STORAGE_TYPE !== 'localstorage') {
@@ -1283,7 +1331,9 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
   }
 
   // localStorage 模式
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
 
   try {
     const history = await getSearchHistory();
@@ -1319,7 +1369,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
 
     if (cachedData) {
       // 返回缓存数据，同时后台异步更新
-      fetchFromApi<Record<string, Favorite>>(`/api/favorites`)
+      fetchFromApi<Record<string, Favorite>>('/api/favorites')
         .then((freshData) => {
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
@@ -1342,7 +1392,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
       // 缓存为空，直接从 API 获取并缓存
       try {
         const freshData =
-          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
+          await fetchFromApi<Record<string, Favorite>>('/api/favorites');
         cacheManager.cacheFavorites(freshData);
         return freshData;
       } catch (err) {
@@ -1356,7 +1406,9 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
   // localStorage 模式
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
-    if (!raw) return {};
+    if (!raw) {
+      return {};
+    }
     return JSON.parse(raw) as Record<string, Favorite>;
   } catch (err) {
     console.error('读取收藏失败:', err);
@@ -1504,7 +1556,7 @@ export async function isFavorited(
 
     if (cachedFavorites) {
       // 返回缓存数据，同时后台异步更新
-      fetchFromApi<Record<string, Favorite>>(`/api/favorites`)
+      fetchFromApi<Record<string, Favorite>>('/api/favorites')
         .then((freshData) => {
           // 只有数据真正不同时才更新缓存
           if (JSON.stringify(cachedFavorites) !== JSON.stringify(freshData)) {
@@ -1527,7 +1579,7 @@ export async function isFavorited(
       // 缓存为空，直接从 API 获取并缓存
       try {
         const freshData =
-          await fetchFromApi<Record<string, Favorite>>(`/api/favorites`);
+          await fetchFromApi<Record<string, Favorite>>('/api/favorites');
         cacheManager.cacheFavorites(freshData);
         return !!freshData[key];
       } catch (err) {
@@ -1562,7 +1614,7 @@ export async function clearAllPlayRecords(): Promise<void> {
 
     // 异步同步到数据库
     try {
-      await fetchWithAuth(`/api/playrecords`, {
+      await fetchWithAuth('/api/playrecords', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -1575,7 +1627,9 @@ export async function clearAllPlayRecords(): Promise<void> {
   }
 
   // localStorage 模式
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   localStorage.removeItem(PLAY_RECORDS_KEY);
   window.dispatchEvent(
     new CustomEvent('playRecordsUpdated', {
@@ -1603,7 +1657,7 @@ export async function clearAllFavorites(): Promise<void> {
 
     // 异步同步到数据库
     try {
-      await fetchWithAuth(`/api/favorites`, {
+      await fetchWithAuth('/api/favorites', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -1616,7 +1670,9 @@ export async function clearAllFavorites(): Promise<void> {
   }
 
   // localStorage 模式
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   localStorage.removeItem(FAVORITES_KEY);
   window.dispatchEvent(
     new CustomEvent('favoritesUpdated', {
@@ -1664,14 +1720,16 @@ export async function forceGetFreshPlayRecords(): Promise<
  * 强制从服务器重新获取数据并更新缓存
  */
 export async function refreshAllCache(): Promise<void> {
-  if (STORAGE_TYPE === 'localstorage') return;
+  if (STORAGE_TYPE === 'localstorage') {
+    return;
+  }
 
   try {
     // 并行刷新所有数据
     const [playRecords, favorites, searchHistory] = await Promise.allSettled([
-      fetchFromApi<Record<string, PlayRecord>>(`/api/playrecords`),
-      fetchFromApi<Record<string, Favorite>>(`/api/favorites`),
-      fetchFromApi<string[]>(`/api/searchhistory`),
+      fetchFromApi<Record<string, PlayRecord>>('/api/playrecords'),
+      fetchFromApi<Record<string, Favorite>>('/api/favorites'),
+      fetchFromApi<string[]>('/api/searchhistory'),
     ]);
 
     if (playRecords.status === 'fulfilled') {
@@ -1781,7 +1839,9 @@ export function subscribeToDataUpdates<T>(
  * 适合在应用启动时调用，提升后续访问速度
  */
 export async function preloadUserData(): Promise<void> {
-  if (STORAGE_TYPE === 'localstorage') return;
+  if (STORAGE_TYPE === 'localstorage') {
+    return;
+  }
 
   // 检查是否已有有效缓存，避免重复请求
   const status = getCacheStatus();
@@ -1867,7 +1927,9 @@ export function clearDoubanCache(): void {
  * 基于注册时间或首次观看时间计算用户已注册的自然天数
  */
 export function calculateRegistrationDays(startDate: number): number {
-  if (!startDate || startDate <= 0) return 0;
+  if (!startDate || startDate <= 0) {
+    return 0;
+  }
 
   const firstDate = new Date(startDate);
   const currentDate = new Date();
@@ -2176,7 +2238,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
 
           if (response.ok) {
             const responseData = await response.json();
-            console.log(`API响应数据:`, responseData);
+            console.log('API响应数据:', responseData);
 
             // 更新localStorage中的上次播放进度和更新时间
             localStorage.setItem(lastProgressKey, record.play_time.toString());
@@ -2185,7 +2247,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
             // 立即更新缓存中的用户统计数据
             if (responseData.userStats) {
               cacheManager.cacheUserStats(responseData.userStats);
-              console.log(`更新用户统计数据缓存:`, responseData.userStats);
+              console.log('更新用户统计数据缓存:', responseData.userStats);
 
               // 触发用户统计数据更新事件
               window.dispatchEvent(

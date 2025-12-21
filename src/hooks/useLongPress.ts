@@ -47,7 +47,9 @@ export const useLongPress = ({
 
       pressTimer.current = setTimeout(() => {
         // 再次检查是否仍然活跃
-        if (!isActive.current) return;
+        if (!isActive.current) {
+          return;
+        }
 
         isLongPress.current = true;
 
@@ -64,7 +66,9 @@ export const useLongPress = ({
 
   const handleMove = useCallback(
     (clientX: number, clientY: number) => {
-      if (!startPosition.current || !isActive.current) return;
+      if (!startPosition.current || !isActive.current) {
+        return;
+      }
 
       const distance = Math.sqrt(
         Math.pow(clientX - startPosition.current.x, 2) +

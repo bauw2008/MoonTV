@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     // 检查用户是否登录
     const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
+    if (!authInfo?.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

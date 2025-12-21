@@ -25,7 +25,9 @@ async function getCache(key: string): Promise<any | null> {
   try {
     // 优先从统一存储获取
     const cached = await ClientCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     // 兜底：从localStorage获取（兼容性）
     if (typeof localStorage !== 'undefined') {
@@ -149,7 +151,9 @@ export function getDoubanCacheStats(): {
 
 // 清理所有缓存（豆瓣+bangumi）
 export function clearDoubanCache(): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
 
   const keys = Object.keys(localStorage).filter(
     (key) => key.startsWith('douban-') || key.startsWith('bangumi-'),
@@ -160,7 +164,9 @@ export function clearDoubanCache(): void {
 
 // 初始化缓存系统（应该在应用启动时调用）
 export async function initDoubanCache(): Promise<void> {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
 
   // 立即清理一次过期缓存
   await cleanExpiredCache();

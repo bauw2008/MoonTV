@@ -55,7 +55,7 @@ export default [
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-alert': 'warn',
-      
+
       // React 规则
       'react/jsx-uses-react': 'off', // React 17+ 不需要导入 React
       'react/react-in-jsx-scope': 'off', // React 17+ 不需要 React in scope
@@ -69,11 +69,11 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      
+
       // React Hooks 规则
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      
+
       // 导入排序
       'simple-import-sort/exports': 'warn',
       'simple-import-sort/imports': [
@@ -111,7 +111,7 @@ export default [
           ],
         },
       ],
-      
+
       // 未使用导入
       'unused-imports/no-unused-imports': 'warn',
       'unused-imports/no-unused-vars': [
@@ -123,14 +123,14 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      
+
       // 代码质量
-      'eqeqeq': ['warn', 'always'],
-      'curly': ['warn', 'all'],
+      eqeqeq: ['warn', 'always'],
+      curly: ['warn', 'all'],
       'brace-style': ['warn', '1tbs'],
       'comma-dangle': ['warn', 'always-multiline'],
-      'semi': ['warn', 'always'],
-      'quotes': ['warn', 'single', { avoidEscape: true }],
+      semi: ['warn', 'always'],
+      quotes: ['warn', 'single', { avoidEscape: true }],
     },
   },
   {
@@ -170,14 +170,14 @@ export default [
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-alert': 'warn',
-      
+
       // TypeScript 规则
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      
+
       // React 规则
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
@@ -191,11 +191,11 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      
+
       // React Hooks 规则
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      
+
       // 导入排序
       'simple-import-sort/exports': 'warn',
       'simple-import-sort/imports': [
@@ -233,7 +233,7 @@ export default [
           ],
         },
       ],
-      
+
       // 未使用导入
       'unused-imports/no-unused-imports': 'warn',
       'unused-imports/no-unused-vars': [
@@ -245,14 +245,14 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      
+
       // 代码质量
-      'eqeqeq': ['warn', 'always'],
-      'curly': ['warn', 'all'],
+      eqeqeq: ['warn', 'always'],
+      curly: ['warn', 'all'],
       'brace-style': ['warn', '1tbs'],
       'comma-dangle': ['warn', 'always-multiline'],
-      'semi': ['warn', 'always'],
-      'quotes': ['warn', 'single', { avoidEscape: true }],
+      semi: ['warn', 'always'],
+      quotes: ['warn', 'single', { avoidEscape: true }],
     },
   },
 ];

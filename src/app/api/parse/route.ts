@@ -58,19 +58,39 @@ const PARSERS: Parser[] = [
 function detectPlatform(url: string): string {
   const urlLower = url.toLowerCase();
 
-  if (urlLower.includes('qq.com') || urlLower.includes('v.qq.com')) return 'qq';
-  if (urlLower.includes('iqiyi.com') || urlLower.includes('qiyi.com'))
+  if (urlLower.includes('qq.com') || urlLower.includes('v.qq.com')) {
+    return 'qq';
+  }
+  if (urlLower.includes('iqiyi.com') || urlLower.includes('qiyi.com')) {
     return 'iqiyi';
-  if (urlLower.includes('youku.com')) return 'youku';
-  if (urlLower.includes('mgtv.com')) return 'mgtv';
-  if (urlLower.includes('bilibili.com')) return 'bilibili';
-  if (urlLower.includes('sohu.com')) return 'sohu';
-  if (urlLower.includes('letv.com') || urlLower.includes('le.com'))
+  }
+  if (urlLower.includes('youku.com')) {
+    return 'youku';
+  }
+  if (urlLower.includes('mgtv.com')) {
+    return 'mgtv';
+  }
+  if (urlLower.includes('bilibili.com')) {
+    return 'bilibili';
+  }
+  if (urlLower.includes('sohu.com')) {
+    return 'sohu';
+  }
+  if (urlLower.includes('letv.com') || urlLower.includes('le.com')) {
     return 'letv';
-  if (urlLower.includes('pptv.com')) return 'pptv';
-  if (urlLower.includes('tudou.com')) return 'tudou';
-  if (urlLower.includes('wasu.com')) return 'wasu';
-  if (urlLower.includes('1905.com')) return '1905';
+  }
+  if (urlLower.includes('pptv.com')) {
+    return 'pptv';
+  }
+  if (urlLower.includes('tudou.com')) {
+    return 'tudou';
+  }
+  if (urlLower.includes('wasu.com')) {
+    return 'wasu';
+  }
+  if (urlLower.includes('1905.com')) {
+    return '1905';
+  }
 
   return 'unknown';
 }
