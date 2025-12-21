@@ -227,11 +227,11 @@ export default function artplayerPluginSkipSettings(
           bottom: 55px;
 		  left: 50%;
 		  transform: translateX(-50%);
-          width: 200px;
+          width: 280px;
           background: rgba(0, 0, 0, 0.8);
           backdrop-filter: blur(12px);
           border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
+          border-radius: 10px;
           z-index: 9999;
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
           display: none;
@@ -239,32 +239,32 @@ export default function artplayerPluginSkipSettings(
         }
         
         .art-skip-settings-content {
-          padding: 6px;
+          padding: 10px;
           color: #fff;
         }
         
         .art-skip-section {
-          margin-bottom: 5px;
-          padding: 3px;
+          margin-bottom: 8px;
+          padding: 6px;
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
+          border-radius: 6px;
         }
         
         .art-skip-section-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 3px;
-          gap: 4px;
+          margin-bottom: 6px;
+          gap: 6px;
         }
         
         .art-skip-icon {
-          font-size: 12px;
-          margin-right: 4px;
+          font-size: 16px;
+          margin-right: 6px;
         }
         
         .art-skip-section-title {
-          font-size: 10px;
+          font-size: 13px;
           font-weight: 500;
           color: #fff;
           flex: 1;
@@ -272,25 +272,25 @@ export default function artplayerPluginSkipSettings(
         
         .art-skip-mode-selector-inline {
           display: flex;
-          gap: 4px;
+          gap: 6px;
           align-items: center;
-          margin-right: 8px;
+          margin-right: 12px;
         }
         
         .art-skip-mode-option {
           display: flex;
           align-items: center;
-          gap: 1px;
+          gap: 3px;
           cursor: pointer;
         }
         
         .art-skip-mode-option input[type="radio"] {
-          width: 8px;
-          height: 8px;
+          width: 12px;
+          height: 12px;
         }
         
         .art-skip-mode-label {
-          font-size: 7px;
+          font-size: 10px;
           color: #ccc;
           font-weight: 500;
         }
@@ -298,18 +298,18 @@ export default function artplayerPluginSkipSettings(
         .art-skip-time-grid {
           display: grid;
           grid-template-columns: 1fr 1fr auto;
-          gap: 2px;
+          gap: 4px;
           align-items: end;
         }
         
         .art-skip-time-field {
           display: flex;
           flex-direction: column;
-          gap: 0px;
+          gap: 2px;
         }
         
         .art-skip-time-label {
-          font-size: 9px;
+          font-size: 11px;
           color: #ccc;
           font-weight: 500;
         }
@@ -317,18 +317,18 @@ export default function artplayerPluginSkipSettings(
         .art-skip-time-input {
           background: rgba(0, 0, 0, 0.7);
           border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 2px;
-          padding: 0px 2px;
+          border-radius: 4px;
+          padding: 2px 4px;
           color: #fff;
-          font-size: 10px;
+          font-size: 12px;
           font-weight: 500;
           outline: none;
           width: 100%;
           text-align: center;
           transition: all 0.2s;
-          height: 16px;
+          height: 22px;
           box-sizing: border-box;
-          line-height: 16px;
+          line-height: 18px;
         }
         
         .art-skip-time-input:focus {
@@ -350,11 +350,11 @@ export default function artplayerPluginSkipSettings(
         
         .art-skip-slider {
           position: relative;
-          width: 28px;
-          height: 16px;
+          width: 36px;
+          height: 20px;
           background: #555;
-          border-radius: 8px;
-          margin-right: 6px;
+          border-radius: 10px;
+          margin-right: 8px;
           transition: background 0.2s;
           flex-shrink: 0;
         }
@@ -362,8 +362,8 @@ export default function artplayerPluginSkipSettings(
         .art-skip-slider::before {
           content: '';
           position: absolute;
-          width: 12px;
-          height: 12px;
+          width: 16px;
+          height: 16px;
           background: #fff;
           border-radius: 50%;
           top: 2px;
@@ -376,7 +376,7 @@ export default function artplayerPluginSkipSettings(
         }
         
         .art-skip-switch input[type="checkbox"]:checked + .art-skip-slider::before {
-          transform: translateX(12px);
+          transform: translateX(16px);
         }
         
         
@@ -465,14 +465,14 @@ export default function artplayerPluginSkipSettings(
         .art-skip-locate-btn {
           background: rgba(0, 168, 255, 0.2);
           border: 1px solid rgba(0, 168, 255, 0.3);
-          border-radius: 2px;
+          border-radius: 4px;
           color: #fff;
           cursor: pointer;
-          padding: 1px 3px;
+          padding: 3px 6px;
           transition: all 0.2s;
           flex-shrink: 0;
-          min-width: 16px;
-          height: 16px;
+          min-width: 24px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -480,7 +480,7 @@ export default function artplayerPluginSkipSettings(
         }
         
         .art-skip-locate-icon {
-          font-size: 8px;
+          font-size: 12px;
           line-height: 1;
           display: block;
         }
@@ -496,30 +496,30 @@ export default function artplayerPluginSkipSettings(
           display: flex;
           justify-content: space-between;
           align-items: center;
-          font-size: 8px;
+          font-size: 11px;
           color: #999;
-          padding: 3px 6px;
-          margin-top: 4px;
+          padding: 6px 10px;
+          margin-top: 6px;
           border-top: 1px solid rgba(255, 255, 255, 0.15);
         }
         
         .art-skip-action-bar {
           display: flex;
           justify-content: center;
-          gap: 6px;
-          padding: 4px 0 2px 0;
+          gap: 10px;
+          padding: 6px 0 4px 0;
         }
         
         .art-skip-btn {
-          padding: 2px 5px;
+          padding: 4px 10px;
           border: none;
-          border-radius: 2px;
-          font-size: 7px;
+          border-radius: 4px;
+          font-size: 11px;
           cursor: pointer;
           transition: all 0.2s;
-          font-weight: 400;
+          font-weight: 500;
           flex: 1;
-          max-width: 60px;
+          max-width: 80px;
         }
         
         .art-skip-btn-primary {
