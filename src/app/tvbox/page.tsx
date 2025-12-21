@@ -449,30 +449,34 @@ function CategoryFilter({
   return (
     <div className='space-y-3 sm:space-y-4'>
       {/* 一级分类 */}
-      <div className='flex items-center gap-3 flex-shrink-0'>
+      <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
         <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
           类型
         </span>
-        {renderCapsuleSelector(
-          categories.primary_categories || [],
-          selectedPrimary,
-          onPrimaryChange,
-          true
-        )}
+        <div className='overflow-x-auto'>
+          {renderCapsuleSelector(
+            categories.primary_categories || [],
+            selectedPrimary,
+            onPrimaryChange,
+            true
+          )}
+        </div>
       </div>
 
       {/* 二级分类（仅一级非“全部”时显示） */}
       {secondaryOptions.length > 0 && (
-        <div className='flex items-center gap-3 flex-shrink-0'>
+        <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
           <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
             分类
           </span>
-          {renderCapsuleSelector(
-            secondaryOptions,
-            selectedSecondary,
-            onSecondaryChange,
-            false
-          )}
+          <div className='overflow-x-auto'>
+            {renderCapsuleSelector(
+              secondaryOptions,
+              selectedSecondary,
+              onSecondaryChange,
+              false
+            )}
+          </div>
         </div>
       )}
     </div>
