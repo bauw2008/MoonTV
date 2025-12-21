@@ -12,7 +12,7 @@ function generateManifest() {
     const generateManifestScript = path.join(
       __dirname,
       'scripts',
-      'generate-manifest.js'
+      'generate-manifest.js',
     );
     require(generateManifestScript);
   } catch (error) {
