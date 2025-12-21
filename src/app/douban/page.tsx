@@ -935,24 +935,7 @@ function DoubanPageClient() {
             </div>
           )}
 
-          {/* 虚拟化开关 */}
-          <div className='flex justify-end'>
-            <label className='flex items-center gap-2 cursor-pointer select-none'>
-              <span className='text-xs sm:text-sm text-gray-700 dark:text-gray-300'>
-                虚拟滑动
-              </span>
-              <div className='relative'>
-                <input
-                  type='checkbox'
-                  className='sr-only peer'
-                  checked={useVirtualization}
-                  onChange={toggleVirtualization}
-                />
-                <div className='w-9 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors dark:bg-gray-600'></div>
-                <div className='absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4'></div>
-              </div>
-            </label>
-          </div>
+          
         </div>
 
         {/* 内容展示区域 */}
@@ -1160,30 +1143,64 @@ function DoubanPageClient() {
         </div>
       </div>
 
-      {/* 返回顶部悬浮按钮 */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-8 h-8 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 transition-all duration-200 ease-in-out flex items-center justify-center ${
-          showBackToTop
-            ? 'opacity-70 translate-y-0 pointer-events-auto hover:opacity-90'
-            : 'opacity-0 translate-y-3 pointer-events-none'
-        }`}
-        aria-label='返回顶部'
-      >
-        <svg
-          className='w-6 h-6'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
+      {/* 侧边工具栏 */}
+      <div className='fixed bottom-20 md:bottom-6 right-6 z-[500] flex flex-col gap-3'>
+        {/* 虚拟滑动开关 */}
+        <div className='relative group/switch'>
+          <label className='flex items-center justify-center cursor-pointer'>
+            <div className='relative'>
+              <input
+                type='checkbox'
+                className='sr-only peer'
+                checked={useVirtualization}
+                onChange={toggleVirtualization}
+              />
+              <div className='w-7 h-7 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl transition-all duration-300 peer-checked:from-gradient-to-br peer-checked:from-blue-500 peer-checked:to-purple-600 shadow-md hover:shadow-lg'></div>
+              {/* 状态图标 */}
+              <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
+                <svg className={`w-4 h-4 transition-all duration-300 ${useVirtualization ? 'text-white scale-100' : 'text-gray-500 scale-90'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+          </label>
+          {/* 优化的提示 */}
+          <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/switch:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
+            <span className='font-medium'>{useVirtualization ? '虚拟滑动' : '标准滑动'}</span>
+            <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
+          </div>
+        </div>
+
+        {/* 返回顶部按钮 */}
+        <button
+          onClick={scrollToTop}
+          className={`relative group/top bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl w-7 h-7 text-gray-600 dark:text-gray-300 transition-all duration-300 shadow-md hover:shadow-lg hover:from-gradient-to-br hover:from-blue-500 hover:to-purple-600 hover:text-white flex items-center justify-center ${
+            showBackToTop
+              ? 'opacity-100 translate-y-0 pointer-events-auto scale-100'
+              : 'opacity-0 translate-y-3 pointer-events-none scale-95'
+          }`}
+          aria-label='返回顶部'
         >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={3}
-            d='M5 15l7-7 7 7'
-          />
-        </svg>
-      </button>
+          <svg
+            className='w-4 h-4 transition-transform duration-300 group-hover/top:-translate-y-0.5'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M5 15l7-7 7 7'
+            />
+          </svg>
+          {/* 提示 */}
+          <div className='absolute bottom-full right-0 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm rounded-lg opacity-0 group-hover/top:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg'>
+            <span className='font-medium'>返回顶部</span>
+            <div className='absolute top-full right-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/90 dark:border-t-gray-700/90'></div>
+          </div>
+        </button>
+      </div>
     </PageLayout>
   );
 }
