@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -91,8 +89,7 @@ async function verifySignature(
       signatureBuffer,
       messageData,
     );
-  } catch (error) {
-    console.error('签名验证失败:', error);
+  } catch {
     return false;
   }
 }

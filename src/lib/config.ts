@@ -72,7 +72,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
   let fileConfig: ConfigFileStruct;
   try {
     fileConfig = JSON.parse(adminConfig.ConfigFile) as ConfigFileStruct;
-  } catch (e) {
+  } catch {
     fileConfig = {} as ConfigFileStruct;
   }
 
@@ -209,7 +209,7 @@ async function getInitConfig(
   let cfgFile: ConfigFileStruct;
   try {
     cfgFile = JSON.parse(configFile) as ConfigFileStruct;
-  } catch (e) {
+  } catch {
     cfgFile = {} as ConfigFileStruct;
   }
   const adminConfig: AdminConfig = {
@@ -672,6 +672,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
 
 // 重置配置
 export async function resetConfig() {
+  clearConfigCache();
   let originConfig: AdminConfig | null = null;
   try {
     originConfig = await db.getAdminConfig();
