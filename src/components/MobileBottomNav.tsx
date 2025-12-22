@@ -138,16 +138,14 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
                     : 'text-gray-900 dark:text-gray-300'
                 }`}
               >
-                <item.icon 
+                <item.icon
                   className={`h-6 w-6 transition-colors duration-200 ${
                     active
                       ? 'text-blue-600 dark:text-blue-400'
                       : 'text-gray-900 dark:text-gray-300'
-                  }`} 
+                  }`}
                 />
-                <span>
-                  {item.label}
-                </span>
+                <span>{item.label}</span>
               </Link>
             </li>
           );

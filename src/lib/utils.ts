@@ -5,7 +5,7 @@ import Hls from 'hls.js';
 const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
 // iOS 设备检测 (包括 iPad 的新版本检测)
-const isIOS = /iPad|iPhone|iPod/i.test(userAgent) && !(window as any).MSStream;
+const isIOS = /iPad|iPhone|iPod/i.test(userAgent) && !(window as any).MSStream; // eslint-disable-line @typescript-eslint/no-explicit-any
 const isIOS13Plus =
   isIOS ||
   (userAgent.includes('Macintosh') &&
@@ -32,7 +32,9 @@ const isMobile =
 const isTablet =
   isIPad ||
   (isAndroid && !/Mobile/i.test(userAgent)) ||
-  (typeof screen !== 'undefined' && screen.width >= 768);
+  (typeof window !== 'undefined' &&
+    typeof window.screen !== 'undefined' &&
+    window.screen.width >= 768);
 
 // Safari 浏览器检测 (更精确)
 const isSafari =
@@ -85,11 +87,11 @@ function getDoubanImageProxyConfig(): {
 } {
   const doubanImageProxyType =
     localStorage.getItem('doubanImageProxyType') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || // eslint-disable-line @typescript-eslint/no-explicit-any
     'cmliussss-cdn-tencent';
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
+    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || // eslint-disable-line @typescript-eslint/no-explicit-any
     '';
   return {
     proxyType: doubanImageProxyType,
@@ -155,6 +157,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
 
     if (isIPad) {
       // iPad使用最简单的ping测试，不创建任何video或HLS实例
+      // eslint-disable-next-line no-console
       console.log('iPad检测，使用简化测速避免崩溃');
 
       const startTime = performance.now();
@@ -171,7 +174,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           loadSpeed: '未知', // iPad不检测下载速度
           pingTime,
         };
-      } catch (error) {
+      } catch {
         return {
           quality: '未知',
           loadSpeed: '未知',
@@ -294,6 +297,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
             hls.destroy();
           }
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.warn('HLS cleanup error:', e);
         }
         try {
@@ -303,6 +307,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
             video.remove();
           }
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.warn('Video cleanup error:', e);
         }
       };
@@ -358,6 +363,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hls.on(Hls.Events.FRAG_LOADED, (event: any, data: any) => {
         if (fragmentStartTime > 0 && data?.payload && !hasSpeedCalculated) {
           const loadTime = performance.now() - fragmentStartTime;
@@ -382,11 +388,14 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       });
 
       // 监听HLS错误 - v1.6.13增强处理
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+        // eslint-disable-next-line no-console
         console.warn('HLS测速错误:', data);
 
         // v1.6.13 特殊处理：片段解析错误不应该导致测速失败
         if (data.details === Hls.ErrorDetails.FRAG_PARSING_ERROR) {
+          // eslint-disable-next-line no-console
           console.log('测速中遇到片段解析错误，v1.6.13已修复，继续测速');
           return;
         }
@@ -396,6 +405,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
           data.err?.message?.includes('timestamp')
         ) {
+          // eslint-disable-next-line no-console
           console.log('测速中遇到时间戳错误，v1.6.13已修复，继续测速');
           return;
         }

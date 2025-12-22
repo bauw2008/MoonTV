@@ -23,42 +23,57 @@ export async function GET(request: NextRequest) {
 
   try {
     // 添加调试信息
+    // eslint-disable-next-line no-console
     console.log('🔍 开始获取缓存统计...');
 
     // 检查存储类型
     const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+    // eslint-disable-next-line no-console
     console.log('🔍 存储类型:', storageType);
 
     // 如果是 Upstash，直接测试连接
     if (storageType === 'upstash') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const storage = (db as any).storage;
+      // eslint-disable-next-line no-console
       console.log('🔍 存储实例存在:', !!storage);
+      // eslint-disable-next-line no-console
       console.log('🔍 存储实例类型:', storage?.constructor?.name);
+      // eslint-disable-next-line no-console
       console.log('🔍 withRetry方法:', typeof storage?.withRetry);
+      // eslint-disable-next-line no-console
       console.log('🔍 client存在:', !!storage?.client);
+      // eslint-disable-next-line no-console
       console.log('🔍 client.keys方法:', typeof storage?.client?.keys);
+      // eslint-disable-next-line no-console
       console.log('🔍 client.mget方法:', typeof storage?.client?.mget);
 
       if (storage?.client) {
         try {
+          // eslint-disable-next-line no-console
           console.log('🔍 测试获取所有cache:*键...');
           const allKeys = await storage.withRetry(() =>
             storage.client.keys('cache:*'),
           );
+          // eslint-disable-next-line no-console
           console.log('🔍 找到的键:', allKeys.length, allKeys.slice(0, 5));
 
           if (allKeys.length > 0) {
+            // eslint-disable-next-line no-console
             console.log('🔍 测试获取第一个键的值...');
             const firstValue = await storage.withRetry(() =>
               storage.client.get(allKeys[0]),
             );
+            // eslint-disable-next-line no-console
             console.log('🔍 第一个值的类型:', typeof firstValue);
+            // eslint-disable-next-line no-console
             console.log(
               '🔍 第一个值的长度:',
               typeof firstValue === 'string' ? firstValue.length : 'N/A',
             );
           }
         } catch (debugError) {
+          // eslint-disable-next-line no-console
           console.error('🔍 调试测试失败:', debugError);
         }
       }
@@ -74,6 +89,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('获取缓存统计失败:', error);
     return NextResponse.json(
       {
@@ -166,6 +182,7 @@ export async function DELETE(request: NextRequest) {
       },
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('清理缓存失败:', error);
     return NextResponse.json(
       {
@@ -179,12 +196,14 @@ export async function DELETE(request: NextRequest) {
 
 // 获取缓存统计信息
 async function getCacheStats() {
+  // eslint-disable-next-line no-console
   console.log('📊 开始获取缓存统计信息...');
 
   // 直接使用数据库统计（支持KVRocks/Upstash/Redis）
   const dbStats = await DatabaseCacheManager.getSimpleCacheStats();
 
   if (!dbStats) {
+    // eslint-disable-next-line no-console
     console.warn('⚠️ 数据库缓存统计失败，返回空统计');
     return {
       douban: { count: 0, size: 0, types: {} },
@@ -209,6 +228,7 @@ async function getCacheStats() {
     };
   }
 
+  // eslint-disable-next-line no-console
   console.log(`✅ 缓存统计获取完成: 总计 ${dbStats.total.count} 项`);
   return dbStats;
 }
@@ -230,6 +250,7 @@ async function clearDoubanCache(): Promise<number> {
       localStorage.removeItem(key);
       clearedCount++;
     });
+    // eslint-disable-next-line no-console
     console.log(`🗑️ localStorage中清理了 ${keys.length} 个豆瓣缓存项`);
   }
 
@@ -253,6 +274,7 @@ async function clearDanmuCache(): Promise<number> {
       localStorage.removeItem(key);
       clearedCount++;
     });
+    // eslint-disable-next-line no-console
     console.log(`🗑️ localStorage中清理了 ${keys.length} 个弹幕缓存项`);
   }
 
@@ -276,6 +298,7 @@ async function clearYouTubeCache(): Promise<number> {
       localStorage.removeItem(key);
       clearedCount++;
     });
+    // eslint-disable-next-line no-console
     console.log(`🗑️ localStorage中清理了 ${keys.length} 个YouTube搜索缓存项`);
   }
 
@@ -299,6 +322,7 @@ async function clearNetdiskCache(): Promise<number> {
       localStorage.removeItem(key);
       clearedCount++;
     });
+    // eslint-disable-next-line no-console
     console.log(`🗑️ localStorage中清理了 ${keys.length} 个网盘搜索缓存项`);
   }
 
@@ -310,6 +334,7 @@ async function clearTVBoxCache(): Promise<number> {
   let clearedCount = 0;
 
   // 清理数据库中的TVBox缓存
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbCleared = await DatabaseCacheManager.clearCacheByType('tvbox' as any);
   clearedCount += dbCleared;
 
@@ -317,18 +342,22 @@ async function clearTVBoxCache(): Promise<number> {
   try {
     await db.clearExpiredCache('tvbox-');
     await db.clearExpiredCache('tvbox:');
+    // eslint-disable-next-line no-console
     console.log('🗑️ TVBox缓存清理完成');
     clearedCount++;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('清理TVBox缓存失败:', error);
   }
 
   // 清理频率限制缓存
   try {
     await db.clearExpiredCache('tvbox-rate-limit');
+    // eslint-disable-next-line no-console
     console.log('🗑️ TVBox频率限制缓存清理完成');
     clearedCount++;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('清理TVBox频率限制缓存失败:', error);
   }
 
@@ -343,9 +372,11 @@ async function clearSearchCache(): Promise<number> {
     // 直接清理数据库中的search-和cache-前缀缓存
     await db.clearExpiredCache('search-');
     await db.clearExpiredCache('cache-');
+    // eslint-disable-next-line no-console
     console.log('🗑️ 搜索缓存清理完成');
     clearedCount = 1; // 标记操作已执行
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('清理搜索缓存失败:', error);
   }
 
@@ -358,6 +389,7 @@ async function clearSearchCache(): Promise<number> {
       localStorage.removeItem(key);
       clearedCount++;
     });
+    // eslint-disable-next-line no-console
     console.log(`🗑️ localStorage中清理了 ${keys.length} 个搜索缓存项`);
   }
 
@@ -397,13 +429,14 @@ async function clearExpiredCache(): Promise<number> {
             clearedCount++;
           }
         }
-      } catch (error) {
+      } catch {
         // 数据格式错误，清理掉
         localStorage.removeItem(key);
         clearedCount++;
       }
     });
 
+    // eslint-disable-next-line no-console
     console.log(
       `🗑️ localStorage中清理了 ${clearedCount - dbCleared} 个过期缓存项`,
     );
@@ -432,7 +465,7 @@ async function clearAllCache(): Promise<number> {
 }
 
 // 格式化字节大小
-function formatBytes(bytes: number): string {
+function _formatBytes(bytes: number): string {
   if (bytes === 0) {
     return '0 B';
   }

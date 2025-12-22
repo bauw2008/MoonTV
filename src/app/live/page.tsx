@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
-
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
 'use client';
 
 import Hls from 'hls.js';
@@ -81,8 +80,8 @@ function LivePageClient() {
     currentChannelRef.current = currentChannel;
   }, [currentChannel]);
 
-  const [needLoadSource] = useState(searchParams.get('source'));
-  const [needLoadChannel] = useState(searchParams.get('id'));
+  const needLoadSource = searchParams.get('source');
+  const needLoadChannel = searchParams.get('id');
 
   // 播放器相关
   const [videoUrl, setVideoUrl] = useState('');
@@ -705,13 +704,13 @@ function LivePageClient() {
         }
 
         // 销毁 HLS 实例
-        if (artPlayerRef.current.video?.hls) {
+        if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
           artPlayerRef.current.video.hls.destroy();
           artPlayerRef.current.video.hls = null;
         }
 
         // 销毁 FLV 实例 - 增强清理逻辑
-        if (artPlayerRef.current.video?.flv) {
+        if (artPlayerRef.current.video && artPlayerRef.current.video.flv) {
           try {
             // 先停止加载
             if (artPlayerRef.current.video.flv.unload) {
@@ -1150,12 +1149,6 @@ function LivePageClient() {
     video.hls = hls;
 
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-      // 检查是否有有效的错误数据
-      if (!data || typeof data !== 'object') {
-        console.warn('HLS Error: Invalid error data received');
-        return;
-      }
-
       console.error('HLS Error:', event, data);
 
       // 使用最新版本的错误详情类型
@@ -1213,7 +1206,9 @@ function LivePageClient() {
       // v1.6.13 增强：处理直播中的时间戳错误（直播回搜修复）
       if (
         data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
-        data.err?.message?.includes('timestamp')
+        data.err &&
+        data.err.message &&
+        data.err.message.includes('timestamp')
       ) {
         console.log('直播时间戳错误，利用v1.6.13修复重新加载...');
         try {

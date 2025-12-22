@@ -29,10 +29,10 @@ export function getDeviceInfo(): DeviceInfo {
     userAgent: navigator.userAgent || '',
     language: navigator.language || '',
     platform: navigator.platform || '',
-    screenResolution: `${screen.width}x${screen.height}`,
+    screenResolution: `${window.screen.width}x${window.screen.height}`,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
     hardwareConcurrency: navigator.hardwareConcurrency || 0,
-    deviceMemory: (navigator as any).deviceMemory || 0,
+    deviceMemory: (navigator as any).deviceMemory || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
   };
 }
 

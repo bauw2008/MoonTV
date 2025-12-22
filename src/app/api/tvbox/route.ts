@@ -11,14 +11,16 @@ import { getCandidates, getSpiderJar } from '@/lib/spiderJar';
 
 // 根据用户权限过滤源站
 function filterSourcesByUserPermissions(
-  sources: any[],
+  sources: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
   user: { username: string; enabledApis?: string[]; tags?: string[] },
-  tagsConfig: any[],
+  tagsConfig: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
 ): any[] {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
   // 如果用户有直接指定的enabledApis，优先使用
   if (user.enabledApis && user.enabledApis.length > 0) {
     return sources.filter(
-      (source) => !source.disabled && user.enabledApis!.includes(source.key),
+      (source) =>
+        !source.disabled && (user.enabledApis || []).includes(source.key),
     );
   }
 
@@ -90,6 +92,7 @@ async function checkRateLimit(
 
     return true;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Rate limit check failed:', error);
     // 如果数据库操作失败，允许请求通过（fail-open策略）
     return true;
@@ -97,11 +100,13 @@ async function checkRateLimit(
 }
 
 // 清理过期的频率限制缓存（内部使用）
-async function cleanExpiredRateLimitCache(): Promise<void> {
+async function _cleanExpiredRateLimitCache(): Promise<void> {
   try {
     await db.clearExpiredCache('tvbox-rate-limit');
+    // eslint-disable-next-line no-console
     console.log('Cleaned expired TVBox rate limit cache');
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to clean expired rate limit cache:', error);
   }
 }
@@ -133,7 +138,7 @@ function getDeviceIdFromRequest(request: NextRequest): string {
   // 使用与前端完全一致的设备指纹算法
   const userAgent = request.headers.get('user-agent') || '';
   const platform = request.headers.get('sec-ch-ua-platform') || '';
-  const accept = request.headers.get('accept') || '';
+  const _accept = request.headers.get('accept') || '';
   const acceptLanguage = request.headers.get('accept-language') || '';
 
   // 模拟前端设备信息结构，与device-fingerprint.ts保持一致
@@ -252,6 +257,7 @@ interface TVBoxConfig {
 }
 
 // 配置缓存 - 减少重复计算
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cachedConfig: any = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 30 * 1000; // 30秒缓存
@@ -305,7 +311,7 @@ async function getCachedCategories(
       const data = await response.json();
       if (data.class && Array.isArray(data.class)) {
         let categories = data.class
-          .map((cat: any) => cat.type_name || cat.name)
+          .map((cat: any) => cat.type_name || cat.name) // eslint-disable-line @typescript-eslint/no-explicit-any
           .filter((name: string) => name);
 
         // 应用18+过滤器（根据用户组权限）
@@ -318,6 +324,7 @@ async function getCachedCategories(
             // 检查用户的所有用户组是否有豁免18+过滤的权限
             const tagsConfig = config.UserConfig?.Tags || [];
             const hasYellowFilterExemption = user.tags.some((tagName) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const tag = tagsConfig.find((t: any) => t.name === tagName);
               return tag?.enabledApis?.includes('disable-yellow-filter');
             });
@@ -325,6 +332,7 @@ async function getCachedCategories(
             // 如果有豁免权限，则不应用过滤器
             if (hasYellowFilterExemption) {
               shouldApplyFilter = false;
+              // eslint-disable-next-line no-console
               console.log(
                 `[TVBox] 用户 ${user.username} 属于有权访问18+内容的用户组，跳过过滤`,
               );
@@ -343,6 +351,7 @@ async function getCachedCategories(
                 );
               });
               if (categories.length !== originalCount) {
+                // eslint-disable-next-line no-console
                 console.log(
                   `[TVBox] 过滤分类: ${sourceName} 从 ${originalCount} 个分类过滤到 ${categories.length} 个`,
                 );
@@ -360,6 +369,7 @@ async function getCachedCategories(
     // 优化的错误处理：区分不同类型的错误
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
+        // eslint-disable-next-line no-console
         console.warn(
           `[TVBox] 获取源站 ${sourceName} 分类超时(5s)，使用默认分类`,
         );
@@ -367,6 +377,7 @@ async function getCachedCategories(
         error.message.includes('JSON') ||
         error.message.includes('parse')
       ) {
+        // eslint-disable-next-line no-console
         console.warn(
           `[TVBox] 源站 ${sourceName} 返回的分类数据格式错误，使用默认分类`,
         );
@@ -374,13 +385,16 @@ async function getCachedCategories(
         error.message.includes('ENOTFOUND') ||
         error.message.includes('ECONNREFUSED')
       ) {
+        // eslint-disable-next-line no-console
         console.warn(`[TVBox] 无法连接到源站 ${sourceName}，使用默认分类`);
       } else {
+        // eslint-disable-next-line no-console
         console.warn(
           `[TVBox] 获取源站 ${sourceName} 分类失败: ${error.message}，使用默认分类`,
         );
       }
     } else {
+      // eslint-disable-next-line no-console
       console.warn(
         `[TVBox] 获取源站 ${sourceName} 分类失败（未知错误），使用默认分类`,
       );
@@ -416,6 +430,7 @@ async function getCachedCategories(
         });
       }
     } else {
+      // eslint-disable-next-line no-console
       console.log(
         `[TVBox] 用户 ${
           user?.username || '匿名'
@@ -426,6 +441,7 @@ async function getCachedCategories(
 
   // 重要：不缓存默认分类，避免将错误数据缓存1小时
   // 下次请求时重新尝试获取真实分类数据
+  // eslint-disable-next-line no-console
   console.log(`[TVBox] 源站 ${sourceName} 分类获取失败，返回默认分类但不缓存`);
   return defaultCategories;
 }
@@ -447,7 +463,7 @@ export async function GET(request: NextRequest) {
     let tokenUsername: string | null = null; // 保存Token对应的用户名
     if (securityConfig?.enableAuth || securityConfig?.enableDeviceBinding) {
       let isValidToken = false;
-      let matchedUserTokenInfo = null;
+      let _matchedUserTokenInfo = null;
 
       // 首先检查用户级别Token
       if (
@@ -458,7 +474,7 @@ export async function GET(request: NextRequest) {
         for (const userTokenInfo of securityConfig.userTokens) {
           if (userTokenInfo.enabled && userTokenInfo.token === token) {
             isValidToken = true;
-            matchedUserTokenInfo = userTokenInfo;
+            _matchedUserTokenInfo = userTokenInfo;
             tokenUsername = userTokenInfo.username; // 保存用户名
 
             // 如果启用了设备绑定，还需要验证设备
@@ -470,6 +486,7 @@ export async function GET(request: NextRequest) {
               const deviceId = getDeviceIdFromRequest(request);
 
               const device = userTokenInfo.devices.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (d: any) => d.deviceId === deviceId,
               );
 
@@ -543,6 +560,7 @@ export async function GET(request: NextRequest) {
                     clearConfigCache(); // 清除配置缓存
                   }
                 } catch (error) {
+                  // eslint-disable-next-line no-console
                   console.error('[TVBox] 保存自动绑定设备失败:', error);
                   return NextResponse.json(
                     {
@@ -554,6 +572,7 @@ export async function GET(request: NextRequest) {
                 }
               }
             } else {
+              // eslint-disable-next-line no-console
               console.log('[TVBox] 设备绑定未启用，跳过设备验证');
             }
             break;
@@ -564,6 +583,7 @@ export async function GET(request: NextRequest) {
         const validToken = securityConfig.token;
         if (token === validToken) {
           isValidToken = true;
+          // eslint-disable-next-line no-console
           console.log('[TVBox] 全局Token验证通过');
         }
       }
@@ -684,6 +704,7 @@ export async function GET(request: NextRequest) {
 
     // 过滤掉被禁用的源站和没有API地址的源站
     let enabledSources = sourceConfigs.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (source: any) =>
         !source.disabled && source.api && source.api.trim() !== '',
     );
@@ -695,6 +716,7 @@ export async function GET(request: NextRequest) {
     // 优先使用Token验证时获取的用户名
     if (tokenUsername) {
       const user = config.UserConfig.Users.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (u: any) => u.username === tokenUsername,
       );
 
@@ -707,6 +729,7 @@ export async function GET(request: NextRequest) {
           config.UserConfig.Tags || [],
         );
 
+        // eslint-disable-next-line no-console
         console.log(
           `[TVBox] 使用Token用户: ${tokenUsername}, 用户组: ${
             user.tags?.join(', ') || '无'
@@ -719,6 +742,7 @@ export async function GET(request: NextRequest) {
 
       if (userAuthInfo && userAuthInfo.username) {
         const user = config.UserConfig.Users.find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (u: any) => u.username === userAuthInfo.username,
         );
 
@@ -731,6 +755,7 @@ export async function GET(request: NextRequest) {
             config.UserConfig.Tags || [],
           );
 
+          // eslint-disable-next-line no-console
           console.log(
             `[TVBox] 使用Cookie用户: ${userAuthInfo.username}, 用户组: ${
               user.tags?.join(', ') || '无'
@@ -751,6 +776,7 @@ export async function GET(request: NextRequest) {
 
       // 影视源配置
       sites: await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         enabledSources.map(async (source: any) => {
           /**
            * 智能 API 类型检测（参考 DecoTV 优化）
@@ -1017,6 +1043,7 @@ export async function GET(request: NextRequest) {
       // 直播源（合并所有启用的直播源为一个，解决TVBox多源限制）
       lives: (() => {
         const enabledLives = (config.LiveConfig || []).filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (live: any) => !live.disabled,
         );
         if (enabledLives.length === 0) {
@@ -1025,13 +1052,16 @@ export async function GET(request: NextRequest) {
 
         // 如果只有一个源，直接返回
         if (enabledLives.length === 1) {
-          return enabledLives.map((live: any) => ({
-            name: live.name,
-            type: 0,
-            url: live.url,
-            epg: live.epg || '',
-            logo: '',
-          }));
+          return enabledLives.map(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (live: any) => ({
+              name: live.name,
+              type: 0,
+              url: live.url,
+              epg: live.epg || '',
+              logo: '',
+            }),
+          );
         }
 
         // 多个源时，创建一个聚合源
@@ -1040,7 +1070,11 @@ export async function GET(request: NextRequest) {
             name: 'LunaTV聚合直播',
             type: 0,
             url: `${baseUrl}/api/live/merged`, // 新的聚合端点
-            epg: enabledLives.find((live: any) => live.epg)?.epg || '',
+            epg:
+              enabledLives.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (live: any) => live.epg,
+              )?.epg || '',
             logo: '',
           },
         ];
@@ -1135,10 +1169,12 @@ export async function GET(request: NextRequest) {
     if (jarInfo.success && jarInfo.source !== 'fallback') {
       // 成功获取远程 jar，直接使用远程 URL（公网地址，减轻服务器负载）
       finalSpiderUrl = `${jarInfo.source};md5;${jarInfo.md5}`;
+      // eslint-disable-next-line no-console
       console.log(`[Spider] 使用远程公网 jar: ${jarInfo.source}`);
     } else {
       // 远程失败，使用本地代理端点（确保100%可用）
       finalSpiderUrl = `${baseUrl}/api/proxy/spider.jar;md5;${jarInfo.md5}`;
+      // eslint-disable-next-line no-console
       console.warn(
         `[Spider] 远程 jar 获取失败，使用本地代理: ${
           finalSpiderUrl.split(';')[0]
@@ -1153,12 +1189,15 @@ export async function GET(request: NextRequest) {
         if (!isPrivateHost(jarUrl.hostname)) {
           // 用户自定义的公网 jar，直接使用
           finalSpiderUrl = globalSpiderJar;
+          // eslint-disable-next-line no-console
           console.log(`[Spider] 使用用户自定义 jar: ${globalSpiderJar}`);
         } else {
+          // eslint-disable-next-line no-console
           console.warn('[Spider] 用户配置的jar是私网地址，使用自动选择结果');
         }
       } catch {
         // URL解析失败，使用自动选择结果
+        // eslint-disable-next-line no-console
         console.warn('[Spider] 用户配置的jar解析失败，使用自动选择结果');
       }
     }
@@ -1186,31 +1225,34 @@ export async function GET(request: NextRequest) {
       // 快速切换优化模式：专门针对资源源切换体验优化
       tvboxConfig = {
         spider: tvboxConfig.spider,
-        sites: tvboxConfig.sites.map((site: any) => {
-          const fastSite = { ...site };
-          // 快速模式：移除可能导致卡顿的配置
-          delete fastSite.timeout;
-          delete fastSite.retry;
+        sites: tvboxConfig.sites.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (site: any) => {
+            const fastSite = { ...site };
+            // 快速模式：移除可能导致卡顿的配置
+            delete fastSite.timeout;
+            delete fastSite.retry;
 
-          // 优化请求头，提升响应速度
-          if (fastSite.type === 3) {
-            fastSite.header = { 'User-Agent': 'okhttp/3.15' };
-          } else {
-            fastSite.header = {
-              'User-Agent':
-                'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36',
-              Connection: 'close',
-            };
-          }
+            // 优化请求头，提升响应速度
+            if (fastSite.type === 3) {
+              fastSite.header = { 'User-Agent': 'okhttp/3.15' };
+            } else {
+              fastSite.header = {
+                'User-Agent':
+                  'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36',
+                Connection: 'close',
+              };
+            }
 
-          // 强制启用快速切换相关功能
-          fastSite.searchable = 1;
-          fastSite.quickSearch = 1;
-          fastSite.filterable = 1;
-          fastSite.changeable = 1;
+            // 强制启用快速切换相关功能
+            fastSite.searchable = 1;
+            fastSite.quickSearch = 1;
+            fastSite.filterable = 1;
+            fastSite.changeable = 1;
 
-          return fastSite;
-        }),
+            return fastSite;
+          },
+        ),
         lives: tvboxConfig.lives,
         parses: [
           {
@@ -1283,7 +1325,7 @@ export async function GET(request: NextRequest) {
           },
         ],
         maxHomeVideoContent: '20',
-      } as any;
+      } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
     // 添加 Spider 状态透明化字段（帮助诊断）

@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
             userPlayStat.firstLoginTime ||
             0;
           loginCount = userPlayStat.loginCount || 0;
-        } catch (err) {
+        } catch {
           // 获取失败时默认为0
           lastLoginTime = 0;
           loginCount = 0;
@@ -252,7 +252,7 @@ export async function GET(request: NextRequest) {
         // 累计全站统计
         totalWatchTime += userWatchTime;
         totalPlays += records.length;
-      } catch (error) {
+      } catch {
         // console.error(`获取用户 ${user.username} 播放记录失败:`, error);
         // 出错的用户显示为空统计
         // 设置项目开始时间，2025年9月14日

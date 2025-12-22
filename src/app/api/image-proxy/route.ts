@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       status: 200,
       headers,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error fetching image' },
       { status: 500 },

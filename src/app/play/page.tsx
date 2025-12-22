@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
 
 'use client';
 
@@ -425,7 +425,7 @@ function PlayPageClient() {
 
           const obj = Object.fromEntries(validEntries);
           localStorage.setItem(oldCacheKey, JSON.stringify(obj));
-        } catch (e) {
+        } catch {
           // localStorage可能满了，忽略错误
         }
       }
@@ -529,12 +529,12 @@ function PlayPageClient() {
             created: Date.now(),
           };
           localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        } catch (e) {
+        } catch {
           // localStorage可能满了，忽略错误
         }
       }
-    } catch (e) {
-      console.warn('设置Bangumi缓存失败:', e);
+    } catch (error) {
+      console.warn('设置Bangumi缓存失败:', error);
     }
   };
 
@@ -1370,7 +1370,7 @@ function PlayPageClient() {
     const lines = m3u8Content.split('\n');
     const filteredLines = [];
     let inAdBlock = false; // 是否在广告区块内
-    let adSegmentCount = 0; // 统计移除的广告片段数量
+    let _adSegmentCount = 0; // 统计移除的广告片段数量
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -1384,7 +1384,7 @@ function PlayPageClient() {
         line.includes('#EXT-OATCLS-SCTE35')
       ) {
         inAdBlock = true;
-        adSegmentCount++;
+        _adSegmentCount++;
         continue; // 跳过广告开始标记
       }
 
@@ -1413,7 +1413,7 @@ function PlayPageClient() {
    * @param seconds 秒数
    * @returns 格式化后的时间字符串
    */
-  const formatTime = (seconds: number): string => {
+  const _formatTime = (seconds: number): string => {
     if (seconds === 0) {
       return '00:00';
     }
@@ -1544,8 +1544,11 @@ function PlayPageClient() {
               }
             };
 
-            if (typeof requestIdleCallback !== 'undefined') {
-              requestIdleCallback(loadDanmu, { timeout: 1000 });
+            if (
+              typeof window !== 'undefined' &&
+              typeof window.requestIdleCallback !== 'undefined'
+            ) {
+              window.requestIdleCallback(loadDanmu, { timeout: 1000 });
             } else {
               setTimeout(loadDanmu, 50);
             }
@@ -3201,7 +3204,7 @@ function PlayPageClient() {
                     artPlayerRef.current = null;
                   }
                   setBlockAdEnabled(nextState);
-                } catch (_) {
+                } catch {
                   // ignore
                 }
                 // 更新tooltip显示
@@ -3909,7 +3912,7 @@ function PlayPageClient() {
         artPlayerRef.current.on('video:timeupdate', () => {
           const currentTime = artPlayerRef.current.currentTime || 0;
           const duration = artPlayerRef.current.duration || 0;
-          const now = performance.now(); // 使用performance.now()更精确
+          const _now = performance.now(); // 使用performance.now()更精确
 
           // 更新播放时间信息
           setCurrentPlayTime(currentTime);

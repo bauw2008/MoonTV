@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const doubanData =
       await fetchDoubanData<DoubanRecommendApiResponse>(target);
     const list = doubanData.items
-      .filter((item) => item.type == 'movie' || item.type == 'tv')
+      .filter((item) => item.type === 'movie' || item.type === 'tv')
       .map((item) => ({
         id: item.id,
         title: item.title,

@@ -1,5 +1,4 @@
-﻿
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps */
 
 'use client';
 
@@ -424,8 +423,6 @@ interface LiveDataSource {
   from: 'config' | 'custom';
 }
 
-
-
 // 自定义分类数据类型
 interface CustomCategory {
   name?: string;
@@ -817,13 +814,13 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
     await withLoading(
       `saveUserGroups_${selectedUserForGroup.username}`,
       async () => {
-          await handleAssignUserGroup(
-            selectedUserForGroup.username,
-            selectedUserGroups,
-          );
-          setShowConfigureUserGroupModal(false);
-          setSelectedUserForGroup(null);
-          setSelectedUserGroups([]);
+        await handleAssignUserGroup(
+          selectedUserForGroup.username,
+          selectedUserGroups,
+        );
+        setShowConfigureUserGroupModal(false);
+        setSelectedUserForGroup(null);
+        setSelectedUserGroups([]);
       },
     );
   };
@@ -990,9 +987,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
     }
 
     await withLoading(`deleteUser_${deletingUser}`, async () => {
-        await handleUserAction('deleteUser', deletingUser);
-        setShowDeleteUserModal(false);
-        setDeletingUser(null);
+      await handleUserAction('deleteUser', deletingUser);
+      setShowDeleteUserModal(false);
+      setDeletingUser(null);
     });
   };
 
@@ -3507,8 +3504,6 @@ const VideoSourceConfig = ({
     onCancel: () => {},
   });
 
-  
-  
   // 有效性检测相关状态
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -3642,11 +3637,7 @@ const VideoSourceConfig = ({
       });
   };
 
-  
-
-  
-
-// 有效性检测函数
+  // 有效性检测函数
   const handleValidateSources = async () => {
     if (!searchKeyword.trim()) {
       showAlert({
@@ -4325,7 +4316,7 @@ const VideoSourceConfig = ({
               </span>
               <span className='sm:hidden'>导出</span>
             </button>
-<button
+            <button
               onClick={() => setShowValidationModal(true)}
               disabled={isValidating}
               className={buttonStyles.primary}
@@ -4339,7 +4330,7 @@ const VideoSourceConfig = ({
                 '有效性检测'
               )}
             </button>
-            
+
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               className={
@@ -4494,8 +4485,6 @@ const VideoSourceConfig = ({
         </div>
       )}
 
-      
-
       {/* 通用弹窗组件 */}
       <AlertModal
         isOpen={alertModal.isOpen}
@@ -4506,8 +4495,6 @@ const VideoSourceConfig = ({
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
       />
-
-      
 
       {/* 有效性检测弹窗 */}
       {showValidationModal &&
@@ -6272,54 +6259,12 @@ const LiveSourceConfig = ({
     });
   };
 
-  const handleDelete = async (key: string) => {
-    try {
-      await withLoading(`deleteLiveSource_${key}`, async () => {
-        // 添加重试机制处理socket错误
-        let retryCount = 0;
-        const maxRetries = 2;
-        
-        while (retryCount <= maxRetries) {
-          try {
-            await callLiveSourceApi({ action: 'delete', key });
-            return; // 成功则退出
-          } catch (err) {
-            retryCount++;
-            console.error(`删除直播源失败 (尝试 ${retryCount}/${maxRetries + 1}):`, { key, error: err });
-            
-            // 如果是socket错误且还有重试次数，等待后重试
-            if (err instanceof Error && err.message.includes('socket') && retryCount <= maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 递增延迟
-              continue;
-            }
-            
-            // 最后一次重试或非socket错误，抛出错误
-            throw err;
-          }
-        }
-      });
-      
-      showSuccess('直播源删除成功', showAlert);
-    } catch (err) {
-      console.error('删除直播源最终失败:', { key, error: err });
-      
-      // 根据错误类型提供不同的用户提示
-      if (err instanceof Error && err.message.includes('socket')) {
-        showError(
-          '删除失败：服务器内部错误。请尝试刷新页面后重试，或联系管理员', 
-          showAlert
-        );
-      } else if (err instanceof Error && err.message.includes('404')) {
-        showError('直播源不存在或已被删除', showAlert);
-      } else if (err instanceof Error && err.message.includes('400')) {
-        showError('不能删除配置文件中的直播源', showAlert);
-      } else {
-        showError(
-          err instanceof Error ? err.message : '删除失败，请稍后重试', 
-          showAlert
-        );
-      }
-    }
+  const handleDelete = (key: string) => {
+    withLoading(`deleteLiveSource_${key}`, () =>
+      callLiveSourceApi({ action: 'delete', key }),
+    ).catch(() => {
+      console.error('操作失败', 'delete', key);
+    });
   };
 
   // 刷新直播源
@@ -7371,8 +7316,6 @@ function AdminPageClient() {
             >
               <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
-
-            
 
             {/* 直播源配置标签 */}
             <CollapsibleTab

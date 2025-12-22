@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
 
       // 检查至少有一个启用的用户Token
       const enabledTokens = tvboxSecurityConfig.userTokens.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (t: any) => t.enabled,
       );
       if (enabledTokens.length === 0) {
@@ -192,6 +193,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Save TVBox security config error:', error);
     return NextResponse.json(
       {

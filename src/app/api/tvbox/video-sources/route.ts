@@ -5,14 +5,16 @@ import { getConfig } from '@/lib/config';
 
 // 根据用户权限过滤源站
 function filterSourcesByUserPermissions(
-  sources: any[],
+  sources: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
   user: { enabledApis?: string[]; tags?: string[] },
-  tagsConfig: any[],
+  tagsConfig: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
 ): any[] {
+  // eslint-disable-line @typescript-eslint/no-explicit-any
   // 如果用户有直接指定的enabledApis，优先使用
   if (user.enabledApis && user.enabledApis.length > 0) {
     return sources.filter(
-      (source) => !source.disabled && user.enabledApis!.includes(source.key),
+      (source) =>
+        !source.disabled && (user.enabledApis || []).includes(source.key),
     );
   }
 
@@ -99,6 +101,7 @@ export async function GET(request: NextRequest) {
       fromCache: false,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('获取视频源失败:', error);
     return NextResponse.json({ error: '获取视频源失败' }, { status: 500 });
   }

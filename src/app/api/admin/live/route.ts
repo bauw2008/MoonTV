@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
 
         console.log(`[API] 从配置中删除直播源: ${key}`);
         config.LiveConfig.splice(deleteIndex, 1);
-        console.log(`[API] 成功删除直播源: ${key}，剩余 ${config.LiveConfig.length} 个源`);
+        console.log(
+          `[API] 成功删除直播源: ${key}，剩余 ${config.LiveConfig.length} 个源`,
+        );
         break;
 
       case 'enable':

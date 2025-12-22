@@ -25,7 +25,7 @@ export const initDB = (): Promise<IDBDatabase> => {
       return;
     }
 
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
       reject(new Error('Failed to open IndexedDB'));
@@ -79,6 +79,7 @@ export const storeBackgroundImage = async (
       };
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error storing background image:', error);
     throw error;
   }
@@ -106,6 +107,7 @@ export const getBackgroundImage = async (): Promise<string | null> => {
       };
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error getting background image:', error);
     return null;
   }
@@ -132,6 +134,7 @@ export const deleteBackgroundImage = async (): Promise<void> => {
       };
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error deleting background image:', error);
     throw error;
   }
@@ -175,6 +178,7 @@ export const cleanupOldImages = async (
       };
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error cleaning up old images:', error);
     throw error;
   }

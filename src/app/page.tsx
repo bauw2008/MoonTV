@@ -78,7 +78,7 @@ function HomeClient() {
 
         // 如果是403错误，说明功能未启用
         setAiEnabled(response.status !== 403);
-      } catch (error) {
+      } catch {
         // 发生错误时默认不显示按钮
         setAiEnabled(false);
       }
@@ -335,6 +335,7 @@ function HomeClient() {
                   <button
                     className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                     onClick={async () => {
+                      // eslint-disable-next-line no-alert
                       if (confirm('确定要清空所有收藏吗？')) {
                         await clearAllFavorites();
                         setFavoriteItems([]);

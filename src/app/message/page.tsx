@@ -17,13 +17,13 @@ interface Comment {
   role?: 'owner' | 'admin' | 'user';
   content: string;
   timestamp: number;
-  replies: Reply[];
+  replies: CommentReply[];
   commentCount?: number;
   category?: 'suggestion' | 'feedback' | 'discussion' | 'other';
   isPinned?: boolean;
 }
 
-interface Reply {
+interface CommentReply {
   id: string;
   username: string;
   avatar?: string;
@@ -78,7 +78,7 @@ export default function MessageBoard() {
     }
 
     fetchComments(1, false);
-  }, [router]);
+  }, [router, fetchComments]);
 
   // 处理分类筛选
   useEffect(() => {
@@ -110,7 +110,7 @@ export default function MessageBoard() {
         setTotalPages(data.pagination?.totalPages || 1);
         setHasNextPage(data.pagination?.hasNextPage || false);
         setHasPrevPage(data.pagination?.hasPrevPage || false);
-      } catch (error) {
+      } catch {
         showError('获取评论失败', '请稍后重试');
       } finally {
         setLoading(false);
@@ -156,6 +156,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('发布失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('发布评论失败:', error);
     }
   };
@@ -183,6 +184,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('回复失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('发布回复失败:', error);
     }
   };
@@ -207,6 +209,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('删除评论失败:', error);
     } finally {
       setDeletingId(null);
@@ -236,6 +239,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('删除回复失败:', error);
     } finally {
       setDeletingId(null);
@@ -261,6 +265,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('清空失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('清空留言失败:', error);
     }
   };
@@ -286,6 +291,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('操作失败', '请稍后重试');
+      // eslint-disable-next-line no-console
       console.error('置顶操作失败:', error);
     }
   };
@@ -1192,6 +1198,7 @@ export default function MessageBoard() {
                       <button
                         onClick={() => {
                           if (
+                            // eslint-disable-next-line no-alert
                             confirm(
                               '确定要清空所有留言和回复吗？此操作不可恢复！',
                             )

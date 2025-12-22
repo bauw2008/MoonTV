@@ -11,17 +11,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Key is required' }, { status: 400 });
     }
 
-    console.log(`🔍 API缓存请求: ${key}`);
-
     // 现在可以安全地调用 db.getCache，Upstash 的 getCache 已经修复
     const data = await db.getCache(key);
-    console.log(`✅ API缓存结果: ${data ? '命中' : '未命中'}`);
     return NextResponse.json({ data });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(
       `❌ API缓存错误 (key: ${request.nextUrl.searchParams.get('key')}):`,
       error,
     );
+    // eslint-disable-next-line no-console
     console.error('错误详情:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -43,6 +42,7 @@ export async function POST(request: NextRequest) {
     await db.setCache(key, data, expireSeconds);
     return NextResponse.json({ success: true });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Set cache error:', error);
     return NextResponse.json({ error: 'Failed to set cache' }, { status: 500 });
   }
@@ -67,6 +67,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Delete cache error:', error);
     return NextResponse.json(
       { error: 'Failed to delete cache' },

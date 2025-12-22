@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
     const limit = searchParams.get('limit')
-      ? parseInt(searchParams.get('limit')!)
+      ? parseInt(searchParams.get('limit') || '0')
       : undefined;
     const offset = parseInt(searchParams.get('offset') || '0');
     const refresh =
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     if (!refresh) {
       const cachedData = await CalendarCacheManager.getCalendarData();
       if (cachedData) {
+        // eslint-disable-next-line no-console
         console.log('✅ 使用数据库缓存的发布日历数据');
 
         // 从缓存中应用过滤和分页
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // eslint-disable-next-line no-console
     console.log('🌐 获取新的发布日历数据...');
 
     // 获取数据和过滤器
@@ -126,6 +128,7 @@ export async function GET(request: NextRequest) {
 
     // 💾 更新数据库缓存（仅在获取完整数据时）
     if (!type && !region && !genre && !dateFrom && !dateTo && offset === 0) {
+      // eslint-disable-next-line no-console
       console.log('📊 获取完整数据，更新数据库缓存...');
       const allData = await getReleaseCalendar({});
       const cacheData = {
@@ -138,16 +141,19 @@ export async function GET(request: NextRequest) {
       const saveSuccess =
         await CalendarCacheManager.saveCalendarData(cacheData);
       if (saveSuccess) {
+        // eslint-disable-next-line no-console
         console.log(
           `✅ 发布日历数据库缓存已更新，包含 ${allData.items.length} 项`,
         );
       } else {
+        // eslint-disable-next-line no-console
         console.warn('⚠️ 数据库缓存更新失败，但不影响API响应');
       }
     }
 
     return NextResponse.json(result);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('获取发布日历失败:', error);
     return NextResponse.json(
       {
@@ -167,6 +173,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // eslint-disable-next-line no-console
     console.log('🔄 手动刷新发布日历数据库缓存...');
 
     // 清除数据库缓存
@@ -189,10 +196,12 @@ export async function POST(request: NextRequest) {
     const saveSuccess = await CalendarCacheManager.saveCalendarData(cacheData);
 
     if (saveSuccess) {
+      // eslint-disable-next-line no-console
       console.log(
         `✅ 发布日历数据库缓存刷新完成，包含 ${calendarData.items.length} 项`,
       );
     } else {
+      // eslint-disable-next-line no-console
       console.warn('⚠️ 数据库缓存刷新失败');
     }
 
@@ -203,6 +212,7 @@ export async function POST(request: NextRequest) {
       cacheUpdated: saveSuccess,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('刷新发布日历缓存失败:', error);
     return NextResponse.json(
       {

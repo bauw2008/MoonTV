@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { useRouter } from 'next/navigation';
 import React, {
   useCallback,
@@ -129,7 +127,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     try {
       const info = await getVideoResolutionFromM3u8(episodeUrl);
       setVideoInfoMap((prev) => new Map(prev).set(sourceKey, info));
-    } catch (error) {
+    } catch {
       // 失败时保存错误状态
       setVideoInfoMap((prev) =>
         new Map(prev).set(sourceKey, {
