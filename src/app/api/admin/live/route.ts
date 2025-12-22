@@ -70,22 +70,28 @@ export async function POST(request: NextRequest) {
 
       case 'delete':
         // 删除直播源
+        console.log(`[API] 尝试删除直播源: ${key}`);
         const deleteIndex = config.LiveConfig.findIndex((l) => l.key === key);
         if (deleteIndex === -1) {
+          console.warn(`[API] 直播源不存在: ${key}`);
           return NextResponse.json({ error: '直播源不存在' }, { status: 404 });
         }
 
         const liveSource = config.LiveConfig[deleteIndex];
         if (liveSource.from === 'config') {
+          console.warn(`[API] 尝试删除配置文件中的直播源: ${key}`);
           return NextResponse.json(
             { error: '不能删除配置文件中的直播源' },
             { status: 400 },
           );
         }
 
+        console.log(`[API] 删除直播源缓存: ${key}`);
         deleteCachedLiveChannels(key);
 
+        console.log(`[API] 从配置中删除直播源: ${key}`);
         config.LiveConfig.splice(deleteIndex, 1);
+        console.log(`[API] 成功删除直播源: ${key}，剩余 ${config.LiveConfig.length} 个源`);
         break;
 
       case 'enable':

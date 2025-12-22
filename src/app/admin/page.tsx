@@ -6272,18 +6272,54 @@ const LiveSourceConfig = ({
     });
   };
 
-  const handleDelete = (key: string) => {
-    withLoading(`deleteLiveSource_${key}`, () =>
-      callLiveSourceApi({ action: 'delete', key }),
-    ).catch((err) => {
-      console.error('删除直播源失败:', { key, error: err });
-      // 如果是socket相关错误，提供用户友好的提示
-      if (err && err.message && err.message.includes('socket')) {
-        showError('删除失败，请尝试刷新页面后重试', showAlert);
+  const handleDelete = async (key: string) => {
+    try {
+      await withLoading(`deleteLiveSource_${key}`, async () => {
+        // 添加重试机制处理socket错误
+        let retryCount = 0;
+        const maxRetries = 2;
+        
+        while (retryCount <= maxRetries) {
+          try {
+            await callLiveSourceApi({ action: 'delete', key });
+            return; // 成功则退出
+          } catch (err) {
+            retryCount++;
+            console.error(`删除直播源失败 (尝试 ${retryCount}/${maxRetries + 1}):`, { key, error: err });
+            
+            // 如果是socket错误且还有重试次数，等待后重试
+            if (err instanceof Error && err.message.includes('socket') && retryCount <= maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 递增延迟
+              continue;
+            }
+            
+            // 最后一次重试或非socket错误，抛出错误
+            throw err;
+          }
+        }
+      });
+      
+      showSuccess('直播源删除成功', showAlert);
+    } catch (err) {
+      console.error('删除直播源最终失败:', { key, error: err });
+      
+      // 根据错误类型提供不同的用户提示
+      if (err instanceof Error && err.message.includes('socket')) {
+        showError(
+          '删除失败：服务器内部错误。请尝试刷新页面后重试，或联系管理员', 
+          showAlert
+        );
+      } else if (err instanceof Error && err.message.includes('404')) {
+        showError('直播源不存在或已被删除', showAlert);
+      } else if (err instanceof Error && err.message.includes('400')) {
+        showError('不能删除配置文件中的直播源', showAlert);
       } else {
-        showError(err instanceof Error ? err.message : '删除失败', showAlert);
+        showError(
+          err instanceof Error ? err.message : '删除失败，请稍后重试', 
+          showAlert
+        );
       }
-    });
+    }
   };
 
   // 刷新直播源
