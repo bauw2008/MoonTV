@@ -6275,8 +6275,14 @@ const LiveSourceConfig = ({
   const handleDelete = (key: string) => {
     withLoading(`deleteLiveSource_${key}`, () =>
       callLiveSourceApi({ action: 'delete', key }),
-    ).catch(() => {
-      console.error('操作失败', 'delete', key);
+    ).catch((err) => {
+      console.error('删除直播源失败:', { key, error: err });
+      // 如果是socket相关错误，提供用户友好的提示
+      if (err && err.message && err.message.includes('socket')) {
+        showError('删除失败，请尝试刷新页面后重试', showAlert);
+      } else {
+        showError(err instanceof Error ? err.message : '删除失败', showAlert);
+      }
     });
   };
 
