@@ -68,23 +68,6 @@ export default function MessageBoard() {
     'all' | 'suggestion' | 'feedback' | 'discussion' | 'other'
   >('all');
 
-  useEffect(() => {
-    const auth = getAuthInfoFromBrowserCookie();
-    setAuthInfo(auth);
-
-    if (!auth?.username) {
-      router.push('/login');
-      return;
-    }
-
-    fetchComments(1, false);
-  }, [router, fetchComments]);
-
-  // 处理分类筛选
-  useEffect(() => {
-    // 这里可以添加筛选逻辑
-  }, [selectedCategoryFilter]);
-
   const fetchComments = useCallback(
     async (page = 1, append = false) => {
       try {
@@ -119,6 +102,23 @@ export default function MessageBoard() {
     },
     [showError],
   );
+
+  useEffect(() => {
+    const auth = getAuthInfoFromBrowserCookie();
+    setAuthInfo(auth);
+
+    if (!auth?.username) {
+      router.push('/login');
+      return;
+    }
+
+    fetchComments(1, false);
+  }, [router, fetchComments]);
+
+  // 处理分类筛选
+  useEffect(() => {
+    // 这里可以添加筛选逻辑
+  }, [selectedCategoryFilter]);
 
   const [selectedCategory, setSelectedCategory] = useState<
     'suggestion' | 'feedback' | 'discussion' | 'other'
