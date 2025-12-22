@@ -1,3 +1,4 @@
+﻿
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps */
 
 'use client';
@@ -35,13 +36,14 @@ import {
   FileText,
   Filter,
   FolderOpen,
+  Search,
   Settings,
-  TestTube,
   Tv,
   Upload,
   User,
   Users,
   Video,
+  X,
 } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
 import Image from 'next/image';
@@ -56,7 +58,6 @@ import CacheManager from '@/components/CacheManager';
 import DataMigration from '@/components/DataMigration';
 import ImportExportModal from '@/components/ImportExportModal';
 import PageLayout from '@/components/PageLayout';
-import SourceTestModule from '@/components/SourceTestModule';
 import TVBoxSecurityConfig from '@/components/TVBoxSecurityConfig';
 import YellowFilterConfig from '@/components/YellowFilterConfig';
 import YouTubeConfig from '@/components/YouTubeConfig';
@@ -423,15 +424,7 @@ interface LiveDataSource {
   from: 'config' | 'custom';
 }
 
-// tvbox配置接口
-interface SecurityConfig {
-  enableAuth: boolean;
-  token: string;
-  enableIpWhitelist: boolean;
-  allowedIPs: string[];
-  enableRateLimit: boolean;
-  rateLimit: number;
-}
+
 
 // 自定义分类数据类型
 interface CustomCategory {
@@ -656,7 +649,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
       await handleUserGroupAction('delete', deletingUserGroup.name);
       setShowDeleteUserGroupModal(false);
       setDeletingUserGroup(null);
-    } catch (err) {
+    } catch (_err) {
       // 错误处理已在 handleUserGroupAction 中处理
     }
   };
@@ -836,7 +829,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
           setShowConfigureUserGroupModal(false);
           setSelectedUserForGroup(null);
           setSelectedUserGroups([]);
-        } catch (err) {
+        } catch (_err) {
           // 错误处理已在 handleAssignUserGroup 中处理
         }
       },
@@ -1009,7 +1002,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
         await handleUserAction('deleteUser', deletingUser);
         setShowDeleteUserModal(false);
         setDeletingUser(null);
-      } catch (err) {
+      } catch (_err) {
         // 错误处理已在 handleUserAction 中处理
       }
     });
@@ -1863,7 +1856,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                         (role === 'admin' && user.role === 'user'));
 
                     // 判断是否为管理员或站长（这些用户的密码不能获取）
-                    const isAdminOrOwner =
+                    const _isAdminOrOwner =
                       user.role === 'admin' || user.role === 'owner';
                     return (
                       <tr
@@ -3526,6 +3519,8 @@ const VideoSourceConfig = ({
     onCancel: () => {},
   });
 
+  
+  
   // 有效性检测相关状态
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -3659,7 +3654,11 @@ const VideoSourceConfig = ({
       });
   };
 
-  // 有效性检测函数
+  
+
+  
+
+// 有效性检测函数
   const handleValidateSources = async () => {
     if (!searchKeyword.trim()) {
       showAlert({
@@ -4338,12 +4337,10 @@ const VideoSourceConfig = ({
               </span>
               <span className='sm:hidden'>导出</span>
             </button>
-            <button
+<button
               onClick={() => setShowValidationModal(true)}
               disabled={isValidating}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors flex items-center space-x-1 ${
-                isValidating ? buttonStyles.disabled : buttonStyles.primary
-              }`}
+              className={buttonStyles.primary}
             >
               {isValidating ? (
                 <>
@@ -4354,6 +4351,7 @@ const VideoSourceConfig = ({
                 '有效性检测'
               )}
             </button>
+            
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               className={
@@ -4435,60 +4433,60 @@ const VideoSourceConfig = ({
         className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='source-list'
       >
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
-            <tr>
-              <th className='w-8' />
-              <th className='w-12 px-2 py-3 text-center'>
-                <input
-                  type='checkbox'
-                  checked={selectAll}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
-                />
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                名称
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                Key
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                API 地址
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                Detail 地址
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                状态
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                有效性
-              </th>
-              <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                操作
-              </th>
-            </tr>
-          </thead>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            autoScroll={false}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          autoScroll={false}
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        >
+          <SortableContext
+            items={sources.map((s) => s.key)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={sources.map((s) => s.key)}
-              strategy={verticalListSortingStrategy}
-            >
+            <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+              <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+                <tr>
+                  <th className='w-8' />
+                  <th className='w-12 px-2 py-3 text-center'>
+                    <input
+                      type='checkbox'
+                      checked={selectAll}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                    />
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    名称
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    Key
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    API 地址
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    Detail 地址
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    状态
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    有效性
+                  </th>
+                  <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    操作
+                  </th>
+                </tr>
+              </thead>
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {sources.map((source) => (
                   <DraggableRow key={source.key} source={source} />
                 ))}
               </tbody>
-            </SortableContext>
-          </DndContext>
-        </table>
+            </table>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* 保存排序按钮 */}
@@ -4508,58 +4506,7 @@ const VideoSourceConfig = ({
         </div>
       )}
 
-      {/* 有效性检测弹窗 */}
-      {showValidationModal &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
-            onClick={() => setShowValidationModal(false)}
-          >
-            <div
-              className='bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                视频源有效性检测
-              </h3>
-              <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
-                请输入检测用的搜索关键词
-              </p>
-              <div className='space-y-4'>
-                <input
-                  type='text'
-                  placeholder='请输入搜索关键词'
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100'
-                  onKeyPress={(e) =>
-                    e.key === 'Enter' && handleValidateSources()
-                  }
-                />
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => setShowValidationModal(false)}
-                    className='px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleValidateSources}
-                    disabled={!searchKeyword.trim()}
-                    className={`px-4 py-2 ${
-                      !searchKeyword.trim()
-                        ? buttonStyles.disabled
-                        : buttonStyles.primary
-                    }`}
-                  >
-                    开始检测
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      
 
       {/* 通用弹窗组件 */}
       <AlertModal
@@ -4571,6 +4518,131 @@ const VideoSourceConfig = ({
         timer={alertModal.timer}
         showConfirm={alertModal.showConfirm}
       />
+
+      
+
+      {/* 有效性检测弹窗 */}
+      {showValidationModal &&
+        createPortal(
+          <div
+            className='fixed inset-0 bg-black/20 backdrop-blur-sm z-[9999] flex items-center justify-center p-4'
+            onClick={() => setShowValidationModal(false)}
+          >
+            <div
+              className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden'
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 头部 */}
+              <div className='relative px-5 py-4 bg-gradient-to-r from-blue-600 to-cyan-600'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center space-x-3'>
+                    <div className='bg-white/10 backdrop-blur-sm p-2 rounded-lg'>
+                      <CheckCircle className='w-5 h-5 text-white' />
+                    </div>
+                    <div>
+                      <h2 className='text-lg font-bold text-white'>
+                        视频源有效性检测
+                      </h2>
+                      <p className='text-white/80 text-xs mt-0.5'>
+                        快速检测所有视频源的可用性
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowValidationModal(false)}
+                    className='text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-lg transition-all'
+                  >
+                    <X className='w-5 h-5' />
+                  </button>
+                </div>
+              </div>
+
+              {/* 内容区 */}
+              <div className='flex-1 overflow-y-auto p-5'>
+                <div className='space-y-4'>
+                  {/* 说明文档 */}
+                  <div className='bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+                    <h4 className='font-semibold text-blue-900 dark:text-blue-200 mb-1.5 text-sm'>
+                      📝 检测说明
+                    </h4>
+                    <ul className='text-xs text-blue-800 dark:text-blue-300 space-y-0.5'>
+                      <li>• 使用流式检测，实时更新源状态</li>
+                      <li>• 检测结果将直接显示在表格中</li>
+                      <li>• 支持检测所有配置的视频源</li>
+                      <li>• 建议使用常用关键词进行检测</li>
+                    </ul>
+                  </div>
+
+                  {/* 搜索输入 */}
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      搜索关键词
+                    </label>
+                    <div className='relative'>
+                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
+                      <input
+                        type='text'
+                        placeholder='请输入搜索关键词（如：电影、电视剧等）'
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        className='w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        onKeyPress={(e) =>
+                          e.key === 'Enter' && handleValidateSources()
+                        }
+                      />
+                    </div>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      建议使用常见的影视名称或关键词进行测试
+                    </p>
+                  </div>
+
+                  {/* 检测状态提示 */}
+                  {isValidating && (
+                    <div className='bg-yellow-50/50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3'>
+                      <div className='flex items-center space-x-2'>
+                        <div className='w-4 h-4 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin'></div>
+                        <span className='text-sm text-yellow-800 dark:text-yellow-200'>
+                          正在检测中，请稍候...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 底部按钮 */}
+              <div className='flex-shrink-0 px-5 py-3 bg-gray-50/50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-2.5'>
+                <button
+                  onClick={() => setShowValidationModal(false)}
+                  className='px-4 py-2 text-sm rounded-lg transition-colors font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleValidateSources}
+                  disabled={!searchKeyword.trim() || isValidating}
+                  className={`px-4 py-2 text-sm rounded-lg transition-colors font-medium ${
+                    !searchKeyword.trim() || isValidating
+                      ? 'bg-gray-400 cursor-not-allowed text-white'
+                      : 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  {isValidating ? (
+                    <div className='flex items-center space-x-2'>
+                      <div className='w-3 h-3 border border-white border-t-transparent rounded-full animate-spin'></div>
+                      <span>检测中...</span>
+                    </div>
+                  ) : (
+                    '开始检测'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* 批量操作确认弹窗 */}
       {confirmModal.isOpen &&
@@ -6677,55 +6749,55 @@ const LiveSourceConfig = ({
         className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='live-source-list'
       >
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
-            <tr>
-              <th className='w-8' />
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                名称
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                Key
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                M3U 地址
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                节目单地址
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                自定义 UA
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                频道数
-              </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                状态
-              </th>
-              <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                操作
-              </th>
-            </tr>
-          </thead>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            autoScroll={false}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          autoScroll={false}
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        >
+          <SortableContext
+            items={liveSources.map((s) => s.key)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={liveSources.map((s) => s.key)}
-              strategy={verticalListSortingStrategy}
-            >
+            <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+              <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+                <tr>
+                  <th className='w-8' />
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    名称
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    Key
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    M3U 地址
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    节目单地址
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    自定义 UA
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    频道数
+                  </th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    状态
+                  </th>
+                  <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                    操作
+                  </th>
+                </tr>
+              </thead>
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {liveSources.map((liveSource) => (
                   <DraggableRow key={liveSource.key} liveSource={liveSource} />
                 ))}
               </tbody>
-            </SortableContext>
-          </DndContext>
-        </table>
+            </table>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* 保存排序按钮 */}
@@ -7083,7 +7155,6 @@ function AdminPageClient() {
   const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
     userConfig: false,
     videoSource: false,
-    sourceTest: false,
     liveSource: false,
     siteConfig: false,
     categoryConfig: false,
@@ -7271,20 +7342,7 @@ function AdminPageClient() {
               <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
 
-            {/* 源检测标签 */}
-            <CollapsibleTab
-              title='源检测'
-              icon={
-                <TestTube
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.sourceTest}
-              onToggle={() => toggleTab('sourceTest')}
-            >
-              <SourceTestModule />
-            </CollapsibleTab>
+            
 
             {/* 直播源配置标签 */}
             <CollapsibleTab

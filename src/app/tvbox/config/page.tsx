@@ -12,26 +12,9 @@ interface DeviceInfo {
   bindTime: number;
 }
 
-interface SecurityConfig {
-  enableAuth: boolean;
-  token: string;
-  enableIpWhitelist: boolean;
-  allowedIPs: string[];
-  enableRateLimit: boolean;
-  rateLimit: number;
-  enableDeviceBinding: boolean;
-  maxDevices: number;
-  userTokens?: Array<{
-    username: string;
-    token: string;
-    enabled: boolean;
-    devices: Array<{
-      deviceId: string;
-      deviceInfo: string;
-      bindTime: number;
-    }>;
-  }>;
-}
+// 使用统一的类型定义
+import type { AdminConfig } from '@/lib/admin.types';
+type SecurityConfig = NonNullable<AdminConfig['TVBoxSecurityConfig']>;
 
 export default function TVBoxConfigPage() {
   const [tokenCopied, setTokenCopied] = useState(false);

@@ -1,11 +1,12 @@
 import js from '@eslint/js';
+
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsparser from '@typescript-eslint/parser';
 
 export default [
   {
@@ -15,44 +16,18 @@ export default [
       'node_modules/**',
       '.next/**',
       'out/**',
+      'build/**',
+      'dist/**',
       '*.config.js',
       'tailwind.config.*',
       '.prettierrc.js',
-      'build/**',
-      'dist/**',
       'start.js',
+      'scripts/**',
     ],
   },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx}'],
-    languageOptions: {
-      ecmaVersion: 2024,
-      sourceType: 'commonjs',
-      globals: {
-        React: true,
-        JSX: true,
-        fetch: true,
-        console: true,
-        document: true,
-        window: true,
-        setTimeout: true,
-        clearTimeout: true,
-        setInterval: true,
-        clearInterval: true,
-        localStorage: true,
-        navigator: true,
-        location: true,
-        history: true,
-        require: true,
-        __dirname: true,
-        process: true,
-        Buffer: true,
-        global: true,
-        module: true,
-        exports: true,
-      },
-    },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -62,25 +37,126 @@ export default [
         },
       },
       globals: {
-        React: true,
-        JSX: true,
-        fetch: true,
-        console: true,
-        document: true,
-        window: true,
-        setTimeout: true,
-        clearTimeout: true,
-        setInterval: true,
-        clearInterval: true,
-        localStorage: true,
-        navigator: true,
-        location: true,
-        history: true,
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        FormData: 'readonly',
+        Blob: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        Headers: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        WebSocket: 'readonly',
+        Event: 'readonly',
+        CustomEvent: 'readonly',
+        EventTarget: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLVideoElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        TouchEvent: 'readonly',
+        MutationObserver: 'readonly',
+        ResizeObserver: 'readonly',
+        IntersectionObserver: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        performance: 'readonly',
+        atob: 'readonly',
+        btoa: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
+        crypto: 'readonly',
+        self: 'readonly',
+        EventSource: 'readonly',
+        confirm: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        Element: 'readonly',
+        Node: 'readonly',
+        NodeList: 'readonly',
+        DOMParser: 'readonly',
+        XMLSerializer: 'readonly',
+        getComputedStyle: 'readonly',
+        matchMedia: 'readonly',
+        history: 'readonly',
+        location: 'readonly',
+        Image: 'readonly',
+        Audio: 'readonly',
+        MediaSource: 'readonly',
+        SourceBuffer: 'readonly',
+        ReadableStream: 'readonly',
+        WritableStream: 'readonly',
+        TransformStream: 'readonly',
+        Uint8Array: 'readonly',
+        ArrayBuffer: 'readonly',
+        DataView: 'readonly',
+        Map: 'readonly',
+        Set: 'readonly',
+        WeakMap: 'readonly',
+        WeakSet: 'readonly',
+        Promise: 'readonly',
+        Proxy: 'readonly',
+        Reflect: 'readonly',
+        Symbol: 'readonly',
+        BigInt: 'readonly',
+        Intl: 'readonly',
+        JSON: 'readonly',
+        Math: 'readonly',
+        Object: 'readonly',
+        Array: 'readonly',
+        String: 'readonly',
+        Number: 'readonly',
+        Boolean: 'readonly',
+        RegExp: 'readonly',
+        Date: 'readonly',
+        Error: 'readonly',
+        TypeError: 'readonly',
+        ReferenceError: 'readonly',
+        SyntaxError: 'readonly',
+        RangeError: 'readonly',
+        // DOM types
+        HTMLDivElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        WheelEvent: 'readonly',
+        EventListener: 'readonly',
+        DOMException: 'readonly',
+        RequestInit: 'readonly',
+        ReadableStreamDefaultReader: 'readonly',
+        // Node.js globals
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+        // React
+        React: 'readonly',
+        JSX: 'readonly',
       },
     },
     plugins: {
-      react,
-      'react-hooks': reactHooks,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
       'react-refresh': reactRefresh,
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
@@ -96,12 +172,14 @@ export default [
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-alert': 'warn',
+      'no-undef': 'error',
 
       // React 规则
-      'react/jsx-uses-react': 'off', // React 17+ 不需要导入 React
-      'react/react-in-jsx-scope': 'off', // React 17+ 不需要 React in scope
+      'react/jsx-uses-react': 'off',
+      'react/react-in-jsx-scope': 'off',
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
+      'react/prop-types': 'off',
       'react/jsx-curly-brace-presence': [
         'warn',
         { props: 'never', children: 'never' },
@@ -115,45 +193,7 @@ export default [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // 导入排序
-      'simple-import-sort/exports': 'warn',
-      'simple-import-sort/imports': [
-        'warn',
-        {
-          groups: [
-            // ext library & side effect imports
-            ['^@?\\w', '^\\u0000'],
-            // {s}css files
-            ['^.+\\.s?css$'],
-            // Lib and hooks
-            ['^@/lib', '^@/hooks'],
-            // static data
-            ['^@/data'],
-            // components
-            ['^@/components', '^@/container'],
-            // zustand store
-            ['^@/store'],
-            // Other imports
-            ['^@/'],
-            // relative paths up until 3 level
-            [
-              '^\\./?$',
-              '^\\.(?!/?$)',
-              '^\\.\\./?$',
-              '^\\.\\.(?!/?$)',
-              '^\\.\\./\\.\\./?$',
-              '^\\.\\./\\.\\.(?!/?$)',
-              '^\\.\\./\\.\\./\\.\\./?$',
-              '^\\.\\./\\.\\./\\.\\.(?!/?$)',
-            ],
-            ['^@/types'],
-            // other that didnt fit in
-            ['^'],
-          ],
-        },
-      ],
-
-      // 未使用导入
+      // Import 排序规则
       'unused-imports/no-unused-imports': 'warn',
       'unused-imports/no-unused-vars': [
         'warn',
@@ -164,8 +204,43 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
+      'simple-import-sort/exports': 'warn',
+      'simple-import-sort/imports': [
+        'warn',
+        {
+          groups: [
+            // 外部库和副作用导入
+            ['^@?\\w', '^\\u0000'],
+            // CSS 文件
+            ['^.+\\.s?css$'],
+            // 项目内部库和 hooks
+            ['^@/lib', '^@/hooks'],
+            // 数据文件
+            ['^@/data'],
+            // 组件
+            ['^@/components'],
+            // 其他别名导入
+            ['^@/'],
+            // 相对路径导入
+            [
+              '^\\./?$',
+              '^\\.(?!/?$)',
+              '^\\.\\./?$',
+              '^\\.\\.(?!/?$)',
+              '^\\.\\./\\.\\./?$',
+              '^\\.\\./\\.\\.(?!/?$)',
+              '^\\.\\./\\.\\./\\.\\./?$',
+              '^\\.\\./\\.\\./\\.\\.(?!/?$)',
+            ],
+            // 类型导入
+            ['^@/types'],
+            // 其他未分类导入
+            ['^'],
+          ],
+        },
+      ],
 
-      // 代码质量
+      // 代码质量规则
       eqeqeq: ['warn', 'always'],
       curly: ['warn', 'all'],
       'brace-style': ['warn', '1tbs'],
@@ -177,7 +252,7 @@ export default [
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      parser: tsparser,
+      parser: tsParser,
       ecmaVersion: 2024,
       sourceType: 'module',
       parserOptions: {
@@ -188,26 +263,129 @@ export default [
         tsconfigRootDir: import.meta.dirname,
       },
       globals: {
-        React: true,
-        JSX: true,
-        fetch: true,
-        console: true,
-        document: true,
-        window: true,
-        setTimeout: true,
-        clearTimeout: true,
-        setInterval: true,
-        clearInterval: true,
-        localStorage: true,
-        navigator: true,
-        location: true,
-        history: true,
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        FormData: 'readonly',
+        Blob: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        Headers: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        WebSocket: 'readonly',
+        Event: 'readonly',
+        CustomEvent: 'readonly',
+        EventTarget: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLVideoElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        TouchEvent: 'readonly',
+        MutationObserver: 'readonly',
+        ResizeObserver: 'readonly',
+        IntersectionObserver: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        performance: 'readonly',
+        atob: 'readonly',
+        btoa: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
+        crypto: 'readonly',
+        self: 'readonly',
+        EventSource: 'readonly',
+        confirm: 'readonly',
+        alert: 'readonly',
+        prompt: 'readonly',
+        Element: 'readonly',
+        Node: 'readonly',
+        NodeList: 'readonly',
+        DOMParser: 'readonly',
+        XMLSerializer: 'readonly',
+        getComputedStyle: 'readonly',
+        matchMedia: 'readonly',
+        history: 'readonly',
+        location: 'readonly',
+        Image: 'readonly',
+        Audio: 'readonly',
+        MediaSource: 'readonly',
+        SourceBuffer: 'readonly',
+        ReadableStream: 'readonly',
+        WritableStream: 'readonly',
+        TransformStream: 'readonly',
+        Uint8Array: 'readonly',
+        ArrayBuffer: 'readonly',
+        DataView: 'readonly',
+        Map: 'readonly',
+        Set: 'readonly',
+        WeakMap: 'readonly',
+        WeakSet: 'readonly',
+        Promise: 'readonly',
+        Proxy: 'readonly',
+        Reflect: 'readonly',
+        Symbol: 'readonly',
+        BigInt: 'readonly',
+        Intl: 'readonly',
+        JSON: 'readonly',
+        Math: 'readonly',
+        Object: 'readonly',
+        Array: 'readonly',
+        String: 'readonly',
+        Number: 'readonly',
+        Boolean: 'readonly',
+        RegExp: 'readonly',
+        Date: 'readonly',
+        Error: 'readonly',
+        TypeError: 'readonly',
+        ReferenceError: 'readonly',
+        SyntaxError: 'readonly',
+        RangeError: 'readonly',
+        // DOM types
+        HTMLDivElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        WheelEvent: 'readonly',
+        EventListener: 'readonly',
+        DOMException: 'readonly',
+        RequestInit: 'readonly',
+        ReadableStreamDefaultReader: 'readonly',
+        // TypeScript/Node types
+        NodeJS: 'readonly',
+        // Node.js globals
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+        // React
+        React: 'readonly',
+        JSX: 'readonly',
       },
     },
     plugins: {
-      '@typescript-eslint': tseslint,
-      react,
-      'react-hooks': reactHooks,
+      '@typescript-eslint': tsPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
       'react-refresh': reactRefresh,
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
@@ -223,19 +401,31 @@ export default [
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-alert': 'warn',
+      'no-undef': 'error',
 
       // TypeScript 规则
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-      '@typescript-eslint/prefer-optional-chain': 'warn',
+      // '@typescript-eslint/prefer-nullish-coalescing': 'warn', // 需要 strictNullChecks
+      // '@typescript-eslint/prefer-optional-chain': 'warn', // 需要 strictNullChecks
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-unnecessary-type-constraint': 'warn',
+      '@typescript-eslint/no-inferrable-types': 'warn',
 
       // React 规则
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
+      'react/prop-types': 'off',
       'react/jsx-curly-brace-presence': [
         'warn',
         { props: 'never', children: 'never' },
@@ -249,45 +439,7 @@ export default [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // 导入排序
-      'simple-import-sort/exports': 'warn',
-      'simple-import-sort/imports': [
-        'warn',
-        {
-          groups: [
-            // ext library & side effect imports
-            ['^@?\\w', '^\\u0000'],
-            // {s}css files
-            ['^.+\\.s?css$'],
-            // Lib and hooks
-            ['^@/lib', '^@/hooks'],
-            // static data
-            ['^@/data'],
-            // components
-            ['^@/components', '^@/container'],
-            // zustand store
-            ['^@/store'],
-            // Other imports
-            ['^@/'],
-            // relative paths up until 3 level
-            [
-              '^\\./?$',
-              '^\\.(?!/?$)',
-              '^\\.\\./?$',
-              '^\\.\\.(?!/?$)',
-              '^\\.\\./\\.\\./?$',
-              '^\\.\\./\\.\\.(?!/?$)',
-              '^\\.\\./\\.\\./\\.\\./?$',
-              '^\\.\\./\\.\\./\\.\\.(?!/?$)',
-            ],
-            ['^@/types'],
-            // other that didnt fit in
-            ['^'],
-          ],
-        },
-      ],
-
-      // 未使用导入
+      // Import 排序规则
       'unused-imports/no-unused-imports': 'warn',
       'unused-imports/no-unused-vars': [
         'warn',
@@ -298,14 +450,61 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
+      'simple-import-sort/exports': 'warn',
+      'simple-import-sort/imports': [
+        'warn',
+        {
+          groups: [
+            // 外部库和副作用导入
+            ['^@?\\w', '^\\u0000'],
+            // CSS 文件
+            ['^.+\\.s?css$'],
+            // 项目内部库和 hooks
+            ['^@/lib', '^@/hooks'],
+            // 数据文件
+            ['^@/data'],
+            // 组件
+            ['^@/components'],
+            // 其他别名导入
+            ['^@/'],
+            // 相对路径导入
+            [
+              '^\\./?$',
+              '^\\.(?!/?$)',
+              '^\\.\\./?$',
+              '^\\.\\.(?!/?$)',
+              '^\\.\\./\\.\\./?$',
+              '^\\.\\./\\.\\.(?!/?$)',
+              '^\\.\\./\\.\\./\\.\\./?$',
+              '^\\.\\./\\.\\./\\.\\.(?!/?$)',
+            ],
+            // 类型导入
+            ['^@/types'],
+            // 其他未分类导入
+            ['^'],
+          ],
+        },
+      ],
 
-      // 代码质量
+      // 代码质量规则
       eqeqeq: ['warn', 'always'],
       curly: ['warn', 'all'],
       'brace-style': ['warn', '1tbs'],
       'comma-dangle': ['warn', 'always-multiline'],
       semi: ['warn', 'always'],
       quotes: ['warn', 'single', { avoidEscape: true }],
+    },
+  },
+  {
+    files: ['**/layout.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    files: ['**/Sidebar.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ];

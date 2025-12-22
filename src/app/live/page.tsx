@@ -1030,7 +1030,7 @@ function LivePageClient() {
               const url = new URL(context.url);
               url.searchParams.set('allowCORS', 'true');
               context.url = url.toString();
-            } catch (error) {
+            } catch (_error) {
               // 如果 URL 解析失败，回退到字符串拼接
               context.url = context.url + '&allowCORS=true';
             }
@@ -1150,6 +1150,12 @@ function LivePageClient() {
     video.hls = hls;
 
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
+      // 检查是否有有效的错误数据
+      if (!data || typeof data !== 'object') {
+        console.warn('HLS Error: Invalid error data received');
+        return;
+      }
+
       console.error('HLS Error:', event, data);
 
       // 使用最新版本的错误详情类型

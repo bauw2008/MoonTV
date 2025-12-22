@@ -41,10 +41,15 @@ const AIRecommendConfig = ({
     'deepseek-chat (DeepSeek)',
     'deepseek-coder (DeepSeek)',
     'qwen3-max (阿里云)',
-    'qwen3-coder (阿里通义千问)',
     'glm-4-plus (智谱AI)',
     'llama-4 (Meta)',
     'grok-4 (xAI)',
+    'GLM-4.6 (recommend)',
+    'DeepSeek-V3.2',
+    'Qwen3-Coder-Plus',
+    'Kimi-K2-Thinking',
+    'MiniMax-M2',
+    'Kimi-K2-0905',
   ];
 
   // 从config加载设置

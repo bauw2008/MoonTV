@@ -132,10 +132,20 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
             >
               <Link
                 href={item.href}
-                className='flex flex-col items-center justify-center w-full h-14 gap-1 text-xs'
+                className={`flex flex-col items-center justify-center w-full h-14 gap-1 text-xs transition-colors duration-200 ${
+                  active
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-900 dark:text-gray-300'
+                }`}
               >
-                <item.icon className='h-6 w-6 transition-colors duration-200' />
-                <span className='transition-colors duration-200'>
+                <item.icon 
+                  className={`h-6 w-6 transition-colors duration-200 ${
+                    active
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-900 dark:text-gray-300'
+                  }`} 
+                />
+                <span>
                   {item.label}
                 </span>
               </Link>

@@ -14,14 +14,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import PageLayout from '@/components/PageLayout';
 
-interface SecurityConfig {
-  enableAuth: boolean;
-  token: string;
-  enableIpWhitelist: boolean;
-  allowedIPs: string[];
-  enableRateLimit: boolean;
-  rateLimit: number;
-}
+// 使用统一的类型定义
+import type { AdminConfig } from '@/lib/admin.types';
+type SecurityConfig = NonNullable<AdminConfig['TVBoxSecurityConfig']>;
 
 interface DiagnoseResult {
   pass: boolean;
