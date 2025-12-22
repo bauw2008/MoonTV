@@ -71,8 +71,9 @@ export default async function RootLayout({
     showShortDrama: false,
   };
 
+  // 总是获取配置以获取最新的 MenuSettings
+  const config = await getConfig();
   if (storageType !== 'localstorage') {
-    const config = await getConfig();
     siteName = config.SiteConfig.SiteName;
     announcement = config.SiteConfig.Announcement;
 
@@ -89,8 +90,10 @@ export default async function RootLayout({
       query: category.query,
     }));
     fluidSearch = config.SiteConfig.FluidSearch;
+  }
 
-    // 从配置中获取 MenuSettings，如果没有则使用默认值
+  // 无论存储类型如何，都从配置中获取 MenuSettings
+  if (config.SiteConfig.MenuSettings) {
     menuSettings = {
       ...menuSettings,
       ...config.SiteConfig.MenuSettings,
