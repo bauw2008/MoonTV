@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import PageLayout from '@/components/PageLayout';
-
 // 使用统一的类型定义
 import type { AdminConfig } from '@/lib/admin.types';
+
+import PageLayout from '@/components/PageLayout';
 type SecurityConfig = NonNullable<AdminConfig['TVBoxSecurityConfig']>;
 
 interface DiagnoseResult {

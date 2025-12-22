@@ -645,13 +645,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
       return;
     }
 
-    try {
-      await handleUserGroupAction('delete', deletingUserGroup.name);
-      setShowDeleteUserGroupModal(false);
-      setDeletingUserGroup(null);
-    } catch (_err) {
-      // 错误处理已在 handleUserGroupAction 中处理
-    }
+    await handleUserGroupAction('delete', deletingUserGroup.name);
+    setShowDeleteUserGroupModal(false);
+    setDeletingUserGroup(null);
   };
 
   const handleStartEditUserGroup = (group: {
@@ -821,7 +817,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
     await withLoading(
       `saveUserGroups_${selectedUserForGroup.username}`,
       async () => {
-        try {
           await handleAssignUserGroup(
             selectedUserForGroup.username,
             selectedUserGroups,
@@ -829,9 +824,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
           setShowConfigureUserGroupModal(false);
           setSelectedUserForGroup(null);
           setSelectedUserGroups([]);
-        } catch (_err) {
-          // 错误处理已在 handleAssignUserGroup 中处理
-        }
       },
     );
   };
@@ -998,13 +990,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
     }
 
     await withLoading(`deleteUser_${deletingUser}`, async () => {
-      try {
         await handleUserAction('deleteUser', deletingUser);
         setShowDeleteUserModal(false);
         setDeletingUser(null);
-      } catch (_err) {
-        // 错误处理已在 handleUserAction 中处理
-      }
     });
   };
 

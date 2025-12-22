@@ -130,7 +130,7 @@ export default function TVBoxConfigPage() {
     return `${baseUrl}/api/tvbox?${params.toString()}`;
   }, [format, configMode, securityConfig]);
 
-  const handleCopy = async () => {
+  const _handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(getConfigUrl());
       setUrlCopied(true);

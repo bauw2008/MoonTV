@@ -147,7 +147,7 @@ const AIRecommendConfig = ({
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);

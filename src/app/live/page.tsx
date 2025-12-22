@@ -1012,7 +1012,7 @@ function LivePageClient() {
             currentSourceRef.current?.key || '',
           );
           context.url = url.toString();
-        } catch (error) {
+        } catch {
           // ignore
         }
         // 拦截manifest和level请求

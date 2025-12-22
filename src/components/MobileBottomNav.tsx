@@ -26,7 +26,7 @@ interface MobileBottomNavProps {
 
 const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   const pathname = usePathname();
-  const router = useRouter();
+  const _router = useRouter();
   const currentActive = activePath ?? pathname;
 
   // 获取菜单配置
