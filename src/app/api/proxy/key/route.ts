@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { supportsNodeFeatures } from '@/lib/runtime-detector';
 
 export const runtime = 'nodejs';
 
@@ -18,21 +19,26 @@ const MAX_CACHE_SIZE = 200;
 import * as http from 'http';
 import * as https from 'https';
 
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 15000,
-  keepAliveMsecs: 30000,
-});
+let httpsAgent: https.Agent | undefined;
+let httpAgent: http.Agent | undefined;
 
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 15000,
-  keepAliveMsecs: 30000,
-});
+if (supportsNodeFeatures()) {
+  httpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 30,
+    maxFreeSockets: 10,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+
+  httpAgent = new http.Agent({
+    keepAlive: true,
+    maxSockets: 30,
+    maxFreeSockets: 10,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+}
 
 // 性能统计
 const keyStats = {
@@ -124,6 +130,8 @@ export async function GET(request: Request) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
+  let response: Response | null = null;
+
   try {
     if (process.env.NODE_ENV === 'development') {
       console.log(`Fetching key: ${decodedUrl}`);
@@ -132,18 +140,25 @@ export async function GET(request: Request) {
     const isHttps = decodedUrl.startsWith('https:');
     const agent = isHttps ? httpsAgent : httpAgent;
 
-    const response = await fetch(decodedUrl, {
+    // 构建请求选项
+    const fetchOptions: RequestInit = {
       signal: controller.signal,
       headers: {
         'User-Agent': ua,
-        Accept: 'application/octet-stream, */*',
+        Accept: '*/*',
+        'Accept-Encoding': 'identity',
         'Cache-Control': 'no-cache',
-        ...(cached?.etag && { 'If-None-Match': cached.etag }),
+        Connection: 'keep-alive',
       },
+    };
 
+    // 仅在非 Edge 环境中添加 agent
+    if (supportsNodeFeatures() && typeof window === 'undefined') {
       // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
+      fetchOptions.agent = agent;
+    }
+
+    response = await fetch(decodedUrl, fetchOptions);
 
     clearTimeout(timeoutId);
 

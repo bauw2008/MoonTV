@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { supportsNodeFeatures } from '@/lib/runtime-detector';
 
 export const runtime = 'nodejs';
 
@@ -18,21 +19,26 @@ const MAX_CACHE_SIZE = 500;
 import * as http from 'http';
 import * as https from 'https';
 
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 20000,
-  keepAliveMsecs: 30000,
-});
+let httpsAgent: https.Agent | undefined;
+let httpAgent: http.Agent | undefined;
 
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 20000,
-  keepAliveMsecs: 30000,
-});
+if (supportsNodeFeatures()) {
+  httpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 30,
+    maxFreeSockets: 10,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+
+  httpAgent = new http.Agent({
+    keepAlive: true,
+    maxSockets: 30,
+    maxFreeSockets: 10,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+}
 
 // 性能统计
 const logoStats = {
@@ -68,6 +74,7 @@ function cleanupExpiredCache() {
   }
 
   if (cleanedCount > 0 && process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
     console.log(`Cleaned ${cleanedCount} expired logo cache entries`);
   }
 }
@@ -299,6 +306,7 @@ export async function GET(request: Request) {
     }
 
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Logo proxy error:', error);
     }
     return NextResponse.json(
@@ -318,6 +326,7 @@ export async function GET(request: Request) {
       process.env.NODE_ENV === 'development'
     ) {
       const hitRate = (logoStats.cacheHits / logoStats.requests) * 100;
+      // eslint-disable-next-line no-console
       console.log(
         `Logo Proxy Stats - Requests: ${logoStats.requests}, Cache Hits: ${
           logoStats.cacheHits

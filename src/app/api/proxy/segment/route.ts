@@ -3,28 +3,34 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { supportsNodeFeatures } from '@/lib/runtime-detector';
 
 export const runtime = 'nodejs';
 
-// 连接池管理
+// 连接池管理 - 仅在支持 Node.js 特性的环境中使用
 import * as http from 'http';
 import * as https from 'https';
 
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 100,
-  maxFreeSockets: 20,
-  timeout: 30000,
-  keepAliveMsecs: 30000,
-});
+let httpsAgent: https.Agent | undefined;
+let httpAgent: http.Agent | undefined;
 
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 100,
-  maxFreeSockets: 20,
-  timeout: 30000,
-  keepAliveMsecs: 30000,
-});
+if (supportsNodeFeatures()) {
+  httpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 100,
+    maxFreeSockets: 20,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+
+  httpAgent = new http.Agent({
+    keepAlive: true,
+    maxSockets: 100,
+    maxFreeSockets: 20,
+    timeout: 30000,
+    keepAliveMsecs: 30000,
+  });
+}
 
 // 性能统计
 const segmentStats = {
@@ -67,9 +73,9 @@ export async function GET(request: Request) {
   try {
     const decodedUrl = decodeURIComponent(url);
     const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
 
-    response = await fetch(decodedUrl, {
+    // 构建请求选项
+    const fetchOptions: RequestInit = {
       signal: controller.signal,
       headers: {
         'User-Agent': ua,
@@ -78,10 +84,16 @@ export async function GET(request: Request) {
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
       },
+    };
 
+    // 仅在支持 Node.js 特性的环境中添加 agent
+    if (supportsNodeFeatures() && typeof window === 'undefined') {
+      const agent = isHttps ? httpsAgent : httpAgent;
       // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
+      fetchOptions.agent = agent;
+    }
+
+    response = await fetch(decodedUrl, fetchOptions);
 
     clearTimeout(timeoutId);
 
@@ -186,9 +198,9 @@ export async function GET(request: Request) {
 
                 try {
                   controller.enqueue(value);
-                } catch (e) {
+                } catch {
                   if (process.env.NODE_ENV === 'development') {
-                    console.warn('Failed to enqueue chunk:', e);
+                    console.warn('Failed to enqueue chunk:');
                   }
                   cleanup();
                   return;
@@ -211,7 +223,7 @@ export async function GET(request: Request) {
             if (reader) {
               try {
                 reader.releaseLock();
-              } catch (e) {
+              } catch {
                 // reader 可能已经被释放，忽略错误
               }
               reader = null;
@@ -226,7 +238,7 @@ export async function GET(request: Request) {
           if (reader) {
             try {
               reader.releaseLock();
-            } catch (e) {
+            } catch {
               // reader 可能已经被释放，忽略错误
             }
             reader = null;
@@ -235,7 +247,7 @@ export async function GET(request: Request) {
           if (response?.body) {
             try {
               response.body.cancel();
-            } catch (e) {
+            } catch {
               // 忽略取消时的错误
             }
           }
@@ -262,7 +274,7 @@ export async function GET(request: Request) {
     if (reader) {
       try {
         (reader as ReadableStreamDefaultReader<Uint8Array>).releaseLock();
-      } catch (e) {
+      } catch {
         // 忽略错误
       }
     }
@@ -270,7 +282,7 @@ export async function GET(request: Request) {
     if (response?.body) {
       try {
         response.body.cancel();
-      } catch (e) {
+      } catch {
         // 忽略错误
       }
     }

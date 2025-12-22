@@ -4,28 +4,34 @@ import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
+import { supportsNodeFeatures } from '@/lib/runtime-detector';
 
 export const runtime = 'nodejs';
 
-// 连接池管理
+// 连接池管理 - 仅在非 Edge 环境中使用
 import * as http from 'http';
 import * as https from 'https';
 
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
+let httpsAgent: https.Agent | undefined;
+let httpAgent: http.Agent | undefined;
 
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
+if (supportsNodeFeatures()) {
+  httpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 50,
+    maxFreeSockets: 10,
+    timeout: 60000,
+    keepAliveMsecs: 30000,
+  });
+
+  httpAgent = new http.Agent({
+    keepAlive: true,
+    maxSockets: 50,
+    maxFreeSockets: 10,
+    timeout: 60000,
+    keepAliveMsecs: 30000,
+  });
+}
 
 // 性能统计
 const stats = {
@@ -81,16 +87,22 @@ export async function GET(request: Request) {
       Connection: 'keep-alive',
     };
 
-    response = await fetch(decodedUrl, {
+    // 构建请求选项
+    const fetchOptions: RequestInit = {
       cache: 'no-cache',
       redirect: 'follow',
       credentials: 'same-origin',
       signal: controller.signal,
       headers: new Headers(headers),
+    };
 
+    // 仅在非 Edge 环境中添加 agent
+    if (supportsNodeFeatures() && typeof window === 'undefined') {
       // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
+      fetchOptions.agent = agent;
+    }
+
+    response = await fetch(decodedUrl, fetchOptions);
 
     clearTimeout(timeoutId);
 
@@ -261,9 +273,9 @@ export async function GET(request: Request) {
     if (response && !responseUsed) {
       try {
         response.body?.cancel();
-      } catch (error) {
+      } catch {
         if (process.env.NODE_ENV === 'development') {
-          console.warn('Failed to close response body:', error);
+          console.warn('Failed to close response body:');
         }
       }
     }
@@ -294,7 +306,7 @@ function rewriteM3U8Content(
     try {
       const refererUrl = new URL(referer);
       protocol = refererUrl.protocol.replace(':', '');
-    } catch (error) {
+    } catch {
       // ignore
     }
   }
@@ -521,9 +533,9 @@ function rewriteMediaUri(
         resolvedUrl,
       )}`;
       return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('解析音频轨道URI失败:', originalUri, error);
+        console.warn('解析音频轨道URI失败:', originalUri);
       }
       // 移除URI属性，让HLS.js忽略这个音频轨道
       return line.replace(/,?URI="[^"]*"/, '');
@@ -645,7 +657,7 @@ function rewriteDateRangeUri(
           fullMatch,
           fullMatch.replace(originalUri, proxyUrl),
         );
-      } catch (error) {
+      } catch {
         // 保持原始 URI 如果解析失败
       }
     }
@@ -690,9 +702,9 @@ function rewritePreloadHintUri(
       }
 
       return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('解析预加载提示URI失败:', originalUri, error);
+        console.warn('解析预加载提示URI失败:', originalUri);
       }
       return line;
     }
@@ -720,9 +732,9 @@ function rewriteRenditionReportUri(
         resolvedUrl,
       )}`;
       return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('解析渲染报告URI失败:', originalUri, error);
+        console.warn('解析渲染报告URI失败:', originalUri);
       }
       return line;
     }
@@ -733,9 +745,9 @@ function rewriteRenditionReportUri(
 // 处理服务器控制
 function rewriteServerControlUri(
   line: string,
-  baseUrl: string,
-  proxyBase: string,
-  variables?: Map<string, string>,
+  _baseUrl: string,
+  _proxyBase: string,
+  _variables?: Map<string, string>,
 ): string {
   // EXT-X-SERVER-CONTROL 通常不包含 URI，但为了完整性保留此函数
   // 如果将来有包含 URI 的扩展，可以在此处理
@@ -745,9 +757,9 @@ function rewriteServerControlUri(
 // 处理跳过片段
 function rewriteSkipUri(
   line: string,
-  baseUrl: string,
-  proxyBase: string,
-  variables?: Map<string, string>,
+  _baseUrl: string,
+  _proxyBase: string,
+  _variables?: Map<string, string>,
 ): string {
   // EXT-X-SKIP 不包含 URI，只包含 SKIPPED-SEGMENTS 等属性
   // 保持原样返回

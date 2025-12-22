@@ -300,34 +300,59 @@ export class UpstashRedisStorage implements IStorage {
   }
 
   async getAdminConfig(): Promise<AdminConfig | null> {
-    const val = await withRetry(() => this.client.get(this.adminConfigKey()));
-    if (!val) {
-      return null;
-    }
-
-    // 智能兼容：自动识别 JSON 字符串或对象
-    if (typeof val === 'string') {
-      try {
-        return JSON.parse(val);
-      } catch (e) {
-        console.error('解析 AdminConfig JSON 失败:', e);
+    try {
+      console.log('[Upstash] 读取配置，键:', this.adminConfigKey());
+      const val = await withRetry(() => this.client.get(this.adminConfigKey()));
+      if (!val) {
+        console.log('[Upstash] 配置为空');
         return null;
       }
-    }
 
-    // 对象格式，直接返回
-    return val as AdminConfig;
+      console.log('[Upstash] 配置读取成功，类型:', typeof val);
+
+      // 智能兼容：自动识别 JSON 字符串或对象
+      if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val);
+          console.log('[Upstash] JSON 解析成功');
+          return parsed;
+        } catch (e) {
+          console.error('解析 AdminConfig JSON 失败:', e);
+          return null;
+        }
+      }
+
+      // 对象格式，直接返回
+      console.log('[Upstash] 返回对象格式配置');
+      return val as AdminConfig;
+    } catch (e) {
+      console.error('[Upstash] 读取配置失败:', e);
+      return null;
+    }
   }
 
   async setAdminConfig(config: AdminConfig): Promise<void> {
     // 智能保存：尝试 JSON 字符串，失败则用对象（兼容两种方式）
     try {
       const jsonStr = JSON.stringify(config);
+      console.log(
+        '[Upstash] 保存配置，键:',
+        this.adminConfigKey(),
+        '数据大小:',
+        jsonStr.length,
+      );
       await withRetry(() => this.client.set(this.adminConfigKey(), jsonStr));
+      console.log('[Upstash] 配置保存成功');
     } catch (e) {
       // JSON 序列化失败，回退到对象方式
       console.warn('[Upstash] JSON.stringify 失败，回退到对象方式:', e);
-      await withRetry(() => this.client.set(this.adminConfigKey(), config));
+      try {
+        await withRetry(() => this.client.set(this.adminConfigKey(), config));
+        console.log('[Upstash] 对象方式保存成功');
+      } catch (e2) {
+        console.error('[Upstash] 配置保存完全失败:', e2);
+        throw e2;
+      }
     }
   }
 
