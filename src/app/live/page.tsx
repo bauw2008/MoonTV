@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+
 'use client';
 
 import Hls from 'hls.js';
@@ -74,14 +75,14 @@ function LivePageClient() {
   // 频道相关
   const [currentChannels, setCurrentChannels] = useState<LiveChannel[]>([]);
   const [currentChannel, setCurrentChannel] = useState<LiveChannel | null>(
-    null,
+    null
   );
   useEffect(() => {
     currentChannelRef.current = currentChannel;
   }, [currentChannel]);
 
-  const needLoadSource = searchParams.get('source');
-  const needLoadChannel = searchParams.get('id');
+  const [needLoadSource] = useState(searchParams.get('source'));
+  const [needLoadChannel] = useState(searchParams.get('id'));
 
   // 播放器相关
   const [videoUrl, setVideoUrl] = useState('');
@@ -117,7 +118,7 @@ function LivePageClient() {
 
   // Tab 切换
   const [activeTab, setActiveTab] = useState<'channels' | 'sources'>(
-    'channels',
+    'channels'
   );
 
   // 频道列表收起状态
@@ -154,23 +155,21 @@ function LivePageClient() {
 
   // EPG数据清洗函数 - 去除重叠的节目，保留时间较短的，只显示今日节目
   const cleanEpgData = (
-    programs: Array<{ start: string; end: string; title: string }>,
+    programs: Array<{ start: string; end: string; title: string }>
   ) => {
-    if (!programs || programs.length === 0) {
-      return programs;
-    }
+    if (!programs || programs.length === 0) return programs;
 
     // 获取今日日期（只考虑年月日，忽略时间）
     const today = new Date();
     const todayStart = new Date(
       today.getFullYear(),
       today.getMonth(),
-      today.getDate(),
+      today.getDate()
     );
     const todayEnd = new Date(
       today.getFullYear(),
       today.getMonth(),
-      today.getDate() + 1,
+      today.getDate() + 1
     );
 
     // 首先过滤出今日的节目（包括跨天节目）
@@ -182,12 +181,12 @@ function LivePageClient() {
       const programStartDate = new Date(
         programStart.getFullYear(),
         programStart.getMonth(),
-        programStart.getDate(),
+        programStart.getDate()
       );
       const programEndDate = new Date(
         programEnd.getFullYear(),
         programEnd.getMonth(),
-        programEnd.getDate(),
+        programEnd.getDate()
       );
 
       // 如果节目的开始时间或结束时间在今天，或者节目跨越今天，都算作今天的节目
@@ -284,9 +283,7 @@ function LivePageClient() {
 
   // 刷新直播源
   const refreshLiveSources = async () => {
-    if (isRefreshingSource) {
-      return;
-    }
+    if (isRefreshingSource) return;
 
     setIsRefreshingSource(true);
     try {
@@ -367,7 +364,7 @@ function LivePageClient() {
         const firstSource = sources[0];
         if (needLoadSource) {
           const foundSource = sources.find(
-            (s: LiveSource) => s.key === needLoadSource,
+            (s: LiveSource) => s.key === needLoadSource
           );
           if (foundSource) {
             setCurrentSource(foundSource);
@@ -433,8 +430,8 @@ function LivePageClient() {
         // 更新直播源的频道数为 0
         setLiveSources((prevSources) =>
           prevSources.map((s) =>
-            s.key === source.key ? { ...s, channelNumber: 0 } : s,
-          ),
+            s.key === source.key ? { ...s, channelNumber: 0 } : s
+          )
         );
 
         setIsVideoLoading(false);
@@ -456,15 +453,15 @@ function LivePageClient() {
       // 更新直播源的频道数
       setLiveSources((prevSources) =>
         prevSources.map((s) =>
-          s.key === source.key ? { ...s, channelNumber: channels.length } : s,
-        ),
+          s.key === source.key ? { ...s, channelNumber: channels.length } : s
+        )
       );
 
       // 默认选中第一个频道
       if (channels.length > 0) {
         if (needLoadChannel) {
           const foundChannel = channels.find(
-            (c: LiveChannel) => c.id === needLoadChannel,
+            (c: LiveChannel) => c.id === needLoadChannel
           );
           if (foundChannel) {
             setCurrentChannel(foundChannel);
@@ -484,17 +481,14 @@ function LivePageClient() {
       }
 
       // 按分组组织频道
-      const grouped = channels.reduce(
-        (acc, channel) => {
-          const group = channel.group || '其他';
-          if (!acc[group]) {
-            acc[group] = [];
-          }
-          acc[group].push(channel);
-          return acc;
-        },
-        {} as { [key: string]: LiveChannel[] },
-      );
+      const grouped = channels.reduce((acc, channel) => {
+        const group = channel.group || '其他';
+        if (!acc[group]) {
+          acc[group] = [];
+        }
+        acc[group].push(channel);
+        return acc;
+      }, {} as { [key: string]: LiveChannel[] });
 
       setGroupedChannels(grouped);
 
@@ -502,7 +496,7 @@ function LivePageClient() {
       let targetGroup = '';
       if (needLoadChannel) {
         const foundChannel = channels.find(
-          (c: LiveChannel) => c.id === needLoadChannel,
+          (c: LiveChannel) => c.id === needLoadChannel
         );
         if (foundChannel) {
           targetGroup = foundChannel.group || '其他';
@@ -539,8 +533,8 @@ function LivePageClient() {
       // 更新直播源的频道数为 0
       setLiveSources((prevSources) =>
         prevSources.map((s) =>
-          s.key === source.key ? { ...s, channelNumber: 0 } : s,
-        ),
+          s.key === source.key ? { ...s, channelNumber: 0 } : s
+        )
       );
 
       setIsVideoLoading(false);
@@ -578,9 +572,7 @@ function LivePageClient() {
   // 切换频道
   const handleChannelChange = async (channel: LiveChannel) => {
     // 如果正在切换直播源，则禁用频道切换
-    if (isSwitchingSource) {
-      return;
-    }
+    if (isSwitchingSource) return;
 
     // 首先销毁当前播放器
     cleanupPlayer();
@@ -605,7 +597,7 @@ function LivePageClient() {
       try {
         setIsEpgLoading(true); // 开始加载 EPG 数据
         const response = await fetch(
-          `/api/live/epg?source=${currentSource.key}&tvgId=${channel.tvgId}`,
+          `/api/live/epg?source=${currentSource.key}&tvgId=${channel.tvgId}`
         );
         if (response.ok) {
           const result = await response.json();
@@ -632,13 +624,11 @@ function LivePageClient() {
 
   // 滚动到指定频道位置的函数
   const scrollToChannel = (channel: LiveChannel) => {
-    if (!channelListRef.current) {
-      return;
-    }
+    if (!channelListRef.current) return;
 
     // 使用 data 属性来查找频道元素
     const targetElement = channelListRef.current.querySelector(
-      `[data-channel-id="${channel.id}"]`,
+      `[data-channel-id="${channel.id}"]`
     ) as HTMLButtonElement;
 
     if (targetElement) {
@@ -677,7 +667,7 @@ function LivePageClient() {
 
     // 直接通过 data-group 属性查找目标按钮
     const targetButton = groupContainerRef.current.querySelector(
-      `[data-group="${group}"]`,
+      `[data-group="${group}"]`
     ) as HTMLButtonElement;
 
     if (targetButton) {
@@ -747,9 +737,7 @@ function LivePageClient() {
 
   // 确保视频源正确设置
   const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
-    if (!video || !url) {
-      return;
-    }
+    if (!video || !url) return;
     const sources = Array.from(video.getElementsByTagName('source'));
     const existed = sources.some((s) => s.src === url);
     if (!existed) {
@@ -771,13 +759,11 @@ function LivePageClient() {
   // 切换分组
   const handleGroupChange = (group: string) => {
     // 如果正在切换直播源，则禁用分组切换
-    if (isSwitchingSource) {
-      return;
-    }
+    if (isSwitchingSource) return;
 
     setSelectedGroup(group);
     const filtered = currentChannels.filter(
-      (channel) => channel.group === group,
+      (channel) => channel.group === group
     );
     setFilteredChannels(filtered);
 
@@ -811,7 +797,7 @@ function LivePageClient() {
     const results = currentChannels.filter(
       (channel) =>
         channel.name.toLowerCase().includes(normalizedQuery) ||
-        channel.group.toLowerCase().includes(normalizedQuery),
+        channel.group.toLowerCase().includes(normalizedQuery)
     );
     setCurrentSourceSearchResults(results);
   };
@@ -827,9 +813,7 @@ function LivePageClient() {
 
   // 切换收藏
   const handleToggleFavorite = async () => {
-    if (!currentSourceRef.current || !currentChannelRef.current) {
-      return;
-    }
+    if (!currentSourceRef.current || !currentChannelRef.current) return;
 
     try {
       const currentFavorited = favoritedRef.current;
@@ -851,19 +835,19 @@ function LivePageClient() {
               source_name: currentSourceRef.current.name,
               year: '',
               cover: `/api/proxy/logo?url=${encodeURIComponent(
-                currentChannelRef.current.logo,
+                currentChannelRef.current.logo
               )}&source=${currentSourceRef.current.key}`,
               total_episodes: 1,
               save_time: Date.now(),
               search_title: '',
               origin: 'live',
-            },
+            }
           );
         } else {
           // 如果已收藏，删除收藏
           await deleteFavorite(
             `live_${currentSourceRef.current.key}`,
-            `live_${currentChannelRef.current.id}`,
+            `live_${currentChannelRef.current.id}`
           );
         }
       } catch (err) {
@@ -891,14 +875,12 @@ function LivePageClient() {
 
   // 检查收藏状态
   useEffect(() => {
-    if (!currentSource || !currentChannel) {
-      return;
-    }
+    if (!currentSource || !currentChannel) return;
     (async () => {
       try {
         const fav = await checkIsFavorited(
           `live_${currentSource.key}`,
-          `live_${currentChannel.id}`,
+          `live_${currentChannel.id}`
         );
         setFavorited(fav);
         favoritedRef.current = fav;
@@ -910,21 +892,19 @@ function LivePageClient() {
 
   // 监听收藏数据更新事件
   useEffect(() => {
-    if (!currentSource || !currentChannel) {
-      return;
-    }
+    if (!currentSource || !currentChannel) return;
 
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
       (favorites: Record<string, any>) => {
         const key = generateStorageKey(
           `live_${currentSource.key}`,
-          `live_${currentChannel.id}`,
+          `live_${currentChannel.id}`
         );
         const isFav = !!favorites[key];
         setFavorited(isFav);
         favoritedRef.current = isFav;
-      },
+      }
     );
 
     return unsubscribe;
@@ -948,7 +928,7 @@ function LivePageClient() {
     if (typeof window !== 'undefined') {
       localStorage.setItem(
         'live-auto-refresh-enabled',
-        JSON.stringify(autoRefreshEnabled),
+        JSON.stringify(autoRefreshEnabled)
       );
     }
   }, [autoRefreshEnabled]);
@@ -957,22 +937,18 @@ function LivePageClient() {
     if (typeof window !== 'undefined') {
       localStorage.setItem(
         'live-auto-refresh-interval',
-        autoRefreshInterval.toString(),
+        autoRefreshInterval.toString()
       );
     }
   }, [autoRefreshInterval]);
 
   // 当分组切换时，将激活的分组标签滚动到视口中间
   useEffect(() => {
-    if (!selectedGroup || !groupContainerRef.current) {
-      return;
-    }
+    if (!selectedGroup || !groupContainerRef.current) return;
 
     const groupKeys = Object.keys(groupedChannels);
     const groupIndex = groupKeys.indexOf(selectedGroup);
-    if (groupIndex === -1) {
-      return;
-    }
+    if (groupIndex === -1) return;
 
     const btn = groupButtonRefs.current[groupIndex];
     const container = groupContainerRef.current;
@@ -1008,10 +984,10 @@ function LivePageClient() {
           const url = new URL(context.url);
           url.searchParams.set(
             'vidora-source',
-            currentSourceRef.current?.key || '',
+            currentSourceRef.current?.key || ''
           );
           context.url = url.toString();
-        } catch {
+        } catch (error) {
           // ignore
         }
         // 拦截manifest和level请求
@@ -1029,7 +1005,7 @@ function LivePageClient() {
               const url = new URL(context.url);
               url.searchParams.set('allowCORS', 'true');
               context.url = url.toString();
-            } catch {
+            } catch (error) {
               // 如果 URL 解析失败，回退到字符串拼接
               context.url = context.url + '&allowCORS=true';
             }
@@ -1079,14 +1055,14 @@ function LivePageClient() {
         devicePerformance === 'low'
           ? 20
           : devicePerformance === 'medium'
-            ? 30
-            : 30, // 源码默认 30
+          ? 30
+          : 30, // 源码默认 30
       maxBufferSize:
         devicePerformance === 'low'
           ? 30 * 1000 * 1000
           : devicePerformance === 'medium'
-            ? 60 * 1000 * 1000
-            : 60 * 1000 * 1000, // 源码默认 60MB
+          ? 60 * 1000 * 1000
+          : 60 * 1000 * 1000, // 源码默认 60MB
       maxBufferHole: 0.1, // 源码默认值，允许小的缓冲区空洞
 
       // Gap Controller 配置 - 缓冲区空洞处理 (源码中的默认值)
@@ -1098,8 +1074,8 @@ function LivePageClient() {
         devicePerformance === 'low'
           ? 500000
           : devicePerformance === 'medium'
-            ? 500000
-            : 500000, // 源码默认 500k
+          ? 500000
+          : 500000, // 源码默认 500k
       abrBandWidthFactor: 0.95, // 源码默认
       abrBandWidthUpFactor: 0.7, // 源码默认
       abrMaxWithRealBitrate: false, // 源码默认
@@ -1164,13 +1140,13 @@ function LivePageClient() {
         lastErrorTime = currentTime;
 
         console.warn(
-          `KeyLoadError count: ${keyLoadErrorCount}/${MAX_KEY_ERRORS}`,
+          `KeyLoadError count: ${keyLoadErrorCount}/${MAX_KEY_ERRORS}`
         );
 
         // 如果短时间内keyLoadError次数过多，认为这个频道不可用
         if (keyLoadErrorCount >= MAX_KEY_ERRORS) {
           console.error(
-            'Too many keyLoadErrors, marking channel as unavailable',
+            'Too many keyLoadErrors, marking channel as unavailable'
           );
           setUnsupportedType('channel-unavailable');
           setIsVideoLoading(false);
@@ -1262,7 +1238,7 @@ function LivePageClient() {
             } catch (e) {
               console.error(
                 'Failed to recover from media error, trying audio codec swap:',
-                e,
+                e
               );
               try {
                 // 使用音频编解码器交换作为备选方案
@@ -1302,7 +1278,7 @@ function LivePageClient() {
             console.log(
               `Fragment loaded: ${loadTime.toFixed(2)}ms, size: ${
                 data.frag.stats.loaded
-              }B, throughput: ${throughputMbps.toFixed(2)} Mbps`,
+              }B, throughput: ${throughputMbps.toFixed(2)} Mbps`
             );
           }
         }
@@ -1356,7 +1332,7 @@ function LivePageClient() {
 
       const customType = { m3u8: m3u8Loader };
       const targetUrl = `/api/proxy/m3u8?url=${encodeURIComponent(
-        videoUrl,
+        videoUrl
       )}&vidora-source=${currentSourceRef.current?.key || ''}`;
       try {
         // 使用动态导入的 Artplayer
@@ -1437,7 +1413,7 @@ function LivePageClient() {
         if (artPlayerRef.current?.video) {
           ensureVideoSource(
             artPlayerRef.current.video as HTMLVideoElement,
-            targetUrl,
+            targetUrl
           );
         }
       } catch (err) {
@@ -1492,9 +1468,8 @@ function LivePageClient() {
       if (
         (e.target as HTMLElement).tagName === 'INPUT' ||
         (e.target as HTMLElement).tagName === 'TEXTAREA'
-      ) {
+      )
         return;
-      }
 
       // 上箭头 = 音量+
       if (e.key === 'ArrowUp') {
@@ -1502,7 +1477,7 @@ function LivePageClient() {
           artPlayerRef.current.volume =
             Math.round((artPlayerRef.current.volume + 0.1) * 10) / 10;
           artPlayerRef.current.notice.show = `音量: ${Math.round(
-            artPlayerRef.current.volume * 100,
+            artPlayerRef.current.volume * 100
           )}`;
           e.preventDefault();
         }
@@ -1514,7 +1489,7 @@ function LivePageClient() {
           artPlayerRef.current.volume =
             Math.round((artPlayerRef.current.volume - 0.1) * 10) / 10;
           artPlayerRef.current.notice.show = `音量: ${Math.round(
-            artPlayerRef.current.volume * 100,
+            artPlayerRef.current.volume * 100
           )}`;
           e.preventDefault();
         }
@@ -1605,8 +1580,8 @@ function LivePageClient() {
                       loadingStage === 'loading'
                         ? '33%'
                         : loadingStage === 'fetching'
-                          ? '66%'
-                          : '100%',
+                        ? '66%'
+                        : '100%',
                   }}
                 ></div>
               </div>
@@ -1900,7 +1875,7 @@ function LivePageClient() {
                                 container.addEventListener(
                                   'wheel',
                                   handleWheel,
-                                  { passive: false },
+                                  { passive: false }
                                 );
                                 // 将事件处理器存储在容器上，以便后续移除
                                 (container as any)._wheelHandler = handleWheel;
@@ -1915,7 +1890,7 @@ function LivePageClient() {
                               ) {
                                 container.removeEventListener(
                                   'wheel',
-                                  (container as any)._wheelHandler,
+                                  (container as any)._wheelHandler
                                 );
                                 delete (container as any)._wheelHandler;
                               }
@@ -1937,8 +1912,8 @@ function LivePageClient() {
                                    isSwitchingSource
                                      ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                                      : selectedGroup === group
-                                       ? 'text-green-500 dark:text-green-400'
-                                       : 'text-gray-700 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400'
+                                     ? 'text-green-500 dark:text-green-400'
+                                     : 'text-gray-700 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400'
                                  }
                                `.trim()}
                                   >
@@ -1953,7 +1928,7 @@ function LivePageClient() {
                                         <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 dark:bg-green-400' />
                                       )}
                                   </button>
-                                ),
+                                )
                               )}
                             </div>
                           </div>
@@ -1978,8 +1953,8 @@ function LivePageClient() {
                                     isSwitchingSource
                                       ? 'opacity-50 cursor-not-allowed'
                                       : isActive
-                                        ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
-                                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
+                                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                   }`}
                                 >
                                   <div className='flex items-center gap-3'>
@@ -1987,7 +1962,7 @@ function LivePageClient() {
                                       {channel.logo ? (
                                         <img
                                           src={`/api/proxy/logo?url=${encodeURIComponent(
-                                            channel.logo,
+                                            channel.logo
                                           )}&source=${
                                             currentSource?.key || ''
                                           }`}
@@ -2056,8 +2031,8 @@ function LivePageClient() {
                                   isSwitchingSource
                                     ? 'opacity-50 cursor-not-allowed'
                                     : isActive
-                                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
-                                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
+                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                               >
                                 <div className='flex items-center gap-3'>
@@ -2065,7 +2040,7 @@ function LivePageClient() {
                                     {channel.logo ? (
                                       <img
                                         src={`/api/proxy/logo?url=${encodeURIComponent(
-                                          channel.logo,
+                                          channel.logo
                                         )}&source=${currentSource?.key || ''}`}
                                         alt={channel.name}
                                         className='w-full h-full rounded object-contain'
@@ -2084,11 +2059,11 @@ function LivePageClient() {
                                               new RegExp(
                                                 `(${searchQuery.replace(
                                                   /[.*+?^${}()|[\]\\]/g,
-                                                  '\\$&',
+                                                  '\\$&'
                                                 )})`,
-                                                'gi',
+                                                'gi'
                                               ),
-                                              '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>',
+                                              '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>'
                                             )
                                           : channel.name,
                                       }}
@@ -2256,7 +2231,7 @@ function LivePageClient() {
                     {currentChannel.logo ? (
                       <img
                         src={`/api/proxy/logo?url=${encodeURIComponent(
-                          currentChannel.logo,
+                          currentChannel.logo
                         )}&source=${currentSource?.key || ''}`}
                         alt={currentChannel.name}
                         className='w-full h-full rounded object-contain'

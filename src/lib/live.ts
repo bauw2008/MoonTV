@@ -1,3 +1,5 @@
+/* eslint-disable no-constant-condition */
+
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -30,7 +32,7 @@ export function deleteCachedLiveChannels(key: string) {
 }
 
 export async function getCachedLiveChannels(
-  key: string,
+  key: string
 ): Promise<LiveChannels | null> {
   if (!cachedLiveChannels[key]) {
     const config = await getConfig();
@@ -73,7 +75,7 @@ export async function refreshLiveChannels(liveInfo: {
   const epgs = await parseEpg(
     epgUrl,
     liveInfo.ua || defaultUA,
-    result.channels.map((channel) => channel.tvgId).filter((tvgId) => tvgId),
+    result.channels.map((channel) => channel.tvgId).filter((tvgId) => tvgId)
   );
   cachedLiveChannels[liveInfo.key] = {
     channelNumber: result.channels.length,
@@ -87,7 +89,7 @@ export async function refreshLiveChannels(liveInfo: {
 async function parseEpg(
   epgUrl: string,
   ua: string,
-  tvgIds: string[],
+  tvgIds: string[]
 ): Promise<{
   [key: string]: {
     start: string;
@@ -129,9 +131,7 @@ async function parseEpg(
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
+      if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -142,9 +142,7 @@ async function parseEpg(
       // 处理完整的行
       for (const line of lines) {
         const trimmedLine = line.trim();
-        if (!trimmedLine) {
-          continue;
-        }
+        if (!trimmedLine) continue;
 
         // 解析 <programme> 标签
         if (trimmedLine.startsWith('<programme')) {
@@ -174,7 +172,7 @@ async function parseEpg(
         ) {
           // 处理带有语言属性的title标签，如 <title lang="zh">远方的家2025-60</title>
           const titleMatch = trimmedLine.match(
-            /<title(?:\s+[^>]*)?>(.*?)<\/title>/,
+            /<title(?:\s+[^>]*)?>(.*?)<\/title>/
           );
           if (titleMatch && currentProgram) {
             currentProgram.title = titleMatch[1];
@@ -210,7 +208,7 @@ async function parseEpg(
  */
 function parseM3U(
   sourceKey: string,
-  m3uContent: string,
+  m3uContent: string
 ): {
   tvgUrl: string;
   channels: {
@@ -371,7 +369,7 @@ export function getBaseUrl(m3u8Url: string) {
     if (url.pathname.endsWith('.m3u8')) {
       url.pathname = url.pathname.substring(
         0,
-        url.pathname.lastIndexOf('/') + 1,
+        url.pathname.lastIndexOf('/') + 1
       );
     } else if (!url.pathname.endsWith('/')) {
       url.pathname += '/';
