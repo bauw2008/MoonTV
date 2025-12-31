@@ -196,7 +196,7 @@ async function refreshConfig() {
           },
         });
       } catch (networkError) {
-        console.log('⚠️ 网络连接失败，跳过配置更新:', networkError.message);
+        console.log('⚠️ 网络连接失败，跳过配置更新:', (networkError as Error).message);
         return; // 网络不通直接返回，不更新任何东西
       } finally {
         clearTimeout(timeoutId);
@@ -242,7 +242,7 @@ async function refreshConfig() {
       console.log('✅ 配置更新成功');
       
     } catch (e) {
-      console.error('❌ 配置更新过程中发生意外错误:', e.message);
+      console.error('❌ 配置更新过程中发生意外错误:', (e as Error).message);
       // 不更新配置，保持原状
     }
   } else {

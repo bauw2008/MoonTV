@@ -6,20 +6,20 @@ import AdminAccessGuard from '@/components/AdminAccessGuard';
 import PageLayout from '@/components/PageLayout';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-import { AIConfig } from '../admin-new/components/config/AIConfig';
-import { CategoryConfig } from '../admin-new/components/config/CategoryConfig';
-import { LiveConfig } from '../admin-new/components/config/LiveConfig';
-import { NetdiskConfig } from '../admin-new/components/config/NetdiskConfig';
-import { OwnerConfig } from '../admin-new/components/config/OwnerConfig';
-import { SiteConfig } from '../admin-new/components/config/SiteConfig';
-import { TMDBConfig } from '../admin-new/components/config/TMDBConfig';
-import { TVBoxConfig } from '../admin-new/components/config/TVBoxConfig';
-import UserConfig from '../admin-new/components/config/UserConfig';
-import { VideoConfig } from '../admin-new/components/config/VideoConfig';
-import { YellowConfig } from '../admin-new/components/config/YellowConfig';
-import { CacheManager } from '../admin-new/components/tools/CacheManager';
-import { ConfigFile } from '../admin-new/components/tools/ConfigFile';
-import { DataMigration } from '../admin-new/components/tools/DataMigration';
+import { AIConfig } from '@/components/admin/config/AIConfig';
+import { CategoryConfig } from '@/components/admin/config/CategoryConfig';
+import { LiveConfig } from '@/components/admin/config/LiveConfig';
+import { NetdiskConfig } from '@/components/admin/config/NetdiskConfig';
+import { OwnerConfig } from '@/components/admin/config/OwnerConfig';
+import { SiteConfig } from '@/components/admin/config/SiteConfig';
+import { TMDBConfig } from '@/components/admin/config/TMDBConfig';
+import { TVBoxConfig } from '@/components/admin/config/TVBoxConfig';
+import UserConfig from '@/components/admin/config/UserConfig';
+import { VideoConfig } from '@/components/admin/config/VideoConfig';
+import { YellowConfig } from '@/components/admin/config/YellowConfig';
+import { CacheManager } from '@/components/admin/tools/CacheManager';
+import { ConfigFile } from '@/components/admin/tools/ConfigFile';
+import { DataMigration } from '@/components/admin/tools/DataMigration';
 
 export default function AdminPage() {
   // 管理员设置状态

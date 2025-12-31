@@ -10,6 +10,9 @@ const nextConfig = {
 
   reactStrictMode: false,
 
+  // 排除备份目录
+  excludeDefaultMomentLocales: true,
+
   // 增加构建日志
   logging: {
     fetches: {
