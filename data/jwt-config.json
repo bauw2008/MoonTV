@@ -1,0 +1,13 @@
+{
+  "secret": "55761cd47c832fd540de06a51b2d9c079b5edc81e508e9c66615e4d0fa44289fc1fd142e82562958eb3153dfcb437bbc17e0f31b85ba74c81b8a2a8d7f02b2d8",
+  "updatedAt": 1767005671080,
+  "updatedBy": "chyi",
+  "history": [
+    {
+      "secret": "123456",
+      "updatedAt": 1767005671078,
+      "updatedBy": "system",
+      "reason": "安全更新"
+    }
+  ]
+}

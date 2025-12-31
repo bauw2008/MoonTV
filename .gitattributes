@@ -1,0 +1,61 @@
+# Set default behavior for file permissions and line endings
+* text=auto eol=lf
+
+# Shell scripts - keep executable permissions
+*.sh text eol=lf
+*.bash text eol=lf
+*.fish text eol=lf
+
+# JavaScript/TypeScript files
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+
+# Configuration files
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.conf text eol=lf
+
+# CSS and styling
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.less text eol=lf
+
+# Binary files - no line ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+
+# Archives and packages
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+
+# Documents
+*.pdf binary
+
+# Lock files should not be modified
+package-lock.json binary
+pnpm-lock.yaml binary
+yarn.lock binary
+
+# Generated files
+*.map binary
+*.min.js binary
+*.min.css binary
