@@ -183,50 +183,70 @@ async function refreshConfig() {
     try {
       console.log('🌐 开始获取配置订阅:', config.ConfigSubscribtion.URL);
 
-      // 设置30秒超时
+      // 设置10秒超时，快速失败
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(config.ConfigSubscribtion.URL, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'LunaTV-ConfigFetcher/1.0',
-        },
-      });
-
-      clearTimeout(timeoutId);
+      let response;
+      try {
+        response = await fetch(config.ConfigSubscribtion.URL, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'LunaTV-ConfigFetcher/1.0',
+          },
+        });
+      } catch (networkError) {
+        console.log('⚠️ 网络连接失败，跳过配置更新:', networkError.message);
+        return; // 网络不通直接返回，不更新任何东西
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
-        throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+        console.log('⚠️ 远程服务器响应异常，跳过配置更新:', response.status, response.statusText);
+        return; // 响应异常直接返回
       }
 
       const configContent = await response.text();
 
-      // 对 configContent 进行 base58 解码
+      // 简单验证：内容不能为空
+      if (!configContent || configContent.trim().length === 0) {
+        console.log('⚠️ 远程配置内容为空，跳过更新');
+        return;
+      }
+
+      // 尝试解码和验证
       let decodedContent;
       try {
         const bs58 = (await import('bs58')).default;
         const decodedBytes = bs58.decode(configContent);
         decodedContent = new TextDecoder().decode(decodedBytes);
-      } catch (decodeError) {
-        console.warn('Base58 解码失败:', decodeError);
-        throw decodeError;
+      } catch {
+        // Base58解码失败，直接使用原始内容
+        decodedContent = configContent;
       }
 
+      // 验证JSON格式
       try {
         JSON.parse(decodedContent);
-      } catch (e) {
-        throw new Error('配置文件格式错误，请检查 JSON 语法');
+      } catch {
+        console.log('⚠️ 配置格式错误，跳过更新');
+        return;
       }
+
+      // 只有在一切正常时才更新配置
       config.ConfigFile = decodedContent;
       config.ConfigSubscribtion.LastCheck = new Date().toISOString();
       config = refineConfig(config);
       await db.saveAdminConfig(config);
+      console.log('✅ 配置更新成功');
+      
     } catch (e) {
-      console.error('刷新配置失败:', e);
+      console.error('❌ 配置更新过程中发生意外错误:', e.message);
+      // 不更新配置，保持原状
     }
   } else {
-    console.log('跳过刷新：未配置订阅地址或自动更新');
+    console.log('⏭️ 跳过刷新：未配置订阅地址或自动更新');
   }
 }
 
