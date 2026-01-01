@@ -805,6 +805,24 @@ export async function resetConfig() {
   cachedConfig = adminConfig;
   await db.saveAdminConfig(adminConfig);
 
+  // 重建索引，确保与配置同步
+  // 注意：这个操作需要在服务器端执行，客户端会自动重新加载索引
+  if (typeof window === 'undefined') {
+    try {
+      // 首先清除索引缓存，强制重新初始化
+      const { clearAllIndexes } = await import('./source-index');
+      clearAllIndexes();
+      console.log('[配置重置] 索引缓存已清除');
+      
+      // 然后重建所有索引
+      const { rebuildAllIndexes } = await import('./source-index');
+      await rebuildAllIndexes();
+      console.log('[配置重置] 索引重建完成');
+    } catch (error) {
+      console.error('[配置重置] 索引重建失败:', error);
+    }
+  }
+
   return;
 }
 

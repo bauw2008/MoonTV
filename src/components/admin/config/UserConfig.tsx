@@ -1,18 +1,8 @@
 'use client';
 
-import {
-  Brain,
-  Check,
-  Clock,
-  Eye,
-  ShieldCheck,
-  ShieldX,
-  UserPlus,
-  Users,
-  Video,
-  X,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Brain, Check, Clock, Eye, ShieldCheck, ShieldX, UserPlus, Users, Video, X, } from 'lucide-react';
+
+import { useCallback, useEffect, useState } from 'react';
 
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
 
@@ -189,61 +179,9 @@ function UserConfigContent() {
   const [newUserGroupName, setNewUserGroupName] = useState('');
   const [showAddUserGroupForm, setShowAddUserGroupForm] = useState(false);
 
-  // 添加用户组并关闭表单
-  const handleAddUserGroupWithClose = async () => {
-    console.log('handleAddUserGroupWithClose 被调用');
-    console.log('newUserGroupName:', newUserGroupName);
-
-    if (!newUserGroupName.trim()) {
-      console.log('用户组名称为空，返回');
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('请输入用户组名称');
-        });
-      }
-      return;
-    }
-
-    console.log('开始添加用户组...');
-    try {
-      const newTag = {
-        name: newUserGroupName.trim(),
-        enabledApis: [],
-        videoSources: [],
-      };
-
-      const newTags = [...userSettings.Tags, newTag];
-      const newSettings = {
-        ...userSettings,
-        Tags: newTags,
-      };
-
-      console.log('添加用户组 - 新的用户组列表:', newTags);
-      console.log('添加用户组 - 新的设置:', newSettings);
-
-      // 先更新本地状态
-      setUserSettings(newSettings);
-
-      // 使用一个修改版的saveConfig，直接传入newSettings而不是重新获取userSettings
-      await saveConfigWithSettings(newSettings);
-
-      console.log('添加用户组 - 保存完成');
-      setNewUserGroupName('');
-      setShowAddUserGroupForm(false);
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('用户组添加成功');
-        });
-      }
-    } catch (error) {
-      console.error('添加用户组失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('添加失败: ' + (error as Error).message);
-        });
-      }
-    }
+  // 添加用户组并关闭表单（简化版，直接调用合并后的函数）
+  const handleAddUserGroupWithClose = () => {
+    handleAddUserGroup(true);
   };
 
   // 用户组配置状态
@@ -1079,8 +1017,17 @@ function UserConfigContent() {
     }
   };
 
+  // 辅助函数：计算用户组的视频源数量
+  const getVideoSourceCount = useCallback((tag: any) => {
+    // 优先使用videoSources字段，如果没有则从enabledApis中过滤
+    const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
+    const videoSources = tag.videoSources || 
+      (tag.enabledApis || []).filter((api: string) => !specialFeatures.includes(api));
+    return videoSources.length;
+  }, []);
+
   // 用户组管理函数
-  const handleAddUserGroup = async () => {
+  const handleAddUserGroup = async (closeForm = false) => {
     if (!newUserGroupName.trim()) {
       if (typeof window !== 'undefined') {
         import('@/components/Toast').then(({ ToastManager }) => {
@@ -1114,6 +1061,24 @@ function UserConfigContent() {
       // 重新加载配置
       await loadConfig();
 
+      // 更新索引（服务器端操作）
+      // 客户端会通过重新加载配置自动获取最新的索引状态
+      if (typeof window === 'undefined') {
+        try {
+          // 首先清除索引缓存，强制重新初始化
+          const { clearAllIndexes } = await import('@/lib/source-index');
+          clearAllIndexes();
+          console.log('[添加用户组] 索引缓存已清除');
+          
+          // 然后重建用户组索引
+          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
+          await rebuildUserGroupIndex();
+          console.log('[添加用户组] 索引更新完成');
+        } catch (error) {
+          console.error('[添加用户组] 索引更新失败:', error);
+        }
+      }
+
       setShowAddUserGroupModal(false);
       setNewUserGroupName('');
 
@@ -1122,11 +1087,17 @@ function UserConfigContent() {
           ToastManager?.success('用户组添加成功');
         });
       }
+
+      // 根据参数决定是否关闭表单
+      if (closeForm) {
+        setShowAddUserGroupForm(false);
+        setNewUserGroupName('');
+      }
     } catch (error) {
       console.error('添加用户组失败:', error);
       if (typeof window !== 'undefined') {
         import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('添加用户组失败: ' + (error as Error).message);
+          ToastManager?.error('添加失败: ' + (error as Error).message);
         });
       }
     }
@@ -1329,6 +1300,24 @@ function UserConfigContent() {
       // 重新加载配置
       await loadConfig();
 
+      // 更新索引（服务器端操作）
+      // 客户端会通过重新加载配置自动获取最新的索引状态
+      if (typeof window === 'undefined') {
+        try {
+          // 首先清除索引缓存，强制重新初始化
+          const { clearAllIndexes } = await import('@/lib/source-index');
+          clearAllIndexes();
+          console.log('[用户组配置] 索引缓存已清除');
+          
+          // 然后重建用户组索引
+          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
+          await rebuildUserGroupIndex();
+          console.log('[用户组配置] 索引更新完成');
+        } catch (error) {
+          console.error('[用户组配置] 索引更新失败:', error);
+        }
+      }
+
       if (typeof window !== 'undefined') {
         import('@/components/Toast').then(({ ToastManager }) => {
           ToastManager?.success('采集源配置已保存');
@@ -1420,6 +1409,24 @@ function UserConfigContent() {
       setUserSettings(newSettings);
       await saveConfig();
 
+      // 更新索引（服务器端操作）
+      // 客户端会通过重新加载配置自动获取最新的索引状态
+      if (typeof window === 'undefined') {
+        try {
+          // 首先清除索引缓存，强制重新初始化
+          const { clearAllIndexes } = await import('@/lib/source-index');
+          clearAllIndexes();
+          console.log('[删除用户组] 索引缓存已清除');
+          
+          // 然后重建用户组索引
+          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
+          await rebuildUserGroupIndex();
+          console.log('[删除用户组] 索引更新完成');
+        } catch (error) {
+          console.error('[删除用户组] 索引更新失败:', error);
+        }
+      }
+
       if (typeof window !== 'undefined') {
         import('@/components/Toast').then(({ ToastManager }) => {
           ToastManager?.success('用户组删除成功');
@@ -1494,16 +1501,16 @@ function UserConfigContent() {
     >
       <div className='space-y-6'>
         {/* 统计信息 */}
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           <div className='bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center'>
-                <span className='text-blue-500 mr-2 md:mr-3 text-xl md:text-2xl'>👥</span>
+                <span className='text-blue-500 mr-3 text-2xl'>👥</span>
                 <div>
-                  <div className='text-xl md:text-2xl font-bold text-blue-600'>
+                  <div className='text-2xl font-bold text-blue-600'>
                     {userSettings.Users.length}
                   </div>
-                  <div className='text-xs md:text-sm text-gray-500'>总用户数</div>
+                  <div className='text-sm text-gray-500'>总用户数</div>
                 </div>
               </div>
             </div>
@@ -1511,16 +1518,16 @@ function UserConfigContent() {
           <div className='bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center'>
-                <ShieldCheck className='text-green-500 mr-2 md:mr-3' size={20} />
+                <ShieldCheck className='text-green-500 mr-3' size={24} />
                 <div>
-                  <div className='text-xl md:text-2xl font-bold text-green-600'>
+                  <div className='text-2xl font-bold text-green-600'>
                     {
                       userSettings.Users.filter((u) =>
                         u.enabled !== undefined ? u.enabled : !u.banned,
                       ).length
                     }
                   </div>
-                  <div className='text-xs md:text-sm text-gray-500'>已启用</div>
+                  <div className='text-sm text-gray-500'>已启用</div>
                 </div>
               </div>
             </div>
@@ -1528,16 +1535,16 @@ function UserConfigContent() {
           <div className='bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center'>
-                <ShieldX className='text-red-500 mr-2 md:mr-3' size={20} />
+                <ShieldX className='text-red-500 mr-3' size={24} />
                 <div>
-                  <div className='text-xl md:text-2xl font-bold text-red-600'>
+                  <div className='text-2xl font-bold text-red-600'>
                     {
                       userSettings.Users.filter((u) =>
                         u.enabled === undefined ? u.banned : !u.enabled,
                       ).length
                     }
                   </div>
-                  <div className='text-xs md:text-sm text-gray-500'>已禁用</div>
+                  <div className='text-sm text-gray-500'>已禁用</div>
                 </div>
               </div>
             </div>
@@ -1545,12 +1552,12 @@ function UserConfigContent() {
           <div className='bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center'>
-                <Clock className='text-orange-500 mr-2 md:mr-3' size={20} />
+                <Clock className='text-orange-500 mr-3' size={24} />
                 <div>
-                  <div className='text-xl md:text-2xl font-bold text-orange-600'>
+                  <div className='text-2xl font-bold text-orange-600'>
                     {userSettings.PendingUsers.length}
                   </div>
-                  <div className='text-xs md:text-sm text-gray-500'>待审批</div>
+                  <div className='text-sm text-gray-500'>待审批</div>
                 </div>
               </div>
             </div>
@@ -1558,45 +1565,41 @@ function UserConfigContent() {
         </div>
         {/* 待审批用户列表 */}{' '}
         {userSettings.PendingUsers.length > 0 && (
-          <div className='bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border rounded-lg p-4 md:p-6'>
+          <div className='bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border rounded-lg p-6'>
             <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100'>
               待审批用户
             </h3>
-            <div className='space-y-3'>
+            <div className='space-y-2'>
               {userSettings.PendingUsers.map((pendingUser, index) => (
                 <div
                   key={index}
-                  className='p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'
+                  className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'
                 >
-                  {/* 用户信息 - 移动端垂直布局，PC端水平布局 */}
-                  <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
-                    <div>
-                      <span className='font-medium text-gray-900 dark:text-gray-100 text-base'>
-                        {pendingUser.username}
-                      </span>
-                      <div className='text-xs text-gray-500 dark:text-gray-400 mt-1 md:mt-0 md:ml-2'>
-                        {new Date(pendingUser.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    {/* 操作按钮 - 移动端垂直布局，PC端水平布局 */}
-                    <div className='flex flex-col md:flex-row gap-2'>
-                      <button
-                        onClick={() =>
-                          handleApproveUser(pendingUser.username, index)
-                        }
-                        className='w-full md:w-auto px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
-                      >
-                        批准
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleRejectUser(pendingUser.username, index)
-                        }
-                        className='w-full md:w-auto px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
-                      >
-                        拒绝
-                      </button>
-                    </div>
+                  <div>
+                    <span className='font-medium text-gray-900 dark:text-gray-100'>
+                      {pendingUser.username}
+                    </span>
+                    <span className='ml-2 text-xs text-gray-500 dark:text-gray-400'>
+                      {new Date(pendingUser.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className='flex gap-2'>
+                    <button
+                      onClick={() =>
+                        handleApproveUser(pendingUser.username, index)
+                      }
+                      className='px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700'
+                    >
+                      批准
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleRejectUser(pendingUser.username, index)
+                      }
+                      className='px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700'
+                    >
+                      拒绝
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1804,8 +1807,8 @@ function UserConfigContent() {
           )}
 
           {/* 用户组列表 */}
-          <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden'>
-            <table className='min-w-full'>
+          <div className='overflow-x-auto'>
+            <table className='w-full'>
               <thead className='bg-gray-50 dark:bg-gray-900'>
                 <tr>
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
@@ -1835,21 +1838,9 @@ function UserConfigContent() {
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap'>
                       <span className='text-sm text-gray-900 dark:text-gray-100'>
-                        {(() => {
-                          // 优先使用videoSources字段，如果没有则从enabledApis中过滤
-                          const specialFeatures = [
-                            'ai-recommend',
-                            'disable-yellow-filter',
-                          ];
-                          const videoSources =
-                            tag.videoSources ||
-                            (tag.enabledApis || []).filter(
-                              (api) => !specialFeatures.includes(api),
-                            );
-                          return videoSources.length > 0
-                            ? `${videoSources.length} 个源`
-                            : '无配置';
-                        })()}
+                        {getVideoSourceCount(tag) > 0
+                          ? `${getVideoSourceCount(tag)} 个源`
+                          : '无配置'}
                       </span>
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap'>
@@ -1992,22 +1983,18 @@ function UserConfigContent() {
         </div>
         {/* 添加用户组弹窗 */}
         {showAddUserGroupModal && (
-          <div className='fixed inset-0 z-40 md:inset-auto md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2'>
-            <div className='bg-white dark:bg-gray-800 h-full md:h-auto md:max-w-2xl md:max-h-[85vh] w-full md:w-[90vw] rounded-t-xl md:rounded-xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50'>
-              <div className='p-4 md:p-6'>
-                <div className='flex items-center justify-between mb-4 md:mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
-                  <h3 className='text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
-                    <span className='mr-2'>➕</span>
-                    添加用户组
+          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+            <div className='bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
+              <div className='p-6'>
+                <div className='flex items-center justify-between mb-6'>
+                  <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                    添加新用户组
                   </h3>
                   <button
-                    onClick={() => {
-                      setShowAddUserGroupModal(false);
-                      setNewUserGroupName('');
-                    }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
+                    onClick={() => setShowAddUserGroupModal(false)}
+                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                   >
-                    <X size={16} />
+                    <X size={20} />
                   </button>
                 </div>
 
@@ -2026,17 +2013,16 @@ function UserConfigContent() {
                   </div>
                 </div>
 
-                {/* 移动端按钮布局 */}
-                <div className='flex flex-col md:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='flex justify-end space-x-3'>
                   <button
                     onClick={() => setShowAddUserGroupModal(false)}
-                    className='w-full md:w-auto px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   >
                     取消
                   </button>
                   <button
-                    onClick={handleAddUserGroup}
-                    className='w-full md:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                    onClick={() => handleAddUserGroup(false)}
+                    className='px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
                   >
                     添加
                   </button>
@@ -2047,11 +2033,11 @@ function UserConfigContent() {
         )}
         {/* 编辑用户组弹窗 - 只配置视频源 */}
         {showEditUserGroupModal && editingUserGroupIndex !== null && (
-          <div className='fixed inset-0 z-40 md:inset-auto md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2'>
-            <div className='bg-white dark:bg-gray-800 h-full md:h-auto md:max-w-4xl md:max-h-[85vh] w-full md:w-[90vw] rounded-t-xl md:rounded-xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50'>
-              <div className='p-4 md:p-6'>
-                <div className='flex items-center justify-between mb-4 md:mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
-                  <h3 className='text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
+          <div className='fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40'>
+            <div className='bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl w-[90vw] max-w-2xl max-h-[85vh] overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
+              <div className='p-6'>
+                <div className='flex items-center justify-between mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
+                  <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
                     <span className='mr-2'>⚙️</span>
                     配置采集源 -{' '}
                     {userSettings.Tags[editingUserGroupIndex]?.name}
@@ -2064,30 +2050,30 @@ function UserConfigContent() {
                     }}
                     className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
                   >
-                    <X size={16} />
+                    <X size={20} />
                   </button>
                 </div>
 
                 <div className='max-h-[60vh] overflow-y-auto pr-2'>
                   {/* 采集源选择 */}
                   <div className='mb-6'>
-                    <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4'>
+                    <div className='flex items-center justify-between mb-4'>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center'>
                         <span className='mr-2'>📺</span>
                         选择可用的采集源
                       </h4>
-                      <div className='flex flex-col md:flex-row items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                      <div className='flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400'>
                         <button
                           onClick={() =>
                             setSelectedApis(videoSources.map((s) => s.key))
                           }
-                          className='px-3 py-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'
+                          className='px-3 py-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'
                         >
                           全选
                         </button>
                         <button
                           onClick={() => setSelectedApis([])}
-                          className='px-3 py-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors'
+                          className='px-3 py-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors'
                         >
                           清空
                         </button>
@@ -2133,7 +2119,7 @@ function UserConfigContent() {
                   </div>
 
                   {/* 统计信息 */}
-                  <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
+                  <div className='flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
                     <div className='text-sm text-gray-600 dark:text-gray-400 flex items-center'>
                       已选择：
                       <span className='ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full font-medium text-xs'>
@@ -2144,20 +2130,20 @@ function UserConfigContent() {
                 </div>
 
                 {/* 操作按钮 */}
-                <div className='flex flex-col md:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-4'>
                   <button
                     onClick={() => {
                       setShowEditUserGroupModal(false);
                       setEditingUserGroupIndex(null);
                       setSelectedApis([]);
                     }}
-                    className='w-full md:w-auto px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                    className='px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
                   >
                     取消
                   </button>
                   <button
                     onClick={handleSaveUserGroup}
-                    className='w-full md:w-auto px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
+                    className='px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
                   >
                     保存配置
                   </button>
@@ -2305,8 +2291,7 @@ function UserConfigContent() {
             </div>
           )}
 
-          {/* PC端表格布局 */}
-          <div className='hidden md:block overflow-x-auto'>
+          <div className='overflow-x-auto'>
             <table className='w-full'>
               <thead>
                 <tr className='border-b dark:border-gray-700'>
@@ -2887,410 +2872,16 @@ function UserConfigContent() {
               </tbody>
             </table>
           </div>
-
-          {/* 移动端卡片布局 */}
-          <div className='md:hidden space-y-4'>
-            {userSettings.Users.map((user) => {
-              // 处理状态：优先使用 enabled，如果不存在则根据 banned 判断
-              const isEnabled =
-                user.enabled !== undefined ? user.enabled : !user.banned;
-
-              return (
-                <div
-                  key={user.username}
-                  className='bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700'
-                >
-                  {/* 用户头部信息 */}
-                  <div className='flex items-start space-x-3 mb-4'>
-                    <UserAvatar username={user.username} size='lg' />
-                    <div className='flex-1 min-w-0'>
-                      {/* 用户名和角色 */}
-                      <div className='flex items-center space-x-2 mb-2'>
-                        <div className='font-medium text-gray-900 dark:text-gray-100 text-lg truncate'>
-                          {user.username}
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                            user.role === 'owner'
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                              : user.role === 'admin'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          {user.role === 'owner'
-                            ? '站长'
-                            : user.role === 'admin'
-                              ? '管理员'
-                              : '用户'}
-                        </span>
-                      </div>
-
-                      {/* 时间信息 */}
-                      <div className='text-xs text-gray-500 dark:text-gray-400 space-y-1'>
-                        <div className='flex items-center space-x-1'>
-                          <Clock className='w-3 h-3' />
-                          <span>
-                            注册:{' '}
-                            {user.createdAt
-                              ? new Date(
-                                  user.createdAt,
-                                ).toLocaleDateString()
-                              : '未知'}
-                          </span>
-                        </div>
-                        <div className='flex items-center space-x-1'>
-                          <Check className='w-3 h-3' />
-                          <span>
-                            登录:{' '}
-                            {user.lastLoginAt
-                              ? new Date(
-                                  user.lastLoginAt,
-                                ).toLocaleDateString()
-                              : '从未'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 状态和权限信息 */}
-                  <div className='space-y-3 mb-4'>
-                    {/* 账户状态 */}
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        账户状态
-                      </span>
-                      <button
-                        onClick={async () => {
-                          try {
-                            // 通过配置路径修改用户状态
-                            const updatedUsers = userSettings.Users.map(
-                              (u) => {
-                                if (u.username === user.username) {
-                                  return {
-                                    ...u,
-                                    enabled: !isEnabled,
-                                    banned: isEnabled, // 与enabled相反
-                                    permissionVersion:
-                                      (u.permissionVersion || 0) + 1,
-                                  };
-                                }
-                                return u;
-                              },
-                            );
-
-                            const updatedSettings = {
-                              ...userSettings,
-                              Users: updatedUsers as User[],
-                            };
-
-                            setUserSettings(
-                              updatedSettings as UserSettings,
-                            );
-
-                            // 保存配置
-                            await saveConfig();
-
-                            if (typeof window !== 'undefined') {
-                              import('@/components/Toast').then(
-                                ({ ToastManager }) => {
-                                  ToastManager?.success(
-                                    isEnabled ? '用户已禁用' : '用户已启用',
-                                  );
-                                },
-                              );
-                            }
-                          } catch (error) {
-                            console.error('操作失败:', error);
-                            if (typeof window !== 'undefined') {
-                              import('@/components/Toast').then(
-                                ({ ToastManager }) => {
-                                  ToastManager?.error(
-                                    '操作失败: ' + (error as Error).message,
-                                  );
-                                },
-                              );
-                            }
-                          }
-                        }}
-                        className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          isEnabled
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50'
-                        }`}
-                      >
-                        {isEnabled ? (
-                          <ShieldCheck size={12} />
-                        ) : (
-                          <ShieldX size={12} />
-                        )}
-                        <span>{isEnabled ? '启用' : '禁用'}</span>
-                      </button>
-                    </div>
-
-                    {/* 密码信息 */}
-                    {user.role !== 'owner' && (
-                      <div className='flex items-center justify-between'>
-                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                          密码
-                        </span>
-                        <div className='flex items-center space-x-1'>
-                          <span className='text-xs text-gray-900 dark:text-gray-100 font-mono max-w-[100px] truncate'>
-                            {passwordVisibility[user.username] &&
-                            userPasswords[user.username]
-                              ? userPasswords[user.username]
-                              : '•••••••••'}
-                          </span>
-                          <button
-                            onClick={() =>
-                              togglePasswordVisibility(user.username)
-                            }
-                            className='text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors'
-                            title={
-                              passwordVisibility[user.username]
-                                ? '隐藏密码'
-                                : '显示密码'
-                            }
-                          >
-                            <Eye size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 用户组选择 */}
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        用户组
-                      </span>
-                      <select
-                        value={
-                          user.tags && user.tags.length > 0
-                            ? user.tags[0]
-                            : undefined
-                        }
-                        onChange={async (e) => {
-                          const newTag = e.target.value;
-
-                          try {
-                            // 更新用户组
-                            const updatedUsers = userSettings.Users.map(
-                              (u) => {
-                                if (u.username === user.username) {
-                                  return {
-                                    ...u,
-                                    tags: newTag ? [newTag] : [],
-                                    permissionVersion:
-                                      (u.permissionVersion || 0) + 1,
-                                  };
-                                }
-                                return u;
-                              },
-                            );
-
-                            const newSettings = {
-                              ...userSettings,
-                              Users: updatedUsers,
-                            };
-
-                            // 直接使用 saveConfigWithSettings 避免重新获取数据
-                            await saveConfigWithSettings(newSettings);
-                            setUserSettings(newSettings);
-
-                            if (typeof window !== 'undefined') {
-                              import('@/components/Toast').then(
-                                ({ ToastManager }) => {
-                                  ToastManager?.success('用户组已更新');
-                                },
-                              );
-                            }
-                          } catch (error) {
-                            console.error('更新用户组失败:', error);
-                            if (typeof window !== 'undefined') {
-                              import('@/components/Toast').then(
-                                ({ ToastManager }) => {
-                                  ToastManager?.error('更新用户组失败');
-                                },
-                              );
-                            }
-                          }
-                        }}
-                        className='px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                      >
-                        {userSettings.Tags.map((tag, index) => (
-                          <option key={index} value={tag.name}>
-                            {tag.name}
-                          </option>
-                        ))}
-                        <option value=''>无用户组</option>
-                      </select>
-                    </div>
-
-                    {/* 权限标签 */}
-                    <div className='flex flex-wrap gap-2'>
-                      {(() => {
-                        const specialFeatures = [
-                          'ai-recommend',
-                          'disable-yellow-filter',
-                        ];
-                        const videoSourceCount = (user.enabledApis || [])
-                          .filter(
-                            (api) => !specialFeatures.includes(api),
-                          ).length;
-
-                        return (
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              videoSourceCount === 0
-                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                            }`}
-                          >
-                            <Video size={12} className='mr-1' />
-                            {videoSourceCount === 0
-                              ? '无配置'
-                              : `${videoSourceCount} 个采集源`}
-                          </span>
-                        );
-                      })()}
-                      {(user.enabledApis || []).includes(
-                        'ai-recommend',
-                      ) && (
-                        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'>
-                          <Brain size={10} className='mr-1' />
-                          AI
-                        </span>
-                      )}
-                      {(user.enabledApis || []).includes(
-                        'disable-yellow-filter',
-                      ) && (
-                        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'>
-                          <Eye size={10} className='mr-1' />
-                          18+
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 操作按钮 */}
-                  <div className='grid grid-cols-2 gap-2 pt-3 border-t border-gray-200 dark:border-gray-700'>
-                    <button
-                      onClick={() => handleConfigureUserApis(user)}
-                      className='flex items-center justify-center px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                    >
-                      配置权限
-                    </button>
-                    <button
-                      onClick={() => handleShowChangePasswordForm(user.username)}
-                      className='flex items-center justify-center px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
-                    >
-                      修改密码
-                    </button>
-                    {user.role !== 'owner' && (
-                      <>
-                        {user.role !== 'admin' && (
-                          <button
-                            onClick={() => handleSetAdmin(user.username)}
-                            className='flex items-center justify-center px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
-                          >
-                            设为管理员
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleRemoveAdmin(user.username)}
-                          className='flex items-center justify-center px-3 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors'
-                        >
-                          取消管理员
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (
-                              !confirm(
-                                `确定要删除用户 "${user.username}" 吗？`,
-                              )
-                            ) {
-                              return;
-                            }
-
-                            try {
-                              // 直接通过API删除用户
-                              const response = await fetch(
-                                '/api/admin/user',
-                                {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    targetUsername: user.username,
-                                    action: 'deleteUser',
-                                  }),
-                                },
-                              );
-
-                              if (!response.ok) {
-                                throw new Error('删除用户失败');
-                              }
-
-                              // 从本地状态中移除用户
-                              const updatedUsers =
-                                userSettings.Users.filter(
-                                  (u) => u.username !== user.username,
-                                );
-
-                              const updatedSettings = {
-                                ...userSettings,
-                                Users: updatedUsers,
-                              };
-
-                              setUserSettings(updatedSettings);
-
-                              if (typeof window !== 'undefined') {
-                                import('@/components/Toast').then(
-                                  ({ ToastManager }) => {
-                                    ToastManager?.success('用户已删除');
-                                  },
-                                );
-                              }
-
-                              // 重新加载配置确保同步
-                              await loadConfig();
-                            } catch (error) {
-                              console.error('删除用户失败:', error);
-                              if (typeof window !== 'undefined') {
-                                import('@/components/Toast').then(
-                                  ({ ToastManager }) => {
-                                    ToastManager?.error(
-                                      '删除失败: ' +
-                                        (error as Error).message,
-                                    );
-                                  },
-                                );
-                              }
-                            }
-                          }}
-                          className='flex items-center justify-center px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
-                        >
-                          删除
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
 
       {/* 配置用户采集源权限 - 无遮罩弹窗 */}
       {showConfigureApisModal && selectedUser && (
-        <div className='fixed inset-0 z-40 md:inset-auto md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2'>
-          <div className='bg-white dark:bg-gray-800 h-full md:h-auto md:max-w-4xl md:max-h-[85vh] w-full md:w-[90vw] rounded-t-xl md:rounded-xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50'>
-            <div className='p-4 md:p-6'>
-              <div className='flex items-center justify-between mb-4 md:mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
-                <h3 className='text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
+        <div className='fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40'>
+          <div className='bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
                   <span className='mr-2'>⚙️</span>
                   采集源权限配置 - {selectedUser.username}
                 </h3>
@@ -3302,7 +2893,7 @@ function UserConfigContent() {
                   }}
                   className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
                 >
-                  <X size={16} />
+                  <X size={20} />
                 </button>
               </div>
 
@@ -3354,8 +2945,8 @@ function UserConfigContent() {
               </div>
 
               {/* 快速操作和统计 */}
-              <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
-                <div className='flex flex-wrap gap-2'>
+              <div className='flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
+                <div className='flex space-x-3'>
                   <button
                     onClick={() => setSelectedApis([])}
                     className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
@@ -3396,22 +2987,22 @@ function UserConfigContent() {
               </div>
 
               {/* 操作按钮 */}
-              <div className='flex flex-col md:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700'>
+              <div className='flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-4'>
                 <button
                   onClick={() => {
                     setShowConfigureApisModal(false);
                     setSelectedUser(null);
                     setSelectedApis([]);
                   }}
-                  className='w-full md:w-auto px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                  className='px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSaveUserApis}
-                  className='w-full md:w-auto px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
+                  className='px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
                 >
-                  保存配置
+                  确认配置
                 </button>
               </div>
             </div>
