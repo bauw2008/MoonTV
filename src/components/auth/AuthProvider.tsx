@@ -45,10 +45,7 @@ function authReducer(
       };
 
     case 'AUTH_SUCCESS':
-      console.log('authReducer: AUTH_SUCCESS', {
-        user: action.payload.user,
-        isAuthenticated: true,
-      });
+      // AUTH_SUCCESS
       return {
         ...state,
         isAuthenticated: true,
@@ -119,6 +116,7 @@ const AuthContext = createContext<{
   hasPermission: (resource: string, action: string) => boolean;
   isAdmin: () => boolean;
   isOwner: () => boolean;
+  setAuthState: (user: any) => void;
 } | null>(null);
 
 /**
@@ -152,7 +150,6 @@ export function AuthProvider({
    * 初始化认证状态
    */
   useEffect(() => {
-    console.log('AuthProvider: useEffect触发，开始初始化');
     initializeAuth();
   }, []);
 
@@ -308,10 +305,7 @@ export function AuthProvider({
    */
   async function initializeAuth() {
     try {
-      console.log('AuthProvider: 开始初始化认证状态', {
-        isDatabaseStorage,
-        storageType: process.env.NEXT_PUBLIC_STORAGE_TYPE,
-      });
+      // 初始化认证状态
 
       if (isDatabaseStorage) {
         // 数据库模式：完全依赖服务器端验证
@@ -327,28 +321,22 @@ export function AuthProvider({
           credentials: 'include', // 包含 HttpOnly Cookie
         });
 
-        console.log('AuthProvider: 数据库模式验证响应', {
-          status: response.status,
-          ok: response.ok,
-        });
+        // 数据库模式验证响应
 
         if (response.ok) {
           const data = await response.json();
-          console.log('AuthProvider: 数据库模式验证成功', { user: data.user });
           dispatch({
             type: 'AUTH_SUCCESS',
             payload: {
               user: data.user,
             },
           });
-          console.log('数据库模式：从服务器端获取用户信息成功');
         } else {
-          console.log('AuthProvider: 数据库模式验证失败');
           dispatch({ type: 'AUTH_ERROR', payload: '' });
         }
       } else {
         // localStorage 模式：保持原有兼容性逻辑
-        console.log('localStorage 模式初始化');
+        // localStorage 模式初始化
 
         const storedAuth = getStoredAuth();
 
@@ -373,7 +361,6 @@ export function AuthProvider({
         }
       }
     } catch (error) {
-      console.error('认证初始化失败:', error);
       dispatch({ type: 'AUTH_ERROR', payload: '认证初始化失败' });
     }
   }
@@ -401,11 +388,7 @@ export function AuthProvider({
 
       const { user, accessToken, refreshToken } = data;
 
-      console.log('登录响应数据:', {
-        user,
-        accessToken: !!accessToken,
-        refreshToken: !!refreshToken,
-      });
+      // 登录成功，处理响应数据
 
       if (isDatabaseStorage) {
         // 数据库模式：只存储用户基本信息，Token 完全依赖 HttpOnly Cookie
@@ -414,10 +397,7 @@ export function AuthProvider({
           type: 'AUTH_SUCCESS',
           payload: { user },
         });
-        console.log(
-          `数据库模式登录成功 (${process.env.NEXT_PUBLIC_STORAGE_TYPE})`,
-          { user },
-        );
+        // 数据库模式登录成功
       } else {
         // localStorage 模式：保持原有兼容性，存储完整认证信息
         storeAuth({ user, accessToken, refreshToken });
@@ -425,7 +405,7 @@ export function AuthProvider({
           type: 'AUTH_SUCCESS',
           payload: { user, accessToken, refreshToken },
         });
-        console.log('localStorage 模式登录成功', { user });
+        // localStorage 模式登录成功
       }
     } catch (error) {
       let message = '登录失败';
@@ -454,7 +434,7 @@ export function AuthProvider({
    * 用户注销
    */
   async function logout() {
-    console.log('=== 客户端登出调试 ===');
+    // 客户端登出
 
     try {
       // 通知服务器注销会话
@@ -469,13 +449,13 @@ export function AuthProvider({
       if (!response.ok) {
         console.warn('服务器注销响应异常:', response.status);
       } else {
-        console.log('服务器注销成功');
+        // 服务器注销成功
       }
     } catch (error) {
       console.error('注销请求失败:', error);
     } finally {
       // 无论服务器响应如何，都清除本地状态
-      console.log('清除本地认证状态');
+      // 清除本地认证状态
       clearStoredAuth();
       dispatch({ type: 'LOGOUT' });
     }
@@ -510,9 +490,7 @@ export function AuthProvider({
 
       if (isDatabaseStorage) {
         // 数据库模式：服务器自动更新 HttpOnly Cookie，客户端无需操作
-        console.log(
-          `数据库模式令牌刷新成功 (${process.env.NEXT_PUBLIC_STORAGE_TYPE})`,
-        );
+        // 数据库模式令牌刷新成功
         // 更新活动时间
         dispatch({
           type: 'REFRESH_TOKEN',
@@ -533,15 +511,15 @@ export function AuthProvider({
               refreshToken: storedAuth.refreshToken,
             },
           });
-          console.log('localStorage 模式令牌刷新成功');
+          // localStorage 模式令牌刷新成功
         }
       }
     } catch (error) {
-      console.error(`令牌刷新失败 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, error);
+      // 令牌刷新失败
       
       // 如果还有重试次数，延迟重试
       if (retryCount < maxRetries) {
-        console.log(`将在 ${5 * (retryCount + 1)} 秒后重试刷新令牌...`);
+        // 延迟重试刷新令牌
         setTimeout(() => refreshToken(retryCount + 1), 5000 * (retryCount + 1));
         return;
       }
@@ -552,12 +530,12 @@ export function AuthProvider({
            error.message.includes('Token expired') || 
            error.message.includes('jwt expired') ||
            error.message.includes('令牌过期'))) {
-        console.log('令牌已过期，执行登出');
+        // 令牌已过期，执行登出
         logout();
       } else {
         // 网络错误或其他临时错误，不登出，等待下次重试
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn('令牌刷新失败，保持登录状态. 错误:', errorMessage);
+        // 令牌刷新失败，保持登录状态
       }
     }
   }
@@ -646,9 +624,7 @@ export function AuthProvider({
   }) {
     if (isDatabaseStorage) {
       // 数据库模式：用户信息存储在服务器端，客户端只存储必要信息
-      console.log(
-        `数据库存储模式 (${process.env.NEXT_PUBLIC_STORAGE_TYPE})：用户信息存储在服务器端`,
-      );
+      // 数据库存储模式：用户信息存储在服务器端
       // 可选择性存储非敏感信息到 sessionStorage（页面刷新时清除）
       try {
         sessionStorage.setItem(
@@ -665,7 +641,7 @@ export function AuthProvider({
       // localStorage 模式：保持原有兼容性
       try {
         localStorage.setItem(authConfig.storageKey, JSON.stringify(authData));
-        console.log('localStorage 模式：用户信息存储在客户端');
+        // localStorage 模式：用户信息存储在客户端
       } catch (error) {
         console.error('存储用户信息失败:', error);
       }
@@ -677,7 +653,7 @@ export function AuthProvider({
       // 数据库模式：清除 sessionStorage
       try {
         sessionStorage.removeItem('vidora_user_basic');
-        console.log('数据库存储模式：已清除客户端缓存');
+        // 数据库存储模式：已清除客户端缓存
       } catch (error) {
         console.warn('清除 sessionStorage 失败');
       }
@@ -685,7 +661,7 @@ export function AuthProvider({
       // localStorage 模式：清除 localStorage
       try {
         localStorage.removeItem(authConfig.storageKey);
-        console.log('localStorage 模式：已清除客户端存储');
+        // localStorage 模式：已清除客户端存储
       } catch (error) {
         console.error('清除认证信息失败:', error);
       }
@@ -704,7 +680,6 @@ export function AuthProvider({
 
       return response.ok;
     } catch (error) {
-      console.error('令牌验证失败:', error);
       return false;
     }
   }
@@ -747,6 +722,31 @@ export function AuthProvider({
     dispatch({ type: 'UPDATE_ACTIVITY' });
   }, []);
 
+  /**
+   * 直接设置认证状态（用于注册后更新）
+   */
+  function setAuthState(user: any) {
+    dispatch({
+      type: 'AUTH_SUCCESS',
+      payload: { user }
+    });
+    
+    // 在数据库模式下，存储用户基本信息到sessionStorage
+    if (isDatabaseStorage) {
+      try {
+        sessionStorage.setItem(
+          'vidora_user_basic',
+          JSON.stringify({
+            username: user.username,
+            role: user.role,
+          }),
+        );
+      } catch (error) {
+        console.warn('sessionStorage 不可用，跳过用户基本信息缓存');
+      }
+    }
+  }
+
   const value = {
     state,
     login,
@@ -758,6 +758,7 @@ export function AuthProvider({
     hasPermission,
     isAdmin,
     isOwner,
+    setAuthState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

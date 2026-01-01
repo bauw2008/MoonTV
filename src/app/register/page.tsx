@@ -10,6 +10,7 @@ import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 // 版本显示组件
 function VersionDisplay() {
@@ -81,6 +82,7 @@ function RegisterPageClient() {
   }>({});
 
   const { siteName } = useSite();
+  const { setAuthState } = useAuth();
 
   // 实时表单验证
   const validateForm = () => {
@@ -247,6 +249,12 @@ function RegisterPageClient() {
           setSuccess('已提交注册申请，等待管理员审核');
         } else {
           setSuccess('注册成功！正在跳转...');
+          
+          // 直接更新AuthProvider的状态
+          if (data.user) {
+            setAuthState(data.user);
+          }
+          
           // 给用户一个成功提示，然后再跳转
           setTimeout(() => {
             const redirect = searchParams.get('redirect') || '/';

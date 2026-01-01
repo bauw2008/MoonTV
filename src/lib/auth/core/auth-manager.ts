@@ -19,6 +19,9 @@ import {
 let _configModule: any = null;
 let _dbModule: any = null;
 
+// 服务器构建时间，用于初始化用户注册时间
+const serverBuildTime = new Date().toISOString();
+
 const getConfig = async () => {
   if (!_configModule) {
     _configModule = await import('@/lib/config');
@@ -536,22 +539,61 @@ export class AuthManager {
     }
   }
 
-  /**
-   * 更新用户最后登录时间
+/**
+   * 更新最后登录时间
    */
   private async updateLastLogin(username: string): Promise<void> {
     try {
-      // 跳过站长用户（环境变量中的用户）
+      const config = await getConfig();
+      const dbModule = await getDb();
+      const currentTime = Date.now();
+
+      // 对于站长用户，更新登录时间记录
       if (username === process.env.USERNAME) {
+        console.log(`更新站长登录时间: ${username}, 时间: ${new Date(currentTime).toISOString()}`);
+        
+        try {
+          const adminConfig = await config.getAdminConfig();
+          let ownerUser = adminConfig.UserConfig.Users.find(
+            (u) => u.username === username,
+          );
+          
+          // 使用当前时间作为站长的注册时间（首次登录时）
+          const serverStartTime = new Date().getTime();
+          
+          // 如果配置中没有站长用户，创建一个
+          if (!ownerUser) {
+            ownerUser = {
+              username: username,
+              role: 'owner',
+              enabled: true,
+              createdAt: serverBuildTime,
+              lastLoginAt: currentTime,
+            };
+            adminConfig.UserConfig.Users.push(ownerUser);
+            console.log('创建站长用户记录');
+          } else {
+            // 只更新登录时间，保持注册时间不变
+            ownerUser.lastLoginAt = currentTime;
+            // 如果没有注册时间，设置为服务器构建时间
+            if (!ownerUser.createdAt) {
+              ownerUser.createdAt = serverBuildTime;
+            }
+            console.log('更新站长登录时间');
+          }
+          
+          await dbModule.db.saveAdminConfig(adminConfig);
+          console.log('站长信息已保存到配置文件');
+        } catch (error) {
+          console.error('更新站长登录时间失败:', error);
+          throw error;
+        }
         return;
       }
 
-      const config = await getConfig();
-      const dbModule = await getDb();
-
       // 更新数据库中的最后登录时间
       try {
-        await dbModule.db.updateUserLastLogin(username, Date.now());
+        await dbModule.db.updateUserLastLogin(username, currentTime);
       } catch (error) {
         console.warn('更新数据库最后登录时间失败:', error);
       }
@@ -562,7 +604,7 @@ export class AuthManager {
         (u) => u.username === username,
       );
       if (user) {
-        user.lastLoginAt = Date.now();
+        user.lastLoginAt = currentTime;
         await dbModule.db.saveAdminConfig(adminConfig);
       }
     } catch (error) {
