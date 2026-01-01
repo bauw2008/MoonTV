@@ -628,7 +628,8 @@ function TVBoxConfigContent() {
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                   添加白名单规则
                 </label>
-                <div className='flex gap-2'>
+                {/* PC端布局 - 水平排列 */}
+                <div className='hidden md:flex gap-2'>
                   <input
                     type='text'
                     value={newUAName}
@@ -651,13 +652,38 @@ function TVBoxConfigContent() {
                     添加
                   </button>
                 </div>
+                
+                {/* 移动端布局 - 垂直排列 */}
+                <div className='md:hidden space-y-3'>
+                  <input
+                    type='text'
+                    value={newUAName}
+                    onChange={(e) => setNewUAName(e.target.value)}
+                    placeholder='名称（可选）'
+                    className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <input
+                    type='text'
+                    value={newUAValue}
+                    onChange={(e) => setNewUAValue(e.target.value)}
+                    placeholder='User-Agent值（如：okHttp/Mod-1.4.0.0）'
+                    className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <button
+                    onClick={handleAddUserAgent}
+                    className='w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2'
+                  >
+                    <CheckCircle className='w-4 h-4' />
+                    添加
+                  </button>
+                </div>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
                   支持部分匹配，如输入"okHttp"将匹配所有包含该字符串的User-Agent
                 </p>
               </div>
 
               <div>
-                <div className='flex items-center justify-between mb-2'>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
                   <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                     当前白名单
                   </label>
@@ -676,19 +702,19 @@ function TVBoxConfigContent() {
                       (ua: string, index: number) => (
                         <div
                           key={index}
-                          className='flex items-center justify-between p-3 bg-teal-50 dark:bg-teal-800 rounded-lg'
+                          className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-teal-50 dark:bg-teal-800 rounded-lg gap-2'
                         >
-                          <div className='flex-1'>
-                            <div className='font-medium text-gray-900 dark:text-gray-100'>
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-gray-900 dark:text-gray-100 truncate'>
                               {getUAName(ua)}
                             </div>
-                            <code className='text-xs text-gray-600 dark:text-gray-400'>
+                            <code className='text-xs text-gray-600 dark:text-gray-400 break-all'>
                               {ua}
                             </code>
                           </div>
                           <button
                             onClick={() => handleDeleteUserAgent(index)}
-                            className='ml-3 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors'
+                            className='sm:ml-3 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors p-1'
                           >
                             <XCircle className='w-4 h-4' />
                           </button>

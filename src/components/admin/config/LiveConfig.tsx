@@ -142,13 +142,13 @@ const SortableLiveItem = ({
             </div>
           </div>
 
-          <div className='flex justify-end space-x-2'>
+          {/* PC端按钮布局 */}
+          <div className='hidden md:flex justify-end space-x-2'>
             <button
               onClick={onCancelEdit}
               className='flex items-center space-x-2 px-4 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-700'
             >
               <X size={16} />
-
               <span>取消</span>
             </button>
 
@@ -157,8 +157,26 @@ const SortableLiveItem = ({
               className='flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
             >
               <Save size={16} />
-
               <span>保存</span>
+            </button>
+          </div>
+
+          {/* 移动端按钮布局 */}
+          <div className='md:hidden grid grid-cols-2 gap-3 pt-4 border-t border-gray-200 dark:border-gray-600'>
+            <button
+              onClick={onCancelEdit}
+              className='flex items-center justify-center px-4 py-3 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-700 font-medium'
+            >
+              <X size={16} className='mr-2' />
+              取消
+            </button>
+
+            <button
+              onClick={onSaveEdit}
+              className='flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium'
+            >
+              <Save size={16} className='mr-2' />
+              保存
             </button>
           </div>
         </div>
@@ -174,7 +192,8 @@ const SortableLiveItem = ({
         liveSource.disabled ? 'opacity-60' : ''
       }`}
     >
-      <div className='flex items-center justify-between'>
+      {/* PC端布局 - 水平排列 */}
+      <div className='hidden md:flex items-center justify-between'>
         <div className='flex items-center space-x-3 flex-1'>
           <button
             {...attributes}
@@ -264,6 +283,105 @@ const SortableLiveItem = ({
             title='删除'
           >
             <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* 移动端布局 - 垂直排列 */}
+      <div className='md:hidden space-y-3'>
+        <div className='flex items-center space-x-3'>
+          <button
+            {...attributes}
+            {...listeners}
+            className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-move'
+          >
+            <GripVertical size={18} />
+          </button>
+
+          <div className='flex-1'>
+            <div className='flex items-center space-x-2'>
+              <Tv size={16} className='text-blue-500' />
+
+              <h3 className='font-medium text-gray-900 dark:text-white text-base'>
+                {liveSource.name}
+              </h3>
+
+              {liveSource.disabled && (
+                <span className='text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded'>
+                  已禁用
+                </span>
+              )}
+            </div>
+
+            <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              标识: {liveSource.key}
+            </div>
+
+            {liveSource.channelNumber !== undefined && (
+              <div className='text-xs text-blue-600 dark:text-blue-400 mt-1'>
+                {liveSource.channelNumber} 个频道
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className='bg-white dark:bg-gray-700 p-3 rounded-lg'>
+          <div className='text-xs text-gray-500 dark:text-gray-400 mb-1'>URL:</div>
+          <div className='text-sm text-gray-900 dark:text-gray-100 break-all'>
+            {liveSource.url}
+          </div>
+        </div>
+
+        {(liveSource.ua || liveSource.epg) && (
+          <div className='flex flex-wrap gap-2'>
+            {liveSource.ua && (
+              <div className='bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded text-xs'>
+                <span className='text-gray-500 dark:text-gray-400'>UA:</span>
+                <span className='text-gray-700 dark:text-gray-300 ml-1 truncate max-w-32 inline-block'>
+                  {liveSource.ua}
+                </span>
+              </div>
+            )}
+
+            {liveSource.epg && (
+              <div className='bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded text-xs'>
+                <span className='text-gray-500 dark:text-gray-400'>EPG:</span>
+                <span className='text-gray-700 dark:text-gray-300 ml-1 truncate max-w-32 inline-block'>
+                  {liveSource.epg}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 移动端操作按钮 */}
+        <div className='flex justify-between gap-2 pt-2 border-t border-gray-200 dark:border-gray-600'>
+          <button
+            onClick={() => onEdit(liveSource)}
+            className='flex-1 flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium'
+          >
+            <Edit size={14} className='mr-1' />
+            编辑
+          </button>
+
+          <button
+            onClick={() => onToggleEnable(liveSource.key)}
+            className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+              liveSource.disabled
+                ? 'bg-green-500 text-white hover:bg-green-600'
+                : 'bg-yellow-500 text-white hover:bg-yellow-600'
+            }`}
+          >
+            <Power size={14} className='mr-1' />
+            {liveSource.disabled ? '启用' : '禁用'}
+          </button>
+
+          <button
+            onClick={() => onDelete(liveSource.key)}
+            className='flex-1 flex items-center justify-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium'
+          >
+            <Trash2 size={14} className='mr-1' />
+            删除
           </button>
         </div>
       </div>

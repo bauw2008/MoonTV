@@ -353,7 +353,7 @@ export function ConfigFile() {
 
         {/* 配置文件编辑区域 */}
         <div className='bg-gradient-to-br from-emerald-50/40 via-teal-50/30 to-cyan-50/20 dark:from-emerald-900/20 dark:via-teal-900/15 dark:to-cyan-900/10 rounded-2xl p-6 border border-emerald-200/50 dark:border-emerald-800/50 backdrop-blur-sm'>
-          <div className='flex items-center justify-between mb-4'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0'>
             <div className='flex items-center space-x-3'>
               <div className='p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg'>
                 <FileText className='w-6 h-6 text-white' />
@@ -362,59 +362,22 @@ export function ConfigFile() {
                 配置内容
               </h3>
             </div>{' '}
-            <div className='flex items-center space-x-2'>
-              {configContent && (
-                <div className='flex items-center space-x-2 px-3 py-1.5 bg-white/80 dark:bg-gray-800/50 rounded-xl backdrop-blur-sm'>
-                  {isValidJson ? (
-                    <CheckCircle className='w-4 h-4 text-emerald-600' />
-                  ) : (
-                    <XCircle className='w-4 h-4 text-red-500' />
-                  )}
-                  <span
-                    className={`text-xs font-semibold ${isValidJson ? 'text-emerald-600' : 'text-red-600'}`}
-                  >
-                    {isValidJson ? 'JSON格式正确' : 'JSON格式错误'}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={loading.saveConfig || !isValidJson}
-                className='px-4 py-2 text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center space-x-1'
-              >
-                <Save className='w-4 h-4' />
-                <span>保存</span>
-              </button>
-              <button
-                onClick={loadConfig}
-                disabled={loading.loadConfigFile}
-                className='px-4 py-2 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center space-x-1'
-              >
-                <RefreshCw
-                  className={`w-3 h-3 ${loading.loadConfigFile ? 'animate-spin' : ''}`}
-                />
-                <span>刷新</span>
-              </button>
-
-              <label className='flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl transform hover:scale-105'>
-                <Upload className='w-4 h-4' />
-                <span className='text-sm font-medium'>导入</span>
-                <input
-                  type='file'
-                  accept='.json'
-                  onChange={handleImport}
-                  className='hidden'
-                />
-              </label>
-
-              <button
-                onClick={handleExport}
-                className='px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center space-x-1'
-              >
-                <Download className='w-4 h-4' />
-                <span className='text-sm font-medium'>导出</span>
-              </button>
-            </div>
+            
+            {/* JSON格式验证状态 - 仅在PC端显示 */}
+            {configContent && (
+              <div className='hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-white/80 dark:bg-gray-800/50 rounded-xl backdrop-blur-sm'>
+                {isValidJson ? (
+                  <CheckCircle className='w-4 h-4 text-emerald-600' />
+                ) : (
+                  <XCircle className='w-4 h-4 text-red-500' />
+                )}
+                <span
+                  className={`text-xs font-semibold ${isValidJson ? 'text-emerald-600' : 'text-red-600'}`}
+                >
+                  {isValidJson ? 'JSON格式正确' : 'JSON格式错误'}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className='p-6'>
@@ -429,6 +392,63 @@ export function ConfigFile() {
                   'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
               }}
             />
+
+            {/* 移动端JSON格式验证状态 */}
+            {configContent && (
+              <div className='sm:hidden mt-4 flex items-center space-x-2 px-3 py-1.5 bg-white/80 dark:bg-gray-800/50 rounded-xl backdrop-blur-sm'>
+                {isValidJson ? (
+                  <CheckCircle className='w-4 h-4 text-emerald-600' />
+                ) : (
+                  <XCircle className='w-4 h-4 text-red-500' />
+                )}
+                <span
+                  className={`text-xs font-semibold ${isValidJson ? 'text-emerald-600' : 'text-red-600'}`}
+                >
+                  {isValidJson ? 'JSON格式正确' : 'JSON格式错误'}
+                </span>
+              </div>
+            )}
+
+            {/* 操作按钮区域 - 移动端独立一行显示 */}
+            <div className='mt-6 grid grid-cols-2 sm:flex sm:flex-row sm:items-center sm:justify-center sm:space-x-2 gap-3 sm:gap-0 sm:space-y-0'>
+              <button
+                onClick={handleSave}
+                disabled={loading.saveConfig || !isValidJson}
+                className='px-4 py-3 text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-1 w-full sm:w-auto'
+              >
+                <Save className='w-4 h-4' />
+                <span>保存</span>
+              </button>
+              <button
+                onClick={loadConfig}
+                disabled={loading.loadConfigFile}
+                className='px-4 py-3 text-xs bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-1 w-full sm:w-auto'
+              >
+                <RefreshCw
+                  className={`w-3 h-3 ${loading.loadConfigFile ? 'animate-spin' : ''}`}
+                />
+                <span>刷新</span>
+              </button>
+
+              <label className='flex items-center justify-center space-x-2 px-3 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl cursor-pointer transition-all shadow-lg hover:shadow-xl transform hover:scale-105 w-full sm:w-auto'>
+                <Upload className='w-4 h-4' />
+                <span className='text-sm font-medium'>导入</span>
+                <input
+                  type='file'
+                  accept='.json'
+                  onChange={handleImport}
+                  className='hidden'
+                />
+              </label>
+
+              <button
+                onClick={handleExport}
+                className='px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-1 w-full sm:w-auto'
+              >
+                <Download className='w-4 h-4' />
+                <span className='text-sm font-medium'>导出</span>
+              </button>
+            </div>
 
             {!isValidJson && (
               <div className='mt-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/30 dark:to-pink-900/20 border border-red-200/50 dark:border-red-800/50 rounded-xl backdrop-blur-sm'>

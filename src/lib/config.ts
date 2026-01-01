@@ -290,6 +290,26 @@ async function getInitConfig(
     ],
   };
 
+  // 添加默认的 TVBox 安全配置
+  adminConfig.TVBoxSecurityConfig = {
+    enableAuth: false,
+    token: '',
+    enableRateLimit: false,
+    rateLimit: 60,
+    enableDeviceBinding: false,
+    maxDevices: 1,
+    enableUserAgentWhitelist: false,
+    allowedUserAgents: [
+      'okHttp/Mod-1.4.0.0',
+      'TVBox',
+      'OKHTTP',
+      'Dalvik',
+      'Java',
+    ],
+    currentDevices: [],
+    userTokens: [],
+  };
+
   // 补充用户信息
   let userNames: string[] = [];
   try {
@@ -707,7 +727,13 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       enableDeviceBinding: false,
       maxDevices: 1,
       enableUserAgentWhitelist: false,
-      allowedUserAgents: [],
+      allowedUserAgents: [
+        'okHttp/Mod-1.4.0.0',
+        'TVBox',
+        'OKHTTP',
+        'Dalvik',
+        'Java',
+      ],
       currentDevices: [],
       userTokens: [],
     };

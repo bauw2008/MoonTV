@@ -746,7 +746,9 @@ function VideoConfigContent() {
               视频源有效性检测
             </h3>
           </div>
-          <div className='flex space-x-2'>
+          
+          {/* PC端布局 - 水平排列 */}
+          <div className='hidden md:flex space-x-2'>
             <input
               type='text'
               value={searchKeyword}
@@ -758,6 +760,25 @@ function VideoConfigContent() {
               onClick={handleValidateSources}
               disabled={isValidating || !searchKeyword.trim()}
               className='flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+            >
+              <Search size={16} />
+              <span>{isValidating ? '检测中...' : '开始检测'}</span>
+            </button>
+          </div>
+          
+          {/* 移动端布局 - 垂直排列 */}
+          <div className='md:hidden space-y-3'>
+            <input
+              type='text'
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              placeholder='输入搜索关键词进行检测'
+              className='w-full px-4 py-3 border border-pink-300 dark:border-pink-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500 focus:border-transparent text-base'
+            />
+            <button
+              onClick={handleValidateSources}
+              disabled={isValidating || !searchKeyword.trim()}
+              className='w-full flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all font-medium'
             >
               <Search size={16} />
               <span>{isValidating ? '检测中...' : '开始检测'}</span>
