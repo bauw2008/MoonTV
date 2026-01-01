@@ -41,6 +41,7 @@ export interface AuthUser {
     actions: string[];
   }>;
   tags?: string[];
+  permissionVersion?: number;
 }
 
 // 客户端认证状态

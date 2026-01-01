@@ -628,9 +628,9 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
     // 重建源索引，确保用户组配置变更立即生效
     try {
       await rebuildSourceIndex();
-      console.log('[用户配置更新] 索引重建完成');
+      // 索引重建完成
     } catch (error) {
-      console.error('[用户配置更新] 索引重建失败:', error);
+      // 索引重建失败
     }
 
     return NextResponse.json(

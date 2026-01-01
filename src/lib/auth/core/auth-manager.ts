@@ -26,7 +26,7 @@ const getConfig = async () => {
   if (!_configModule) {
     _configModule = await import('@/lib/config');
   }
-  return _configModule;
+  return _configModule.getConfig();
 };
 
 const getDb = async () => {
@@ -67,24 +67,27 @@ export class AuthManager {
       const token = this.extractToken(request);
       if (!token) return this.unauthorized();
 
-      // 2. 检查缓存
-      const cached = await this.cacheManager.get(token);
-      if (cached) return this.success(cached);
-
-      // 3. 验证Token
-      const user = await this.tokenService.verify(token);
-      if (!user) {
+      // 2. 验证Token
+      const tokenUser = await this.tokenService.verify(token);
+      if (!tokenUser) {
         // 站长特殊认证：如果JWT验证失败，检查是否为站长初始设置场景
         const ownerUser = await this.tryOwnerAuth(request, token);
         if (ownerUser) {
-          await this.cacheManager.set(token, ownerUser);
           return this.success(ownerUser);
         }
         return this.unauthorized();
       }
 
-      // 4. 缓存结果
-      await this.cacheManager.set(token, user);
+      // 3. 从最新配置获取用户信息（不使用缓存）
+      const userConfig = await this.getUserConfig(tokenUser.username);
+      
+      // 4. 构建用户对象
+      const user = {
+        username: tokenUser.username,
+        role: userConfig.role || 'user',
+        lastActivity: Date.now(),
+        permissionVersion: userConfig.permissionVersion || 0,
+      };
 
       return this.success(user);
     } catch (error) {
@@ -378,19 +381,6 @@ export class AuthManager {
     try {
       const { username, password } = credentials;
 
-      // 优先检查站长身份（环境变量中的USERNAME）
-      if (
-        username === process.env.USERNAME &&
-        password === process.env.PASSWORD
-      ) {
-        console.log(`数据库模式：站长用户验证成功 - ${username}`);
-        return {
-          username,
-          role: 'owner',
-          lastActivity: Date.now(),
-        };
-      }
-
       // 动态导入数据库模块
       const dbModule = await getDb();
 
@@ -398,16 +388,30 @@ export class AuthManager {
       const isValid = await dbModule.db.verifyUser(username, password);
 
       if (!isValid) {
+        // 检查是否为站长（环境变量中的USERNAME）
+        if (
+          username === process.env.USERNAME &&
+          password === process.env.PASSWORD
+        ) {
+          console.log(`数据库模式：站长用户验证成功 - ${username}`);
+          return {
+            username,
+            role: 'owner',
+            lastActivity: Date.now(),
+            permissionVersion: 0,
+          };
+        }
         return null;
       }
 
-      // 获取用户信息
+      // 获取用户信息（确保从最新配置读取）
       const userConfig = await this.getUserConfig(username);
 
       return {
         username,
         role: userConfig.role || 'user',
         lastActivity: Date.now(),
+        permissionVersion: userConfig.permissionVersion || 0,
       };
     } catch (error) {
       console.error('数据库用户验证失败:', error);
@@ -420,46 +424,34 @@ export class AuthManager {
    */
   private async getUserConfig(username: string): Promise<any> {
     try {
-      console.log(`getUserConfig 被调用，用户名: ${username}`);
-      console.log(`环境变量 USERNAME: ${process.env.USERNAME}`);
-
-      // 优先检查站长身份（环境变量中的USERNAME）
-      if (username === process.env.USERNAME) {
-        console.log(`检测到站长用户: ${username}`);
-        return {
-          role: 'owner',
-          permissions: ['all'],
-        };
-      }
-
       // 从配置文件获取用户信息
       const config = await getConfig();
-
-      console.log('完整配置:', {
-        hasUserConfig: !!config.UserConfig,
-        users: config.UserConfig?.Users,
-        username: username,
-      });
 
       const user = config.UserConfig?.Users?.find(
         (u: any) => u.username === username,
       );
 
-      console.log('找到的用户:', user);
-
       if (user) {
         return {
           role: user.role || 'user',
           permissions: user.permissions || [],
+          permissionVersion: user.permissionVersion || 0,
         };
       }
 
-      console.log('未找到用户，使用默认角色 user');
+      // 检查是否为站长（环境变量中的USERNAME）
+      if (username === process.env.USERNAME) {
+        return {
+          role: 'owner',
+          permissions: ['all'],
+          permissionVersion: 0,
+        };
+      }
+
       // 默认用户配置
-      return { role: 'user' };
+      return { role: 'user', permissionVersion: 0 };
     } catch (error) {
-      console.error('获取用户配置失败:', error);
-      return { role: 'user' };
+      return { role: 'user', permissionVersion: 0 };
     }
   }
 

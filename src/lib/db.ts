@@ -288,7 +288,7 @@ export class DbManager {
           const configStr = localStorage.getItem('vidora_admin_config');
           if (configStr) {
             const config = JSON.parse(configStr);
-            console.log('localStorage: 读取配置成功');
+            // 读取配置成功
             return config;
           }
         } catch (error) {
@@ -300,8 +300,6 @@ export class DbManager {
   }
 
   async saveAdminConfig(config: AdminConfig): Promise<void> {
-    console.log('DbManager.saveAdminConfig - 开始保存配置');
-    console.log('存储类型:', STORAGE_TYPE);
 
     if (
       this.storage &&
@@ -325,20 +323,14 @@ export class DbManager {
         // 服务器端：localStorage不可用，但我们需要确保配置能够保存
         // 在localStorage模式下，服务器端实际上不应该执行保存操作
         // 因为真正的保存应该由客户端完成
-        console.warn(
-          'localStorage模式：服务器端无法访问localStorage，跳过保存',
-        );
-
         // 为了确保功能正常，我们至少要验证配置格式
         if (!config || !config.UserConfig) {
           throw new Error('配置格式无效');
         }
-
-        console.log('localStorage模式：配置格式验证通过');
       }
     }
 
-    console.log('DbManager.saveAdminConfig - 保存完成');
+    // 保存完成
   }
 
   // ---------- 用户头像 ----------

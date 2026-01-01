@@ -381,13 +381,7 @@ export async function getConfig(forceRefresh = false): Promise<AdminConfig> {
   // 检查缓存是否有效
   const now = Date.now();
 
-  console.log('getConfig - 调用详情:', {
-    forceRefresh,
-    当前时间: now,
-    缓存时间戳: cacheTimestamp,
-    是否有缓存配置: !!cachedConfig,
-    缓存版本: cacheVersion
-  });
+  // 检查缓存是否有效
 
   // 智能缓存策略：
   // - 如果强制刷新，跳过缓存
@@ -400,11 +394,6 @@ export async function getConfig(forceRefresh = false): Promise<AdminConfig> {
   }
 
   if (!forceRefresh && cachedConfig && now - cacheTimestamp < CACHE_TTL) {
-    console.log('getConfig - 使用缓存配置:', {
-      缓存中的源数量: cachedConfig.SourceConfig?.length || 0,
-      缓存中的用户数量: cachedConfig.UserConfig?.Users?.length || 0,
-      缓存中的用户组数量: cachedConfig.UserConfig?.Tags?.length || 0
-    });
     return cachedConfig;
   }
 
@@ -412,20 +401,12 @@ export async function getConfig(forceRefresh = false): Promise<AdminConfig> {
   let adminConfig: AdminConfig | null = null;
   try {
     adminConfig = await db.getAdminConfig();
-    console.log('getConfig - 数据库配置读取结果:', {
-      是否读取到配置: !!adminConfig,
-      源配置数量: adminConfig?.SourceConfig?.length || 0,
-      用户配置数量: adminConfig?.UserConfig?.Users?.length || 0,
-      用户组配置数量: adminConfig?.UserConfig?.Tags?.length || 0,
-      存储类型: process.env.NEXT_PUBLIC_STORAGE_TYPE
-    });
   } catch (e) {
     console.error('获取管理员配置失败:', e);
   }
 
   // db 中无配置，执行一次初始化
   if (!adminConfig) {
-    console.log('getConfig - 数据库中没有配置，执行初始化');
     adminConfig = await getInitConfig('');
     adminConfig = configSelfCheck(adminConfig);
     cachedConfig = adminConfig;
@@ -454,12 +435,10 @@ export function clearConfigCache(): void {
   cachedConfig = null as any;
   cacheTimestamp = 0;
   cacheVersion++; // 增加版本号，强制刷新所有缓存
-  console.log('配置缓存已清除，版本号:', cacheVersion);
 
   // localStorage模式：也清除localStorage中的缓存
   if (typeof window !== 'undefined') {
     localStorage.removeItem('vidora_admin_config');
-    console.log('localStorage: 配置缓存已清除');
   }
 }
 
