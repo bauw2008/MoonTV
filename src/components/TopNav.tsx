@@ -138,13 +138,59 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
     // 添加鼠标滚轮监听器
     window.addEventListener('wheel', handleWheel, { passive: true });
 
+    // 移动端触摸滚动检测
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let touchTimeout: NodeJS.Timeout;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndY = e.touches[0].clientY;
+      const deltaY = touchEndY - touchStartY;
+
+      // 清除之前的timeout
+      if (touchTimeout) {
+        clearTimeout(touchTimeout);
+      }
+
+      // 手向上拨（deltaY为负数）→ 内容向下滚动 → 隐藏导航栏
+      if (deltaY < -30) {
+        setIsVisible(false);
+      }
+      // 手向下拨（deltaY为正数）→ 内容向上滚动 → 显示导航栏
+      else if (deltaY > 30) {
+        setIsVisible(true);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      // 停止触摸1秒后显示导航栏
+      touchTimeout = setTimeout(() => {
+        setIsVisible(true);
+      }, 1000);
+    };
+
+    // 添加触摸事件监听器
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
     return () => {
       window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
       if (wheelTimeout) {
         clearTimeout(wheelTimeout);
+      }
+      if (touchTimeout) {
+        clearTimeout(touchTimeout);
       }
     };
   }, []);
@@ -686,8 +732,47 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
           : 'scale-100 opacity-100'
       }`}
     >
-      {/* 动态渐变背景层 */}
-      <div className='absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md backdrop-saturate-150 border-b border-white/40 dark:border-gray-700/40 shadow-lg shadow-black/10 dark:shadow-black/30'>
+      {/* 动态渐变背景层 - 跟随主题背景 */}
+      <div 
+        className='absolute inset-0 backdrop-blur-md backdrop-saturate-150 border-b shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'
+        ref={(el) => {
+          if (el) {
+            // 监听body的背景变化并应用到导航栏
+            const updateBackground = () => {
+              const bodyBg = window.getComputedStyle(document.body).background;
+              const htmlBg = window.getComputedStyle(document.documentElement).background;
+              
+              // 优先使用body的背景，如果没有则使用html的背景
+              const currentBg = bodyBg && bodyBg !== 'none' ? bodyBg : htmlBg;
+              
+              if (currentBg && currentBg !== 'none') {
+                el.style.background = currentBg;
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundAttachment = 'fixed';
+                el.style.backgroundColor = 'transparent';
+                el.style.opacity = '0.9'; // 稍微透明以保持可读性
+              }
+            };
+            
+            // 初始设置
+            updateBackground();
+            
+            // 监听主题变化
+            const observer = new MutationObserver(updateBackground);
+            observer.observe(document.body, { 
+              attributes: true, 
+              attributeFilter: ['style'] 
+            });
+            observer.observe(document.documentElement, { 
+              attributes: true, 
+              attributeFilter: ['style'] 
+            });
+            
+            // 清理函数
+            return () => observer.disconnect();
+          }
+        }}
+      >
         {/* 动态光效流动 */}
         <div className='absolute inset-0 overflow-hidden'>
           <div className='absolute -top-2 -left-2 w-96 h-96 bg-gradient-to-br from-blue-400/20 via-purple-400/10 to-pink-400/20 rounded-full blur-3xl animate-pulse'></div>
@@ -705,7 +790,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
         ></div>
       </div>
       <div className='relative px-4 sm:px-6 lg:px-8'>
-        <div className='flex justify-between items-center h-16'>
+        <div className='flex justify-between items-center h-14'>
           {/* Logo */}
           <div className='flex items-center flex-1'>
             <Link
@@ -718,8 +803,8 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
                 <div className='absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300'></div>
 
                 {/* Logo主体 */}
-                <div className='relative w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300'>
-                  <span className='text-white font-bold text-xl logo-icon transition-transform duration-500 group-hover:rotate-180'>
+                <div className='relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300'>
+                  <span className='text-white font-bold text-base sm:text-xl logo-icon transition-transform duration-500 group-hover:rotate-180'>
                     V
                   </span>
                 </div>

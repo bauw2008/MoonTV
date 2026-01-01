@@ -164,7 +164,7 @@ export function AuthProvider({
       dispatch({ type: 'UPDATE_ACTIVITY' });
       
       // 如果Token即将过期，主动刷新
-      if (isTokenExpiringSoon(90)) { // 90分钟内过期
+      if (isTokenExpiringSoon(30)) { // 30分钟内过期
         
         refreshToken();
       }
@@ -298,8 +298,8 @@ export function AuthProvider({
       }
     };
 
-    // 每10分钟检查一次Token状态
-    const interval = setInterval(checkAndRefresh, 10 * 60 * 1000);
+    // 每5分钟检查一次Token状态
+    const interval = setInterval(checkAndRefresh, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [state.isAuthenticated, authConfig.autoRefresh]);
@@ -588,10 +588,13 @@ export function AuthProvider({
         });
       } else {
         if (data.accessToken) {
-          storeAuth({
+          // 更新存储的认证信息，保持refreshToken不变
+          const updatedAuth = {
             ...storedAuth,
-            accessToken: data.accessToken
-          });
+            accessToken: data.accessToken,
+            refreshToken: storedAuth.refreshToken // 保持原有的refreshToken
+          };
+          storeAuth(updatedAuth);
           dispatch({
             type: 'AUTH_SUCCESS',
             payload: {

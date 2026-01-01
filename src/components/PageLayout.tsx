@@ -8,13 +8,15 @@ interface PageLayoutProps {
 }
 
 const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
+  const isPlayOrLivePage = ['/play', '/live'].includes(activePath);
+  
   return (
     <div className='w-full min-h-screen' style={{ background: 'transparent' }}>
-      {/* 顶部导航 - 所有端都显示 */}
+      {/* 顶部导航 - PC端所有页面显示，移动端非播放页面显示 */}
       <TopNav activePath={activePath} />
 
-      {/* 移动端头部 - 仅在特定页面显示，但不在首页显示 */}
-      {['/play', '/live'].includes(activePath) && activePath !== '/' && (
+      {/* 移动端头部 - 仅在移动端播放页面显示 */}
+      {isPlayOrLivePage && activePath !== '/' && (
         <MobileHeader showBackButton={true} />
       )}
 
@@ -24,20 +26,19 @@ const PageLayout = ({ children, activePath = '/' }: PageLayoutProps) => {
         style={{ background: 'transparent' }}
       >
         {/* 桌面端左上角返回按钮 */}
-        {['/play', '/live'].includes(activePath) && (
-          <div className='absolute top-24 left-4 z-20 hidden md:flex'>
+        {isPlayOrLivePage && (
+          <div className='absolute top-16 left-4 z-20 hidden md:flex'>
             <BackButton />
           </div>
         )}
 
         {/* 主内容 */}
         <main
-          className='flex-1 md:min-h-0 mt-20 px-2 md:px-4'
+          className='flex-1 md:min-h-0 mt-10 px-2 md:px-4'
           style={{
             paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
           }}
         >
-          {' '}
           {children}
         </main>
       </div>

@@ -138,7 +138,7 @@ export default function PosterCarousel({
   }
 
   return (
-    <div className='mb-8 relative -mt-12 z-10 px-2 md:px-4'>
+    <div className='mb-8 relative -mt-16 z-10 px-2 md:px-4'>
       {/* 海报轮播容器 */}
       <div
         className='relative h-[calc(58vh+2rem)] min-h-[480px] max-h-[750px] overflow-hidden bg-black w-full rounded-2xl shadow-2xl'
