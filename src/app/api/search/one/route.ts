@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthGuard } from '@/lib/auth';
 import { shouldApplyYellowFilter } from '@/lib/config-separation';
 import { searchFromApi } from '@/lib/downstream';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 import { getYellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -22,7 +22,7 @@ export const GET = AuthGuard.user(
       }
 
       // 获取可用API站点
-      const availableSites = await getUserVideoSources(user?.username || '');
+      const availableSites = await getUserVideoSourcesSimple(user?.username || '');
 
       if (availableSites.length === 0) {
         return NextResponse.json({ results: [] });

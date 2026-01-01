@@ -6,9 +6,35 @@ import { AuthGuard } from '@/lib/auth';
 import { clearConfigCache, getAdminConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
-import { rebuildSourceIndex } from '@/lib/source-index';
 
 export const runtime = 'nodejs';
+
+/**
+ * 强制用户下线
+ * 通过增加用户的权限版本号，使用户的当前token失效
+ */
+async function forceUserLogout(username: string): Promise<void> {
+  try {
+    // 获取当前配置
+    const adminConfig = await getAdminConfig();
+    
+    // 查找用户
+    const userEntry = adminConfig.UserConfig.Users.find(
+      (u) => u.username === username,
+    );
+    
+    if (userEntry) {
+      // 增加权限版本号，这将使用户的当前token失效
+      userEntry.permissionVersion = (userEntry.permissionVersion || 0) + 1;
+      
+      // 保存配置
+      await db.saveAdminConfig(adminConfig);
+    }
+  } catch (error) {
+    console.error(`强制用户 ${username} 下线失败:`, error);
+    throw error;
+  }
+}
 
 // 支持的操作类型
 const ACTIONS = [
@@ -211,9 +237,12 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
           }
         }
         targetEntry.banned = true;
+        targetEntry.enabled = false; // 同时设置enabled为false
         // 更新权限版本号
         targetEntry.permissionVersion =
           (targetEntry.permissionVersion || 0) + 1;
+        
+        // 权限版本号已更新，用户下次操作时会被强制下线
         break;
       }
       case 'unban': {
@@ -232,6 +261,7 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
           }
         }
         targetEntry.banned = false;
+        targetEntry.enabled = true; // 同时设置enabled为true
         // 更新权限版本号
         targetEntry.permissionVersion =
           (targetEntry.permissionVersion || 0) + 1;
@@ -608,11 +638,11 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
         });
       }
       case 'getUsers': {
-        // 返回数据库中的最新用户列表，用于配置同步
-        const dbUserList = await db.getAllUsersWithDetails();
-        console.log('API返回的详细用户列表:', dbUserList);
+        // 返回配置文件中的最新用户列表
+        const config = await getAdminConfig();
+        const users = config.UserConfig?.Users || [];
         return NextResponse.json({
-          users: dbUserList,
+          users: users,
         });
       }
       default:
@@ -625,13 +655,7 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
     // 清除配置缓存，强制下次重新从数据库读取
     clearConfigCache();
     
-    // 重建源索引，确保用户组配置变更立即生效
-    try {
-      await rebuildSourceIndex();
-      // 索引重建完成
-    } catch (error) {
-      // 索引重建失败
-    }
+    // 配置已更新
 
     return NextResponse.json(
       { ok: true },

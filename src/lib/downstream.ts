@@ -544,11 +544,19 @@ export async function getDetailFromApi(
 
   const detailUrl = `${apiSite.api}${API_CONFIG.detail.path}${id}`;
 
+  // 准备请求头
+  const headers = { ...API_CONFIG.detail.headers };
+  
+  // 如果源有token，添加认证头
+  if (apiSite.token) {
+    headers['Authorization'] = `Bearer ${apiSite.token}`;
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   const response = await fetch(detailUrl, {
-    headers: API_CONFIG.detail.headers,
+    headers,
     signal: controller.signal,
   });
 
@@ -625,6 +633,14 @@ async function handleSpecialSourceDetail(
 ): Promise<SearchResult> {
   const detailUrl = `${apiSite.detail}/index.php/vod/detail/id/${id}.html`;
 
+  // 准备请求头
+  const headers = { ...API_CONFIG.detail.headers };
+  
+  // 如果源有token，添加认证头
+  if (apiSite.token) {
+    headers['Authorization'] = `Bearer ${apiSite.token}`;
+  }
+
   // 添加重试机制
   const maxRetries = 2;
   let lastError: Error;
@@ -635,7 +651,7 @@ async function handleSpecialSourceDetail(
       const timeoutId = setTimeout(() => controller.abort(), 8000); // 减少超时时间
 
       const response = await fetch(detailUrl, {
-        headers: API_CONFIG.detail.headers,
+        headers,
         signal: controller.signal,
       });
 
@@ -648,7 +664,10 @@ async function handleSpecialSourceDetail(
       return await response.json();
     } catch (error) {
       lastError = error as Error;
-      console.warn(`[重试 ${attempt}/${maxRetries}] 源 ${apiSite.key} 获取详情失败:`, (error as Error).message);
+      // 只在开发环境记录日志
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[重试 ${attempt}/${maxRetries}] 源 ${apiSite.key} 获取详情失败:`, (error as Error).message);
+      }
       
       if (attempt === maxRetries) {
         throw new Error(`获取视频详情失败 (源: ${apiSite.key}): ${lastError.message}`);

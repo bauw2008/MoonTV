@@ -13,9 +13,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 import { useAdminPermissions } from '@/hooks/admin/useAdminPermissions';
 import { useAdminState } from '@/hooks/admin/useAdminState';
+
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 interface CacheStats {
   douban: { count: number; size: number; types: Record<string, number> };

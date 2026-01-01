@@ -24,6 +24,8 @@ export interface ApiSite {
   ext?: any;
   jar?: any;
   disabled?: boolean;
+  requiresAuth?: boolean;
+  token?: string;
 }
 
 export interface LiveCfg {
@@ -784,23 +786,7 @@ export async function resetConfig() {
   cachedConfig = adminConfig;
   await db.saveAdminConfig(adminConfig);
 
-  // 重建索引，确保与配置同步
-  // 注意：这个操作需要在服务器端执行，客户端会自动重新加载索引
-  if (typeof window === 'undefined') {
-    try {
-      // 首先清除索引缓存，强制重新初始化
-      const { clearAllIndexes } = await import('./source-index');
-      clearAllIndexes();
-      console.log('[配置重置] 索引缓存已清除');
-      
-      // 然后重建所有索引
-      const { rebuildAllIndexes } = await import('./source-index');
-      await rebuildAllIndexes();
-      console.log('[配置重置] 索引重建完成');
-    } catch (error) {
-      console.error('[配置重置] 索引重建失败:', error);
-    }
-  }
+
 
   return;
 }
@@ -811,15 +797,121 @@ export async function getCacheTime(): Promise<number> {
   return config.SiteConfig.SiteInterfaceCacheTime || 7200;
 }
 
+/**
+ * 获取用户可用的视频源 - 简化版本
+ * 替代索引系统的getUserVideoSources
+ */
+export async function getUserVideoSourcesSimple(username: string): Promise<ApiSite[]> {
+  try {
+    const config = await getConfig();
+    
+    // 获取用户配置
+    const user = config.UserConfig?.Users?.find(u => u.username === username);
+    if (!user) {
+      return [];
+    }
+
+    // 权限过滤逻辑
+    const filteredSources = config.SourceConfig.filter(source => {
+      // 1. 基础过滤：禁用的源
+      if (source.disabled) return false;
+
+      // 2. 用户直接权限优先
+      if (user.enabledApis && user.enabledApis.length > 0) {
+        return user.enabledApis.includes(source.key);
+      }
+
+      // 3. 用户组权限
+      if (user.tags && user.tags.length > 0) {
+        const allowedApis = new Set<string>();
+        
+        user.tags.forEach(tagName => {
+          const tag = config.UserConfig?.Tags?.find(t => t.name === tagName);
+          if (tag?.enabledApis) {
+            tag.enabledApis.forEach(api => allowedApis.add(api));
+          }
+        });
+
+        return allowedApis.has(source.key);
+      }
+
+      // 4. 默认允许（站长或无权限限制）
+      return true;
+    });
+
+    // 5. 认证源处理
+    const authSources = filteredSources.map(source => {
+      if (source.requiresAuth) {
+        const userToken = config.TVBoxSecurityConfig?.userTokens?.find(
+          t => t.username === username && t.enabled
+        );
+        
+        if (userToken) {
+          return { ...source, token: userToken.token };
+        } else {
+          return null; // 没有有效token的认证源不返回
+        }
+      }
+      return source;
+    }).filter(Boolean);
+
+    return authSources as ApiSite[];
+  } catch (error) {
+    console.error('获取用户视频源失败:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取用户可用的视频源（带18+过滤）
+ * 用于需要18+内容过滤的场景
+ */
+export async function getUserVideoSourcesWithFilter(username: string): Promise<ApiSite[]> {
+  const sources = await getUserVideoSourcesSimple(username);
+  const config = await getConfig();
+  const user = config.UserConfig?.Users?.find(u => u.username === username);
+  
+  // 检查是否需要18+过滤
+  if (!config.YellowWords?.length) return sources;
+  if (user?.role === 'owner') return sources;
+  
+  let shouldFilter = false;
+  
+  // 检查用户组过滤设置
+  if (user?.tags?.length > 0 && config.UserConfig.Tags) {
+    for (const tagName of user.tags) {
+      const tagConfig = config.UserConfig.Tags.find(t => t.name === tagName);
+      if (tagConfig?.disableYellowFilter === true) {
+        shouldFilter = true;
+        break;
+      }
+    }
+  }
+  
+  if (!shouldFilter) return sources;
+  
+  // 应用18+过滤
+  return sources.map(source => {
+    if (!source.categories) return source;
+    
+    const filteredCategories = source.categories.filter((category: string) => {
+      const lowerCategory = category.toLowerCase();
+      return !config.YellowWords.some((word: string) =>
+        lowerCategory.includes(word.toLowerCase())
+      );
+    });
+    
+    return { ...source, categories: filteredCategories };
+  });
+}
+
 // 获取可用的 API 站点
 export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
-  // 如果有用户名，使用新的索引系统
   if (user) {
-    const { getUserVideoSources } = await import('./source-index');
-    return await getUserVideoSources(user);
+    return await getUserVideoSourcesSimple(user);
   }
 
-  // 如果没有用户名，返回所有未禁用的源（降级处理）
+  // 如果没有用户名，返回所有未禁用的源
   const config = await getConfig();
   return config.SourceConfig.filter((s) => !s.disabled);
 }

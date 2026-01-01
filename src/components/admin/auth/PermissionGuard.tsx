@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 
 import type { UserRole } from '@/lib/auth/types';
-
 import { useAdminPermissions } from '@/hooks/admin/useAdminPermissions';
 
 interface PermissionGuardProps {

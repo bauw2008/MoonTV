@@ -3,10 +3,10 @@
 import { Plus, Save, Shield, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { PermissionGuard } from '@/components/PermissionGuard';
+import { useAdminState } from '@/hooks/admin/useAdminState';
 
 import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-import { useAdminState } from '@/hooks/admin/useAdminState';
+import { PermissionGuard } from '@/components/PermissionGuard';
 
 function YellowConfigContent() {
   const { loading, withLoading, errors, clearError } = useAdminState();

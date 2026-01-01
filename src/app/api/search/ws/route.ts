@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 import { AuthGuard } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import type { SearchResult } from '@/lib/types';
 import { getYellowWords } from '@/lib/yellow';
@@ -32,7 +32,7 @@ export const GET = AuthGuard.user(
       // 直接使用配置，无需额外处理
       
       // 使用高性能索引查询
-          const availableSites = await getUserVideoSources(user?.username || '');
+          const availableSites = await getUserVideoSourcesSimple(user?.username || '');
           
             
       if (availableSites.length === 0) {

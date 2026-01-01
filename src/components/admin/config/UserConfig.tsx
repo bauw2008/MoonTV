@@ -1,16 +1,25 @@
 'use client';
-
-import { Brain, Check, Clock, Eye, ShieldCheck, ShieldX, UserPlus, Users, Video, X, } from 'lucide-react';
-
+'use client';
+import {
+  Check,
+  Clock,
+  Eye,
+  ShieldCheck,
+  ShieldX,
+  UserPlus,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
+import { useAdminState } from '@/hooks/admin/useAdminState';
 
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { PermissionGuard } from '@/components/PermissionGuard';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-import { useAdminState } from '@/hooks/admin/useAdminState';
 import { ConfigService } from '@/services/admin/configService';
 
 // 类型定义
@@ -238,7 +247,12 @@ function UserConfigContent() {
       if (config?.UserConfig) {
         console.log('原始UserConfig:', config.UserConfig);
         console.log('原始Users数量:', config.UserConfig.Users?.length || 0);
-        console.log('原始Tags数量:', Array.isArray(config.UserConfig.Tags) ? config.UserConfig.Tags.length : 0);
+        console.log(
+          '原始Tags数量:',
+          Array.isArray(config.UserConfig.Tags)
+            ? config.UserConfig.Tags.length
+            : 0,
+        );
 
         // 先从数据库获取最新的用户列表
         let dbUsers = [];
@@ -264,7 +278,9 @@ function UserConfigContent() {
         }
 
         // 使用配置中的用户组数据
-        let tagsToUse = Array.isArray(config.UserConfig.Tags) ? config.UserConfig.Tags : [];
+        let tagsToUse = Array.isArray(config.UserConfig.Tags)
+          ? config.UserConfig.Tags
+          : [];
 
         console.log('处理后的用户组列表:', tagsToUse);
 
@@ -275,26 +291,19 @@ function UserConfigContent() {
           usersToUse = dbUsers;
         }
 
-        // 合并配置中的用户数据和数据库中的用户数据
+        // 直接使用配置中的用户数据，不合并
         const mergedUsers = usersToUse.map((configUser: any) => {
-          // 从数据库中查找对应的用户，获取最新的状态信息
-          const dbUser = dbUsers.find(
-            (u: any) => u.username === configUser.username,
-          );
-
           let finalUser = { ...configUser };
-
-          if (dbUser) {
-            // 使用数据库中的最新状态
-            finalUser = {
-              ...finalUser,
-              enabled:
-                dbUser.enabled !== undefined ? dbUser.enabled : !dbUser.banned,
-              banned: dbUser.banned,
-              role: dbUser.role,
-              lastLoginAt: dbUser.lastLoginAt,
-              createdAt: dbUser.createdAt,
-            };
+          
+          // 对于站长账户（环境变量用户），确保有时间戳
+          if (finalUser.role === 'owner') {
+            // 使用当前时间作为站长的注册时间（首次登录时）
+            const serverStartTime = new Date().getTime();
+            finalUser.createdAt = finalUser.createdAt || serverStartTime;
+            // 如果没有登录时间，设置为注册时间
+            if (!finalUser.lastLoginAt) {
+              finalUser.lastLoginAt = finalUser.createdAt;
+            }
           }
 
           // 确保用户有tags字段
@@ -313,18 +322,19 @@ function UserConfigContent() {
             userSpecialFeatures = finalUser.enabledApis.filter((api) =>
               specialFeatures.includes(api),
             );
-                      console.log(`用户 ${finalUser.username} 有独立权限:`, {
-                        videoSources: userVideoSources,
-                        specialFeatures: userSpecialFeatures,
-                      });
-                    }
-            
-                    // 2. 从用户组继承特殊功能权限（仅AI功能）
-                    let inheritedSpecialFeatures: string[] = [];
-                    userTags.forEach((tagName) => {
-                      const tag = tagsToUse.find((t) => t.name === tagName);
-                      if (tag && tag.enabledApis) {
-                        const specialFeatures = ['ai-recommend'];              const tagSpecialFeatures = tag.enabledApis.filter((api) =>
+            console.log(`用户 ${finalUser.username} 有独立权限:`, {
+              videoSources: userVideoSources,
+              specialFeatures: userSpecialFeatures,
+            });
+          }
+
+          // 2. 从用户组继承特殊功能权限（仅AI功能）
+          let inheritedSpecialFeatures: string[] = [];
+          userTags.forEach((tagName) => {
+            const tag = tagsToUse.find((t) => t.name === tagName);
+            if (tag && tag.enabledApis) {
+              const specialFeatures = ['ai-recommend'];
+              const tagSpecialFeatures = tag.enabledApis.filter((api) =>
                 specialFeatures.includes(api),
               );
               inheritedSpecialFeatures = [
@@ -379,10 +389,6 @@ function UserConfigContent() {
             }),
           ),
         };
-
-        console.log('最终用户设置:', newSettings);
-        console.log('最终用户数量:', newSettings.Users.length);
-        console.log('最终用户组数量:', newSettings.Tags.length);
 
         setUserSettings(newSettings);
       } else {
@@ -452,50 +458,102 @@ function UserConfigContent() {
     }
   };
 
+  // 工具函数：从数据库同步用户数据
+  const syncUsersFromDatabase = async () => {
+    let dbUsers = [];
+    try {
+      const response = await fetch('/api/admin/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'getUsers',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        dbUsers = data.users || [];
+        console.log('数据库同步成功，获取用户数量:', dbUsers.length);
+      } else {
+        console.error('获取用户列表失败:', response.status);
+      }
+    } catch (error) {
+      console.error('从数据库同步用户失败:', error);
+    }
+    return dbUsers;
+  };
+
+  // 工具函数：配置更新日志（索引系统已移除）
+  const updateIndexes = async (type: 'userGroup' | 'all' = 'userGroup') => {
+    console.log(`[配置更新] ${type === 'all' ? '所有配置' : '用户组配置'}已更新`);
+  };
+
+  // 工具函数：统一错误处理和提示
+  const showResult = async (
+    operation: () => Promise<any>,
+    successMessage: string,
+    errorMessage?: string,
+  ) => {
+    try {
+      await operation();
+      if (typeof window !== 'undefined') {
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.success(successMessage);
+      }
+    } catch (error) {
+      console.error(`${errorMessage || '操作失败'}:`, error);
+      if (typeof window !== 'undefined') {
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.error(
+          `${errorMessage || '操作失败'}: ${(error as Error).message}`,
+        );
+      }
+    }
+  };
+
+  // 工具函数：获取用户状态
+  const getUserStatus = (user: User) => {
+    return user.enabled !== undefined ? user.enabled : !user.banned;
+  };
+
   // 通用用户操作函数
   const handleUserAction = async (
     action: 'ban' | 'unban' | 'setAdmin' | 'cancelAdmin' | 'changePassword',
     targetUsername: string,
     targetPassword?: string,
   ) => {
-    try {
-      const response = await fetch('/api/admin/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          targetUsername,
-          ...(targetPassword ? { targetPassword } : {}),
-        }),
-      });
+    const actionMessages = {
+      ban: '用户已封禁',
+      unban: '用户已解封',
+      setAdmin: '用户已设为管理员',
+      cancelAdmin: '用户已取消管理员权限',
+      changePassword: '密码修改成功',
+    };
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '操作失败');
-      }
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          const actionMessages = {
-            ban: '用户已封禁',
-            unban: '用户已解封',
-            setAdmin: '用户已设为管理员',
-            cancelAdmin: '用户已取消管理员权限',
-            changePassword: '密码修改成功',
-          };
-          ToastManager?.success(actionMessages[action]);
+    await showResult(
+      async () => {
+        const response = await fetch('/api/admin/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            targetUsername,
+            ...(targetPassword ? { targetPassword } : {}),
+          }),
         });
-      }
 
-      await loadConfig();
-    } catch (error) {
-      console.error('用户操作失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('操作失败: ' + (error as Error).message);
-        });
-      }
-    }
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || '操作失败');
+        }
+
+        await loadConfig();
+        
+        
+      },
+      actionMessages[action] || '操作完成',
+      '操作失败',
+    );
   };
 
   // 显示修改密码表单
@@ -508,9 +566,8 @@ function UserConfigContent() {
   const handleChangePassword = async () => {
     if (!changePasswordUser.username || !changePasswordUser.password) {
       if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('请输入新密码');
-        });
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.error('请输入新密码');
       }
       return;
     }
@@ -526,14 +583,12 @@ function UserConfigContent() {
   };
 
   // 设为管理员
-  const handleSetAdmin = async (username: string) => {
-    await handleUserAction('setAdmin', username);
-  };
+  const handleSetAdmin = (username: string) =>
+    handleUserAction('setAdmin', username);
 
   // 取消管理员权限
-  const handleRemoveAdmin = async (username: string) => {
-    await handleUserAction('cancelAdmin', username);
-  };
+  const handleRemoveAdmin = (username: string) =>
+    handleUserAction('cancelAdmin', username);
 
   // 配置用户采集源权限
   const handleConfigureUserApis = (user: any) => {
@@ -624,156 +679,73 @@ function UserConfigContent() {
     }
   };
 
-  const saveConfig = async () => {
-    console.log('saveConfig 函数开始执行');
-    console.log('saveConfig - 当前 userSettings:', userSettings);
-
+  // 统一的配置保存函数
+  const saveUnifiedConfig = async (
+    settings?: Partial<UserSettings>,
+    options: {
+      skipDbSync?: boolean;
+      skipIndexUpdate?: boolean;
+      showMessage?: boolean;
+    } = {},
+  ) => {
     try {
-      // 先获取最新状态
-      const currentSettings = userSettings;
-
       // 获取完整配置
       const configService = new ConfigService();
       const fullConfig = await configService.getConfig();
 
-      // 从数据库获取最新的用户列表，确保不覆盖其他操作产生的数据变更
-      let dbUsers = [];
-      try {
-        const response = await fetch('/api/admin/user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'getUsers',
-          }),
+      // 使用传入的设置或当前设置
+      const currentSettings = settings
+        ? { ...userSettings, ...settings }
+        : userSettings;
+
+      // 合并用户数据
+      let mergedUsers = currentSettings.Users;
+
+      if (!options.skipDbSync) {
+        // 从数据库获取最新的用户列表
+        const dbUsers = await syncUsersFromDatabase();
+
+        // 保留配置中的权限设置，使用数据库中的最新状态
+        mergedUsers = currentSettings.Users.map((configUser: any) => {
+          const dbUser = dbUsers.find(
+            (u: any) => u.username === configUser.username,
+          );
+
+          if (dbUser) {
+            return {
+              ...dbUser,
+              role: configUser.role || dbUser.role || 'user',
+              banned:
+                configUser.banned !== undefined
+                  ? configUser.banned
+                  : dbUser.banned,
+              enabledApis: configUser.enabledApis || dbUser.enabledApis || [],
+              tags: configUser.tags || dbUser.tags || [],
+              videoSources:
+                configUser.videoSources || dbUser.videoSources || [],
+            };
+          }
+          return configUser;
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          dbUsers = data.users || [];
-          console.log('=== 数据库用户获取调试 ===');
-          console.log('API响应数据:', data);
-          console.log('数据库用户数量:', dbUsers.length);
-          console.log(
-            '数据库用户详情:',
-            dbUsers.map((u) => ({
-              username: u.username,
-              role: u.role,
-              banned: u.banned,
-              enabled: u.enabled,
-            })),
-          );
-          console.log('当前配置中的用户数量:', currentSettings.Users.length);
-          console.log(
-            '当前配置中的用户:',
-            currentSettings.Users.map((u) => ({
-              username: u.username,
-              role: u.role,
-            })),
-          );
-        }
-      } catch (error) {
-        console.error('保存前从数据库同步用户失败:', error);
-      }
-
-      // 合并用户数据：保留配置中的权限设置，使用数据库中的最新状态
-      const mergedUsers = currentSettings.Users.map((configUser: any) => {
-        const dbUser = dbUsers.find(
-          (u: any) => u.username === configUser.username,
-        );
-
-        let finalUser = { ...configUser };
-
-        if (dbUser) {
-          // 使用数据库中的状态信息，但保留配置中的 tags 和 enabledApis
-          finalUser = {
-            ...finalUser,
-            enabled:
-              dbUser.enabled !== undefined ? dbUser.enabled : !dbUser.banned,
-            banned: dbUser.banned,
-            role: dbUser.role,
-            lastLoginAt: dbUser.lastLoginAt,
-            createdAt: dbUser.createdAt,
-            tags: configUser.tags || [], // 确保使用配置中的 tags
-            enabledApis: configUser.enabledApis || dbUser.enabledApis, // 保留配置中的 enabledApis
-          };
-        }
-
-        // 保持用户原有的用户组设置，不自动分配
-        let userTags = finalUser.tags || [];
-
-        // 权限合并逻辑：分离视频源权限和特殊功能权限
-        let userVideoSources: string[] = [];
-        let userSpecialFeatures: string[] = [];
-
-        // 1. 如果用户有独立的enabledApis，分离视频源和特殊功能
-        if (finalUser.enabledApis && finalUser.enabledApis.length > 0) {
-          const specialFeatures = ['ai-recommend'];
-          userVideoSources = finalUser.enabledApis.filter(
-            (api) => !specialFeatures.includes(api),
-          );
-          userSpecialFeatures = finalUser.enabledApis.filter((api) =>
-            specialFeatures.includes(api),
-          );
-        }
-
-        // 2. 从用户组继承特殊功能权限（仅AI功能）
-        let inheritedSpecialFeatures: string[] = [];
-        userTags.forEach((tagName) => {
-          const tag = currentSettings.Tags.find((t) => t.name === tagName);
-          if (tag && tag.enabledApis) {
-            const specialFeatures = ['ai-recommend'];
-            const tagSpecialFeatures = tag.enabledApis.filter((api) =>
-              specialFeatures.includes(api),
-            );
-            inheritedSpecialFeatures = [
-              ...inheritedSpecialFeatures,
-              ...tagSpecialFeatures,
-            ];
+        // 添加数据库中存在但配置中没有的用户
+        dbUsers.forEach((dbUser: any) => {
+          if (
+            !currentSettings.Users.find(
+              (u: any) => u.username === dbUser.username,
+            )
+          ) {
+            mergedUsers.push(dbUser);
           }
         });
+      }
 
-        // 3. 合并用户的特殊功能权限（用户独立权限 + 用户组继承权限）
-        const finalSpecialFeatures = [
-          ...new Set([...userSpecialFeatures, ...inheritedSpecialFeatures]),
-        ];
-
-        // 4. 构建最终的enabledApis（用户视频源 + 特殊功能）
-        finalUser.enabledApis = [...userVideoSources, ...finalSpecialFeatures];
-
-        // 更新用户的tags
-        finalUser.tags = userTags;
-
-        console.log(`保存时用户 ${finalUser.username} 权限合并结果:`, {
-          userVideoSources,
-          userSpecialFeatures,
-          inheritedSpecialFeatures,
-          finalSpecialFeatures,
-          finalEnabledApis: finalUser.enabledApis,
-        });
-
-        finalUser.permissionVersion = (finalUser.permissionVersion || 0) + 1;
-
-        return finalUser;
-      });
-
-      // 添加数据库中存在但配置中没有的用户（可能是通过其他方式添加的）
-      dbUsers.forEach((dbUser: any) => {
-        if (
-          !currentSettings.Users.find(
-            (u: any) => u.username === dbUser.username,
-          )
-        ) {
-          mergedUsers.push(dbUser);
-        }
-      });
-
-      console.log('保存时合并后的用户数据:', mergedUsers);
-
-      // 创建干净的配置对象，只包含必要的字段
+      // 创建干净的配置对象
       const cleanConfig: any = {
         UserConfig: {
+          ...fullConfig.UserConfig,
           ...currentSettings,
-          Users: mergedUsers, // 使用合并后的用户数据
+          Users: mergedUsers,
         },
         // 保留其他必要的配置字段
         SourceConfig: fullConfig.SourceConfig || [],
@@ -787,120 +759,39 @@ function UserConfigContent() {
           : [],
       };
 
-      // 保存完整配置
+      // 保存配置
       await configService.saveConfig(cleanConfig);
 
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('用户配置保存成功');
-        });
+      // 更新索引
+      if (!options.skipIndexUpdate) {
+        await updateIndexes('all');
       }
 
-      // 不重新加载，保持当前状态
+      // 显示成功消息
+      if (options.showMessage !== false && typeof window !== 'undefined') {
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.success('配置保存成功');
+      }
+
+      // 更新本地状态
+      if (settings) {
+        setUserSettings(currentSettings as UserSettings);
+      }
     } catch (error) {
-      console.error('保存用户配置失败:', error);
+      console.error('保存配置失败:', error);
       if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('保存失败: ' + (error as Error).message);
-        });
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.error('保存失败: ' + (error as Error).message);
       }
     }
   };
 
-  // 直接使用传入的设置保存配置，不重新获取userSettings
-  const saveConfigWithSettings = async (settingsToSave: any) => {
-    console.log('saveConfigWithSettings 函数开始执行');
-    console.log('saveConfigWithSettings - 要保存的设置:', settingsToSave);
+  // 保持向后兼容的saveConfig函数
+  const saveConfig = () => saveUnifiedConfig(undefined, { showMessage: true });
 
-    try {
-      // 获取完整配置
-      const configService = new ConfigService();
-      const fullConfig = await configService.getConfig();
-
-      // 从数据库获取最新的用户列表，确保不覆盖其他操作产生的数据变更
-      let dbUsers = [];
-      try {
-        const response = await fetch('/api/admin/user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'getUsers',
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          dbUsers = data.users || [];
-          console.log('保存前从数据库同步的最新用户列表:', dbUsers);
-        }
-      } catch (error) {
-        console.error('保存前从数据库同步用户失败:', error);
-      }
-
-      // 合并用户数据：保留配置中的权限设置，使用数据库中的最新状态
-      const mergedUsers = settingsToSave.Users.map((configUser: any) => {
-        // 从数据库中查找对应的用户，获取最新的状态信息
-        const dbUser = dbUsers.find(
-          (u: any) => u.username === configUser.username,
-        );
-
-        if (dbUser) {
-          // 保留配置中的权限设置，但使用数据库中的最新状态
-          return {
-            ...dbUser,
-            role: configUser.role || dbUser.role || 'user',
-            banned:
-              configUser.banned !== undefined
-                ? configUser.banned
-                : dbUser.banned,
-            enabledApis: configUser.enabledApis || dbUser.enabledApis || [],
-            tags: configUser.tags || dbUser.tags || [],
-          };
-        }
-        return configUser;
-      });
-
-      console.log('保存时合并后的用户数据:', mergedUsers);
-
-      // 创建干净的配置对象，只包含必要的字段
-      const cleanConfig: any = {
-        UserConfig: {
-          ...settingsToSave,
-          Users: mergedUsers, // 使用合并后的用户数据
-        },
-        // 保留其他必要的配置字段
-        SourceConfig: fullConfig.SourceConfig || [],
-        CustomCategories: fullConfig.CustomCategories || [],
-        LiveConfig: fullConfig.LiveConfig || [],
-        SiteConfig: fullConfig.SiteConfig || {},
-        NetDiskConfig: fullConfig.NetDiskConfig || {},
-        AIConfig: fullConfig.AIRecommendConfig || {},
-        CategoryConfig: Array.isArray(fullConfig.CustomCategories)
-          ? fullConfig.CustomCategories
-          : [],
-        TVBoxSecurityConfig: fullConfig.TVBoxSecurityConfig || {},
-        YellowWords: fullConfig.YellowWords || [],
-      };
-
-      // 保存完整配置
-      await configService.saveConfig(cleanConfig);
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('用户配置保存成功');
-        });
-      }
-
-      // 不重新加载，保持当前状态
-    } catch (error) {
-      console.error('保存用户配置失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('保存失败: ' + (error as Error).message);
-        });
-      }
-    }
-  };
+  // 保持向后兼容的saveConfigWithSettings函数
+  const saveConfigWithSettings = (settings: any) =>
+    saveUnifiedConfig(settings, { showMessage: true });
 
   const handleToggleSwitch = async (key: keyof UserSettings, value: any) => {
     try {
@@ -1021,8 +912,11 @@ function UserConfigContent() {
   const getVideoSourceCount = useCallback((tag: any) => {
     // 优先使用videoSources字段，如果没有则从enabledApis中过滤
     const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
-    const videoSources = tag.videoSources || 
-      (tag.enabledApis || []).filter((api: string) => !specialFeatures.includes(api));
+    const videoSources =
+      tag.videoSources ||
+      (tag.enabledApis || []).filter(
+        (api: string) => !specialFeatures.includes(api),
+      );
     return videoSources.length;
   }, []);
 
@@ -1030,77 +924,66 @@ function UserConfigContent() {
   const handleAddUserGroup = async (closeForm = false) => {
     if (!newUserGroupName.trim()) {
       if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('请输入用户组名称');
-        });
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.error('请输入用户组名称');
       }
       return;
     }
 
-    try {
-      const response = await fetch('/api/admin/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'userGroup',
-          groupAction: 'add',
-          groupName: newUserGroupName.trim(),
+    await showResult(
+      async () => {
+        const response = await fetch('/api/admin/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'userGroup',
+            groupAction: 'add',
+            groupName: newUserGroupName.trim(),
+            enabledApis: videoSources.map((source) => source.key),
+            disableYellowFilter:
+              DefaultPermissions[PermissionType.DISABLE_YELLOW_FILTER],
+            aiEnabled:
+              DefaultPermissions[PermissionType.AI_RECOMMEND].length > 0,
+            videoSources: videoSources.map((source) => source.key),
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || '添加用户组失败');
+        }
+
+        // 更新本地状态
+        const newTag = {
+          name: newUserGroupName.trim(),
           enabledApis: videoSources.map((source) => source.key),
+          videoSources: videoSources.map((source) => source.key),
           disableYellowFilter:
             DefaultPermissions[PermissionType.DISABLE_YELLOW_FILTER],
           aiEnabled: DefaultPermissions[PermissionType.AI_RECOMMEND].length > 0,
-          videoSources: videoSources.map((source) => source.key),
-        }),
-      });
+        };
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '添加用户组失败');
-      }
+        const newSettings = {
+          ...userSettings,
+          Tags: [...userSettings.Tags, newTag],
+        };
 
-      // 重新加载配置
-      await loadConfig();
+        setUserSettings(newSettings);
+        await saveUnifiedConfig(newSettings, { skipIndexUpdate: true });
 
-      // 更新索引（服务器端操作）
-      // 客户端会通过重新加载配置自动获取最新的索引状态
-      if (typeof window === 'undefined') {
-        try {
-          // 首先清除索引缓存，强制重新初始化
-          const { clearAllIndexes } = await import('@/lib/source-index');
-          clearAllIndexes();
-          console.log('[添加用户组] 索引缓存已清除');
-          
-          // 然后重建用户组索引
-          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
-          await rebuildUserGroupIndex();
-          console.log('[添加用户组] 索引更新完成');
-        } catch (error) {
-          console.error('[添加用户组] 索引更新失败:', error);
-        }
-      }
+        // 更新索引
+        await updateIndexes('userGroup');
 
-      setShowAddUserGroupModal(false);
-      setNewUserGroupName('');
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('用户组添加成功');
-        });
-      }
-
-      // 根据参数决定是否关闭表单
-      if (closeForm) {
-        setShowAddUserGroupForm(false);
+        setShowAddUserGroupModal(false);
         setNewUserGroupName('');
-      }
-    } catch (error) {
-      console.error('添加用户组失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('添加失败: ' + (error as Error).message);
-        });
-      }
-    }
+
+        if (closeForm) {
+          setShowAddUserGroupForm(false);
+        }
+      },
+      '用户组添加成功',
+      '添加用户组失败',
+    );
   };
 
   const handleToggleVideoSource = async (
@@ -1108,28 +991,49 @@ function UserConfigContent() {
     sourceKey: string,
     checked: boolean,
   ) => {
+    const tag = userSettings.Tags[index];
+    if (!tag) return;
+
+    const enabledApis = new Set(tag.enabledApis || []);
+    if (checked) {
+      enabledApis.add(sourceKey);
+    } else {
+      enabledApis.delete(sourceKey);
+    }
+
+    // 同步更新videoSources字段
+    const videoSources = [...(tag.videoSources || [])];
+    if (checked && !videoSources.includes(sourceKey)) {
+      videoSources.push(sourceKey);
+    } else if (!checked) {
+      const idx = videoSources.indexOf(sourceKey);
+      if (idx > -1) videoSources.splice(idx, 1);
+    }
+
+    await updateUserGroup(index, {
+      enabledApis: Array.from(enabledApis),
+      videoSources,
+    });
+  };
+
+  // 通用的用户组更新函数
+  const updateUserGroup = async (
+    index: number,
+    updates: Partial<{
+      enabledApis: string[];
+      videoSources: string[];
+      disableYellowFilter: boolean;
+      aiEnabled: boolean;
+    }>,
+    options: {
+      updateIndex?: boolean;
+      showMessage?: string;
+    } = {},
+  ) => {
     try {
       const newTags = [...userSettings.Tags];
-      const tag = { ...newTags[index] };
-      const apis = new Set(tag.enabledApis || []);
-
-      if (checked) {
-        apis.add(sourceKey);
-      } else {
-        apis.delete(sourceKey);
-      }
-
-      tag.enabledApis = Array.from(apis);
-
-      // 同步更新videoSources字段
-      const currentVideoSources = tag.videoSources || [];
-      if (checked && !currentVideoSources.includes(sourceKey)) {
-        tag.videoSources = [...currentVideoSources, sourceKey];
-      } else if (!checked) {
-        tag.videoSources = currentVideoSources.filter((s) => s !== sourceKey);
-      }
-
-      newTags[index] = tag;
+      const updatedTag = { ...newTags[index], ...updates };
+      newTags[index] = updatedTag;
 
       const newSettings = {
         ...userSettings,
@@ -1137,9 +1041,22 @@ function UserConfigContent() {
       };
 
       setUserSettings(newSettings);
-      await saveConfig();
+      await saveUnifiedConfig(newSettings, { skipIndexUpdate: true });
+
+      // 更新索引
+      await updateIndexes('userGroup');
+
+      // 显示成功消息
+      if (options.showMessage && typeof window !== 'undefined') {
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.success(options.showMessage);
+      }
     } catch (error) {
-      console.error('切换视频源失败:', error);
+      console.error('更新用户组失败:', error);
+      if (typeof window !== 'undefined') {
+        const { ToastManager } = await import('@/components/Toast');
+        ToastManager?.error('更新失败: ' + (error as Error).message);
+      }
     }
   };
 
@@ -1148,192 +1065,77 @@ function UserConfigContent() {
     permissionType: string,
     checked: boolean,
   ) => {
-    try {
-      console.log(
-        `切换特殊功能: 用户组索引=${index}, 类型=${permissionType}, 值=${checked}`,
-      );
-
-      const tag = userSettings.Tags[index];
-      if (!tag) return;
-
-      // 先更新本地状态
-      const newTags = [...userSettings.Tags];
-      const updatedTag = { ...newTags[index] };
-
-      // 确保enabledApis数组存在
-      if (!updatedTag.enabledApis) {
-        updatedTag.enabledApis = [];
-      }
-
-      // 将字符串转换为枚举值进行比较
-      const permissionTypeKey = permissionType as keyof typeof PermissionType;
-
-      // 处理不同类型的权限
-      if (
-        permissionType === 'ai-recommend' ||
-        permissionType === PermissionType.AI_RECOMMEND
-      ) {
-        updatedTag.aiEnabled = checked;
-        // 更新enabledApis
-        if (checked && !updatedTag.enabledApis.includes('ai-recommend')) {
-          updatedTag.enabledApis.push('ai-recommend');
-        } else if (!checked) {
-          updatedTag.enabledApis = updatedTag.enabledApis.filter(
-            (api) => api !== 'ai-recommend',
-          );
-        }
-      } else if (
-        permissionType === 'disable-yellow-filter' ||
-        permissionType === PermissionType.DISABLE_YELLOW_FILTER
-      ) {
-        updatedTag.disableYellowFilter = checked;
-        // 更新enabledApis
-        if (
-          checked &&
-          !updatedTag.enabledApis.includes('disable-yellow-filter')
-        ) {
-          updatedTag.enabledApis.push('disable-yellow-filter');
-        } else if (!checked) {
-          updatedTag.enabledApis = updatedTag.enabledApis.filter(
-            (api) => api !== 'disable-yellow-filter',
-          );
-        }
-      } else {
-        console.warn('未知的权限类型:', permissionType);
-        return;
-      }
-
-      newTags[index] = updatedTag;
-      const newSettings = {
-        ...userSettings,
-        Tags: newTags,
-      };
-
-      // 通过API更新用户组
-      try {
-        const response = await fetch('/api/admin/user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'userGroup',
-            groupAction: 'edit',
-            groupName: tag.name,
-            enabledApis: updatedTag.enabledApis,
-            // 传递其他字段以保持完整
-            disableYellowFilter: updatedTag.disableYellowFilter,
-            aiEnabled: updatedTag.aiEnabled,
-            videoSources: updatedTag.videoSources,
-          }),
-        });
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || '更新用户组失败');
-        }
-
-        // 更新本地状态
-        setUserSettings(newSettings);
-
-        console.log(
-          `用户组 ${tag.name} 的 ${permissionType} 已通过API更新为:`,
-          checked,
-        );
-
-        if (typeof window !== 'undefined') {
-          import('@/components/Toast').then(({ ToastManager }) => {
-            ToastManager?.success('用户组已更新');
-          });
-        }
-      } catch (error) {
-        console.error('通过API更新用户组失败:', error);
-        // 如果API失败，回退到直接保存配置
-        setUserSettings(newSettings);
-        await saveConfig();
-      }
-    } catch (error) {
-      console.error('切换特殊功能失败:', error);
+    const tag = userSettings.Tags[index];
+    if (!tag) {
+      console.error('用户组不存在，索引:', index);
+      return;
     }
+
+    const updates: any = {};
+
+    if (
+      permissionType === 'ai-recommend' ||
+      permissionType === PermissionType.AI_RECOMMEND
+    ) {
+      updates.aiEnabled = checked;
+      // 更新enabledApis
+      const enabledApis = [...tag.enabledApis];
+      if (checked && !enabledApis.includes('ai-recommend')) {
+        enabledApis.push('ai-recommend');
+      } else if (!checked) {
+        const index = enabledApis.indexOf('ai-recommend');
+        if (index > -1) enabledApis.splice(index, 1);
+      }
+      updates.enabledApis = enabledApis;
+    } else if (
+      permissionType === 'disable-yellow-filter' ||
+      permissionType === PermissionType.DISABLE_YELLOW_FILTER
+    ) {
+      updates.disableYellowFilter = checked;
+      // 更新enabledApis
+      const enabledApis = [...tag.enabledApis];
+      if (checked && !enabledApis.includes('disable-yellow-filter')) {
+        enabledApis.push('disable-yellow-filter');
+      } else if (!checked) {
+        const index = enabledApis.indexOf('disable-yellow-filter');
+        if (index > -1) enabledApis.splice(index, 1);
+      }
+      updates.enabledApis = enabledApis;
+    } else {
+      console.warn('未知的权限类型:', permissionType);
+      return;
+    }
+
+    await updateUserGroup(index, updates, {
+      showMessage: `特殊功能已${checked ? '启用' : '禁用'}`,
+    });
   };
 
   const handleSaveUserGroup = async () => {
     if (editingUserGroupIndex === null) return;
 
-    try {
-      const tag = userSettings.Tags[editingUserGroupIndex];
-      if (!tag) return;
+    const tag = userSettings.Tags[editingUserGroupIndex];
+    if (!tag) return;
 
-      console.log(`保存用户组 ${tag.name} 的采集源:`, selectedApis);
-
-      // 更新enabledApis以保持兼容性（视频源 + 现有功能权限）
-      const enabledApis = [...selectedApis];
-      if (tag.aiEnabled && !enabledApis.includes('ai-recommend')) {
-        enabledApis.push('ai-recommend');
-      }
-      if (
-        tag.disableYellowFilter &&
-        !enabledApis.includes('disable-yellow-filter')
-      ) {
-        enabledApis.push('disable-yellow-filter');
-      }
-
-      // 通过API更新用户组
-      const response = await fetch('/api/admin/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'userGroup',
-          groupAction: 'edit',
-          groupName: tag.name,
-          enabledApis: enabledApis,
-          videoSources: selectedApis,
-          // 保持其他字段不变
-          disableYellowFilter: tag.disableYellowFilter,
-          aiEnabled: tag.aiEnabled,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '保存用户组失败');
-      }
-
-      // 重新加载配置
-      await loadConfig();
-
-      // 更新索引（服务器端操作）
-      // 客户端会通过重新加载配置自动获取最新的索引状态
-      if (typeof window === 'undefined') {
-        try {
-          // 首先清除索引缓存，强制重新初始化
-          const { clearAllIndexes } = await import('@/lib/source-index');
-          clearAllIndexes();
-          console.log('[用户组配置] 索引缓存已清除');
-          
-          // 然后重建用户组索引
-          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
-          await rebuildUserGroupIndex();
-          console.log('[用户组配置] 索引更新完成');
-        } catch (error) {
-          console.error('[用户组配置] 索引更新失败:', error);
-        }
-      }
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('采集源配置已保存');
-        });
-      }
-
-      setShowEditUserGroupModal(false);
-      setEditingUserGroupIndex(null);
-    } catch (error) {
-      console.error('保存用户组失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('保存失败: ' + (error as Error).message);
-        });
-      }
+    // 更新enabledApis以保持兼容性（视频源 + 现有功能权限）
+    const enabledApis = [...selectedApis];
+    if (tag.aiEnabled && !enabledApis.includes('ai-recommend')) {
+      enabledApis.push('ai-recommend');
     }
+    if (
+      tag.disableYellowFilter &&
+      !enabledApis.includes('disable-yellow-filter')
+    ) {
+      enabledApis.push('disable-yellow-filter');
+    }
+
+    await updateUserGroup(editingUserGroupIndex, {
+      enabledApis,
+      videoSources: selectedApis,
+    });
+
+    setShowEditUserGroupModal(false);
+    setEditingUserGroupIndex(null);
   };
 
   // 提取域名
@@ -1399,47 +1201,23 @@ function UserConfigContent() {
       return;
     }
 
-    try {
-      const newTags = userSettings.Tags.filter((_, i) => i !== index);
-      const newSettings = {
-        ...userSettings,
-        Tags: newTags,
-      };
+    await showResult(
+      async () => {
+        const newTags = userSettings.Tags.filter((_, i) => i !== index);
+        const newSettings = {
+          ...userSettings,
+          Tags: newTags,
+        };
 
-      setUserSettings(newSettings);
-      await saveConfig();
+        setUserSettings(newSettings);
+        await saveUnifiedConfig(newSettings, { skipIndexUpdate: true });
 
-      // 更新索引（服务器端操作）
-      // 客户端会通过重新加载配置自动获取最新的索引状态
-      if (typeof window === 'undefined') {
-        try {
-          // 首先清除索引缓存，强制重新初始化
-          const { clearAllIndexes } = await import('@/lib/source-index');
-          clearAllIndexes();
-          console.log('[删除用户组] 索引缓存已清除');
-          
-          // 然后重建用户组索引
-          const { rebuildUserGroupIndex } = await import('@/lib/source-index');
-          await rebuildUserGroupIndex();
-          console.log('[删除用户组] 索引更新完成');
-        } catch (error) {
-          console.error('[删除用户组] 索引更新失败:', error);
-        }
-      }
-
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.success('用户组删除成功');
-        });
-      }
-    } catch (error) {
-      console.error('删除用户组失败:', error);
-      if (typeof window !== 'undefined') {
-        import('@/components/Toast').then(({ ToastManager }) => {
-          ToastManager?.error('删除失败: ' + (error as Error).message);
-        });
-      }
-    }
+        // 更新索引
+        await updateIndexes('userGroup');
+      },
+      '用户组删除成功',
+      '删除用户组失败',
+    );
   };
 
   // 确保userSettings已初始化
@@ -2013,16 +1791,16 @@ function UserConfigContent() {
                   </div>
                 </div>
 
-                <div className='flex justify-end space-x-3'>
+                <div className='flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 sm:gap-0'>
                   <button
                     onClick={() => setShowAddUserGroupModal(false)}
-                    className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    className='w-full sm:w-auto px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   >
                     取消
                   </button>
                   <button
                     onClick={() => handleAddUserGroup(false)}
-                    className='px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                    className='w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
                   >
                     添加
                   </button>
@@ -2130,20 +1908,20 @@ function UserConfigContent() {
                 </div>
 
                 {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-4'>
+                <div className='flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 sm:gap-0 border-t border-gray-200 dark:border-gray-700 pt-4'>
                   <button
                     onClick={() => {
                       setShowEditUserGroupModal(false);
                       setEditingUserGroupIndex(null);
                       setSelectedApis([]);
                     }}
-                    className='px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                    className='w-full sm:w-auto px-4 sm:px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
                   >
                     取消
                   </button>
                   <button
                     onClick={handleSaveUserGroup}
-                    className='px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
+                    className='w-full sm:w-auto px-4 sm:px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
                   >
                     保存配置
                   </button>
@@ -2200,7 +1978,7 @@ function UserConfigContent() {
                   </svg>
                 </button>
               </div>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
+              <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
                 <input
                   type='text'
                   placeholder='用户名'
@@ -2291,29 +2069,50 @@ function UserConfigContent() {
             </div>
           )}
 
-          <div className='overflow-x-auto'>
-            <table className='w-full'>
+          <div className='overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0'>
+            <table className='w-full min-w-[800px]'>
               <thead>
                 <tr className='border-b dark:border-gray-700'>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[200px]'>
                     用户信息
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px]'>
                     状态
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
                     用户组
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
                     采集源权限
                   </th>
-                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[200px]'>
                     操作
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {userSettings.Users.map((user) => {
+                {userSettings.Users
+                  .slice() // 创建副本以避免修改原数组
+                  .sort((a, b) => {
+                    // 定义角色优先级
+                    const rolePriority = {
+                      owner: 0,
+                      admin: 1,
+                      user: 2,
+                    };
+                    
+                    const aPriority = rolePriority[a.role as keyof typeof rolePriority] ?? 2;
+                    const bPriority = rolePriority[b.role as keyof typeof rolePriority] ?? 2;
+                    
+                    // 按优先级排序
+                    if (aPriority !== bPriority) {
+                      return aPriority - bPriority;
+                    }
+                    
+                    // 相同角色按用户名排序
+                    return a.username.localeCompare(b.username);
+                  })
+                  .map((user) => {
                   // 处理状态：优先使用 enabled，如果不存在则根据 banned 判断
                   const isEnabled =
                     user.enabled !== undefined ? user.enabled : !user.banned;
@@ -2359,7 +2158,11 @@ function UserConfigContent() {
                                   {user.createdAt
                                     ? new Date(
                                         user.createdAt,
-                                      ).toLocaleDateString()
+                                      ).toLocaleDateString('zh-CN', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                      })
                                     : '未知'}
                                 </span>
                               </div>
@@ -2370,7 +2173,11 @@ function UserConfigContent() {
                                   {user.lastLoginAt
                                     ? new Date(
                                         user.lastLoginAt,
-                                      ).toLocaleDateString()
+                                      ).toLocaleDateString('zh-CN', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                      })
                                     : '从未'}
                                 </span>
                               </div>
@@ -2386,33 +2193,25 @@ function UserConfigContent() {
                           <button
                             onClick={async () => {
                               try {
-                                // 通过配置路径修改用户状态
-                                const updatedUsers = userSettings.Users.map(
-                                  (u) => {
-                                    if (u.username === user.username) {
-                                      return {
-                                        ...u,
-                                        enabled: !isEnabled,
-                                        banned: isEnabled, // 与enabled相反
-                                        permissionVersion:
-                                          (u.permissionVersion || 0) + 1,
-                                      };
-                                    }
-                                    return u;
-                                  },
-                                );
+                                // 调用API修改用户状态
+                                const action = isEnabled ? 'ban' : 'unban';
+                                
+                                const response = await fetch('/api/admin/user', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    action,
+                                    targetUsername: user.username,
+                                  }),
+                                });
 
-                                const updatedSettings = {
-                                  ...userSettings,
-                                  Users: updatedUsers as User[],
-                                };
+                                if (!response.ok) {
+                                  const data = await response.json().catch(() => ({}));
+                                  throw new Error(data.error || '操作失败');
+                                }
 
-                                setUserSettings(
-                                  updatedSettings as UserSettings,
-                                );
-
-                                // 保存配置
-                                await saveConfig();
+                                // 重新加载配置
+                                await loadConfig();
 
                                 if (typeof window !== 'undefined') {
                                   import('@/components/Toast').then(
@@ -2514,22 +2313,45 @@ function UserConfigContent() {
                             })()}
                           </div>
                           <div className='flex flex-wrap gap-1 justify-center'>
-                            {(user.enabledApis || []).includes(
-                              'ai-recommend',
-                            ) && (
-                              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'>
-                                <Brain size={10} className='mr-1' />
-                                AI
-                              </span>
-                            )}
-                            {(user.enabledApis || []).includes(
-                              'disable-yellow-filter',
-                            ) && (
-                              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'>
-                                <Eye size={10} className='mr-1' />
-                                18+
-                              </span>
-                            )}
+                            {/* AI功能显示 */}
+                            {(() => {
+                              // 检查用户或用户组是否启用了AI功能
+                              const hasAiEnabled =
+                                (user.enabledApis || []).includes(
+                                  'ai-recommend',
+                                ) ||
+                                (user.tags &&
+                                  user.tags.length > 0 &&
+                                  userSettings.Tags.find(
+                                    (tag) => tag.name === user.tags[0],
+                                  )?.aiEnabled);
+
+                              return hasAiEnabled ? (
+                                <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'>
+                                  🤖 AI
+                                </span>
+                              ) : null;
+                            })()}
+
+                            {/* 18+功能显示 */}
+                            {(() => {
+                              // 检查用户或用户组是否启用了18+功能
+                              const has18Enabled =
+                                (user.enabledApis || []).includes(
+                                  'disable-yellow-filter',
+                                ) ||
+                                (user.tags &&
+                                  user.tags.length > 0 &&
+                                  userSettings.Tags.find(
+                                    (tag) => tag.name === user.tags[0],
+                                  )?.disableYellowFilter);
+
+                              return has18Enabled ? (
+                                <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'>
+                                  🚫 18+
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                       </td>
@@ -2599,271 +2421,169 @@ function UserConfigContent() {
                       </td>
 
                       {/* 操作列 */}
+
                       <td className='py-4 px-4'>
-                        <div className='flex flex-col gap-2'>
-                          {/* 主要操作 */}
-                          <div className='flex flex-wrap gap-2 justify-center'>
-                            {/* 权限控制逻辑 */}
-                            {(() => {
-                              // 修改密码权限
-                              const canChangePassword =
-                                user.role !== 'owner' &&
-                                (currentUser?.role === 'owner' ||
-                                  (currentUser?.role === 'admin' &&
-                                    (user.role === 'user' ||
-                                      user.username ===
-                                        currentUser?.username)));
+                        <div className='grid grid-cols-2 gap-2 min-w-[200px]'>
+                          {/* 第一行 */}
+                          {/* 采集源权限按钮 */}
 
-                              // 操作权限
-                              const canOperate =
-                                currentUser?.role === 'owner' ||
-                                (currentUser?.role === 'admin' &&
-                                  user.role === 'user');
+                          {(currentUser?.role === 'owner' ||
+                            (currentUser?.role === 'admin' &&
+                              (user.role === 'user' ||
+                                user.username === currentUser?.username))) && (
+                            <button
+                              onClick={() => handleConfigureUserApis(user)}
+                              className='px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center'
+                            >
+                              <span className='mr-1'>⚙️</span>
+                              采集权限
+                            </button>
+                          )}
 
-                              return (
-                                <>
-                                  {/* 配置采集源权限按钮 */}
-                                  {(currentUser?.role === 'owner' ||
-                                    (currentUser?.role === 'admin' &&
-                                      (user.role === 'user' ||
-                                        user.username ===
-                                          currentUser?.username))) && (
-                                    <button
-                                      onClick={() =>
-                                        handleConfigureUserApis(user)
-                                      }
-                                      className='px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center'
-                                    >
-                                      <span className='mr-1'>⚙️</span>
-                                      采集权限
-                                    </button>
-                                  )}
+                          {/* 修改密码按钮 */}
 
-                                  {/* 修改密码按钮 */}
-                                  {canChangePassword && (
-                                    <button
-                                      onClick={() =>
-                                        handleShowChangePasswordForm(
-                                          user.username,
-                                        )
-                                      }
-                                      className='px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                                    >
-                                      修改密码
-                                    </button>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </div>
+                          {user.role !== 'owner' &&
+                            (currentUser?.role === 'owner' ||
+                              (currentUser?.role === 'admin' &&
+                                user.role === 'user') ||
+                              user.username === currentUser?.username) && (
+                              <button
+                                onClick={() =>
+                                  handleShowChangePasswordForm(user.username)
+                                }
+                                className='px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center'
+                              >
+                                修改密码
+                              </button>
+                            )}
 
-                          {/* 高级操作 */}
-                          {(() => {
-                            const canOperate = currentUser?.role === 'owner';
+                          {/* 第二行 */}
+                          {/* 管理员控制按钮 */}
 
-                            if (!canOperate) return null;
-
-                            return (
-                              <div className='flex flex-wrap gap-1 justify-center'>
-                                {/* 角色管理 */}
-                                {user.role === 'user' && (
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        // 通过配置路径修改用户角色
-                                        const updatedUsers =
-                                          userSettings.Users.map((u) => {
-                                            if (u.username === user.username) {
-                                              return {
-                                                ...u,
-                                                role: 'admin' as
-                                                  | 'owner'
-                                                  | 'admin'
-                                                  | 'user',
-                                                permissionVersion:
-                                                  (u.permissionVersion || 0) +
-                                                  1,
-                                              };
-                                            }
-                                            return u;
-                                          });
-
-                                        const updatedSettings = {
-                                          ...userSettings,
-                                          Users: updatedUsers,
-                                        };
-
-                                        // 保存配置
-                                        await saveConfigWithSettings(
-                                          updatedSettings,
-                                        );
-                                        setUserSettings(updatedSettings);
-
-                                        if (typeof window !== 'undefined') {
-                                          import('@/components/Toast').then(
-                                            ({ ToastManager }) => {
-                                              ToastManager?.success(
-                                                '用户已设为管理员',
-                                              );
-                                            },
-                                          );
-                                        }
-                                      } catch (error) {
-                                        console.error('设为管理员失败:', error);
-                                        if (typeof window !== 'undefined') {
-                                          import('@/components/Toast').then(
-                                            ({ ToastManager }) => {
-                                              ToastManager?.error(
-                                                '操作失败: ' +
-                                                  (error as Error).message,
-                                              );
-                                            },
-                                          );
-                                        }
-                                      }
-                                    }}
-                                    className='px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors'
-                                  >
-                                    设为管理
-                                  </button>
-                                )}
-                                {user.role === 'admin' && (
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        // 通过配置路径修改用户角色
-                                        const updatedUsers =
-                                          userSettings.Users.map((u) => {
-                                            if (u.username === user.username) {
-                                              return {
-                                                ...u,
-                                                role: 'user' as
-                                                  | 'owner'
-                                                  | 'admin'
-                                                  | 'user',
-                                                permissionVersion:
-                                                  (u.permissionVersion || 0) +
-                                                  1,
-                                              };
-                                            }
-                                            return u;
-                                          });
-
-                                        const updatedSettings = {
-                                          ...userSettings,
-                                          Users: updatedUsers,
-                                        };
-
-                                        // 保存配置
-                                        await saveConfigWithSettings(
-                                          updatedSettings,
-                                        );
-                                        setUserSettings(updatedSettings);
-
-                                        if (typeof window !== 'undefined') {
-                                          import('@/components/Toast').then(
-                                            ({ ToastManager }) => {
-                                              ToastManager?.success(
-                                                '管理员权限已取消',
-                                              );
-                                            },
-                                          );
-                                        }
-                                      } catch (error) {
-                                        console.error('取消管理员失败:', error);
-                                        if (typeof window !== 'undefined') {
-                                          import('@/components/Toast').then(
-                                            ({ ToastManager }) => {
-                                              ToastManager?.error(
-                                                '操作失败: ' +
-                                                  (error as Error).message,
-                                              );
-                                            },
-                                          );
-                                        }
-                                      }
-                                    }}
-                                    className='px-2 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors'
-                                  >
-                                    取消管理
-                                  </button>
-                                )}
-
-                                {/* 删除按钮 */}
-                                <button
-                                  onClick={async () => {
-                                    if (
-                                      !confirm(
-                                        `确定要删除用户 "${user.username}" 吗？`,
-                                      )
-                                    ) {
-                                      return;
-                                    }
-
-                                    try {
-                                      // 直接通过API删除用户
-                                      const response = await fetch(
-                                        '/api/admin/user',
-                                        {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify({
-                                            targetUsername: user.username,
-                                            action: 'deleteUser',
-                                          }),
-                                        },
-                                      );
-
-                                      if (!response.ok) {
-                                        throw new Error('删除用户失败');
-                                      }
-
-                                      // 从本地状态中移除用户
+                          {(currentUser?.role === 'owner' ||
+                            (currentUser?.role === 'admin' &&
+                              user.role !== 'owner')) && (
+                            <button
+                              onClick={async () => {
+                                if (user.role === 'user') {
+                                  await showResult(
+                                    async () => {
                                       const updatedUsers =
-                                        userSettings.Users.filter(
-                                          (u) => u.username !== user.username,
-                                        );
+                                        userSettings.Users.map((u) => {
+                                          if (u.username === user.username) {
+                                            return {
+                                              ...u,
+
+                                              role: 'admin' as
+                                                | 'admin'
+                                                | 'owner'
+                                                | 'user',
+
+                                              permissionVersion:
+                                                (u.permissionVersion || 0) + 1,
+                                            };
+                                          }
+
+                                          return u;
+                                        });
 
                                       const updatedSettings = {
                                         ...userSettings,
+
                                         Users: updatedUsers,
                                       };
 
-                                      setUserSettings(updatedSettings);
+                                      await saveUnifiedConfig(updatedSettings, {
+                                        showMessage: true,
+                                      });
 
-                                      if (typeof window !== 'undefined') {
-                                        import('@/components/Toast').then(
-                                          ({ ToastManager }) => {
-                                            ToastManager?.success('用户已删除');
-                                          },
-                                        );
-                                      }
+                                      await updateIndexes('userGroup');
+                                      
+                                      
+                                    },
 
-                                      // 重新加载配置确保同步
-                                      await loadConfig();
-                                    } catch (error) {
-                                      console.error('删除用户失败:', error);
-                                      if (typeof window !== 'undefined') {
-                                        import('@/components/Toast').then(
-                                          ({ ToastManager }) => {
-                                            ToastManager?.error(
-                                              '删除失败: ' +
-                                                (error as Error).message,
-                                            );
-                                          },
-                                        );
-                                      }
+                                    '用户已设为管理员',
+
+                                    '设为管理员失败',
+                                  );
+                                } else {
+                                  handleRemoveAdmin(user.username);
+                                }
+                              }}
+                              className={`px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-center ${
+                                user.role === 'admin'
+                                  ? 'bg-gray-600 text-white hover:bg-gray-700'
+                                  : 'bg-purple-600 text-white hover:bg-purple-700'
+                              }`}
+                            >
+                              <span className='mr-1'>
+                                {user.role === 'admin' ? '👤' : '👑'}
+                              </span>
+
+                              {user.role === 'admin'
+                                ? '取消管理员'
+                                : '设为管理员'}
+                            </button>
+                          )}
+
+                          {/* 删除用户按钮 */}
+
+                          {user.role !== 'owner' && (
+                            <button
+                              onClick={async () => {
+                                if (
+                                  !confirm(
+                                    `确定要删除用户 "${user.username}" 吗？`,
+                                  )
+                                )
+                                  return;
+
+                                await showResult(
+                                  async () => {
+                                    const response = await fetch(
+                                      '/api/admin/user',
+                                      {
+                                        method: 'POST',
+
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+
+                                        body: JSON.stringify({
+                                          targetUsername: user.username,
+
+                                          action: 'deleteUser',
+                                        }),
+                                      },
+                                    );
+
+                                    if (!response.ok) {
+                                      throw new Error('删除用户失败');
                                     }
-                                  }}
-                                  className='px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors'
-                                >
-                                  删除
-                                </button>
-                              </div>
-                            );
-                          })()}
+                                    const updatedUsers =
+                                      userSettings.Users.filter(
+                                        (u) => u.username !== user.username,
+                                      );
+                                    const updatedSettings = {
+                                      ...userSettings,
+                                      Users: updatedUsers,
+                                    };
+                                    setUserSettings(updatedSettings);
+                                    await saveUnifiedConfig(updatedSettings, {
+                                      showMessage: true,
+                                    });
+                                    await updateIndexes('userGroup');
+                                  },
+                                  '用户已删除',
+                                  '删除用户失败',
+                                );
+                              }}
+                              className='px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center'
+                            >
+                              <span className='mr-1'>🗑️</span>
+                              删除
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -2878,7 +2598,7 @@ function UserConfigContent() {
       {/* 配置用户采集源权限 - 无遮罩弹窗 */}
       {showConfigureApisModal && selectedUser && (
         <div className='fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40'>
-          <div className='bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
+          <div className='bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl w-[90vw] max-w-2xl max-h-[85vh] overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
             <div className='p-6'>
               <div className='flex items-center justify-between mb-6 border-b border-gray-200 dark:border-gray-700 pb-4'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center'>
@@ -2898,13 +2618,34 @@ function UserConfigContent() {
               </div>
 
               <div className='max-h-[60vh] overflow-y-auto pr-2'>
-                {/* 视频源选择 */}
+                {/* 采集源选择 */}
                 <div className='mb-6'>
-                  <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center'>
-                    <span className='mr-2'>📺</span>
-                    选择可用的视频源
-                  </h4>
-                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center'>
+                      <span className='mr-2'>📺</span>
+                      选择可用的视频源
+                    </h4>
+                    <div className='flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400'>
+                      <button
+                        onClick={() => {
+                          const allApis = videoSources
+                            .filter((source) => !source.disabled)
+                            .map((s) => s.key);
+                          setSelectedApis(allApis);
+                        }}
+                        className='px-3 py-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'
+                      >
+                        全选
+                      </button>
+                      <button
+                        onClick={() => setSelectedApis([])}
+                        className='px-3 py-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors'
+                      >
+                        清空
+                      </button>
+                    </div>
+                  </div>
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                     {videoSources.map((source) => (
                       <label
                         key={source.key}
@@ -2942,67 +2683,53 @@ function UserConfigContent() {
                     ))}
                   </div>
                 </div>
-              </div>
 
-              {/* 快速操作和统计 */}
-              <div className='flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
-                <div className='flex space-x-3'>
-                  <button
-                    onClick={() => setSelectedApis([])}
-                    className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
-                  >
-                    清空
-                  </button>
-                  <button
-                    onClick={() => {
-                      const allApis = videoSources
-                        .filter((source) => !source.disabled)
-                        .map((s) => s.key);
-                      setSelectedApis(allApis);
-                    }}
-                    className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
-                  >
-                    全选
-                  </button>
-                </div>
-                <div className='text-sm text-gray-600 dark:text-gray-400 flex items-center'>
-                  已选择：
-                  <span className='ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full font-medium text-xs'>
-                    {(() => {
-                      if (selectedApis.length === 0) {
-                        return '无配置';
-                      }
-                      // 过滤掉特殊功能权限，只统计真正的视频源
-                      const specialFeatures = [
-                        'ai-recommend',
-                        'disable-yellow-filter',
-                      ];
-                      const videoSourceCount = selectedApis.filter(
-                        (api) => !specialFeatures.includes(api),
-                      ).length;
-                      return `${videoSourceCount} 个源`;
-                    })()}
-                  </span>
+                {/* 统计信息 */}
+                <div className='flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg'>
+                  <div className='text-sm text-gray-600 dark:text-gray-400 flex items-center'>
+                    已选择：
+                    <span className='ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-full font-medium text-xs'>
+                      {(() => {
+                        if (selectedApis.length === 0) {
+                          return '无配置';
+                        }
+                        // 过滤掉特殊功能权限，只统计真正的视频源
+                        const specialFeatures = [
+                          'ai-recommend',
+                          'disable-yellow-filter',
+                        ];
+                        const videoSourceCount = selectedApis.filter(
+                          (api) => !specialFeatures.includes(api),
+                        ).length;
+                        return `${videoSourceCount} 个采集源`;
+                      })()}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* 操作按钮 */}
-              <div className='flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-4'>
+              <div className='flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 sm:gap-0 border-t border-gray-200 dark:border-gray-700 pt-4'>
                 <button
                   onClick={() => {
                     setShowConfigureApisModal(false);
                     setSelectedUser(null);
                     setSelectedApis([]);
                   }}
-                  className='px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                  className='w-full sm:w-auto px-4 sm:px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSaveUserApis}
-                  className='px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105'
+                  disabled={selectedApis.length === 0}
+                  className={`w-full sm:w-auto px-4 sm:px-6 py-2.5 text-sm font-medium text-white rounded-lg transition-all transform hover:scale-105 ${
+                    selectedApis.length === 0
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                  }`}
                 >
-                  确认配置
+                  确认配置 ({selectedApis.length})
                 </button>
               </div>
             </div>
@@ -3062,20 +2789,20 @@ function UserConfigContent() {
               </div>
             </div>
 
-            <div className='flex justify-end space-x-3 mt-6 border-t border-gray-200 dark:border-gray-700 pt-4'>
+            <div className='flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 sm:gap-0 mt-6 border-t border-gray-200 dark:border-gray-700 pt-4'>
               <button
                 onClick={() => {
                   setShowChangePasswordForm(false);
                   setChangePasswordUser({ username: '', password: '' });
                 }}
-                className='px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
+                className='w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
               >
                 取消
               </button>
               <button
                 onClick={handleChangePassword}
                 disabled={!changePasswordUser.password}
-                className='px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
+                className='w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
               >
                 确认修改
               </button>

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthGuard } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { rebuildSourceIndex } from '@/lib/source-index';
+
 
 export const runtime = 'nodejs';
 
@@ -282,13 +282,7 @@ async function POSTHandler(request: NextRequest, { user }: { user: any }) {
     // 清除配置缓存，强制下次重新从数据库读取
     clearConfigCache();
     
-    // 重建源索引，确保配置变更立即生效
-    try {
-      await rebuildSourceIndex();
-      console.log('[源配置更新] 索引重建完成');
-    } catch (error) {
-      console.error('[源配置更新] 索引重建失败:', error);
-    }
+    // 源配置已更新
 
     return NextResponse.json(
       { ok: true },

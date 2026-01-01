@@ -4,7 +4,7 @@ import { AuthManager } from '@/lib/auth/core/auth-manager';
 import {
   getConfig,
 } from '@/lib/config';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 import { getVideosByCategory } from '@/lib/tvbox-analysis';
 import {
   getTVBoxCategoryCache,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     let availableSites;
     try {
-      availableSites = await getUserVideoSources(username);
+      availableSites = await getUserVideoSourcesSimple(username);
     } catch (error) {
       console.error('获取可用站点失败:', error);
       return NextResponse.json({ error: '获取可用站点失败' }, { status: 500 });

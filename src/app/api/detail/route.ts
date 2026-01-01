@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { AuthGuard } from '@/lib/auth';
 import { getDetailFromApi } from '@/lib/downstream';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
@@ -21,7 +21,7 @@ export const GET = AuthGuard.user(
     }
 
     try {
-      const apiSites = await getUserVideoSources(user.username);
+      const apiSites = await getUserVideoSourcesSimple(user.username);
       console.log(
         '可用API站点:',
         apiSites.map((s) => s.key),

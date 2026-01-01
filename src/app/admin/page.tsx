@@ -2,10 +2,6 @@
 
 import { Suspense } from 'react';
 
-import AdminAccessGuard from '@/components/AdminAccessGuard';
-import PageLayout from '@/components/PageLayout';
-import { ThemeToggle } from '@/components/ThemeToggle';
-
 import { AIConfig } from '@/components/admin/config/AIConfig';
 import { CategoryConfig } from '@/components/admin/config/CategoryConfig';
 import { LiveConfig } from '@/components/admin/config/LiveConfig';
@@ -20,6 +16,9 @@ import { YellowConfig } from '@/components/admin/config/YellowConfig';
 import { CacheManager } from '@/components/admin/tools/CacheManager';
 import { ConfigFile } from '@/components/admin/tools/ConfigFile';
 import { DataMigration } from '@/components/admin/tools/DataMigration';
+import AdminAccessGuard from '@/components/AdminAccessGuard';
+import PageLayout from '@/components/PageLayout';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function AdminPage() {
   // 管理员设置状态

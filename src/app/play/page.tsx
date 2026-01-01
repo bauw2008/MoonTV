@@ -1839,17 +1839,7 @@ function PlayPageClient() {
             return [detailData];
           } catch (err) {
             console.error('获取视频详情失败:', err);
-            const errorMessage = err instanceof Error ? err.message : '未知错误';
-            
-            // 显示更友好的错误信息
-            if (typeof window !== 'undefined') {
-              import('@/components/Toast').then(({ ToastManager }) => {
-                ToastManager?.error(`获取视频详情失败: ${errorMessage}`);
-              });
-            }
-            
-            // 设置错误状态
-            setSourceSearchError(`获取视频详情失败: ${errorMessage}`);
+            // 不设置错误状态，让后续搜索继续进行
             return [];
           } finally {
             setSourceSearchLoading(false);

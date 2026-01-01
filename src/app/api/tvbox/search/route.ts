@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { AuthGuard } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -34,7 +34,7 @@ export const GET = AuthGuard.user(
       
 
       // 获取用户有权限访问的源配置
-      const availableSources = await getUserVideoSources(user?.username || '');
+      const availableSources = await getUserVideoSourcesSimple(user?.username || '');
       const sourceConfig = availableSources.find((s) => s.key === source);
 
       if (!sourceConfig) {

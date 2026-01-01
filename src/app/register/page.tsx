@@ -7,10 +7,10 @@ import { Suspense, useEffect, useState } from 'react';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
+import { useAuth } from '@/components/auth/AuthProvider';
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuth } from '@/components/auth/AuthProvider';
 
 // 版本显示组件
 function VersionDisplay() {

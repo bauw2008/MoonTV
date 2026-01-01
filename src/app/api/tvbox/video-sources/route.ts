@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { AuthManager } from '@/lib/auth/core/auth-manager';
 import { getConfig } from '@/lib/config';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesWithFilter } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
 
     const username = authResult.user.username;
     
-    // 使用高性能索引查询
-    const availableSites = await getUserVideoSources(username);
+    // 使用简化的权限查询
+    const availableSites = await getUserVideoSourcesWithFilter(username);
     
     // 获取配置
     const config = await getConfig();

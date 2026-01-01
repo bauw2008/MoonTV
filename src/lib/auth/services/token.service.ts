@@ -9,8 +9,8 @@ import path from 'path';
 import { AuthUser, TokenPair, UserRole } from '../types';
 
 export class TokenService {
-  private readonly accessTokenExpiry = '2h';
-  private readonly refreshTokenExpiry = '7d';
+  private readonly accessTokenExpiry = '8h';
+  private readonly refreshTokenExpiry = '30d';
   private readonly jwtConfigPath = path.join(
     process.cwd(),
     'data',

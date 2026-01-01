@@ -3,12 +3,12 @@
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useAdminState } from '@/hooks/admin/useAdminState';
+
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 import { PermissionGuard } from '@/components/PermissionGuard';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-import { useAdminState } from '@/hooks/admin/useAdminState';
 
 interface AISettings {
   enabled: boolean;

@@ -121,7 +121,9 @@ export class AuthManager {
 
       // 2. 验证用户
       const user = await this.validateUser(credentials);
-      if (!user) return this.failure('用户名或密码错误');
+      if (!user) {
+        return this.failure('用户名或密码错误');
+      }
 
       // 3. 更新最后登录时间
       await this.updateLastLogin(user.username);
@@ -407,6 +409,33 @@ export class AuthManager {
       // 获取用户信息（确保从最新配置读取）
       const userConfig = await this.getUserConfig(username);
 
+      // 检查用户是否被禁用
+      const config = await getConfig();
+      const userEntry = config.UserConfig?.Users?.find(
+        (u: any) => u.username === username,
+      );
+      
+      // 检查禁用状态（banned 字段或 enabled 字段）
+      let isBanned = false;
+      if (userEntry) {
+        // 优先使用 banned 字段
+        if (userEntry.banned !== undefined) {
+          isBanned = userEntry.banned;
+        }
+        // 如果没有 banned 字段，使用 enabled 字段（取反）
+        else if (userEntry.enabled !== undefined) {
+          isBanned = !userEntry.enabled;
+        }
+      }
+
+      // 如果用户被禁用，返回 null
+      if (isBanned) {
+        console.log(`用户 ${username} 已被禁用，拒绝登录`);
+        return null;
+      }
+
+
+
       return {
         username,
         role: userConfig.role || 'user',
@@ -426,7 +455,7 @@ export class AuthManager {
     try {
       // 从配置文件获取用户信息
       const config = await getConfig();
-
+      
       const user = config.UserConfig?.Users?.find(
         (u: any) => u.username === username,
       );
@@ -449,8 +478,10 @@ export class AuthManager {
       }
 
       // 默认用户配置
+      console.log(`getUserConfig - 用户 ${username} 未找到，使用默认角色`);
       return { role: 'user', permissionVersion: 0 };
     } catch (error) {
+      console.error('获取用户配置失败:', error);
       return { role: 'user', permissionVersion: 0 };
     }
   }

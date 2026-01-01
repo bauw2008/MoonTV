@@ -80,6 +80,7 @@ export interface AdminConfig {
     detail?: string;
     from: 'config' | 'custom';
     disabled?: boolean;
+    requiresAuth?: boolean;
   }[];
   CustomCategories: {
     name?: string;

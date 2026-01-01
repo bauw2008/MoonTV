@@ -139,12 +139,72 @@ export function AuthProvider({
 
   const authConfig: AuthConfig = {
     apiBaseUrl: '/api',
-    tokenRefreshThreshold: 90 * 60 * 1000, // 1.5小时
+    tokenRefreshThreshold: 6 * 60 * 60 * 1000, // 6小时
     sessionTimeout: 24 * 60 * 60 * 1000, // 24小时
     autoRefresh: true,
     storageKey: 'vidora_auth',
     ...config,
   };
+
+  /**
+   * 用户活跃检测
+   */
+  useEffect(() => {
+    if (!state.isAuthenticated) {
+      return;
+    }
+
+    const activityEvents = [
+      'mousedown', 'mousemove', 'keypress', 
+      'scroll', 'touchstart', 'click', 'focus'
+    ];
+
+    const handleUserActivity = () => {
+      // 用户有活动，更新最后活动时间
+      dispatch({ type: 'UPDATE_ACTIVITY' });
+      
+      // 如果Token即将过期，主动刷新
+      if (isTokenExpiringSoon(90)) { // 90分钟内过期
+        
+        refreshToken();
+      }
+    };
+
+    // 节流处理，避免过于频繁的触发
+    let throttleTimer: NodeJS.Timeout;
+    const throttledActivityHandler = () => {
+      if (throttleTimer) return;
+      
+      handleUserActivity();
+      throttleTimer = setTimeout(() => {
+        throttleTimer = null;
+      }, 5000); // 5秒内只处理一次
+    };
+
+    // 添加事件监听
+    activityEvents.forEach(event => {
+      document.addEventListener(event, throttledActivityHandler, { passive: true });
+    });
+
+    // 页面可见性变化时也检查
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        handleUserActivity();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      // 清理事件监听
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, throttledActivityHandler);
+      });
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (throttleTimer) {
+        clearTimeout(throttleTimer);
+      }
+    };
+  }, [state.isAuthenticated]);
 
   /**
    * 初始化认证状态
@@ -153,133 +213,67 @@ export function AuthProvider({
     initializeAuth();
   }, []);
 
-  // 暂时禁用权限版本检查，解决登录问题
-  // useEffect(() => {
-  //   // 只在已认证且有用户信息时启动检查
-  //   if (!state.isAuthenticated || !state.user) return;
+  // 检查权限版本变化
+  useEffect(() => {
+    if (!state.isAuthenticated || !state.user) return;
 
-  //   // 防抖变量，避免频繁检查
-  //   let checkTimeout: NodeJS.Timeout | null = null;
-  //   let lastCheckTime = 0;
-  //   const CHECK_COOLDOWN = 50000; // 50秒冷却时间
+    // 用户操作时检查权限版本
+    const checkPermissionVersion = async () => {
+      try {
+        const response = await fetch('/api/auth/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
 
-  //   const checkPermissionVersion = async () => {
-  //     const now = Date.now();
+        if (response.ok) {
+          const data = await response.json();
+          const currentVersion = state.user.permissionVersion || 0;
+          
+          // 如果权限版本号变化，强制下线
+          if (data.user && data.user.permissionVersion > currentVersion) {
+            clearStoredAuth();
+            dispatch({ type: 'LOGOUT' });
+            
+            // 显示提示并跳转到登录页
+            if (typeof window !== 'undefined') {
+              const toastEvent = new CustomEvent('showToast', {
+                detail: {
+                  type: 'warning',
+                  message: '您的权限已被更新，请重新登录',
+                  duration: 5000
+                }
+              });
+              window.dispatchEvent(toastEvent);
+              
+              setTimeout(() => {
+                window.location.href = '/login';
+              }, 1000);
+            }
+          }
+        }
+      } catch (error) {
+        // 忽略错误，避免频繁检查
+      }
+    };
 
-  //     // 冷却时间检查，避免频繁调用
-  //     if (now - lastCheckTime < CHECK_COOLDOWN) {
-  //       return;
-  //     }
+    // 监听用户活动
+    const handleUserActivity = () => {
+      checkPermissionVersion();
+    };
 
-  //     lastCheckTime = now;
+    // 添加事件监听器
+    window.addEventListener('click', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('scroll', handleUserActivity);
 
-  //     try {
-  //       const storedAuth = getStoredAuth();
-  //       if (!storedAuth?.accessToken) {
-  //         // 没有token，强制重新登录
-  //         forceLogout('认证信息已失效，请重新登录');
-  //         return;
-  //       }
-
-  //       const response = await fetch('/api/auth/version', {
-  //         headers: {
-  //           'Authorization': `Bearer ${storedAuth.accessToken}`
-  //         }
-  //       });
-
-  //       if (!response.ok) {
-  //         // API调用失败，强制重新登录
-  //         forceLogout('登录状态已过期，请重新登录');
-  //         return;
-  //       }
-
-  //       const data = await response.json();
-  //       const currentVersion = state.user.permissionVersion || 0;
-
-  //       // 检查权限变更
-  //       if (data.permissionVersion > currentVersion) {
-  //         // 检查是否是权限降级
-  //         const isDowngraded = checkIfDowngraded(state.user.role, data.role);
-
-  //         if (isDowngraded) {
-  //           // 权限降级，强制下线
-  //           forceLogout(`您的权限已从 ${state.user.role} 调整为 ${data.role}，请重新登录`, {
-  //             type: 'warning',
-  //             duration: 5000
-  //           });
-  //         } else {
-  //           // 权限升级，刷新即可
-  //           await refreshAuth();
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error('权限检查失败:', error);
-  //       forceLogout('权限验证失败，请重新登录');
-  //     }
-  //   };
-
-  //   // 检查是否是权限降级
-  //   const checkIfDowngraded = (oldRole: string, newRole: string): boolean => {
-  //     const roleHierarchy = {
-  //       'owner': 3,
-  //       'admin': 2,
-  //       'user': 1,
-  //       'banned': 0
-  //     };
-
-  //     return (roleHierarchy[oldRole] || 0) > (roleHierarchy[newRole] || 0);
-  //   };
-
-  //   // 强制下线函数
-  //   const forceLogout = (message: string, options?: { type?: string; duration?: number }) => {
-  //     // 1. 清除本地认证信息
-  //     clearStoredAuth();
-
-  //     // 2. 清除认证状态
-  //     dispatch({ type: 'LOGOUT' });
-
-  //     // 3. 显示提示信息
-  //     if (options?.type === 'warning') {
-  //       const toastEvent = new CustomEvent('showToast', {
-  //         detail: {
-  //           type: 'warning',
-  //           message,
-  //           duration: options.duration || 3000
-  //         }
-  //       });
-  //       window.dispatchEvent(toastEvent);
-  //     }
-
-  //     // 4. 延迟跳转到登录页
-  //     setTimeout(() => {
-  //       const currentPath = window.location.pathname + window.location.search;
-  //       window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-  //     }, 1000);
-  //   };
-
-  //   // 延迟5秒后开始第一次检查，避免初始化时的冲突
-  //   checkTimeout = setTimeout(() => {
-  //     checkPermissionVersion();
-
-  //     // 之后每60秒检查一次
-  //     const interval = setInterval(checkPermissionVersion, 60000);
-
-  //     // 清理函数
-  //     return () => {
-  //       clearInterval(interval);
-  //       if (checkTimeout) {
-  //         clearTimeout(checkTimeout);
-  //       }
-  //     };
-  //   }, 5000);
-
-  //   // 返回清理函数
-  //   return () => {
-  //     if (checkTimeout) {
-  //       clearTimeout(checkTimeout);
-  //     }
-  //   };
-  // }, [state.isAuthenticated]); // 只依赖认证状态，不依赖user对象
+    // 清理函数
+    return () => {
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+    };
+  }, [state.isAuthenticated, state.user?.permissionVersion]);
 
   /**
    * 自动刷新令牌
@@ -289,16 +283,86 @@ export function AuthProvider({
       return;
     }
 
-    const interval = setInterval(() => {
-      const shouldRefresh =
-        Date.now() - state.lastActivity > authConfig.tokenRefreshThreshold;
-      if (shouldRefresh) {
-        refreshToken();
+    const checkAndRefresh = async () => {
+      try {
+        // 检查Token是否即将过期（剩余1小时内）
+        const tokenExpiryTime = getTokenExpiryTime();
+        const timeUntilExpiry = tokenExpiryTime - Date.now();
+        
+        if (timeUntilExpiry < 60 * 60 * 1000) { // 1小时内过期
+
+          await refreshToken();
+        }
+      } catch (error) {
+        console.error('Token检查失败:', error);
       }
-    }, 5 * 60 * 1000); // 每5分钟检查一次
+    };
+
+    // 每10分钟检查一次Token状态
+    const interval = setInterval(checkAndRefresh, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [state.isAuthenticated, state.lastActivity, authConfig.autoRefresh]);
+  }, [state.isAuthenticated, authConfig.autoRefresh]);
+
+  /**
+   * 检查权限版本号（静默更新，不强制下线）
+   */
+  useEffect(() => {
+    if (!state.isAuthenticated || !state.user) {
+      return;
+    }
+
+    const checkPermissionVersion = async () => {
+      try {
+        const response = await fetch('/api/auth/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // 检查权限版本号是否变化
+          const currentVersion = state.user.permissionVersion || 0;
+          const serverVersion = data.user?.permissionVersion || 0;
+          
+          if (serverVersion > currentVersion) {
+            // 权限版本号已更新，静默更新用户信息，不强制下线
+            
+            dispatch({
+              type: 'UPDATE_USER',
+              payload: { 
+                permissionVersion: serverVersion,
+                role: data.user?.role || state.user.role
+              }
+            });
+          }
+        }
+      } catch (error) {
+        // 静默处理错误，不影响用户体验
+        console.warn('权限版本检查失败:', error);
+      }
+    };
+
+    // 在用户活动时检查权限版本号
+    const handleActivity = () => {
+      checkPermissionVersion();
+    };
+
+    // 监听用户活动事件
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    return () => {
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+    };
+  }, [state.isAuthenticated, state.user]);
 
   /**
    * 初始化认证状态 - 智能认证策略
@@ -462,10 +526,39 @@ export function AuthProvider({
   }
 
   /**
+   * 获取Token过期时间
+   */
+  function getTokenExpiryTime(): number {
+    try {
+      const storedAuth = getStoredAuth();
+      if (!storedAuth?.accessToken) {
+        return 0;
+      }
+
+      // 解析JWT Token获取过期时间
+      const token = storedAuth.accessToken;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000; // 转换为毫秒
+    } catch (error) {
+      console.error('解析Token过期时间失败:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * 检查Token是否即将过期
+   */
+  function isTokenExpiringSoon(thresholdMinutes = 60): boolean {
+    const expiryTime = getTokenExpiryTime();
+    const timeUntilExpiry = expiryTime - Date.now();
+    return timeUntilExpiry < thresholdMinutes * 60 * 1000;
+  }
+
+  /**
    * 刷新令牌（带重试机制）
    */
   async function refreshToken(retryCount = 0) {
-    const maxRetries = 2;
+    const maxRetries = 3;
     
     try {
       const storedAuth = getStoredAuth();
@@ -479,7 +572,7 @@ export function AuthProvider({
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // 包含 HttpOnly Cookie
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -489,53 +582,32 @@ export function AuthProvider({
       }
 
       if (isDatabaseStorage) {
-        // 数据库模式：服务器自动更新 HttpOnly Cookie，客户端无需操作
-        // 数据库模式令牌刷新成功
-        // 更新活动时间
         dispatch({
           type: 'REFRESH_TOKEN',
-          payload: { accessToken: 'database-mode' },
+          payload: { accessToken: 'database-mode' }
         });
       } else {
-        // localStorage 模式：保持原有兼容性，更新本地存储的 Token
         if (data.accessToken) {
           storeAuth({
             ...storedAuth,
-            accessToken: data.accessToken,
+            accessToken: data.accessToken
           });
           dispatch({
             type: 'AUTH_SUCCESS',
             payload: {
               user: storedAuth.user,
               accessToken: data.accessToken,
-              refreshToken: storedAuth.refreshToken,
-            },
+              refreshToken: storedAuth.refreshToken
+            }
           });
-          // localStorage 模式令牌刷新成功
         }
       }
     } catch (error) {
-      // 令牌刷新失败
-      
-      // 如果还有重试次数，延迟重试
       if (retryCount < maxRetries) {
-        // 延迟重试刷新令牌
-        setTimeout(() => refreshToken(retryCount + 1), 5000 * (retryCount + 1));
-        return;
-      }
-      
-      // 只有在确实是token过期的情况下才登出
-      if (error instanceof Error && 
-          (error.message.includes('401') || 
-           error.message.includes('Token expired') || 
-           error.message.includes('jwt expired') ||
-           error.message.includes('令牌过期'))) {
-        // 令牌已过期，执行登出
-        logout();
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        setTimeout(() => refreshToken(retryCount + 1), delay);
       } else {
-        // 网络错误或其他临时错误，不登出，等待下次重试
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        // 令牌刷新失败，保持登录状态
+        setTimeout(() => refreshToken(0), 10 * 60 * 1000);
       }
     }
   }

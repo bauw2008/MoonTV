@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AdminConfig } from '@/lib/admin.types';
 import { AuthGuard } from '@/lib/auth';
 import { searchFromApi } from '@/lib/downstream';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 import { getYellowWords } from '@/lib/yellow';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ async function generateSuggestions(
 > {
   const queryLower = query.toLowerCase();
 
-  const apiSites = await getUserVideoSources(username);
+  const apiSites = await getUserVideoSourcesSimple(username);
   let realKeywords: string[] = [];
 
   if (apiSites.length > 0) {

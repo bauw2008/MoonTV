@@ -12,9 +12,10 @@ declare global {
 import { AlertTriangle, Download, FileCheck, Lock, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 import { useAdminPermissions } from '@/hooks/admin/useAdminPermissions';
 import { useAdminState } from '@/hooks/admin/useAdminState';
+
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 export function DataMigration() {
   const permissions = useAdminPermissions();

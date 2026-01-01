@@ -39,10 +39,11 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { PermissionGuard } from '@/components/PermissionGuard';
+import { useAdminState } from '@/hooks/admin/useAdminState';
 
 import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-import { useAdminState } from '@/hooks/admin/useAdminState';
+import { PermissionGuard } from '@/components/PermissionGuard';
+
 import { ConfigService } from '@/services/admin/configService';
 
 interface DataSource {

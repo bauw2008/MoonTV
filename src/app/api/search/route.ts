@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthGuard } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { getUserVideoSources } from '@/lib/source-index';
+import { getUserVideoSourcesSimple } from '@/lib/config';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 import { getYellowWords } from '@/lib/yellow';
@@ -43,7 +43,7 @@ export const GET = AuthGuard.user(async function(request: NextRequest, { user }:
     // 直接使用配置，无需额外处理
     
     // 使用高性能索引查询
-    const apiSites = await getUserVideoSources(user?.username || '');
+    const apiSites = await getUserVideoSourcesSimple(user?.username || '');
 
     if (apiSites.length === 0) {
       return NextResponse.json({
