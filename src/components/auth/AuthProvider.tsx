@@ -759,7 +759,7 @@ export function AuthProvider({
     }
   }
 
-  async function refreshStoredToken(refreshToken: string) {
+  async function _refreshStoredToken(refreshToken: string) {
     try {
       const response = await fetch(`${authConfig.apiBaseUrl}/auth/refresh`, {
         method: 'POST',

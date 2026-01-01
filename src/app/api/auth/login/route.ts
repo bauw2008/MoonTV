@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
       { status: 401 },
     );
   } catch (error) {
-    console.error('登录API错误:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

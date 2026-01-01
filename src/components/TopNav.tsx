@@ -30,6 +30,24 @@ import { useAuth } from '@/components/auth/AuthProvider';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
 
+// 类型定义
+interface MenuItem {
+  name?: string;
+  label: string;
+  path?: string;
+  href: string;
+  icon?: React.ComponentType<any>;
+  badge?: string | number;
+}
+
+interface Comment {
+  timestamp: number;
+  username: string;
+  replies?: Comment[];
+}
+
+// 组件定义
+
 import { useSite } from './SiteProvider';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
@@ -38,21 +56,20 @@ interface TopNavProps {
   activePath?: string;
 }
 
-const TopNav = ({ activePath = '/' }: TopNavProps) => {
+const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const { state } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { siteName } = useSite();
-  const { menuSettings, isMenuEnabled, forceUpdate, customCategories } =
+  const { menuSettings, isMenuEnabled, customCategories } =
     useNavigationConfig();
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [updateKey, setUpdateKey] = useState(0); // 用于强制重新渲染
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(true);
+  const [_updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
+  const [_isCheckingUpdate, setIsCheckingUpdate] = useState(true);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isNotificationMuted, setIsNotificationMuted] = useState(false);
   const [notifications, setNotifications] = useState({
@@ -83,7 +100,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
   };
 
   // 安全导航函数
-  const safeNavigate = (targetPath: string, item?: any) => {
+  const safeNavigate = (targetPath: string, _item?: MenuItem) => {
     if (checkAccessAndRedirect(targetPath)) {
       router.push(targetPath);
     }
@@ -217,7 +234,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
             },
           }));
         }
-      } catch (error) {
+      } catch (_error) {
         // 忽略获取追剧更新失败
       }
     };
@@ -240,7 +257,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
           ...prev,
           pendingUsers: { count: pendingUsers.length },
         }));
-      } catch (error) {
+      } catch (_error) {
         // 忽略获取待审核用户数量失败
       }
     };
@@ -275,7 +292,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
             localStorage.getItem('lastViewedMessages') || '0',
           );
 
-          comments.forEach((comment: any) => {
+          comments.forEach((comment: Comment) => {
             // 如果是管理员或站长，检查所有新留言和非自己发送的回复
             if (state.user?.role === 'admin' || state.user?.role === 'owner') {
               // 检查新留言（评论本身），但排除自己发送的留言
@@ -287,7 +304,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
               }
 
               // 检查非自己发送的回复
-              comment.replies.forEach((reply: any) => {
+              comment.replies.forEach((reply: Comment) => {
                 // 如果回复时间在最后查看之后且不是自己发送的，则为未读
                 if (
                   reply.timestamp > lastViewedMessages &&
@@ -299,7 +316,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
             } else {
               // 如果是普通用户，只检查自己的留言回复
               if (comment.username === state.user?.username) {
-                comment.replies.forEach((reply: any) => {
+                comment.replies.forEach((reply: Comment) => {
                   // 如果回复时间在最后查看之后，则为未读
                   if (reply.timestamp > lastViewedMessages) {
                     unreadCount++;
@@ -314,7 +331,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
             messages: { count: unreadCount, hasUnread: unreadCount > 0 },
           }));
         }
-      } catch (error) {
+      } catch (_error) {
         // 忽略获取留言信息的错误
       }
     };
@@ -353,7 +370,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
 
   // 当菜单设置变化时更新菜单项
   useEffect(() => {
-    const items: any[] = [];
+    const items: MenuItem[] = [];
 
     // 添加首页
     items.push({ icon: Home, label: '首页', href: '/' });
@@ -394,13 +411,13 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
     }
 
     setMenuItems(items);
-  }, [menuSettings, customCategories]);
+  }, [menuSettings, customCategories, isMenuEnabled]);
 
   // 监听menuSettings变化，强制更新TopNav
   useEffect(() => {
     // 当菜单设置变化时，更新key值强制重新渲染
     setUpdateKey((prev) => prev + 1);
-  }, [menuSettings]);
+  }, [menuSettings, isMenuEnabled]);
 
   // 当前路径访问控制检查
   useEffect(() => {
@@ -418,7 +435,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
         break;
       }
     }
-  }, [pathname, menuSettings]);
+  }, [pathname, menuSettings, isMenuEnabled]);
 
   // 页面切换动画效果
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
@@ -830,7 +847,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
 
           {/* Desktop Navigation */}
           <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
-            {menuItems.map((item, index) => {
+            {menuItems.map((item, _index) => {
               const Icon = item.icon;
               const isAccessible = checkAccessAndRedirect(item.href);
 
@@ -1031,7 +1048,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
             </div>
 
             <div className='relative px-3 pt-3 pb-4 space-y-1'>
-              {menuItems.map((item, index) => {
+              {menuItems.map((item, _index) => {
                 const Icon = item.icon;
                 const isAccessible = checkAccessAndRedirect(item.href);
 
@@ -1052,7 +1069,7 @@ const TopNav = ({ activePath = '/' }: TopNavProps) => {
                     }`}
                     style={{
                       animationDelay: isMobileMenuOpen
-                        ? `${index * 30}ms`
+                        ? `${_index * 30}ms`
                         : '0ms',
                     }}
                     title={!isAccessible ? '该功能已被管理员禁用' : ''}
