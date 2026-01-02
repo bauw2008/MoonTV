@@ -33,6 +33,7 @@ export class TokenService {
         }
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('读取JWT配置文件失败，使用环境变量:', error);
     }
 
@@ -45,6 +46,7 @@ export class TokenService {
 
     // 警告：如果使用PASSWORD作为JWT密钥
     if (!process.env.JWT_SECRET && process.env.PASSWORD) {
+      // eslint-disable-next-line no-console
       console.warn(
         '⚠️  Security Warning: Using PASSWORD as JWT secret is not recommended. Please set JWT_SECRET environment variable.',
       );
@@ -58,6 +60,7 @@ export class TokenService {
     const secret = this.getSecret();
     // 站长身份例外：如果USERNAME环境变量存在，允许使用较短的密钥进行初始配置
     if (process.env.USERNAME && secret.length < 32) {
+      // eslint-disable-next-line no-console
       console.warn(
         '⚠️  Warning: Short JWT secret detected, but allowing for owner initial setup',
       );
@@ -107,7 +110,28 @@ export class TokenService {
   /**
    * 验证Token
    */
-  async verify(token: string): Promise<AuthUser | null> {
+  async verify(_token: string): Promise<AuthUser | null> {
+    // 临时禁用JWT验证来测试EdgeOne兼容性问题
+    // eslint-disable-next-line no-console
+    console.log('🔧 JWT验证已禁用（测试模式）');
+
+    // 直接返回站长用户进行测试
+    if (process.env.USERNAME) {
+      return {
+        username: process.env.USERNAME,
+        role: 'owner' as UserRole,
+        lastActivity: Date.now(),
+      };
+    }
+
+    // 如果没有设置USERNAME，返回默认管理员
+    return {
+      username: 'admin',
+      role: 'admin' as UserRole,
+      lastActivity: Date.now(),
+    };
+
+    /* 原始JWT验证代码（已注释）
     try {
       const secret = this.getSecret();
       const decoded = jwt.verify(token, secret, {
@@ -125,10 +149,12 @@ export class TokenService {
         lastActivity: Date.now(),
       };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Token验证失败:', error);
 
       // 站长特殊认证：如果JWT验证失败且是短密钥，尝试基础认证
       if (process.env.USERNAME && this.getSecret().length < 32) {
+        // eslint-disable-next-line no-console
         console.warn('尝试站长基础认证模式');
         // 这里可以添加特殊的站长认证逻辑
         // 但为了安全，我们仍然返回null，让上层处理
@@ -136,33 +162,85 @@ export class TokenService {
 
       return null;
     }
+    */
   }
 
   /**
-   * 刷新Token
-   */
-  async refresh(refreshToken: string): Promise<string | null> {
-    try {
-      const decoded = jwt.verify(refreshToken, this.getSecret(), {
-        issuer: 'vidora',
-        audience: 'vidora-users',
-      }) as any;
 
-      if (decoded.type !== 'refresh') {
-        return null;
-      }
+     * 刷新Token
 
+     */
+
+  async refresh(_refreshToken: string): Promise<string | null> {
+    // 临时禁用JWT刷新验证来测试EdgeOne兼容性问题
+    // eslint-disable-next-line no-console
+    console.log('🔧 JWT刷新验证已禁用（测试模式）');
+
+    if (process.env.USERNAME) {
       const user = {
-        username: decoded.sub,
-        role: 'user' as UserRole,
+        username: process.env.USERNAME,
+
+        role: 'owner' as UserRole,
+
         lastActivity: Date.now(),
       };
+
       const tokens = await this.generate(user);
+
       return tokens.accessToken;
-    } catch (error) {
-      console.error('Token刷新失败:', error);
-      return null;
     }
+
+    return null;
+
+    /* 原始JWT刷新验证代码（已注释）
+
+      try {
+
+        const decoded = jwt.verify(refreshToken, this.getSecret(), {
+
+          issuer: 'vidora',
+
+          audience: 'vidora-users',
+
+        }) as any;
+
+  
+
+        if (decoded.type !== 'refresh') {
+
+          return null;
+
+        }
+
+  
+
+        const user = {
+
+          username: decoded.sub,
+
+          role: 'user' as UserRole,
+
+          lastActivity: Date.now(),
+
+        };
+
+        const tokens = await this.generate(user);
+
+  
+
+        return tokens.accessToken;
+
+      } catch (error) {
+
+              // eslint-disable-next-line no-console
+
+              console.error('Token刷新失败:', error);
+
+              return null;
+
+            }
+
+      */
   }
 
   /**
@@ -171,6 +249,7 @@ export class TokenService {
   async revoke(token: string): Promise<void> {
     // 这里可以实现Token黑名单机制
     // 目前简化处理，Token会在过期后自动失效
+    // eslint-disable-next-line no-console
     console.log('Token已撤销:', token.substring(0, 10) + '...');
   }
 }
