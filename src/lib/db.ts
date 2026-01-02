@@ -281,56 +281,17 @@ export class DbManager {
       typeof (this.storage as any).getAdminConfig === 'function'
     ) {
       return (this.storage as any).getAdminConfig();
-    } else {
-      // localStorage模式：从localStorage读取
-      if (typeof window !== 'undefined') {
-        try {
-          const configStr = localStorage.getItem('vidora_admin_config');
-          if (configStr) {
-            const config = JSON.parse(configStr);
-            // 读取配置成功
-            return config;
-          }
-        } catch (error) {
-          console.error('localStorage: 读取配置失败', error);
-        }
-      }
-      return null;
     }
+    return null;
   }
 
   async saveAdminConfig(config: AdminConfig): Promise<void> {
-
     if (
       this.storage &&
       typeof (this.storage as any).setAdminConfig === 'function'
     ) {
-      console.log('使用存储后端保存配置');
       await (this.storage as any).setAdminConfig(config);
-    } else {
-      // localStorage模式：在服务器端需要特殊处理
-      if (typeof window !== 'undefined') {
-        // 客户端：直接保存到localStorage
-        try {
-          const configStr = JSON.stringify(config);
-          localStorage.setItem('vidora_admin_config', configStr);
-          console.log('localStorage: 保存配置成功');
-        } catch (error) {
-          console.error('localStorage: 保存配置失败', error);
-          throw error;
-        }
-      } else {
-        // 服务器端：localStorage不可用，但我们需要确保配置能够保存
-        // 在localStorage模式下，服务器端实际上不应该执行保存操作
-        // 因为真正的保存应该由客户端完成
-        // 为了确保功能正常，我们至少要验证配置格式
-        if (!config || !config.UserConfig) {
-          throw new Error('配置格式无效');
-        }
-      }
     }
-
-    // 保存完成
   }
 
   // ---------- 用户头像 ----------
