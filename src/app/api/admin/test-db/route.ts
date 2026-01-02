@@ -58,10 +58,42 @@ export const POST = AuthGuard.admin(
     // 测试3: 尝试保存配置（使用测试数据）
     try {
       const testConfig = {
+        ConfigSubscribtion: {
+          URL: '',
+          AutoUpdate: false,
+          LastCheck: new Date().toISOString(),
+        },
+        ConfigFile: '',
+        SiteConfig: {
+          SiteName: 'Test',
+          Announcement: '',
+          SearchDownstreamMaxPage: 1,
+          SiteInterfaceCacheTime: 300,
+          DoubanProxyType: 'none',
+          DoubanProxy: '',
+          DoubanImageProxyType: 'none',
+          DoubanImageProxy: '',
+          DisableYellowFilter: false,
+          FluidSearch: false,
+          MenuSettings: {
+            showMovies: true,
+            showTVShows: true,
+            showAnime: true,
+            showVariety: true,
+            showLive: true,
+            showTvbox: true,
+            showShortDrama: true,
+            showAI: true,
+            showNetDiskSearch: true,
+            showTMDBActorSearch: true,
+          },
+        },
         UserConfig: {
           Users: [],
           PendingUsers: [],
         },
+        SourceConfig: [],
+        CustomCategories: [],
         TestConfig: {
           timestamp: Date.now(),
           test: true,
