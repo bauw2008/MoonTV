@@ -1,0 +1,1192 @@
+'use client';
+
+import {
+  Activity,
+  BarChart3,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Globe,
+  Heart,
+  RefreshCw,
+  Save,
+  Shield,
+  Smartphone,
+  XCircle,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { useAdminState } from '@/hooks/admin/useAdminState';
+
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
+import { PermissionGuard } from '@/components/PermissionGuard';
+
+import { ConfigService } from '@/services/admin/configService';
+
+interface UserToken {
+  username: string;
+  token: string;
+  enabled: boolean;
+  devices: Array<{
+    deviceId: string;
+    deviceInfo: string;
+    bindTime: number;
+  }>;
+}
+
+interface SecuritySettings {
+  enableRateLimit: boolean;
+  rateLimit: number;
+  enableDeviceBinding: boolean;
+  maxDevices: number;
+  enableUserAgentWhitelist: boolean;
+  allowedUserAgents: string[];
+  defaultUserGroup: string;
+  currentDevices: Array<{
+    deviceId: string;
+    deviceInfo: string;
+    bindTime: number;
+  }>;
+  userTokens: UserToken[];
+}
+
+interface SmartHealthResult {
+  success: boolean;
+  timestamp: number;
+  executionTime: number;
+  network: {
+    environment: 'domestic' | 'international';
+    region: string;
+    detectionMethod: string;
+    optimized: boolean;
+  };
+  spider: {
+    current: {
+      success: boolean;
+      source: string;
+      size: number;
+      md5: string;
+      cached: boolean;
+      tried_sources: number;
+    };
+    cached: any;
+  };
+  reachability: {
+    total_tested: number;
+    successful: number;
+    health_score: number;
+    tests: Array<{
+      url: string;
+      success: boolean;
+      responseTime: number;
+      statusCode?: number;
+      error?: string;
+      size?: number;
+    }>;
+  };
+  recommendations: string[];
+  status: {
+    overall: 'excellent' | 'good' | 'needs_attention';
+    spider_available: boolean;
+    network_stable: boolean;
+    recommendations_count: number;
+  };
+  error?: string;
+}
+
+function TVBoxConfigContent() {
+  const { loading, withLoading } = useAdminState();
+  const configService = new ConfigService();
+
+  const [config, setConfig] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnoseResult, setDiagnoseResult] = useState<any>(null);
+  const [showDiagnoseResult, setShowDiagnoseResult] = useState(false);
+  const [configMode, setConfigMode] = useState<
+    'standard' | 'safe' | 'fast' | 'yingshicang'
+  >('standard');
+  const [format, setFormat] = useState<'json' | 'base64'>('json');
+  const [refreshingJar, setRefreshingJar] = useState(false);
+  const [jarRefreshMsg, setJarRefreshMsg] = useState<string | null>(null);
+  const [smartHealthResult, setSmartHealthResult] =
+    useState<SmartHealthResult | null>(null);
+  const [smartHealthLoading, setSmartHealthLoading] = useState(false);
+  const [newUAName, setNewUAName] = useState('');
+  const [newUAValue, setNewUAValue] = useState('');
+  const [showUAList, setShowUAList] = useState(false);
+
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
+    enableRateLimit: false,
+    rateLimit: 60,
+    enableDeviceBinding: false,
+    maxDevices: 1,
+    enableUserAgentWhitelist: false,
+    allowedUserAgents: [
+      'okHttp/Mod-1.4.0.0',
+      'TVBox',
+      'OKHTTP',
+      'Dalvik',
+      'Java',
+    ],
+    defaultUserGroup: '',
+    currentDevices: [],
+    userTokens: [
+      {
+        username: 'admin',
+        token: generateToken(),
+        enabled: true,
+        devices: [],
+      },
+    ],
+  });
+
+  // 生成随机Token
+  function generateToken() {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 32; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  const loadConfig = async () => {
+    try {
+      const data = await withLoading('loadTVBoxConfig', () =>
+        configService.getConfig(),
+      );
+      setConfig(data);
+      if (data?.TVBoxSecurityConfig) {
+        setSecuritySettings({
+          enableRateLimit: data.TVBoxSecurityConfig.enableRateLimit ?? false,
+          rateLimit: data.TVBoxSecurityConfig.rateLimit ?? 60,
+          enableDeviceBinding:
+            data.TVBoxSecurityConfig.enableDeviceBinding ?? false,
+          maxDevices: data.TVBoxSecurityConfig.maxDevices ?? 1,
+          enableUserAgentWhitelist:
+            data.TVBoxSecurityConfig.enableUserAgentWhitelist ?? false,
+          allowedUserAgents: data.TVBoxSecurityConfig.allowedUserAgents || [
+            'okHttp/Mod-1.4.0.0',
+            'TVBox',
+            'OKHTTP',
+            'Dalvik',
+            'Java',
+          ],
+          defaultUserGroup:
+            (data.TVBoxSecurityConfig as any).defaultUserGroup || '',
+          currentDevices: data.TVBoxSecurityConfig.currentDevices || [],
+          userTokens: data.TVBoxSecurityConfig.userTokens || [],
+        });
+      }
+    } catch (error) {
+      console.error('加载TVBox配置失败:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      if (securitySettings.rateLimit < 1 || securitySettings.rateLimit > 1000) {
+        // 使用Toast通知
+        if (typeof window !== 'undefined') {
+          import('@/components/Toast').then(({ ToastManager }) => {
+            ToastManager?.error('频率限制应在1-1000之间');
+          });
+        }
+        return;
+      }
+
+      const saveData = {
+        enableAuth: false,
+        token: '',
+        enableRateLimit: securitySettings.enableRateLimit,
+        rateLimit: securitySettings.rateLimit,
+        enableDeviceBinding: securitySettings.enableDeviceBinding,
+        maxDevices: securitySettings.maxDevices,
+        enableUserAgentWhitelist: securitySettings.enableUserAgentWhitelist,
+        allowedUserAgents: securitySettings.allowedUserAgents,
+        currentDevices: securitySettings.userTokens.flatMap(
+          (user) => user.devices,
+        ),
+        userTokens: securitySettings.userTokens,
+      };
+
+      const response = await fetch('/api/admin/tvbox-security', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saveData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '保存失败');
+      }
+
+      // 使用Toast通知
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.success('TVBox安全配置保存成功！');
+        });
+      }
+      await loadConfig();
+    } catch (error) {
+      // 使用Toast通知
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.error(
+            error instanceof Error ? error.message : '保存失败',
+          );
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyUserToken = (token: string) => {
+    navigator.clipboard.writeText(token);
+    // 使用Toast通知
+    if (typeof window !== 'undefined') {
+      import('@/components/Toast').then(({ ToastManager }) => {
+        ToastManager?.success('Token已复制到剪贴板');
+      });
+    }
+  };
+
+  const generateExampleURL = () => {
+    // 处理SSR环境
+    if (typeof window === 'undefined') {
+      return '';
+    }
+
+    const baseUrl = window.location.origin;
+    const params = new URLSearchParams();
+
+    params.append('format', format);
+
+    if (
+      securitySettings.enableDeviceBinding &&
+      securitySettings.userTokens.length > 0
+    ) {
+      const userToken = securitySettings.userTokens.find((t) => t.enabled);
+      if (userToken && userToken.token) {
+        params.append('token', userToken.token);
+      }
+    }
+
+    if (configMode !== 'standard') {
+      params.append('mode', configMode);
+    }
+
+    return `${baseUrl}/api/tvbox?${params.toString()}`;
+  };
+
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    setDiagnoseResult(null);
+
+    try {
+      let diagnoseUrl = '/api/tvbox/diagnose';
+      if (
+        securitySettings.enableDeviceBinding &&
+        securitySettings.userTokens.length > 0
+      ) {
+        const userToken = securitySettings.userTokens.find((t) => t.enabled);
+        if (userToken) {
+          diagnoseUrl += `?token=${encodeURIComponent(userToken.token)}`;
+        }
+      }
+
+      const response = await fetch(diagnoseUrl);
+      const result = await response.json();
+
+      setDiagnoseResult(result);
+      setShowDiagnoseResult(true);
+
+      if (result.pass) {
+        // 使用Toast通知
+        if (typeof window !== 'undefined') {
+          import('@/components/Toast').then(({ ToastManager }) => {
+            ToastManager?.success('配置诊断通过！所有检查项正常');
+          });
+        }
+      } else {
+        // 使用Toast通知
+        if (typeof window !== 'undefined') {
+          import('@/components/Toast').then(({ ToastManager }) => {
+            ToastManager?.warning(`发现 ${result.issues?.length || 0} 个问题`);
+          });
+        }
+      }
+    } catch (error) {
+      // 使用Toast通知
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.error(
+            '诊断失败：' +
+              (error instanceof Error ? error.message : '未知错误'),
+          );
+        });
+      }
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const handleRefreshJar = async () => {
+    setRefreshingJar(true);
+    setJarRefreshMsg(null);
+    try {
+      const response = await fetch('/api/tvbox/spider-status', {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setJarRefreshMsg(
+          `✓ JAR 缓存已刷新 (${data.jar_status.source.split('/').pop()})`,
+        );
+        if (diagnoseResult) {
+          setTimeout(() => handleDiagnose(), 500);
+        }
+      } else {
+        setJarRefreshMsg(`✗ 刷新失败: ${data.error}`);
+      }
+    } catch (error) {
+      setJarRefreshMsg('✗ 刷新失败，请稍后重试');
+    } finally {
+      setRefreshingJar(false);
+      setTimeout(() => setJarRefreshMsg(null), 5000);
+    }
+  };
+
+  const handleSmartHealthCheck = async () => {
+    setSmartHealthLoading(true);
+    setSmartHealthResult(null);
+    try {
+      const response = await fetch('/api/tvbox/smart-health');
+      const data = await response.json();
+      setSmartHealthResult(data);
+    } catch (error) {
+      setSmartHealthResult({
+        success: false,
+        error: '智能健康检查失败，请稍后重试',
+      } as SmartHealthResult);
+    } finally {
+      setSmartHealthLoading(false);
+    }
+  };
+
+  const handleAddUserAgent = () => {
+    if (!newUAValue.trim()) {
+      // 使用Toast通知
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.error('请输入User-Agent值');
+        });
+      }
+      return;
+    }
+
+    const currentUAs = securitySettings.allowedUserAgents || [];
+    if (currentUAs.includes(newUAValue.trim())) {
+      // 使用Toast通知
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.error('该User-Agent已存在');
+        });
+      }
+      return;
+    }
+
+    const updatedUAs = [...currentUAs, newUAValue.trim()];
+    setSecuritySettings({
+      ...securitySettings,
+      allowedUserAgents: updatedUAs,
+    });
+
+    setNewUAName('');
+    setNewUAValue('');
+    // 使用Toast通知
+    if (typeof window !== 'undefined') {
+      import('@/components/Toast').then(({ ToastManager }) => {
+        ToastManager?.success('User-Agent已添加到白名单');
+      });
+    }
+  };
+
+  const handleDeleteUserAgent = (index: number) => {
+    const updatedUAs = [...(securitySettings.allowedUserAgents || [])];
+    updatedUAs.splice(index, 1);
+    setSecuritySettings({
+      ...securitySettings,
+      allowedUserAgents: updatedUAs,
+    });
+    // 使用Toast通知
+    if (typeof window !== 'undefined') {
+      import('@/components/Toast').then(({ ToastManager }) => {
+        ToastManager?.success('User-Agent已从白名单移除');
+      });
+    }
+  };
+
+  const getUAName = (ua: string) => {
+    const knownUAs: { [key: string]: string } = {
+      'okHttp/Mod-1.4.0.0': 'TVBox Mod客户端',
+      TVBox: 'TVBox标准客户端',
+      OKHTTP: 'OKHTTP客户端',
+      Dalvik: 'Android应用',
+      Java: 'Java客户端',
+    };
+
+    if (knownUAs[ua]) {
+      return knownUAs[ua];
+    }
+
+    for (const [key, name] of Object.entries(knownUAs)) {
+      if (ua.toLowerCase().includes(key.toLowerCase())) {
+        return name;
+      }
+    }
+
+    return ua.length > 20 ? ua.substring(0, 20) + '...' : ua;
+  };
+
+  return (
+    <CollapsibleTab
+      title='TVBox配置'
+      theme='purple'
+      icon={
+        <svg
+          className='w-5 h-5 text-purple-500'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+          />
+        </svg>
+      }
+      defaultCollapsed
+    >
+      <div className='space-y-6'>
+        {/* 统计信息 */}
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          <div className='bg-teal-50 dark:bg-teal-900/30 p-4 rounded-lg border border-teal-200 dark:border-teal-700'>
+            <div className='flex items-center justify-between'>
+              <Shield className='text-blue-500' size={24} />
+              <div className='text-right'>
+                <div className='text-2xl font-bold text-blue-600'>
+                  {securitySettings.userTokens.length}
+                </div>
+                <div className='text-sm text-gray-500'>用户Token</div>
+              </div>
+            </div>
+          </div>
+          <div className='bg-teal-50 dark:bg-teal-900/30 p-4 rounded-lg border border-teal-200 dark:border-teal-700'>
+            <div className='flex items-center justify-between'>
+              <Smartphone className='text-green-500' size={24} />
+              <div className='text-right'>
+                <div className='text-2xl font-bold text-green-600'>
+                  {securitySettings.userTokens.reduce(
+                    (acc, t) => acc + t.devices.length,
+                    0,
+                  )}
+                </div>
+                <div className='text-sm text-gray-500'>绑定设备</div>
+              </div>
+            </div>
+          </div>
+          <div className='bg-teal-50 dark:bg-teal-900/30 p-4 rounded-lg border border-teal-200 dark:border-teal-700'>
+            <div className='flex items-center justify-between'>
+              <Activity className='text-purple-500' size={24} />
+              <div className='text-right'>
+                <div className='text-2xl font-bold text-purple-600'>
+                  {securitySettings.enableRateLimit
+                    ? securitySettings.rateLimit
+                    : '∞'}
+                </div>
+                <div className='text-sm text-gray-500'>频率限制</div>
+              </div>
+            </div>
+          </div>
+          <div className='bg-teal-50 dark:bg-teal-900/30 p-4 rounded-lg border border-teal-200 dark:border-teal-700'>
+            <div className='flex items-center justify-between'>
+              <Globe className='text-orange-500' size={24} />
+              <div className='text-right'>
+                <div className='text-2xl font-bold text-orange-600'>
+                  {securitySettings.allowedUserAgents.length}
+                </div>
+                <div className='text-sm text-gray-500'>UA白名单</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 消息提示 */}
+        {jarRefreshMsg && (
+          <div className='p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg'>
+            <p className='text-sm text-blue-600 dark:text-blue-400'>
+              {jarRefreshMsg}
+            </p>
+          </div>
+        )}
+
+        {/* 频率限制 */}
+        <div className='bg-teal-50 dark:bg-teal-900/30 border rounded-lg p-6 border-teal-200 dark:border-teal-700'>
+          <div className='flex items-center justify-between mb-4'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                访问频率限制
+              </h3>
+              <p className='text-sm text-gray-600 dark:text-gray-400'>
+                限制每个IP每分钟的访问次数，防止滥用
+              </p>
+            </div>
+            <label className='relative inline-flex items-center cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={securitySettings.enableRateLimit}
+                onChange={(e) =>
+                  setSecuritySettings((prev) => ({
+                    ...prev,
+                    enableRateLimit: e.target.checked,
+                  }))
+                }
+                className='sr-only peer'
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          {securitySettings.enableRateLimit && (
+            <div>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                每分钟请求次数限制
+              </label>
+              <input
+                type='number'
+                min='1'
+                max='1000'
+                value={securitySettings.rateLimit}
+                onChange={(e) =>
+                  setSecuritySettings((prev) => ({
+                    ...prev,
+                    rateLimit: parseInt(e.target.value) || 60,
+                  }))
+                }
+                className='w-32 px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              />
+              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                建议设置30-60次，过低可能影响正常使用
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* User-Agent白名单 */}
+        <div className='bg-teal-50 dark:bg-teal-900/30 border rounded-lg p-6 border-teal-200 dark:border-teal-700'>
+          <div className='flex items-center justify-between mb-4'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2'>
+                <Globe className='w-5 h-5' />
+                User-Agent白名单
+              </h3>
+              <p className='text-sm text-gray-600 dark:text-gray-400'>
+                限制只有特定User-Agent的客户端才能访问TVBox API
+              </p>
+            </div>
+            <label className='relative inline-flex items-center cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={securitySettings.enableUserAgentWhitelist}
+                onChange={(e) =>
+                  setSecuritySettings((prev) => ({
+                    ...prev,
+                    enableUserAgentWhitelist: e.target.checked,
+                  }))
+                }
+                className='sr-only peer'
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          {securitySettings.enableUserAgentWhitelist && (
+            <div className='space-y-4'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  添加白名单规则
+                </label>
+                {/* PC端布局 - 水平排列 */}
+                <div className='hidden md:flex gap-2'>
+                  <input
+                    type='text'
+                    value={newUAName}
+                    onChange={(e) => setNewUAName(e.target.value)}
+                    placeholder='名称（可选）'
+                    className='flex-1 px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <input
+                    type='text'
+                    value={newUAValue}
+                    onChange={(e) => setNewUAValue(e.target.value)}
+                    placeholder='User-Agent值（如：okHttp/Mod-1.4.0.0）'
+                    className='flex-1 px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <button
+                    onClick={handleAddUserAgent}
+                    className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2'
+                  >
+                    <CheckCircle className='w-4 h-4' />
+                    添加
+                  </button>
+                </div>
+                
+                {/* 移动端布局 - 垂直排列 */}
+                <div className='md:hidden space-y-3'>
+                  <input
+                    type='text'
+                    value={newUAName}
+                    onChange={(e) => setNewUAName(e.target.value)}
+                    placeholder='名称（可选）'
+                    className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <input
+                    type='text'
+                    value={newUAValue}
+                    onChange={(e) => setNewUAValue(e.target.value)}
+                    placeholder='User-Agent值（如：okHttp/Mod-1.4.0.0）'
+                    className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  />
+                  <button
+                    onClick={handleAddUserAgent}
+                    className='w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2'
+                  >
+                    <CheckCircle className='w-4 h-4' />
+                    添加
+                  </button>
+                </div>
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  支持部分匹配，如输入"okHttp"将匹配所有包含该字符串的User-Agent
+                </p>
+              </div>
+
+              <div>
+                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2'>
+                  <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    当前白名单
+                  </label>
+                  <button
+                    onClick={() => setShowUAList(!showUAList)}
+                    className='text-xs px-3 py-1 bg-teal-100 dark:bg-teal-600 hover:bg-teal-200 dark:hover:bg-teal-500 text-teal-700 dark:text-teal-300 rounded transition-colors'
+                  >
+                    {showUAList ? '隐藏' : '显示'} (
+                    {securitySettings.allowedUserAgents?.length || 0})
+                  </button>{' '}
+                </div>
+
+                {showUAList && (
+                  <div className='space-y-2'>
+                    {securitySettings.allowedUserAgents?.map(
+                      (ua: string, index: number) => (
+                        <div
+                          key={index}
+                          className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-teal-50 dark:bg-teal-800 rounded-lg gap-2'
+                        >
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-gray-900 dark:text-gray-100 truncate'>
+                              {getUAName(ua)}
+                            </div>
+                            <code className='text-xs text-gray-600 dark:text-gray-400 break-all'>
+                              {ua}
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteUserAgent(index)}
+                            className='sm:ml-3 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors p-1'
+                          >
+                            <XCircle className='w-4 h-4' />
+                          </button>
+                        </div>
+                      ),
+                    )}
+                    {(!securitySettings.allowedUserAgents ||
+                      securitySettings.allowedUserAgents.length === 0) && (
+                      <div className='text-center py-8 text-gray-500 dark:text-gray-400 bg-teal-50 dark:bg-teal-800 rounded-lg'>
+                        暂无白名单规则
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Token和设备管理 */}
+        <div className='bg-teal-50 dark:bg-teal-900/30 border rounded-lg p-6 border-teal-200 dark:border-teal-700'>
+          <div className='flex items-center justify-between mb-4'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+              用户Token验证和绑定
+            </h3>
+            <label className='relative inline-flex items-center cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={securitySettings.enableDeviceBinding}
+                onChange={(e) =>
+                  setSecuritySettings((prev) => ({
+                    ...prev,
+                    enableDeviceBinding: e.target.checked,
+                  }))
+                }
+                className='sr-only peer'
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          {securitySettings.enableDeviceBinding && (
+            <div className='space-y-4'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  设备绑定数量限制
+                </label>
+                <div className='flex items-center gap-3'>
+                  <input
+                    type='number'
+                    min='1'
+                    max='100'
+                    value={securitySettings.maxDevices}
+                    onChange={(e) =>
+                      setSecuritySettings((prev) => ({
+                        ...prev,
+                        maxDevices: parseInt(e.target.value) || 1,
+                      }))
+                    }
+                    className='w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm'
+                  />
+                  <span className='text-sm text-gray-600 dark:text-gray-400'>
+                    台设备
+                  </span>
+                </div>
+              </div>
+
+              <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4'>
+                <div className='flex items-center justify-between mb-4'>
+                  <h4 className='text-sm font-medium text-blue-900 dark:text-blue-300'>
+                    用户Token管理
+                  </h4>
+                  <div className='flex items-center gap-3'>
+                    <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'>
+                      {securitySettings.userTokens.length} 个用户
+                    </span>
+                    <button
+                      onClick={() => setShowToken(!showToken)}
+                      className='text-xs px-3 py-1 bg-teal-100 dark:bg-teal-600 hover:bg-teal-200 dark:hover:bg-teal-500 text-teal-700 dark:text-teal-300 rounded transition-colors'
+                    >
+                      {showToken ? '隐藏Token' : '显示Token'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-sm'>
+                    <thead>
+                      <tr className='border-b border-blue-200 dark:border-blue-700'>
+                        <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
+                          用户名
+                        </th>
+                        <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
+                          设备数量
+                        </th>
+                        <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
+                          Token
+                        </th>
+                        <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
+                          状态
+                        </th>
+                        <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
+                          功能
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {securitySettings.userTokens.map((userToken) => (
+                        <tr
+                          key={userToken.username}
+                          className='border-b border-blue-100 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors'
+                        >
+                          <td className='py-3 px-4'>
+                            <div className='flex items-center gap-2'>
+                              <span className='font-medium text-blue-900 dark:text-blue-300'>
+                                {userToken.username}
+                              </span>
+                            </div>
+                          </td>
+                          <td className='py-3 px-4'>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                userToken.devices.length >=
+                                securitySettings.maxDevices
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
+                                  : userToken.devices.length === 0
+                                    ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                              }`}
+                            >
+                              {userToken.devices.length}/
+                              {securitySettings.maxDevices}
+                            </span>
+                          </td>
+                          <td className='py-3 px-4'>
+                            <div className='flex items-center gap-2'>
+                              <code
+                                className={`font-mono text-xs ${
+                                  showToken
+                                    ? 'text-gray-900 dark:text-gray-100'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}
+                              >
+                                {showToken
+                                  ? userToken.token
+                                  : '••••••••••••••••••••••••••••••••'}
+                              </code>
+                              <button
+                                onClick={() => copyUserToken(userToken.token)}
+                                className='p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors'
+                                title='复制Token'
+                              >
+                                <Copy className='w-3 h-3' />
+                              </button>
+                            </div>
+                          </td>
+                          <td className='py-3 px-4'>
+                            <div className='flex items-center gap-2'>
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  userToken.enabled
+                                    ? 'bg-green-500'
+                                    : 'bg-red-500'
+                                }`}
+                              ></div>
+                              <span
+                                className={`text-xs ${
+                                  userToken.enabled
+                                    ? 'text-green-700 dark:text-green-400'
+                                    : 'text-red-700 dark:text-red-400'
+                                }`}
+                              >
+                                {userToken.enabled ? '已启用' : '已禁用'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className='py-3 px-4'>
+                            <div className='flex items-center gap-1'>
+                              <button
+                                onClick={() => {
+                                  const newTokens =
+                                    securitySettings.userTokens.map((t) =>
+                                      t.username === userToken.username
+                                        ? { ...t, enabled: !t.enabled }
+                                        : t,
+                                    );
+                                  setSecuritySettings((prev) => ({
+                                    ...prev,
+                                    userTokens: newTokens,
+                                  }));
+                                }}
+                                className={`p-1 rounded ${
+                                  userToken.enabled
+                                    ? 'text-yellow-600 hover:text-yellow-800'
+                                    : 'text-green-600 hover:text-green-800'
+                                }`}
+                                title={userToken.enabled ? '禁用' : '启用'}
+                              >
+                                {userToken.enabled ? (
+                                  <XCircle className='w-4 h-4' />
+                                ) : (
+                                  <CheckCircle className='w-4 h-4' />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 配置生成器 */}
+        <div className='bg-teal-50 dark:bg-teal-900/30 border rounded-lg p-6 border-teal-200 dark:border-teal-700'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+            配置生成器
+          </h3>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                配置模式
+              </label>
+              <select
+                value={configMode}
+                onChange={(e) => setConfigMode(e.target.value as any)}
+                className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              >
+                <option value='standard'>标准模式</option>
+                <option value='safe'>安全模式</option>
+                <option value='fast'>快速模式</option>
+                <option value='yingshicang'>影视仓模式</option>
+              </select>
+            </div>
+
+            <div>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                输出格式
+              </label>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value as any)}
+                className='w-full px-3 py-2 border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              >
+                <option value='json'>JSON</option>
+                <option value='base64'>Base64</option>
+              </select>
+            </div>
+          </div>
+
+          <div className='bg-teal-50 dark:bg-teal-800 rounded-lg p-4'>
+            <div className='flex items-center justify-between mb-2'>
+              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                生成的URL
+              </label>
+              <button
+                onClick={() =>
+                  navigator.clipboard.writeText(generateExampleURL())
+                }
+                className='text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors'
+              >
+                <Copy className='w-4 h-4' />
+              </button>
+            </div>
+            <code className='text-xs text-gray-600 dark:text-gray-400 break-all'>
+              {generateExampleURL()}
+            </code>
+          </div>
+
+          {/* 操作按钮组 */}
+          <div className='flex flex-wrap gap-2 mt-4'>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.open(generateExampleURL(), '_blank');
+                }
+              }}
+              className='flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+            >
+              <ExternalLink size={16} />
+              <span>测试访问</span>
+            </button>
+
+            <button
+              onClick={handleDiagnose}
+              disabled={isDiagnosing}
+              className='flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50'
+            >
+              <BarChart3 size={16} />
+              <span>{isDiagnosing ? '诊断中...' : '配置诊断'}</span>
+            </button>
+
+            <button
+              onClick={handleRefreshJar}
+              disabled={refreshingJar}
+              className='flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50'
+            >
+              <RefreshCw
+                className={refreshingJar ? 'animate-spin' : ''}
+                size={16}
+              />
+              <span>{refreshingJar ? '刷新中...' : '刷新JAR'}</span>
+            </button>
+
+            <button
+              onClick={handleSmartHealthCheck}
+              disabled={smartHealthLoading}
+              className='flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50'
+            >
+              <Heart
+                className={smartHealthLoading ? 'animate-pulse' : ''}
+                size={16}
+              />
+              <span>{smartHealthLoading ? '检查中...' : '智能健康检查'}</span>
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={isLoading}
+              className='flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50'
+            >
+              <Save size={16} />
+              <span>{isLoading ? '保存中...' : '保存配置'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 诊断结果 */}
+        {showDiagnoseResult && diagnoseResult && (
+          <div className='bg-white dark:bg-gray-800 border rounded-lg p-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                诊断结果
+              </h3>
+              <button
+                onClick={() => setShowDiagnoseResult(false)}
+                className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              >
+                <XCircle className='w-5 h-5' />
+              </button>
+            </div>
+
+            <div
+              className={`p-4 rounded-lg ${diagnoseResult.pass ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700'}`}
+            >
+              <div className='flex items-center gap-2 mb-2'>
+                {diagnoseResult.pass ? (
+                  <CheckCircle className='text-green-500' size={20} />
+                ) : (
+                  <XCircle className='text-red-500' size={20} />
+                )}
+                <span
+                  className={`font-medium ${diagnoseResult.pass ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}
+                >
+                  {diagnoseResult.pass ? '诊断通过' : '发现问题'}
+                </span>
+              </div>
+
+              {diagnoseResult.issues && diagnoseResult.issues.length > 0 && (
+                <ul className='mt-2 space-y-1 text-sm text-red-600 dark:text-red-400'>
+                  {diagnoseResult.issues.map((issue: string, index: number) => (
+                    <li key={index}>• {issue}</li>
+                  ))}
+                </ul>
+              )}
+
+              {diagnoseResult.recommendations &&
+                diagnoseResult.recommendations.length > 0 && (
+                  <div className='mt-3'>
+                    <p className='text-sm font-medium text-blue-700 dark:text-blue-300 mb-1'>
+                      建议：
+                    </p>
+                    <ul className='space-y-1 text-sm text-blue-600 dark:text-blue-400'>
+                      {diagnoseResult.recommendations.map(
+                        (rec: string, index: number) => (
+                          <li key={index}>• {rec}</li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
+            </div>
+          </div>
+        )}
+
+        {/* 智能健康检查结果 */}
+        {smartHealthResult && (
+          <div className='bg-white dark:bg-gray-800 border rounded-lg p-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                智能健康检查结果
+              </h3>
+              <button
+                onClick={() => setSmartHealthResult(null)}
+                className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              >
+                <XCircle className='w-5 h-5' />
+              </button>
+            </div>
+
+            {smartHealthResult.success ? (
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                  <div className='text-center'>
+                    <div
+                      className={`text-2xl font-bold ${
+                        smartHealthResult.status.overall === 'excellent'
+                          ? 'text-green-600'
+                          : smartHealthResult.status.overall === 'good'
+                            ? 'text-blue-600'
+                            : 'text-yellow-600'
+                      }`}
+                    >
+                      {smartHealthResult.status.overall === 'excellent'
+                        ? '优秀'
+                        : smartHealthResult.status.overall === 'good'
+                          ? '良好'
+                          : '需要关注'}
+                    </div>
+                    <div className='text-sm text-gray-500'>整体状态</div>
+                  </div>
+                  <div className='text-center'>
+                    <div className='text-2xl font-bold text-blue-600'>
+                      {smartHealthResult.reachability.health_score}%
+                    </div>
+                    <div className='text-sm text-gray-500'>健康分数</div>
+                  </div>
+                  <div className='text-center'>
+                    <div className='text-2xl font-bold text-purple-600'>
+                      {smartHealthResult.executionTime}ms
+                    </div>
+                    <div className='text-sm text-gray-500'>执行时间</div>
+                  </div>
+                </div>
+
+                {smartHealthResult.recommendations.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 dark:text-gray-100 mb-2'>
+                      优化建议
+                    </h4>
+                    <ul className='space-y-1 text-sm text-gray-600 dark:text-gray-400'>
+                      {smartHealthResult.recommendations.map((rec, index) => (
+                        <li key={index}>• {rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg'>
+                <p className='text-red-600 dark:text-red-400'>
+                  {smartHealthResult.error}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </CollapsibleTab>
+  );
+}
+
+// 导出组件
+export function TVBoxConfig() {
+  return (
+    <PermissionGuard permission='canManageConfig'>
+      <TVBoxConfigContent />
+    </PermissionGuard>
+  );
+}

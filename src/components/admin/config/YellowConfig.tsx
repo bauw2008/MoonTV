@@ -1,0 +1,334 @@
+'use client';
+
+import { Plus, Save, Shield, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { useAdminState } from '@/hooks/admin/useAdminState';
+
+import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
+import { PermissionGuard } from '@/components/PermissionGuard';
+
+function YellowConfigContent() {
+  const { loading, withLoading, errors, clearError } = useAdminState();
+  const [config, setConfig] = useState<any>(null);
+  const [yellowWords, setYellowWords] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const [filterEnabled, setFilterEnabled] = useState(true);
+
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  const loadConfig = async () => {
+    try {
+      await withLoading('loadYellowConfig', async () => {
+        const response = await fetch('/api/admin/config');
+        const data = await response.json();
+        setConfig(data.Config);
+        setYellowWords(data.Config.YellowWords || []);
+        // 加载过滤开关状态，默认为true
+        setFilterEnabled(data.Config.DisableYellowFilter !== undefined ? !data.Config.DisableYellowFilter : true);
+      });
+    } catch (error) {
+      console.error('加载18+配置失败:', error);
+    }
+  };
+
+  const saveConfig = async () => {
+    try {
+      await withLoading('saveYellowConfig', async () => {
+        // 先获取当前的完整配置
+        const getResponse = await fetch('/api/admin/config');
+        if (!getResponse.ok) {
+          throw new Error('获取配置失败');
+        }
+
+        const currentConfigData = await getResponse.json();
+
+        // 更新YellowWords和DisableYellowFilter部分，保持其他配置不变
+        const updatedConfig = {
+          ...currentConfigData.Config,
+          YellowWords: yellowWords,
+          DisableYellowFilter: !filterEnabled, // 注意：DisableYellowFilter是反向逻辑
+        };
+
+        // 保存完整配置
+        const response = await fetch('/api/admin/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedConfig),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `保存失败: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // 使用Toast通知保存成功
+        if (typeof window !== 'undefined') {
+          import('@/components/Toast').then(({ ToastManager }) => {
+            ToastManager?.success('18+配置已保存');
+          });
+        }
+
+        // 重新加载确保最新
+        await loadConfig();
+      });
+    } catch (error) {
+      console.error('保存18+配置失败:', error);
+      if (typeof window !== 'undefined') {
+        import('@/components/Toast').then(({ ToastManager }) => {
+          ToastManager?.error('保存失败: ' + (error as Error).message);
+        });
+      }
+    }
+  };
+
+  const [newWord, setNewWord] = useState('');
+
+  const addWord = () => {
+    if (newWord && newWord.trim()) {
+      // 检查是否已存在
+      if (yellowWords.includes(newWord.trim())) {
+        if (typeof window !== 'undefined') {
+          import('@/components/Toast').then(({ ToastManager }) => {
+            ToastManager?.error('该词汇已存在');
+          });
+        }
+        return;
+      }
+      setYellowWords([...yellowWords, newWord.trim()]);
+      setNewWord('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      addWord();
+    }
+  };
+
+  const removeWord = (index: number) => {
+    setYellowWords(yellowWords.filter((_, i) => i !== index));
+  };
+
+  const clearAll = () => {
+    if (yellowWords.length === 0) return;
+
+    if (typeof window !== 'undefined') {
+      if (confirm('确定要清空所有过滤词吗？')) {
+        setYellowWords([]);
+      }
+    }
+  };
+
+  return (
+    <CollapsibleTab
+      title='18+配置'
+      theme='green'
+      icon={
+        <svg
+          className='w-5 h-5 text-green-500'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
+          />
+        </svg>
+      }
+      defaultCollapsed={true}
+    >
+      {loading.loadYellowConfig ? (
+        <div className='text-center py-12'>
+          <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+          <p className='mt-4 text-gray-500 dark:text-gray-400'>加载中...</p>
+        </div>
+      ) : (
+        <div className='space-y-6'>
+          {/* 总开关 */}
+          <div className='bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700 p-6'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <h4 className='text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2'>
+                  <Shield className='w-5 h-5' />
+                  18+内容过滤
+                </h4>
+                <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                  {filterEnabled 
+                    ? '开启后将过滤包含敏感词汇的内容，保护用户体验' 
+                    : '已禁用18+内容过滤，所有内容将不会被过滤'}
+                </p>
+              </div>
+              <label className='relative inline-flex items-center cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={filterEnabled}
+                  onChange={(e) => setFilterEnabled(e.target.checked)}
+                  className='sr-only peer'
+                />
+                <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-yellow-600"></div>
+              </label>
+            </div>
+          </div>
+
+          {/* 只有在开关开启时才显示其他内容 */}
+          {filterEnabled && (
+            <>
+              {/* 添加新词区域 */}
+              <div className='bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700 p-6'>
+                <div className='flex items-center justify-between mb-4'>
+                  <h4 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+                    添加过滤词
+                  </h4>
+                </div>
+                {/* PC端布局 - 水平排列 */}
+                <div className='hidden md:flex gap-3'>
+                  <input
+                    type='text'
+                    value={newWord}
+                    onChange={(e) => setNewWord(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder='输入要过滤的词汇，按回车添加'
+                    className='flex-1 px-4 py-3 border border-yellow-300 dark:border-yellow-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all'
+                  />
+                  <button
+                    onClick={addWord}
+                    disabled={!newWord.trim()}
+                    className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <Plus className='w-4 h-4' />
+                      添加
+                    </div>
+                  </button>
+                </div>
+                
+                {/* 移动端布局 - 垂直排列 */}
+                <div className='md:hidden space-y-3'>
+                  <input
+                    type='text'
+                    value={newWord}
+                    onChange={(e) => setNewWord(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder='输入要过滤的词汇，按回车添加'
+                    className='w-full px-4 py-3 border border-yellow-300 dark:border-yellow-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all text-base'
+                  />
+                  <button
+                    onClick={addWord}
+                    disabled={!newWord.trim()}
+                    className='w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                  >
+                    <div className='flex items-center justify-center gap-2'>
+                      <Plus className='w-4 h-4' />
+                      添加
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* 词汇列表 */}
+              <div className='bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700 overflow-hidden'>
+                <div className='px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
+                  <div className='flex items-center justify-between'>
+                    <h4 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+                      过滤词汇列表
+                    </h4>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-sm text-gray-500 dark:text-gray-400'>
+                        共 {yellowWords.length} 个词汇
+                      </span>
+                      {yellowWords.length > 0 && (
+                        <button
+                          onClick={clearAll}
+                          className='text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
+                        >
+                          清空全部
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {yellowWords.length > 0 ? (
+                  <div className='p-6 max-h-96 overflow-y-auto'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                      {yellowWords.map((word, index) => (
+                        <div
+                          key={index}
+                          className='group flex items-center justify-between p-3 bg-yellow-100 dark:bg-yellow-800/50 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-700 transition-colors border border-yellow-200 dark:border-yellow-600'
+                        >
+                          <div className='flex items-center gap-2 min-w-0 flex-1'>
+                            <div className='w-6 h-6 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0'>
+                              <Shield className='w-3 h-3 text-red-600 dark:text-red-400' />
+                            </div>
+                            <span className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                              {word}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => removeWord(index)}
+                            className='opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0'
+                          >
+                            <Trash2 className='w-3 h-3' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='px-6 py-12 text-center'>
+                    <Shield className='w-12 h-12 text-gray-400 mx-auto mb-4' />
+                    <p className='text-gray-500 dark:text-gray-400'>暂无过滤词汇</p>
+                    <p className='text-sm text-gray-400 dark:text-gray-500 mt-2'>
+                      添加词汇开始配置内容过滤
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 操作按钮 */}
+              <div className='flex gap-3'>
+                <button
+                  onClick={saveConfig}
+                  disabled={loading.saveYellowConfig}
+                  className='flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+                >
+                  <div className='flex items-center justify-center gap-2'>
+                    {loading.saveYellowConfig ? (
+                      <>
+                        <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                        保存中...
+                      </>
+                    ) : (
+                      <>
+                        <Save className='w-4 h-4' />
+                        保存配置
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </CollapsibleTab>
+  );
+}
+
+export function YellowConfig() {
+  return (
+    <PermissionGuard permission='canManageConfig'>
+      <YellowConfigContent />
+    </PermissionGuard>
+  );
+}
