@@ -194,10 +194,10 @@ function SiteConfigContent() {
 
       // 合并本地修改和现有设置
       const updatedMenuSettings = {
-        // 确保所有必需字段都存在
-        showAI: currentMenuSettings.showAI || false,
-        showNetDiskSearch: currentMenuSettings.showNetDiskSearch || false,
-        showTMDBActorSearch: currentMenuSettings.showTMDBActorSearch || false,
+        // 使用本地状态中的值，确保包含最新的设置
+        showAI: siteSettings.MenuSettings.showAI,
+        showNetDiskSearch: siteSettings.MenuSettings.showNetDiskSearch,
+        showTMDBActorSearch: siteSettings.MenuSettings.showTMDBActorSearch,
         // 更新基础菜单字段
         showMovies: siteSettings.MenuSettings.showMovies,
         showTVShows: siteSettings.MenuSettings.showTVShows,
@@ -353,9 +353,10 @@ function SiteConfigContent() {
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'>
               {Object.entries(siteSettings.MenuSettings || {}).map(
                 ([key, value]) => (
-                  <label
+                  <div
                     key={key}
                     className='flex items-center justify-between p-3 border border-cyan-200/60 dark:border-cyan-600/60 rounded-lg bg-cyan-50/80 dark:bg-cyan-900/30 backdrop-blur-sm cursor-pointer hover:bg-cyan-100/80 dark:hover:bg-cyan-900/50 transition-all duration-200'
+                    onClick={() => handleToggleMenu(key as keyof MenuSettings)}
                   >
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                       {menuLabels[key as keyof MenuSettings]}
@@ -363,9 +364,7 @@ function SiteConfigContent() {
                     <input
                       type='checkbox'
                       checked={value}
-                      onChange={() =>
-                        handleToggleMenu(key as keyof MenuSettings)
-                      }
+                      onChange={() => {}}
                       className='sr-only'
                     />
                     <div
@@ -379,7 +378,7 @@ function SiteConfigContent() {
                         }`}
                       />
                     </div>
-                  </label>
+                  </div>
                 ),
               )}
             </div>

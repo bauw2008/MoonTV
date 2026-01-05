@@ -150,38 +150,31 @@ function NetdiskConfigContent() {
   const handleToggleChange = async (enabled: boolean) => {
     console.log('[NetdiskConfig] 开关切换:', enabled);
 
-    // 如果是关闭开关，直接生效，不需要保存
-    if (!enabled) {
-      // 立即更新本地状态
-      setNetDiskSettings((prev) => ({ ...prev, enabled: false }));
+    // 立即更新本地状态，让UI立即响应
+    setNetDiskSettings((prev) => ({ ...prev, enabled }));
 
-      // 直接保存关闭状态到数据库
-      try {
-        await withLoading('toggleNetDisk', async () => {
-          const response = await fetch('/api/admin/netdisk', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...netDiskSettings,
-              enabled: false,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('关闭开关失败');
-          }
-
-          showSuccess('网盘搜索功能已关闭');
-          await loadConfig();
+    // 保存到数据库
+    try {
+      await withLoading('toggleNetDisk', async () => {
+        const response = await fetch('/api/admin/netdisk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...netDiskSettings,
+            enabled,
+          }),
         });
-      } catch (error) {
-        // 如果关闭失败，恢复开关状态
-        setNetDiskSettings((prev) => ({ ...prev, enabled: true }));
-        showError('关闭失败: ' + (error as Error).message);
-      }
-    } else {
-      // 开启开关，更新状态但不立即保存
-      setNetDiskSettings((prev) => ({ ...prev, enabled: true }));
+
+        if (!response.ok) {
+          throw new Error('保存失败');
+        }
+
+        showSuccess(`网盘搜索功能已${enabled ? '开启' : '关闭'}`);
+      });
+    } catch (error) {
+      // 如果保存失败，恢复状态
+      setNetDiskSettings((prev) => ({ ...prev, enabled: !enabled }));
+      showError('保存失败: ' + (error as Error).message);
     }
   };
 
@@ -245,15 +238,19 @@ function NetdiskConfigContent() {
                     : '已禁用网盘搜索功能，用户将无法使用网盘搜索'}
                 </p>
               </div>
-              <label className='relative inline-flex items-center cursor-pointer'>
+              <div className='relative inline-flex items-center cursor-pointer' onClick={() => {
+                  const newState = !netDiskSettings.enabled;
+                  console.log('[NetdiskConfig] 开关点击，当前值:', netDiskSettings.enabled, '新值:', newState);
+                  handleToggleChange(newState);
+                }}>
                 <input
                   type='checkbox'
                   checked={netDiskSettings.enabled}
-                  onChange={(e) => handleToggleChange(e.target.checked)}
+                  onChange={() => {}}
                   className='sr-only peer'
                 />
                 <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-              </label>
+              </div>
             </div>
           </div>
 

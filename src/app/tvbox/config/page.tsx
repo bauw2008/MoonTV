@@ -53,11 +53,6 @@ export default function TVBoxConfigPage() {
   }, []);
 
   const fetchDevices = useCallback(async () => {
-    // 在函数内部检查 securityConfig，避免循环依赖
-    if (!securityConfig?.enableDeviceBinding) {
-      return;
-    }
-
     try {
       setDevicesLoading(true);
       const response = await fetch('/api/tvbox-config/devices');
@@ -70,7 +65,7 @@ export default function TVBoxConfigPage() {
     } finally {
       setDevicesLoading(false);
     }
-  }, []); // 移除依赖项
+  }, []);
 
   const unbindDevice = useCallback(
     async (deviceId: string) => {
@@ -119,7 +114,7 @@ export default function TVBoxConfigPage() {
     if (securityConfig?.enableDeviceBinding) {
       fetchDevices();
     }
-  }, [securityConfig?.enableDeviceBinding]); // 移除 fetchDevices 依赖
+  }, [securityConfig?.enableDeviceBinding, fetchDevices]);
 
   const getConfigUrl = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -232,26 +227,7 @@ export default function TVBoxConfigPage() {
                       {securityConfig.enableDeviceBinding && (
                         <div className='flex items-center justify-between'>
                           <p>
-                            • 绑定设备数量：
-                            {(() => {
-                              const authInfo = getAuthInfoFromBrowserCookie();
-                              const currentUsername = authInfo?.username;
-                              if (
-                                currentUsername &&
-                                securityConfig.userTokens
-                              ) {
-                                const userToken =
-                                  securityConfig.userTokens.find(
-                                    (t) =>
-                                      t.username === currentUsername &&
-                                      t.enabled,
-                                  );
-                                if (userToken) {
-                                  return `${userToken.devices?.length || 0}/${securityConfig.maxDevices}`;
-                                }
-                              }
-                              return '0/0';
-                            })()}
+                            • 绑定设备数量：{devices.length}/{securityConfig.maxDevices}
                           </p>
                           <button
                             onClick={() => setShowDeviceList(!showDeviceList)}

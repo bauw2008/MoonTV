@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
           errorMessage =
             errorData.error.message || errorData.error || errorMessage;
         }
-      } catch (e) {
+      } catch {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
 

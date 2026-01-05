@@ -12,6 +12,7 @@ import {
   Save,
   Shield,
   Smartphone,
+  Users,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -128,10 +129,11 @@ function TVBoxConfigContent() {
   const [newUAName, setNewUAName] = useState('');
   const [newUAValue, setNewUAValue] = useState('');
   const [showUAList, setShowUAList] = useState(false);
+  
 
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     enableRateLimit: false,
-    rateLimit: 60,
+    rateLimit: 30,
     enableDeviceBinding: false,
     maxDevices: 1,
     enableUserAgentWhitelist: false,
@@ -175,16 +177,16 @@ function TVBoxConfigContent() {
         const response = await fetch('/api/tvbox-config');
         const data = await response.json();
         setConfig(data);
-        if (data?.TVBoxSecurityConfig) {
+        if (data?.securityConfig) {
           setSecuritySettings({
-            enableRateLimit: data.TVBoxSecurityConfig.enableRateLimit ?? false,
-            rateLimit: data.TVBoxSecurityConfig.rateLimit ?? 60,
+            enableRateLimit: data.securityConfig.enableRateLimit ?? false,
+            rateLimit: data.securityConfig.rateLimit ?? 30,
             enableDeviceBinding:
-              data.TVBoxSecurityConfig.enableDeviceBinding ?? false,
-            maxDevices: data.TVBoxSecurityConfig.maxDevices ?? 1,
+              data.securityConfig.enableDeviceBinding ?? false,
+            maxDevices: data.securityConfig.maxDevices ?? 1,
             enableUserAgentWhitelist:
-              data.TVBoxSecurityConfig.enableUserAgentWhitelist ?? false,
-            allowedUserAgents: data.TVBoxSecurityConfig.allowedUserAgents || [
+              data.securityConfig.enableUserAgentWhitelist ?? false,
+            allowedUserAgents: data.securityConfig.allowedUserAgents || [
               'okHttp/Mod-1.4.0.0',
               'TVBox',
               'OKHTTP',
@@ -192,9 +194,9 @@ function TVBoxConfigContent() {
               'Java',
             ],
             defaultUserGroup:
-              (data.TVBoxSecurityConfig as any).defaultUserGroup || '',
-            currentDevices: data.TVBoxSecurityConfig.currentDevices || [],
-            userTokens: data.TVBoxSecurityConfig.userTokens || [],
+              (data.securityConfig as any).defaultUserGroup || '',
+            currentDevices: data.securityConfig.currentDevices || [],
+            userTokens: data.securityConfig.userTokens || [],
           });
         }
       } catch (error) {
@@ -773,7 +775,7 @@ function TVBoxConfigContent() {
                           状态
                         </th>
                         <th className='text-left py-3 px-4 text-blue-900 dark:text-blue-300 font-medium'>
-                          功能
+                          操作
                         </th>
                       </tr>
                     </thead>
@@ -788,6 +790,11 @@ function TVBoxConfigContent() {
                               <span className='font-medium text-blue-900 dark:text-blue-300'>
                                 {userToken.username}
                               </span>
+                              {userToken.username === process.env.USERNAME && (
+                                <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'>
+                                  站长
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className='py-3 px-4'>
@@ -854,6 +861,25 @@ function TVBoxConfigContent() {
                                   const newTokens =
                                     securitySettings.userTokens.map((t) =>
                                       t.username === userToken.username
+                                        ? { ...t, token: generateToken() }
+                                        : t,
+                                    );
+                                  setSecuritySettings((prev) => ({
+                                    ...prev,
+                                    userTokens: newTokens,
+                                  }));
+                                  showSuccess(`${userToken.username}的Token已重新生成`);
+                                }}
+                                className='text-xs px-2 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded transition-colors'
+                                title='重新生成Token'
+                              >
+                                重新生成
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newTokens =
+                                    securitySettings.userTokens.map((t) =>
+                                      t.username === userToken.username
                                         ? { ...t, enabled: !t.enabled }
                                         : t,
                                     );
@@ -862,18 +888,14 @@ function TVBoxConfigContent() {
                                     userTokens: newTokens,
                                   }));
                                 }}
-                                className={`p-1 rounded ${
+                                className={`text-xs px-2 py-1 rounded transition-colors ${
                                   userToken.enabled
-                                    ? 'text-yellow-600 hover:text-yellow-800'
-                                    : 'text-green-600 hover:text-green-800'
+                                    ? 'bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:hover:bg-yellow-700 text-yellow-700 dark:text-yellow-300'
+                                    : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300'
                                 }`}
-                                title={userToken.enabled ? '禁用' : '启用'}
+                                title={userToken.enabled ? '禁用Token' : '启用Token'}
                               >
-                                {userToken.enabled ? (
-                                  <XCircle className='w-4 h-4' />
-                                ) : (
-                                  <CheckCircle className='w-4 h-4' />
-                                )}
+                                {userToken.enabled ? '禁用' : '启用'}
                               </button>
                             </div>
                           </td>
@@ -882,6 +904,244 @@ function TVBoxConfigContent() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* 暂无Token提示 */}
+                {securitySettings.userTokens.length === 0 && (
+                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+                    <svg
+                      className='mx-auto h-12 w-12 text-gray-400'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M12 4v16m8-8H4'
+                      />
+                    </svg>
+                    <p className='text-sm'>暂无用户Token</p>
+                    <p className='text-xs mt-1'>系统会自动为用户生成Token</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 绑定设备列表 */}
+              <div className='bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-4'>
+                <div className='flex items-center justify-between mb-4'>
+                  <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    绑定设备列表
+                  </h4>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>
+                      {securitySettings.userTokens.reduce(
+                        (total, user) => total + user.devices.length,
+                        0
+                      )}{' '}
+                      台设备
+                    </span>
+                    {securitySettings.userTokens.some(
+                      (user) => user.devices.length > 0
+                    ) && (
+                      <button
+                        onClick={async () => {
+                          const clearedTokens = securitySettings.userTokens.map(
+                            (user) => ({
+                              ...user,
+                              devices: [],
+                            })
+                          );
+
+                          const saveData = {
+                            enableAuth: false,
+                            token: '',
+                            enableRateLimit: securitySettings.enableRateLimit,
+                            rateLimit: securitySettings.rateLimit,
+                            enableDeviceBinding: securitySettings.enableDeviceBinding,
+                            maxDevices: securitySettings.maxDevices,
+                            enableUserAgentWhitelist: securitySettings.enableUserAgentWhitelist,
+                            allowedUserAgents: securitySettings.allowedUserAgents,
+                            currentDevices: [],
+                            userTokens: clearedTokens,
+                          };
+
+                          console.log('清空所有设备发送的数据:', JSON.stringify(saveData, null, 2));
+                          console.log('清空后的userTokens详情:', saveData.userTokens.map(t => ({
+                            username: t.username,
+                            devicesCount: t.devices?.length || 0,
+                            devices: t.devices
+                          })));
+                          const response = await fetch('/api/admin/tvbox-security', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(saveData),
+                          });
+
+                          if (response.ok) {
+                            showSuccess('已清空所有绑定设备');
+                            // 延迟一下再加载配置，确保缓存清除
+                            setTimeout(async () => {
+                              await loadConfig();
+                            }, 500);
+                          } else {
+                            const errorData = await response.json();
+                            console.error('清空失败:', errorData);
+                            showError(errorData.error || '清空失败');
+                          }
+                        }}
+                        className='text-xs px-3 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-300 rounded transition-colors'
+                      >
+                        清空所有
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {securitySettings.userTokens.some(
+                  (user) => user.devices.length > 0
+                ) ? (
+                  <div className='overflow-x-auto'>
+                    <table className='w-full text-sm'>
+                      <thead>
+                        <tr className='border-b border-gray-200 dark:border-gray-600'>
+                          <th className='text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium'>
+                            设备ID
+                          </th>
+                          <th className='text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium'>
+                            设备信息
+                          </th>
+                          <th className='text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium'>
+                            绑定时间
+                          </th>
+                          <th className='text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium'>
+                            用户
+                          </th>
+                          <th className='text-left py-3 px-4 text-gray-600 dark:text-gray-400 font-medium'>
+                            操作
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {securitySettings.userTokens.flatMap((userToken) =>
+                          userToken.devices.map((device) => (
+                            <tr
+                              key={`${userToken.username}-${device.deviceId}`}
+                              className='border-b border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors'
+                            >
+                              <td className='py-3 px-4'>
+                                <code className='text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded'>
+                                  {device.deviceId.substring(0, 8)}...
+                                </code>
+                              </td>
+                              <td className='py-3 px-4 text-gray-700 dark:text-gray-300 max-w-xs'>
+                                <div
+                                  className='truncate'
+                                  title={device.deviceInfo}
+                                >
+                                  {device.deviceInfo}
+                                </div>
+                              </td>
+                              <td className='py-3 px-4 text-gray-600 dark:text-gray-400 whitespace-nowrap'>
+                                {new Date(device.bindTime).toLocaleString(
+                                  'zh-CN'
+                                )}
+                              </td>
+                              <td className='py-3 px-4'>
+                                <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'>
+                                  {userToken.username}
+                                </span>
+                              </td>
+                              <td className='py-3 px-4'>
+                                <div className='flex items-center gap-1'>
+                                  <button
+                                    onClick={async () => {
+                                      const updatedTokens =
+                                        securitySettings.userTokens.map(
+                                          (user) =>
+                                            user.username === userToken.username
+                                              ? {
+                                                  ...user,
+                                                  devices: user.devices.filter(
+                                                    (d) =>
+                                                      d.deviceId !==
+                                                      device.deviceId
+                                                  ),
+                                                }
+                                              : user
+                                        );
+
+                                      const saveData = {
+                                        enableAuth: false,
+                                        token: '',
+                                        enableRateLimit: securitySettings.enableRateLimit,
+                                        rateLimit: securitySettings.rateLimit,
+                                        enableDeviceBinding: securitySettings.enableDeviceBinding,
+                                        maxDevices: securitySettings.maxDevices,
+                                        enableUserAgentWhitelist: securitySettings.enableUserAgentWhitelist,
+                                        allowedUserAgents: securitySettings.allowedUserAgents,
+                                        currentDevices: updatedTokens.flatMap(
+                                          (user) => user.devices,
+                                        ),
+                                        userTokens: updatedTokens,
+                                      };
+
+                                      console.log('解绑设备发送的数据:', JSON.stringify(saveData, null, 2));
+                                      console.log('解绑后的userTokens详情:', saveData.userTokens.map(t => ({
+                                        username: t.username,
+                                        devicesCount: t.devices?.length || 0,
+                                        devices: t.devices
+                                      })));
+                                      const response = await fetch('/api/admin/tvbox-security', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(saveData),
+                                      });
+
+                                      if (response.ok) {
+                                        showSuccess('设备已解绑');
+                                        // 延迟一下再加载配置，确保缓存清除
+                                        setTimeout(async () => {
+                                          await loadConfig();
+                                        }, 500);
+                                      } else {
+                                        const errorData = await response.json();
+                                        console.error('解绑失败:', errorData);
+                                        showError(errorData.error || '解绑失败');
+                                      }
+                                    }}
+                                    className='text-xs px-2 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-300 rounded transition-colors'
+                                    title='解绑设备'
+                                  >
+                                    解绑
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+                    <svg
+                      className='mx-auto h-12 w-12 text-gray-400'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+                      />
+                    </svg>
+                    <p className='text-sm'>暂无绑定设备</p>
+                    <p className='text-xs mt-1'>用户使用Token后会自动绑定设备</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -999,7 +1259,7 @@ function TVBoxConfigContent() {
               className='flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50'
             >
               <Save size={16} />
-              <span>{isLoading ? '保存中...' : '保存配置'}</span>
+              <span>{isLoading('saveTVBoxConfig') ? '保存中...' : '保存配置'}</span>
             </button>
           </div>
         </div>

@@ -773,7 +773,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
         ></div>
       </div>
       <div className='relative px-4 sm:px-6 lg:px-8'>
-        <div className='flex justify-between items-center h-14'>
+        <div className='flex justify-between items-center h-12'>
           {/* Logo */}
           <div className='flex items-center flex-1'>
             <Link

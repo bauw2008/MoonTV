@@ -96,6 +96,10 @@ export async function POST(request: NextRequest) {
     // 清除缓存
     const { clearConfigCache } = await import('@/lib/config');
     clearConfigCache();
+    
+    // 清除18+词汇缓存，确保新添加的关键词立即生效
+    const { clearYellowWordsCache } = await import('@/lib/yellow');
+    clearYellowWordsCache();
 
     return NextResponse.json(
       {

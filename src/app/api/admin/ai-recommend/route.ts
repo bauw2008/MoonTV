@@ -107,11 +107,8 @@ export async function POST(request: NextRequest) {
             // 百度文心例外
 
             // 记录可能的配置问题，但不阻止保存
-            if (process.env.NODE_ENV === 'development') {
-              console.warn(`API地址可能缺少/v1后缀: ${apiUrl}`);
-            }
           }
-        } catch (error) {
+        } catch {
           return NextResponse.json(
             {
               error: 'API地址格式不正确',
@@ -179,7 +176,6 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error('Save AI recommend config error:', error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',

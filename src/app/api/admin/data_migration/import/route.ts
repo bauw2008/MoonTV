@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     let decryptedData: string;
     try {
       decryptedData = SimpleCrypto.decrypt(encryptedData, password);
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: '解密失败，请检查密码是否正确' },
         { status: 400 },
