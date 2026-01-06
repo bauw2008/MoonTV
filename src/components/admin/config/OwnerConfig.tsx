@@ -171,10 +171,10 @@ function OwnerConfigContent() {
                 </div>
                 <div>
                   <h3 className='font-semibold text-red-700 dark:text-red-400'>
-                    站点维护模式（测试）
+                    维护模式（测试）
                   </h3>
                   <p className='text-sm text-red-600 dark:text-red-500'>
-                    启用后，普通用户无法访问站点
+                    限制普通用户访问站点
                   </p>
                 </div>
               </div>
@@ -219,7 +219,7 @@ function OwnerConfigContent() {
                     调试模式（测试）
                   </h3>
                   <p className='text-sm text-yellow-600 dark:text-yellow-500'>
-                    启用后，显示详细的调试信息
+                    显示详细的调试信息
                   </p>
                 </div>
               </div>
@@ -258,7 +258,7 @@ function OwnerConfigContent() {
                 </div>
                 <div>
                   <h3 className='font-semibold text-purple-700 dark:text-purple-400'>
-                    最大用户数限制（测试）
+                    用户数限制（测试）
                   </h3>
                   <p className='text-sm text-purple-600 dark:text-purple-500'>
                     限制站点最大用户数量
@@ -292,7 +292,7 @@ function OwnerConfigContent() {
                 <button
                   onClick={handleResetAllConfigs}
                   disabled={isLoading('resetAllConfigs')}
-                  className='px-2 py-1.5 sm:px-4 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center space-x-2 disabled:opacity-50'
+                  className='px-2 py-1.5 sm:px-4 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm font-medium flex items-center space-x-2 disabled:opacity-50'
                 >
                   {isLoading('resetAllConfigs') ? (
                     <>
@@ -353,7 +353,7 @@ function OwnerConfigContent() {
                         showError('清理失败');
                       }
                     }}
-                    className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium flex items-center space-x-2'
+                    className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow hover:shadow-md text-xs sm:text-sm font-medium flex items-center space-x-2'
                   >
                     <svg
                       className='w-4 h-4'
@@ -375,7 +375,7 @@ function OwnerConfigContent() {
                 <button
                   onClick={handleSave}
                   disabled={isLoading('saveOwnerConfig')}
-                  className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
+                  className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all shadow hover:shadow-md text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
                 >
                   {isLoading('saveOwnerConfig') ? (
                     <>
