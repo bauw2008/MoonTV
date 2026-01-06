@@ -4,12 +4,10 @@ import { ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 interface TMDBSettings {
   TMDBApiKey: string;
@@ -27,44 +25,12 @@ const languageOptions = [
 ];
 
 function TMDBConfigContent() {
-  // 使用统一的 hooks
-  const { isAdminOrOwner } = useAdminAuthSimple();
-  const { withLoading, isLoading } = useAdminLoading();
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
+  const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <CollapsibleTab
-        title='TMDB配置'
-        theme='purple'
-        icon={
-          <svg
-            className='w-5 h-5 text-purple-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4'
-            />
-          </svg>
-        }
-        defaultCollapsed
-      >
-        <div className='p-6 text-center text-red-500'>
-          <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-          <p>您没有权限访问TMDB配置功能</p>
-        </div>
-      </CollapsibleTab>
-    );
-  }
 
   // TMDB配置状态 - 使用合理的默认值
   const [tmdbSettings, setTmdbSettings] = useState<TMDBSettings>({
@@ -74,6 +40,7 @@ function TMDBConfigContent() {
     EnableTMDBPosters: false,
   });
 
+  // 加载配置
   const loadConfig = useCallback(async () => {
     try {
       await withLoading('loadTMDBConfig', async () => {
@@ -97,9 +64,39 @@ function TMDBConfigContent() {
     }
   }, []);
 
+  // 初始化加载
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问TMDB配置功能</p>
+      </div>
+    );
+  }
 
   const saveConfig = async () => {
     try {
@@ -123,27 +120,7 @@ function TMDBConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='TMDB配置'
-      theme='purple'
-      icon={
-        <svg
-          className='w-5 h-5 text-purple-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4'
-          />
-        </svg>
-      }
-      isExpanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
-    >
+    <div className='p-6'>
       {isLoading('loadTMDBConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
@@ -291,11 +268,12 @@ function TMDBConfigContent() {
           </div>
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
-// 导出组件
-export function TMDBConfig() {
+function TMDBConfig() {
   return <TMDBConfigContent />;
 }
+
+export default TMDBConfig;

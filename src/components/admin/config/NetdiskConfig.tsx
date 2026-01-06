@@ -4,12 +4,10 @@ import { Clock, Save, Shield } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 interface NetDiskSettings {
   enabled: boolean;
@@ -19,79 +17,21 @@ interface NetDiskSettings {
 }
 
 function NetdiskConfigContent() {
-  // 使用统一的 hooks
-  const { isAdminOrOwner } = useAdminAuthSimple();
-  const { withLoading, isLoading } = useAdminLoading();
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
+  const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <CollapsibleTab
-        title='网盘配置'
-        theme='purple'
-        icon={
-          <svg
-            className='w-5 h-5 text-purple-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
-            />
-          </svg>
-        }
-        defaultCollapsed
-      >
-        <div className='p-6 text-center text-red-500'>
-          <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-          <p>您没有权限访问网盘配置功能</p>
-        </div>
-      </CollapsibleTab>
-    );
-  }
 
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
-  const [expanded, setExpanded] = useState(false);
+
   const [netDiskSettings, setNetDiskSettings] = useState<NetDiskSettings>({
     enabled: true,
-    pansouUrl: 'https://so.252035.xyz',
-    timeout: 30,
-    enabledCloudTypes: [
-      'baidu',
-      'aliyun',
-      'quark',
-      'tianyi',
-      'uc',
-      'mobile',
-      '115',
-      'pikpak',
-      'xunlei',
-      '123',
-      'magnet',
-      'ed2k',
-    ],
+    pansouUrl: 'https://pansou.com',
+    timeout: 5000,
+    enabledCloudTypes: ['aliyun', '115', 'quark'],
   });
 
-  // 网盘类型选项
-  const CLOUD_TYPE_OPTIONS = [
-    { key: 'baidu', name: '百度网盘', icon: '📁' },
-    { key: 'aliyun', name: '阿里云盘', icon: '☁️' },
-    { key: 'quark', name: '夸克网盘', icon: '⚡' },
-    { key: 'tianyi', name: '天翼云盘', icon: '📱' },
-    { key: 'uc', name: 'UC网盘', icon: '🌐' },
-    { key: 'mobile', name: '移动云盘', icon: '📲' },
-    { key: '115', name: '115网盘', icon: '💾' },
-    { key: 'pikpak', name: 'PikPak', icon: '📦' },
-    { key: 'xunlei', name: '迅雷网盘', icon: '⚡' },
-    { key: '123', name: '123网盘', icon: '🔢' },
-    { key: 'magnet', name: '磁力链接', icon: '🧲' },
-    { key: 'ed2k', name: '电驴链接', icon: '🐴' },
-  ];
-
+  // 加载配置
   const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config');
@@ -118,9 +58,55 @@ function NetdiskConfigContent() {
     }
   }, []);
 
+  // 初始化加载
   useEffect(() => {
     withLoading('loadNetdiskConfig', loadConfig);
   }, [loadConfig]);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问网盘配置功能</p>
+      </div>
+    );
+  }
+
+  // 网盘类型选项
+  const CLOUD_TYPE_OPTIONS = [
+    { key: 'baidu', name: '百度网盘', icon: '📁' },
+    { key: 'aliyun', name: '阿里云盘', icon: '☁️' },
+    { key: 'quark', name: '夸克网盘', icon: '⚡' },
+    { key: 'tianyi', name: '天翼云盘', icon: '📱' },
+    { key: 'uc', name: 'UC网盘', icon: '🌐' },
+    { key: 'mobile', name: '移动云盘', icon: '📲' },
+    { key: '115', name: '115网盘', icon: '💾' },
+    { key: 'pikpak', name: 'PikPak', icon: '📦' },
+    { key: 'xunlei', name: '迅雷网盘', icon: '⚡' },
+    { key: '123', name: '123网盘', icon: '🔢' },
+    { key: 'magnet', name: '磁力链接', icon: '🧲' },
+    { key: 'ed2k', name: '电驴链接', icon: '🐴' },
+  ];
 
   const handleSave = async () => {
     console.log('[NetdiskConfig] handleSave 被调用');
@@ -197,27 +183,7 @@ function NetdiskConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='网盘配置'
-      theme='purple'
-      icon={
-        <svg
-          className='w-5 h-5 text-purple-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
-          />
-        </svg>
-      }
-      isExpanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
-    >
+    <div className='p-6'>
       {isLoading('loadNetdiskConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
@@ -238,11 +204,19 @@ function NetdiskConfigContent() {
                     : '已禁用网盘搜索功能，用户将无法使用网盘搜索'}
                 </p>
               </div>
-              <div className='relative inline-flex items-center cursor-pointer' onClick={() => {
+              <div
+                className='relative inline-flex items-center cursor-pointer'
+                onClick={() => {
                   const newState = !netDiskSettings.enabled;
-                  console.log('[NetdiskConfig] 开关点击，当前值:', netDiskSettings.enabled, '新值:', newState);
+                  console.log(
+                    '[NetdiskConfig] 开关点击，当前值:',
+                    netDiskSettings.enabled,
+                    '新值:',
+                    newState,
+                  );
                   handleToggleChange(newState);
-                }}>
+                }}
+              >
                 <input
                   type='checkbox'
                   checked={netDiskSettings.enabled}
@@ -397,11 +371,12 @@ function NetdiskConfigContent() {
           )}
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
-// 导出组件
-export function NetdiskConfig() {
+function NetdiskConfig() {
   return <NetdiskConfigContent />;
 }
+
+export default NetdiskConfig;

@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
     const isValidSignature = await verifySignature(
       authInfo.username,
       authInfo.signature,
-      process.env.PASSWORD || ''
+      process.env.PASSWORD || '',
     );
 
     // 签名验证通过即可
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
 async function verifySignature(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -76,12 +76,12 @@ async function verifySignature(
       keyData,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['verify']
+      ['verify'],
     );
 
     // 将十六进制字符串转换为Uint8Array
     const signatureBuffer = new Uint8Array(
-      signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
+      signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
     );
 
     // 验证签名
@@ -89,7 +89,7 @@ async function verifySignature(
       'HMAC',
       key,
       signatureBuffer,
-      messageData
+      messageData,
     );
   } catch (error) {
     console.error('签名验证失败:', error);
@@ -100,7 +100,7 @@ async function verifySignature(
 // 处理认证失败的情况
 function handleAuthFailure(
   request: NextRequest,
-  pathname: string
+  pathname: string,
 ): NextResponse {
   // 如果是 API 路由，返回 401 状态码
   if (pathname.startsWith('/api')) {

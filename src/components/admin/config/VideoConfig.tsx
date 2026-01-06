@@ -43,8 +43,6 @@ import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
 interface DataSource {
   name: string;
   key: string;
@@ -650,26 +648,7 @@ function VideoConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='视频配置'
-      theme='green'
-      icon={
-        <svg
-          className='w-5 h-5 text-green-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
-          />
-        </svg>
-      }
-      defaultCollapsed={true}
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
@@ -854,7 +833,7 @@ function VideoConfigContent() {
         )}
 
         {/* 有效性检测 - 移到拖拽区域外面 */}
-        <div className='bg-white dark:bg-gray-800 border rounded-lg p-6 shadow-sm'>
+        <div className='bg-gradient-to-br from-pink-50/40 via-rose-50/30 to-purple-50/20 dark:from-pink-900/20 dark:via-rose-900/15 dark:to-purple-900/10 border border-pink-200/50 dark:border-pink-800/50 rounded-lg p-6 shadow-sm backdrop-blur-sm'>
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
               视频源有效性检测
@@ -868,7 +847,7 @@ function VideoConfigContent() {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               placeholder='输入搜索关键词进行检测'
-              className='flex-1 px-4 py-3 border border-pink-300 dark:border-pink-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500 focus:border-transparent'
+              className='flex-1 px-4 py-3 border border-pink-300/50 dark:border-pink-600/50 rounded-lg bg-white/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500/50 focus:border-transparent backdrop-blur-sm'
             />
             <button
               onClick={handleValidateSources}
@@ -887,7 +866,7 @@ function VideoConfigContent() {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               placeholder='输入搜索关键词进行检测'
-              className='w-full px-4 py-3 border border-pink-300 dark:border-pink-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500 focus:border-transparent text-base'
+              className='w-full px-4 py-3 border border-pink-300/50 dark:border-pink-600/50 rounded-lg bg-white/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500/50 focus:border-transparent text-base backdrop-blur-sm'
             />
             <button
               onClick={handleValidateSources}
@@ -988,10 +967,12 @@ function VideoConfigContent() {
           )}
         </div>
       </div>
-    </CollapsibleTab>
+    </div>
   );
 }
 
-export function VideoConfig() {
+function VideoConfig() {
   return <VideoConfigContent />;
 }
+
+export default VideoConfig;

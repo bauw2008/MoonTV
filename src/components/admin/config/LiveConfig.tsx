@@ -33,8 +33,6 @@ import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
 interface LiveDataSource {
   name: string;
   key: string;
@@ -325,7 +323,7 @@ const SortableLiveItem = ({
           </div>
         </div>
 
-        <div className='bg-white dark:bg-gray-700 p-3 rounded-lg'>
+        <div className='bg-gradient-to-r from-blue-50/40 via-cyan-50/30 to-teal-50/20 dark:from-blue-900/20 dark:via-cyan-900/15 dark:to-teal-900/10 p-3 rounded-lg border border-blue-200/30 dark:border-blue-800/30 backdrop-blur-sm'>
           <div className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
             URL:
           </div>
@@ -623,26 +621,7 @@ function LiveConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='直播配置'
-      theme='green'
-      icon={
-        <svg
-          className='w-5 h-5 text-green-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
-          />
-        </svg>
-      }
-      defaultCollapsed={true}
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -813,7 +792,7 @@ function LiveConfigContent() {
         )}
 
         {/* 直播源列表 */}
-        <div className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6'>
+        <div className='bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-teal-50/10 dark:from-blue-900/15 dark:via-cyan-900/10 dark:to-teal-900/5 border border-blue-200/40 dark:border-blue-800/40 rounded-lg p-6 backdrop-blur-sm'>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -840,11 +819,12 @@ function LiveConfigContent() {
           </DndContext>
         </div>
       </div>
-    </CollapsibleTab>
+    </div>
   );
 }
 
 // 导出组件
-export function LiveConfig() {
+function LiveConfig() {
   return <LiveConfigContent />;
 }
+export default LiveConfig;

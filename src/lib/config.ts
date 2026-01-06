@@ -278,7 +278,7 @@ async function getInitConfig(
     enableAuth: false,
     token: '',
     enableRateLimit: false,
-    rateLimit: 60,
+    rateLimit: 30,
     enableDeviceBinding: false,
     maxDevices: 1,
     enableUserAgentWhitelist: false,
@@ -625,7 +625,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       enableAuth: false,
       token: '',
       enableRateLimit: false,
-      rateLimit: 60,
+      rateLimit: 30,
       enableDeviceBinding: false,
       maxDevices: 1,
       enableUserAgentWhitelist: false,
@@ -751,12 +751,13 @@ export async function resetConfig() {
     },
   };
 
-  // 重置 TVBox 安全配置为默认值
+  // 重置 TVBox 安全配置为默认值，但保留用户 Token
+  const existingUserTokens = originConfig.TVBoxSecurityConfig?.userTokens || [];
   adminConfig.TVBoxSecurityConfig = {
     enableAuth: false,
     token: '',
     enableRateLimit: false,
-    rateLimit: 60,
+    rateLimit: 30,
     enableDeviceBinding: false,
     maxDevices: 1,
     enableUserAgentWhitelist: false,
@@ -768,7 +769,7 @@ export async function resetConfig() {
       'Java',
     ],
     currentDevices: [],
-    userTokens: [],
+    userTokens: existingUserTokens, // 保留现有的用户 Token
   };
 
   // 重置 YellowWords 为默认值

@@ -4,59 +4,25 @@ import { Plus, Save, Shield, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
 function YellowConfigContent() {
   // 使用统一的 hooks
-  const { isAdminOrOwner } = useAdminAuthSimple();
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
   const { withLoading, isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <CollapsibleTab
-        title='18+配置'
-        theme='green'
-        icon={
-          <svg
-            className='w-5 h-5 text-green-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
-            />
-          </svg>
-        }
-        defaultCollapsed={true}
-      >
-        <div className='p-6 text-center text-red-500'>
-          <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-          <p>您没有权限访问18+配置功能</p>
-        </div>
-      </CollapsibleTab>
-    );
-  }
-
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
   const [yellowWords, setYellowWords] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [filterEnabled, setFilterEnabled] = useState(true);
+  const [newWord, setNewWord] = useState('');
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
+  // 加载配置
   const loadConfig = async () => {
     await withLoading('loadYellowConfig', async () => {
       try {
@@ -75,6 +41,41 @@ function YellowConfigContent() {
       }
     });
   };
+
+  // 初始化加载
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>权限验证过程中出现错误，请稍后重试</p>
+      </div>
+    );
+  }
+
+  // 非管理员或站长禁止访问
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问18+配置功能</p>
+      </div>
+    );
+  }
 
   const saveConfig = async () => {
     await withLoading('saveYellowConfig', async () => {
@@ -116,8 +117,6 @@ function YellowConfigContent() {
     });
   };
 
-  const [newWord, setNewWord] = useState('');
-
   const addWord = () => {
     if (newWord && newWord.trim()) {
       // 检查是否已存在
@@ -151,26 +150,7 @@ function YellowConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='18+配置'
-      theme='green'
-      icon={
-        <svg
-          className='w-5 h-5 text-green-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
-          />
-        </svg>
-      }
-      defaultCollapsed={true}
-    >
+    <div className='p-6'>
       {isLoading('loadYellowConfig') ? (
         <div className='text-center py-12'>
           <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
@@ -397,11 +377,12 @@ function YellowConfigContent() {
           )}
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
-// 导出组件
-export function YellowConfig() {
+function YellowConfig() {
   return <YellowConfigContent />;
 }
+
+export default YellowConfig;

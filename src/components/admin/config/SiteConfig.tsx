@@ -7,8 +7,6 @@ import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
 
 import { menuLabels, MenuSettings } from '@/types/menu';
@@ -70,7 +68,6 @@ const doubanImageProxyTypeOptions = [
 function SiteConfigContent() {
   const { updateMenuSettings, forceUpdate } = useNavigationConfig();
   const [config, setConfig] = useState<any>(null);
-  const [expanded, setExpanded] = useState(false);
 
   // 使用统一接口
   const { isLoading } = useAdminLoading();
@@ -294,13 +291,7 @@ function SiteConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='站点配置'
-      theme='blue'
-      icon={<Globe size={20} className='text-blue-500' />}
-      isExpanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
-    >
+    <div className='p-6'>
       {isLoading('api_/api/admin/config') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
@@ -613,11 +604,13 @@ function SiteConfigContent() {
           </div>
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
 // 导出组件
-export function SiteConfig() {
+function SiteConfig() {
   return <SiteConfigContent />;
 }
+
+export default SiteConfig;

@@ -18,12 +18,11 @@ import {
 import { useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 interface UserToken {
   username: string;
@@ -50,6 +49,10 @@ interface SecuritySettings {
     bindTime: number;
   }>;
   userTokens: UserToken[];
+  configGenerator?: {
+    configMode: 'standard' | 'safe' | 'fast' | 'yingshicang';
+    format: 'json' | 'base64';
+  };
 }
 
 interface SmartHealthResult {
@@ -98,20 +101,11 @@ interface SmartHealthResult {
 
 function TVBoxConfigContent() {
   // 使用统一的 hooks
-  const { isAdminOrOwner } = useAdminAuthSimple();
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess, showWarning } = useToastNotification();
 
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <div className='p-6 text-center text-red-500'>
-        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-        <p>您没有权限访问TVBox配置功能</p>
-      </div>
-    );
-  }
-
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
   const [showToken, setShowToken] = useState(false);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -129,7 +123,6 @@ function TVBoxConfigContent() {
   const [newUAName, setNewUAName] = useState('');
   const [newUAValue, setNewUAValue] = useState('');
   const [showUAList, setShowUAList] = useState(false);
-  
 
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     enableRateLimit: false,
@@ -144,33 +137,12 @@ function TVBoxConfigContent() {
       'Dalvik',
       'Java',
     ],
-    defaultUserGroup: '',
+    defaultUserGroup: 'user',
     currentDevices: [],
-    userTokens: [
-      {
-        username: 'admin',
-        token: generateToken(),
-        enabled: true,
-        devices: [],
-      },
-    ],
+    userTokens: [],
   });
 
-  // 生成随机Token
-  function generateToken() {
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 32; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  }
-
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
+  // 加载配置
   const loadConfig = async () => {
     await withLoading('loadTVBoxConfig', async () => {
       try {
@@ -186,25 +158,78 @@ function TVBoxConfigContent() {
             maxDevices: data.securityConfig.maxDevices ?? 1,
             enableUserAgentWhitelist:
               data.securityConfig.enableUserAgentWhitelist ?? false,
-            allowedUserAgents: data.securityConfig.allowedUserAgents || [
+            allowedUserAgents: data.securityConfig.allowedUserAgents ?? [
               'okHttp/Mod-1.4.0.0',
               'TVBox',
               'OKHTTP',
               'Dalvik',
               'Java',
             ],
-            defaultUserGroup:
-              (data.securityConfig as any).defaultUserGroup || '',
-            currentDevices: data.securityConfig.currentDevices || [],
-            userTokens: data.securityConfig.userTokens || [],
+            defaultUserGroup: data.securityConfig.defaultUserGroup ?? '',
+            currentDevices: data.securityConfig.currentDevices ?? [],
+            userTokens: data.securityConfig.userTokens ?? [],
           });
+
+          // 加载配置生成器设置
+          if (data.securityConfig.configGenerator) {
+            setConfigMode(
+              data.securityConfig.configGenerator.configMode || 'standard',
+            );
+            setFormat(data.securityConfig.configGenerator.format || 'json');
+          }
         }
+        showSuccess('配置加载成功');
       } catch (error) {
-        console.error('加载TVBox配置失败:', error);
-        showError('加载TVBox配置失败');
+        showError('加载配置失败');
       }
     });
   };
+
+  // 初始化加载
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // 非管理员或站长禁止访问
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问TVBox配置功能</p>
+      </div>
+    );
+  }
+
+  // 生成随机Token
+  function generateToken() {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 32; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
 
   const handleSave = async () => {
     await withLoading('saveTVBoxConfig', async () => {
@@ -217,8 +242,9 @@ function TVBoxConfigContent() {
           return;
         }
 
+        // 保存所有配置（配置生成器需要完整的配置）
         const saveData = {
-          enableAuth: false,
+          enableAuth: securitySettings.enableDeviceBinding,
           token: '',
           enableRateLimit: securitySettings.enableRateLimit,
           rateLimit: securitySettings.rateLimit,
@@ -230,8 +256,12 @@ function TVBoxConfigContent() {
             (user) => user.devices,
           ),
           userTokens: securitySettings.userTokens,
+          // 添加配置生成器设置
+          configGenerator: {
+            configMode,
+            format,
+          },
         };
-
         const response = await fetch('/api/admin/tvbox-security', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -243,7 +273,7 @@ function TVBoxConfigContent() {
           throw new Error(errorData.error || '保存失败');
         }
 
-        showSuccess('TVBox安全配置保存成功！');
+        showSuccess('TVBox配置保存成功！');
         await loadConfig();
       } catch (error) {
         showError(error instanceof Error ? error.message : '保存失败');
@@ -417,26 +447,7 @@ function TVBoxConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='TVBox配置'
-      theme='purple'
-      icon={
-        <svg
-          className='w-5 h-5 text-purple-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
-          />
-        </svg>
-      }
-      defaultCollapsed
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
@@ -515,12 +526,130 @@ function TVBoxConfigContent() {
               <input
                 type='checkbox'
                 checked={securitySettings.enableRateLimit}
-                onChange={(e) =>
+                onChange={async (e) => {
+                  const newEnableRateLimit = e.target.checked;
+
+                  // 立即更新本地状态，让UI立即响应
                   setSecuritySettings((prev) => ({
                     ...prev,
-                    enableRateLimit: e.target.checked,
-                  }))
-                }
+                    enableRateLimit: newEnableRateLimit,
+                  }));
+
+                  try {
+                    // 获取当前完整配置
+                    try {
+                      const currentResponse = await fetch('/api/tvbox-config');
+                      const currentData = await currentResponse.json();
+
+                      // 构建完整的配置对象，只更新频率限制相关字段
+                      const saveData = {
+                        enableAuth:
+                          currentData.securityConfig?.enableAuth || false,
+                        token: currentData.securityConfig?.token || '',
+                        enableRateLimit: newEnableRateLimit,
+                        rateLimit: securitySettings.rateLimit,
+                        enableDeviceBinding:
+                          currentData.securityConfig?.enableDeviceBinding ||
+                          false,
+                        maxDevices: currentData.securityConfig?.maxDevices || 1,
+                        enableUserAgentWhitelist:
+                          currentData.securityConfig
+                            ?.enableUserAgentWhitelist || false,
+                        allowedUserAgents:
+                          currentData.securityConfig?.allowedUserAgents || [],
+                        currentDevices:
+                          currentData.securityConfig?.currentDevices || [],
+                        userTokens:
+                          currentData.securityConfig?.userTokens || [],
+                      };
+
+                      const response = await fetch(
+                        '/api/admin/tvbox-security',
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(saveData),
+                        },
+                      );
+
+                      if (response.ok) {
+                        showSuccess(
+                          `频率限制已${newEnableRateLimit ? '开启' : '关闭'}`,
+                        );
+                      } else {
+                        // 如果保存失败，恢复状态
+                        setSecuritySettings((prev) => ({
+                          ...prev,
+                          enableRateLimit: !newEnableRateLimit,
+                        }));
+
+                        // 尝试获取更详细的错误信息
+                        const errorData = await response
+                          .json()
+                          .catch(() => ({}));
+                        throw new Error(errorData.error || '保存失败');
+                      }
+                    } catch (fetchError) {
+                      // 如果获取当前配置失败，使用本地状态
+                      console.error(
+                        '获取当前配置失败，使用本地状态:',
+                        fetchError,
+                      );
+
+                      const saveData = {
+                        enableAuth: false,
+                        token: '',
+                        enableRateLimit: newEnableRateLimit,
+                        rateLimit: securitySettings.rateLimit,
+                        enableDeviceBinding:
+                          securitySettings.enableDeviceBinding,
+                        maxDevices: securitySettings.maxDevices,
+                        enableUserAgentWhitelist:
+                          securitySettings.enableUserAgentWhitelist,
+                        allowedUserAgents: securitySettings.allowedUserAgents,
+                        currentDevices: securitySettings.userTokens.flatMap(
+                          (user) => user.devices,
+                        ),
+                        userTokens: securitySettings.userTokens,
+                      };
+
+                      const response = await fetch(
+                        '/api/admin/tvbox-security',
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(saveData),
+                        },
+                      );
+
+                      if (response.ok) {
+                        showSuccess(
+                          `频率限制已${newEnableRateLimit ? '开启' : '关闭'}`,
+                        );
+                      } else {
+                        // 如果保存失败，恢复状态
+                        setSecuritySettings((prev) => ({
+                          ...prev,
+                          enableRateLimit: !newEnableRateLimit,
+                        }));
+
+                        // 尝试获取更详细的错误信息
+                        const errorData = await response
+                          .json()
+                          .catch(() => ({}));
+                        throw new Error(errorData.error || '保存失败');
+                      }
+                    }
+                  } catch (error) {
+                    console.error('保存频率限制失败:', error);
+                    // 如果保存失败，恢复状态
+                    setSecuritySettings((prev) => ({
+                      ...prev,
+                      enableRateLimit: !newEnableRateLimit,
+                    }));
+                    showError('保存失败: ' + (error as Error).message);
+                  }
+                }}
                 className='sr-only peer'
               />
               <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -568,12 +697,129 @@ function TVBoxConfigContent() {
               <input
                 type='checkbox'
                 checked={securitySettings.enableUserAgentWhitelist}
-                onChange={(e) =>
+                onChange={async (e) => {
+                  const newEnableUserAgentWhitelist = e.target.checked;
+
+                  // 立即更新本地状态，让UI立即响应
                   setSecuritySettings((prev) => ({
                     ...prev,
-                    enableUserAgentWhitelist: e.target.checked,
-                  }))
-                }
+                    enableUserAgentWhitelist: newEnableUserAgentWhitelist,
+                  }));
+
+                  try {
+                    // 获取当前完整配置
+                    try {
+                      const currentResponse = await fetch('/api/tvbox-config');
+                      const currentData = await currentResponse.json();
+
+                      // 构建完整的配置对象，只更新User-Agent白名单相关字段
+                      const saveData = {
+                        enableAuth:
+                          currentData.securityConfig?.enableAuth || false,
+                        token: currentData.securityConfig?.token || '',
+                        enableRateLimit:
+                          currentData.securityConfig?.enableRateLimit || false,
+                        rateLimit: currentData.securityConfig?.rateLimit || 30,
+                        enableDeviceBinding:
+                          currentData.securityConfig?.enableDeviceBinding ||
+                          false,
+                        maxDevices: currentData.securityConfig?.maxDevices || 1,
+                        enableUserAgentWhitelist: newEnableUserAgentWhitelist,
+                        allowedUserAgents: securitySettings.allowedUserAgents,
+                        currentDevices:
+                          currentData.securityConfig?.currentDevices || [],
+                        userTokens:
+                          currentData.securityConfig?.userTokens || [],
+                      };
+
+                      const response = await fetch(
+                        '/api/admin/tvbox-security',
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(saveData),
+                        },
+                      );
+
+                      if (response.ok) {
+                        showSuccess(
+                          `User-Agent白名单已${newEnableUserAgentWhitelist ? '开启' : '关闭'}`,
+                        );
+                      } else {
+                        // 如果保存失败，恢复状态
+                        setSecuritySettings((prev) => ({
+                          ...prev,
+                          enableUserAgentWhitelist:
+                            !newEnableUserAgentWhitelist,
+                        }));
+
+                        // 尝试获取更详细的错误信息
+                        const errorData = await response
+                          .json()
+                          .catch(() => ({}));
+                        throw new Error(errorData.error || '保存失败');
+                      }
+                    } catch (fetchError) {
+                      // 如果获取当前配置失败，使用本地状态
+                      console.error(
+                        '获取当前配置失败，使用本地状态:',
+                        fetchError,
+                      );
+
+                      const saveData = {
+                        enableAuth: false,
+                        token: '',
+                        enableRateLimit: securitySettings.enableRateLimit,
+                        rateLimit: securitySettings.rateLimit,
+                        enableDeviceBinding:
+                          securitySettings.enableDeviceBinding,
+                        maxDevices: securitySettings.maxDevices,
+                        enableUserAgentWhitelist: newEnableUserAgentWhitelist,
+                        allowedUserAgents: securitySettings.allowedUserAgents,
+                        currentDevices: securitySettings.userTokens.flatMap(
+                          (user) => user.devices,
+                        ),
+                        userTokens: securitySettings.userTokens,
+                      };
+
+                      const response = await fetch(
+                        '/api/admin/tvbox-security',
+                        {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(saveData),
+                        },
+                      );
+
+                      if (response.ok) {
+                        showSuccess(
+                          `User-Agent白名单已${newEnableUserAgentWhitelist ? '开启' : '关闭'}`,
+                        );
+                      } else {
+                        // 如果保存失败，恢复状态
+                        setSecuritySettings((prev) => ({
+                          ...prev,
+                          enableUserAgentWhitelist:
+                            !newEnableUserAgentWhitelist,
+                        }));
+
+                        // 尝试获取更详细的错误信息
+                        const errorData = await response
+                          .json()
+                          .catch(() => ({}));
+                        throw new Error(errorData.error || '保存失败');
+                      }
+                    }
+                  } catch (error) {
+                    console.error('保存User-Agent白名单失败:', error);
+                    // 如果保存失败，恢复状态
+                    setSecuritySettings((prev) => ({
+                      ...prev,
+                      enableUserAgentWhitelist: !newEnableUserAgentWhitelist,
+                    }));
+                    showError('保存失败: ' + (error as Error).message);
+                  }
+                }}
                 className='sr-only peer'
               />
               <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -702,12 +948,110 @@ function TVBoxConfigContent() {
               <input
                 type='checkbox'
                 checked={securitySettings.enableDeviceBinding}
-                onChange={(e) =>
+                onChange={async (e) => {
+                  const newEnableDeviceBinding = e.target.checked;
+                  const oldEnableDeviceBinding =
+                    securitySettings.enableDeviceBinding;
+
+                  // 立即更新本地状态，让UI立即响应
                   setSecuritySettings((prev) => ({
                     ...prev,
-                    enableDeviceBinding: e.target.checked,
-                  }))
-                }
+                    enableDeviceBinding: newEnableDeviceBinding,
+                  }));
+
+                  try {
+                    let userTokens = [...securitySettings.userTokens];
+
+                    // 如果是开启操作，确保有当前用户的token
+                    if (newEnableDeviceBinding) {
+                      const authInfo = getAuthInfoFromBrowserCookie();
+                      const currentUsername = authInfo?.username;
+
+                      if (currentUsername) {
+                        // 如果当前用户没有token，添加一个
+                        if (
+                          !userTokens.find(
+                            (t) => t.username === currentUsername,
+                          )
+                        ) {
+                          const chars =
+                            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                          let token = '';
+                          for (let i = 0; i < 32; i++) {
+                            token += chars.charAt(
+                              Math.floor(Math.random() * chars.length),
+                            );
+                          }
+
+                          userTokens.push({
+                            username: currentUsername,
+                            token,
+                            enabled: true,
+                            devices: [],
+                          });
+
+                          // 立即更新用户Tokens状态
+                          setSecuritySettings((prev) => ({
+                            ...prev,
+                            userTokens,
+                          }));
+                        }
+                      }
+                    }
+
+                    // 构建简化的配置对象
+                    const saveData = {
+                      enableAuth: newEnableDeviceBinding, // 当启用设备绑定时启用Token验证
+                      token: '',
+                      enableRateLimit:
+                        securitySettings.enableRateLimit || false,
+                      rateLimit: securitySettings.rateLimit || 30,
+                      enableDeviceBinding: newEnableDeviceBinding,
+                      maxDevices: securitySettings.maxDevices || 5,
+                      enableUserAgentWhitelist:
+                        securitySettings.enableUserAgentWhitelist || false,
+                      allowedUserAgents:
+                        securitySettings.allowedUserAgents || [],
+                      currentDevices: userTokens.flatMap(
+                        (user) => user.devices,
+                      ),
+                      userTokens: userTokens,
+                    };
+
+                    const response = await fetch('/api/admin/tvbox-security', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(saveData),
+                    });
+
+                    if (response.ok) {
+                      showSuccess(
+                        `设备绑定功能已${newEnableDeviceBinding ? '开启' : '关闭'}`,
+                      );
+                    } else {
+                      // 如果保存失败，恢复状态
+                      setSecuritySettings((prev) => ({
+                        ...prev,
+                        enableDeviceBinding: oldEnableDeviceBinding,
+                      }));
+
+                      // 尝试获取更详细的错误信息
+                      const errorData = await response.json().catch(() => ({}));
+                      throw new Error(errorData.error || '保存失败');
+                    }
+                  } catch (error) {
+                    console.error('保存设备绑定失败:', error);
+                    // 如果保存失败，恢复状态
+                    setSecuritySettings((prev) => ({
+                      ...prev,
+                      enableDeviceBinding: oldEnableDeviceBinding,
+                    }));
+                    showError(
+                      '保存失败: ' +
+                        (error instanceof Error ? error.message : '未知错误'),
+                    );
+                  }
+                }}
                 className='sr-only peer'
               />
               <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -868,7 +1212,9 @@ function TVBoxConfigContent() {
                                     ...prev,
                                     userTokens: newTokens,
                                   }));
-                                  showSuccess(`${userToken.username}的Token已重新生成`);
+                                  showSuccess(
+                                    `${userToken.username}的Token已重新生成`,
+                                  );
                                 }}
                                 className='text-xs px-2 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded transition-colors'
                                 title='重新生成Token'
@@ -893,7 +1239,9 @@ function TVBoxConfigContent() {
                                     ? 'bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:hover:bg-yellow-700 text-yellow-700 dark:text-yellow-300'
                                     : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300'
                                 }`}
-                                title={userToken.enabled ? '禁用Token' : '启用Token'}
+                                title={
+                                  userToken.enabled ? '禁用Token' : '启用Token'
+                                }
                               >
                                 {userToken.enabled ? '禁用' : '启用'}
                               </button>
@@ -937,12 +1285,12 @@ function TVBoxConfigContent() {
                     <span className='text-xs text-gray-500 dark:text-gray-400'>
                       {securitySettings.userTokens.reduce(
                         (total, user) => total + user.devices.length,
-                        0
+                        0,
                       )}{' '}
                       台设备
                     </span>
                     {securitySettings.userTokens.some(
-                      (user) => user.devices.length > 0
+                      (user) => user.devices.length > 0,
                     ) && (
                       <button
                         onClick={async () => {
@@ -950,33 +1298,44 @@ function TVBoxConfigContent() {
                             (user) => ({
                               ...user,
                               devices: [],
-                            })
+                            }),
                           );
 
                           const saveData = {
-                            enableAuth: false,
+                            enableAuth: securitySettings.enableDeviceBinding,
                             token: '',
                             enableRateLimit: securitySettings.enableRateLimit,
                             rateLimit: securitySettings.rateLimit,
-                            enableDeviceBinding: securitySettings.enableDeviceBinding,
+                            enableDeviceBinding:
+                              securitySettings.enableDeviceBinding,
                             maxDevices: securitySettings.maxDevices,
-                            enableUserAgentWhitelist: securitySettings.enableUserAgentWhitelist,
-                            allowedUserAgents: securitySettings.allowedUserAgents,
+                            enableUserAgentWhitelist:
+                              securitySettings.enableUserAgentWhitelist,
+                            allowedUserAgents:
+                              securitySettings.allowedUserAgents,
                             currentDevices: [],
                             userTokens: clearedTokens,
                           };
-
-                          console.log('清空所有设备发送的数据:', JSON.stringify(saveData, null, 2));
-                          console.log('清空后的userTokens详情:', saveData.userTokens.map(t => ({
-                            username: t.username,
-                            devicesCount: t.devices?.length || 0,
-                            devices: t.devices
-                          })));
-                          const response = await fetch('/api/admin/tvbox-security', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(saveData),
-                          });
+                          console.log(
+                            '清空所有设备发送的数据:',
+                            JSON.stringify(saveData, null, 2),
+                          );
+                          console.log(
+                            '清空后的userTokens详情:',
+                            saveData.userTokens.map((t) => ({
+                              username: t.username,
+                              devicesCount: t.devices?.length || 0,
+                              devices: t.devices,
+                            })),
+                          );
+                          const response = await fetch(
+                            '/api/admin/tvbox-security',
+                            {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(saveData),
+                            },
+                          );
 
                           if (response.ok) {
                             showSuccess('已清空所有绑定设备');
@@ -999,7 +1358,7 @@ function TVBoxConfigContent() {
                 </div>
 
                 {securitySettings.userTokens.some(
-                  (user) => user.devices.length > 0
+                  (user) => user.devices.length > 0,
                 ) ? (
                   <div className='overflow-x-auto'>
                     <table className='w-full text-sm'>
@@ -1044,7 +1403,7 @@ function TVBoxConfigContent() {
                               </td>
                               <td className='py-3 px-4 text-gray-600 dark:text-gray-400 whitespace-nowrap'>
                                 {new Date(device.bindTime).toLocaleString(
-                                  'zh-CN'
+                                  'zh-CN',
                                 )}
                               </td>
                               <td className='py-3 px-4'>
@@ -1065,38 +1424,54 @@ function TVBoxConfigContent() {
                                                   devices: user.devices.filter(
                                                     (d) =>
                                                       d.deviceId !==
-                                                      device.deviceId
+                                                      device.deviceId,
                                                   ),
                                                 }
-                                              : user
+                                              : user,
                                         );
 
                                       const saveData = {
-                                        enableAuth: false,
+                                        enableAuth:
+                                          securitySettings.enableDeviceBinding,
                                         token: '',
-                                        enableRateLimit: securitySettings.enableRateLimit,
+                                        enableRateLimit:
+                                          securitySettings.enableRateLimit,
                                         rateLimit: securitySettings.rateLimit,
-                                        enableDeviceBinding: securitySettings.enableDeviceBinding,
+                                        enableDeviceBinding:
+                                          securitySettings.enableDeviceBinding,
                                         maxDevices: securitySettings.maxDevices,
-                                        enableUserAgentWhitelist: securitySettings.enableUserAgentWhitelist,
-                                        allowedUserAgents: securitySettings.allowedUserAgents,
+                                        enableUserAgentWhitelist:
+                                          securitySettings.enableUserAgentWhitelist,
+                                        allowedUserAgents:
+                                          securitySettings.allowedUserAgents,
                                         currentDevices: updatedTokens.flatMap(
                                           (user) => user.devices,
                                         ),
                                         userTokens: updatedTokens,
                                       };
 
-                                      console.log('解绑设备发送的数据:', JSON.stringify(saveData, null, 2));
-                                      console.log('解绑后的userTokens详情:', saveData.userTokens.map(t => ({
-                                        username: t.username,
-                                        devicesCount: t.devices?.length || 0,
-                                        devices: t.devices
-                                      })));
-                                      const response = await fetch('/api/admin/tvbox-security', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(saveData),
-                                      });
+                                      console.log(
+                                        '解绑设备发送的数据:',
+                                        JSON.stringify(saveData, null, 2),
+                                      );
+                                      console.log(
+                                        '解绑后的userTokens详情:',
+                                        saveData.userTokens.map((t) => ({
+                                          username: t.username,
+                                          devicesCount: t.devices?.length || 0,
+                                          devices: t.devices,
+                                        })),
+                                      );
+                                      const response = await fetch(
+                                        '/api/admin/tvbox-security',
+                                        {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify(saveData),
+                                        },
+                                      );
 
                                       if (response.ok) {
                                         showSuccess('设备已解绑');
@@ -1107,7 +1482,9 @@ function TVBoxConfigContent() {
                                       } else {
                                         const errorData = await response.json();
                                         console.error('解绑失败:', errorData);
-                                        showError(errorData.error || '解绑失败');
+                                        showError(
+                                          errorData.error || '解绑失败',
+                                        );
                                       }
                                     }}
                                     className='text-xs px-2 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-300 rounded transition-colors'
@@ -1118,7 +1495,7 @@ function TVBoxConfigContent() {
                                 </div>
                               </td>
                             </tr>
-                          ))
+                          )),
                         )}
                       </tbody>
                     </table>
@@ -1139,7 +1516,9 @@ function TVBoxConfigContent() {
                       />
                     </svg>
                     <p className='text-sm'>暂无绑定设备</p>
-                    <p className='text-xs mt-1'>用户使用Token后会自动绑定设备</p>
+                    <p className='text-xs mt-1'>
+                      用户使用Token后会自动绑定设备
+                    </p>
                   </div>
                 )}
               </div>
@@ -1259,7 +1638,9 @@ function TVBoxConfigContent() {
               className='flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50'
             >
               <Save size={16} />
-              <span>{isLoading('saveTVBoxConfig') ? '保存中...' : '保存配置'}</span>
+              <span>
+                {isLoading('saveTVBoxConfig') ? '保存中...' : '保存配置'}
+              </span>
             </button>
           </div>
         </div>
@@ -1395,11 +1776,13 @@ function TVBoxConfigContent() {
           </div>
         )}
       </div>
-    </CollapsibleTab>
+    </div>
   );
 }
 
 // 导出组件
-export function TVBoxConfig() {
+function TVBoxConfig() {
   return <TVBoxConfigContent />;
 }
+
+export default TVBoxConfig;

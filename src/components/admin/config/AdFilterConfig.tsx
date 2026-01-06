@@ -3,24 +3,11 @@
 import { AlertTriangle, Code, Info, RotateCcw, Save } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
-// 动态导入 Toast 组件
-const showToast = async (
-  message: string,
-  type: 'success' | 'error' = 'success',
-) => {
-  try {
-    const { ToastManager } = await import('@/components/Toast');
-    if (type === 'success') {
-      ToastManager?.success(message);
-    } else {
-      ToastManager?.error(message);
-    }
-  } catch (error) {
-    console.error('Toast notification failed:', error);
-  }
-};
+import {
+  useAdminAuth,
+  useAdminLoading,
+  useToastNotification,
+} from '@/hooks/admin';
 
 interface CustomAdFilterSettings {
   CustomAdFilterCode: string;
@@ -35,23 +22,10 @@ function CustomAdFilterConfigContent({
   config?: any;
   refreshConfig?: () => void;
 }) {
-  // 加载状态管理
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
-
-  const withLoading = useCallback(
-    async (key: string, operation: () => Promise<any>): Promise<any> => {
-      setLoading((prev) => ({ ...prev, [key]: true }));
-      try {
-        const result = await operation();
-        return result;
-      } finally {
-        setLoading((prev) => ({ ...prev, [key]: false }));
-      }
-    },
-    [],
-  );
-
-  const [expanded, setExpanded] = useState(false);
+  // 使用统一的 hooks
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
+  const { isLoading, withLoading } = useAdminLoading();
+  const { showError, showSuccess } = useToastNotification();
 
   // 去广告配置状态
   const [filterSettings, setFilterSettings] = useState<CustomAdFilterSettings>({
@@ -62,6 +36,7 @@ function CustomAdFilterConfigContent({
 
   const [hasChanges, setHasChanges] = useState(false);
 
+  // 初始化配置
   useEffect(() => {
     if (config?.SiteConfig) {
       setFilterSettings({
@@ -83,6 +58,16 @@ function CustomAdFilterConfigContent({
         filterSettings.CustomAdFilterEnabled !== originalEnabled,
     );
   }, [filterSettings, config]);
+
+  // 非管理员或站长禁止访问
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问AD过滤配置功能</p>
+      </div>
+    );
+  }
 
   // 默认示例代码
   const defaultExample = `// 示例1：过滤包含特定关键词的广告片段
@@ -133,14 +118,14 @@ function filterAdsFromM3U8(type, m3u8Content) {
           throw new Error(errorData.error || '保存失败');
         }
 
-        await showToast('去广告配置保存成功');
+        showSuccess('去广告配置保存成功');
         setHasChanges(false);
         if (refreshConfig) {
           refreshConfig();
         }
       });
     } catch (error) {
-      await showToast('保存失败: ' + (error as Error).message, 'error');
+      showError('保存失败: ' + (error as Error).message);
     }
   };
 
@@ -193,28 +178,8 @@ function filterAdsFromM3U8(type, m3u8Content) {
   const codeErrors = validateCode(filterSettings.CustomAdFilterCode);
 
   return (
-    <CollapsibleTab
-      title='AD配置'
-      theme='purple'
-      icon={
-        <svg
-          className='w-5 h-5 text-purple-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M13 10V3L4 14h7v7l9-11h-7z'
-          />
-        </svg>
-      }
-      isExpanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
-    >
-      {loading['loadAdFilterConfig'] ? (
+    <div className='p-6'>
+      {isLoading('loadAdFilterConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
         </div>
@@ -353,7 +318,7 @@ function filterAdsFromM3U8(type, m3u8Content) {
             <div className='flex items-center space-x-3'>
               <button
                 onClick={handleReset}
-                disabled={loading['saveAdFilterConfig']}
+                disabled={isLoading('saveAdFilterConfig')}
                 className='px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
               >
                 <RotateCcw className='w-4 h-4' />
@@ -368,7 +333,7 @@ function filterAdsFromM3U8(type, m3u8Content) {
             <button
               onClick={saveConfig}
               disabled={
-                loading['saveAdFilterConfig'] ||
+                isLoading('saveAdFilterConfig') ||
                 codeErrors.length > 0 ||
                 !hasChanges
               }
@@ -376,7 +341,7 @@ function filterAdsFromM3U8(type, m3u8Content) {
             >
               <Save className='w-4 h-4' />
               <span>
-                {loading['saveAdFilterConfig'] ? '保存中...' : '保存配置'}
+                {isLoading('saveAdFilterConfig') ? '保存中...' : '保存配置'}
               </span>
             </button>
           </div>
@@ -444,7 +409,7 @@ function filterAdsFromM3U8(type, m3u8Content) {
           </div>
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 

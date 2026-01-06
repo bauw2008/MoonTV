@@ -49,6 +49,10 @@ export async function GET(request: NextRequest) {
         securityConfig.enableUserAgentWhitelist || false,
       allowedUserAgents: securityConfig.allowedUserAgents || [],
       userTokens: securityConfig.userTokens || [], // 添加userTokens数据
+      configGenerator: securityConfig.configGenerator || {
+        configMode: 'standard',
+        format: 'json',
+      },
     };
 
     // 如果启用了设备绑定，返回当前用户的Token
@@ -76,7 +80,6 @@ export async function GET(request: NextRequest) {
         if (!userTokenInfo.token) {
           // 生成一个默认token
           userTokenInfo.token = 'BYXBX6Ysyb9WMgw92vDLnntv0WGYbJav';
-          console.log('[TVBoxConfig] 为用户生成默认Token');
         }
         userSecurityConfig.token = userTokenInfo.token;
         // 为了向后兼容，同时设置enableAuth为true
@@ -107,11 +110,12 @@ export async function GET(request: NextRequest) {
       userSecurityConfig.userTokens = [];
     }
 
+    // 确保configGenerator设置被保留
+    if (securityConfig.configGenerator) {
+      userSecurityConfig.configGenerator = securityConfig.configGenerator;
+    }
+
     // 只返回用户特定的 TVBox 安全配置和站点名称
-    console.log('[TVBoxConfig] 返回的数据:', {
-      securityConfig: userSecurityConfig,
-      siteName: config.SiteConfig?.SiteName || 'Vidora',
-    });
     return NextResponse.json({
       securityConfig: userSecurityConfig,
       siteName: config.SiteConfig?.SiteName || 'Vidora',

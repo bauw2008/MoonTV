@@ -16,12 +16,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
 import {
   useAdminApi,
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 // 类型定义
 interface User {
@@ -131,21 +129,16 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
 
 function UserConfigContent() {
   // 使用新的hooks
-  const { currentUser, isAdminOrOwner, canManageUser } = useAdminAuthSimple();
+  const { loading, error, username, role, isAdminOrOwner, canManageUser } =
+    useAdminAuth();
   const { userApi } = useAdminApi();
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <div className='p-6 text-center text-red-500'>
-        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-        <p>您没有权限访问用户管理功能</p>
-      </div>
-    );
-  }
+  // 构造 currentUser 对象
+  const currentUser = username && role ? { username, role } : null;
 
+  // 所有状态定义必须在任何条件渲染之前
   const [userSettings, setUserSettings] = useState<UserSettings>({
     Users: [],
     Tags: [],
@@ -175,16 +168,13 @@ function UserConfigContent() {
   const [showConfigureApisModal, setShowConfigureApisModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedApis, setSelectedApis] = useState<string[]>([]);
+
+  // 视频源状态
   const [videoSources, setVideoSources] = useState<
     Array<{ key: string; name: string; api?: string; disabled?: boolean }>
   >([]);
 
-  // 获取用户组的详细信息
-  const getTagDetails = (tagName: string) => {
-    const tag = userSettings.Tags.find((t) => t.name === tagName);
-    return tag || null;
-  };
-
+  // 添加用户表单状态
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [newUser, setNewUser] = useState<User>({
     username: '',
@@ -202,18 +192,13 @@ function UserConfigContent() {
   const [newUserGroupName, setNewUserGroupName] = useState('');
   const [showAddUserGroupForm, setShowAddUserGroupForm] = useState(false);
 
-  // 添加用户组并关闭表单（简化版，直接调用合并后的函数）
-  const handleAddUserGroupWithClose = () => {
-    handleAddUserGroup(true);
+  // 获取用户组的详细信息
+  const getTagDetails = (tagName: string) => {
+    const tag = userSettings.Tags.find((t) => t.name === tagName);
+    return tag || null;
   };
 
-  // 用户组配置状态
-
-  useEffect(() => {
-    loadConfig();
-    loadVideoSources();
-  }, []);
-
+  // 加载视频源配置
   const loadVideoSources = async () => {
     try {
       console.log('开始加载视频源列表...');
@@ -252,6 +237,7 @@ function UserConfigContent() {
     }
   };
 
+  // 加载配置
   const loadConfig = async () => {
     try {
       console.log('=== loadConfig 开始 ===');
@@ -461,6 +447,59 @@ function UserConfigContent() {
       console.error('加载用户配置失败:', error);
     }
   };
+
+  // 添加用户组并关闭表单（简化版，直接调用合并后的函数）
+  const handleAddUserGroupWithClose = () => {
+    handleAddUserGroup(true);
+  };
+
+  // 初始化加载
+  useEffect(() => {
+    loadConfig();
+    loadVideoSources();
+  }, []);
+
+  // 辅助函数：计算用户组的视频源数量
+  const getVideoSourceCount = useCallback((tag: any) => {
+    // 优先使用videoSources字段，如果没有则从enabledApis中过滤
+    const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
+    const videoSources =
+      tag.videoSources ||
+      (tag.enabledApis || []).filter(
+        (api: string) => !specialFeatures.includes(api),
+      );
+    return videoSources.length;
+  }, []);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // 非管理员或站长禁止访问
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问用户管理功能</p>
+      </div>
+    );
+  }
 
   // 获取用户密码
   const fetchUserPassword = async (username: string) => {
@@ -829,18 +868,6 @@ function UserConfigContent() {
     }
   };
 
-  // 辅助函数：计算用户组的视频源数量
-  const getVideoSourceCount = useCallback((tag: any) => {
-    // 优先使用videoSources字段，如果没有则从enabledApis中过滤
-    const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
-    const videoSources =
-      tag.videoSources ||
-      (tag.enabledApis || []).filter(
-        (api: string) => !specialFeatures.includes(api),
-      );
-    return videoSources.length;
-  }, []);
-
   // 用户组管理函数
   const handleAddUserGroup = async (closeForm = false) => {
     if (!newUserGroupName.trim()) {
@@ -1138,56 +1165,16 @@ function UserConfigContent() {
     typeof userSettings !== 'object'
   ) {
     return (
-      <CollapsibleTab
-        title='用户配置'
-        theme='blue'
-        icon={
-          <svg
-            className='w-5 h-5 text-blue-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'
-            />
-          </svg>
-        }
-        defaultCollapsed
-      >
-        <div className='p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg'>
-          <p className='text-yellow-600 dark:text-yellow-400'>
-            正在加载用户配置...
-          </p>
-        </div>
-      </CollapsibleTab>
+      <div className='p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg'>
+        <p className='text-yellow-600 dark:text-yellow-400'>
+          正在加载用户配置...
+        </p>
+      </div>
     );
   }
 
   return (
-    <CollapsibleTab
-      title='用户配置'
-      theme='blue'
-      icon={
-        <svg
-          className='w-5 h-5 text-blue-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'
-          />
-        </svg>
-      }
-      defaultCollapsed
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
@@ -2661,12 +2648,11 @@ function UserConfigContent() {
           </div>
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
-// 导出组件
-export function UserConfig() {
+function UserConfig() {
   return <UserConfigContent />;
 }
 

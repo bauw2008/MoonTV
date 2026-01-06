@@ -3,8 +3,6 @@
  * 用于存储大文件数据，如背景图片
  */
 
- 
-
 const DB_NAME = 'Vidora_ThemeDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'backgroundImages';

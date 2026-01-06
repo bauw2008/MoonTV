@@ -15,9 +15,7 @@ import { useRef, useState } from 'react';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
-export function DataMigration() {
+function DataMigration() {
   const { withLoading, isLoading } = useAdminLoading();
   const { showSuccess, showError } = useToastNotification();
 
@@ -145,26 +143,7 @@ export function DataMigration() {
 
   return (
     <>
-      <CollapsibleTab
-        title='数据迁移'
-        theme='orange'
-        icon={
-          <svg
-            className='w-5 h-5 text-orange-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4'
-            />
-          </svg>
-        }
-        defaultCollapsed={true}
-      >
+      <div className='p-6'>
         <div className='max-w-6xl mx-auto space-y-6'>
           {/* 警告提示 */}
           <div className='flex items-center gap-3 p-4 border border-amber-200 dark:border-amber-700 rounded-lg bg-amber-50/30 dark:bg-amber-900/5'>
@@ -341,7 +320,9 @@ export function DataMigration() {
             </div>
           </div>
         </div>
-      </CollapsibleTab>
+      </div>
     </>
   );
 }
+
+export default DataMigration;

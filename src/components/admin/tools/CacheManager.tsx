@@ -14,12 +14,10 @@ import {
 import { useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 interface CacheStats {
   douban: { count: number; size: number; types: Record<string, number> };
@@ -103,9 +101,9 @@ const CACHE_TYPES: CacheType[] = [
   },
 ];
 
-export function CacheManager() {
+function CacheManager() {
   // 使用统一的权限管理
-  const { isOwner, hasPermission } = useAdminAuthSimple();
+  const { loading, error, isOwner, hasPermission } = useAdminAuth();
   // 使用统一的加载状态管理
   const { withLoading, isLoading } = useAdminLoading();
   // 使用统一的 Toast 通知
@@ -113,13 +111,13 @@ export function CacheManager() {
 
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [clearing, setClearing] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [cacheError, setCacheError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const fetchStats = async () => {
     await withLoading('fetchStats', async () => {
       try {
-        setError(null);
+        setCacheError(null);
         const resp = await fetch('/api/admin/cache');
         if (!resp.ok) {
           if (resp.status === 401) {
@@ -138,7 +136,7 @@ export function CacheManager() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : '获取缓存统计失败';
-        setError(errorMessage);
+        setCacheError(errorMessage);
         showError('获取缓存统计失败: ' + errorMessage);
       }
     });
@@ -160,7 +158,7 @@ export function CacheManager() {
     await withLoading(`clearCache_${type}`, async () => {
       try {
         setClearing(type);
-        setError(null);
+        setCacheError(null);
 
         const resp = await fetch(`/api/admin/cache?type=${type}`, {
           method: 'DELETE',
@@ -182,7 +180,7 @@ export function CacheManager() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : '清理缓存失败';
-        setError(errorMessage);
+        setCacheError(errorMessage);
         showError('清理缓存失败: ' + errorMessage);
       } finally {
         setClearing(null);
@@ -208,56 +206,14 @@ export function CacheManager() {
   // 如果不是站长，显示权限提示
   if (!isOwner) {
     return (
-      <CollapsibleTab
-        title='缓存管理'
-        theme='orange'
-        icon={
-          <svg
-            className='w-5 h-5 text-orange-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z'
-            />
-          </svg>
-        }
-        defaultCollapsed={true}
-      >
-        <div className='p-6 bg-red-50 dark:bg-red-900/20 rounded-lg'>
-          <p className='text-red-600 dark:text-red-400'>
-            缓存管理功能仅站长可用
-          </p>
-        </div>
-      </CollapsibleTab>
+      <div className='p-6 bg-red-50 dark:bg-red-900/20 rounded-lg'>
+        <p className='text-red-600 dark:text-red-400'>缓存管理功能仅站长可用</p>
+      </div>
     );
   }
 
   return (
-    <CollapsibleTab
-      title='缓存管理'
-      theme='orange'
-      icon={
-        <svg
-          className='w-5 h-5 text-orange-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z'
-          />
-        </svg>
-      }
-      defaultCollapsed={true}
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 操作按钮 */}
         <div className='flex items-center justify-end'>
@@ -500,6 +456,8 @@ export function CacheManager() {
           </div>
         )}
       </div>
-    </CollapsibleTab>
+    </div>
   );
 }
+
+export default CacheManager;

@@ -4,12 +4,10 @@ import { AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
-
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
 
 interface AISettings {
   enabled: boolean;
@@ -59,43 +57,12 @@ const API_PROVIDERS = [
 
 function AIConfigContent() {
   // 使用统一的 hooks
-  const { isAdminOrOwner } = useAdminAuthSimple();
+  const { loading, error, isAdminOrOwner } = useAdminAuth();
   const { withLoading, isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 非管理员或站长禁止访问
-  if (!isAdminOrOwner) {
-    return (
-      <CollapsibleTab
-        title='AI配置'
-        theme='purple'
-        icon={
-          <svg
-            className='w-5 h-5 text-purple-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
-            />
-          </svg>
-        }
-        defaultCollapsed
-      >
-        <div className='p-6 text-center text-red-500'>
-          <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-          <p>您没有权限访问AI配置功能</p>
-        </div>
-      </CollapsibleTab>
-    );
-  }
-
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<unknown>(null);
-  const [expanded, setExpanded] = useState(false);
 
   // AI配置状态
   const [aiSettings, setAiSettings] = useState<AISettings>({
@@ -107,6 +74,7 @@ function AIConfigContent() {
     maxTokens: 3000,
   });
 
+  // 加载配置
   const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config');
@@ -129,9 +97,40 @@ function AIConfigContent() {
     }
   }, []); // 空依赖数组
 
+  // 初始化加载
   useEffect(() => {
     withLoading('loadAIConfig', loadConfig);
   }, [loadConfig]); // 添加 loadConfig 依赖
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>权限验证失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // 非管理员或站长禁止访问
+  if (!isAdminOrOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>您没有权限访问AI配置功能</p>
+      </div>
+    );
+  }
 
   const saveConfig = async () => {
     // 基本验证
@@ -257,27 +256,7 @@ function AIConfigContent() {
   };
 
   return (
-    <CollapsibleTab
-      title='AI配置'
-      theme='purple'
-      icon={
-        <svg
-          className='w-5 h-5 text-purple-500'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-        >
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
-          />
-        </svg>
-      }
-      isExpanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
-    >
+    <div className='p-6'>
       {isLoading('loadAIConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
@@ -611,11 +590,12 @@ function AIConfigContent() {
           </div>
         </div>
       )}
-    </CollapsibleTab>
+    </div>
   );
 }
 
-// 导出组件
-export function AIConfig() {
+function AIConfig() {
   return <AIConfigContent />;
 }
+
+export default AIConfig;

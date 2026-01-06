@@ -1,30 +1,317 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import { AIConfig } from '@/components/admin/config/AIConfig';
-import { CategoryConfig } from '@/components/admin/config/CategoryConfig';
-import { LiveConfig } from '@/components/admin/config/LiveConfig';
-import { NetdiskConfig } from '@/components/admin/config/NetdiskConfig';
-import { OwnerConfig } from '@/components/admin/config/OwnerConfig';
-import { SiteConfig } from '@/components/admin/config/SiteConfig';
-import { TMDBConfig } from '@/components/admin/config/TMDBConfig';
-import { TVBoxConfig } from '@/components/admin/config/TVBoxConfig';
+import AIConfig from '@/components/admin/config/AIConfig';
+import CategoryConfig from '@/components/admin/config/CategoryConfig';
+import LiveConfig from '@/components/admin/config/LiveConfig';
+import NetdiskConfig from '@/components/admin/config/NetdiskConfig';
+import OwnerConfig from '@/components/admin/config/OwnerConfig';
+import SiteConfig from '@/components/admin/config/SiteConfig';
+import TMDBConfig from '@/components/admin/config/TMDBConfig';
+import TVBoxConfig from '@/components/admin/config/TVBoxConfig';
 import UserConfig from '@/components/admin/config/UserConfig';
-import { VideoConfig } from '@/components/admin/config/VideoConfig';
-import { YellowConfig } from '@/components/admin/config/YellowConfig';
-import { CacheManager } from '@/components/admin/tools/CacheManager';
-import { ConfigFile } from '@/components/admin/tools/ConfigFile';
-import { DataMigration } from '@/components/admin/tools/DataMigration';
-import CustomAdFilterConfig from '@/components/CustomAdFilterConfig';
+import VideoConfig from '@/components/admin/config/VideoConfig';
+import YellowConfig from '@/components/admin/config/YellowConfig';
+import CacheManager from '@/components/admin/tools/CacheManager';
+import ConfigFile from '@/components/admin/tools/ConfigFile';
+import DataMigration from '@/components/admin/tools/DataMigration';
+import AdFilterConfig from '@/components/admin/config/AdFilterConfig';
 import PageLayout from '@/components/PageLayout';
-import { ThemeToggle } from '@/components/ThemeToggle';
+
+import dynamic from 'next/dynamic';
+
+// 动态导入所有组件
+const ConfigFileDynamic = dynamic(
+  () => import('@/components/admin/tools/ConfigFile'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const SiteConfigDynamic = dynamic(
+  () => import('@/components/admin/config/SiteConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const UserConfigDynamic = dynamic(
+  () => import('@/components/admin/config/UserConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const VideoConfigDynamic = dynamic(
+  () => import('@/components/admin/config/VideoConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const LiveConfigDynamic = dynamic(
+  () => import('@/components/admin/config/LiveConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const CategoryConfigDynamic = dynamic(
+  () => import('@/components/admin/config/CategoryConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const YellowConfigDynamic = dynamic(
+  () => import('@/components/admin/config/YellowConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const TMDBConfigDynamic = dynamic(
+  () => import('@/components/admin/config/TMDBConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const AIConfigDynamic = dynamic(
+  () => import('@/components/admin/config/AIConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const TVBoxConfigDynamic = dynamic(
+  () => import('@/components/admin/config/TVBoxConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const NetdiskConfigDynamic = dynamic(
+  () => import('@/components/admin/config/NetdiskConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const AdFilterConfigDynamic = dynamic(
+  () => import('@/components/admin/config/AdFilterConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const CacheManagerDynamic = dynamic(
+  () => import('@/components/admin/tools/CacheManager'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const DataMigrationDynamic = dynamic(
+  () => import('@/components/admin/tools/DataMigration'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+const OwnerConfigDynamic = dynamic(
+  () => import('@/components/admin/config/OwnerConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
+
+// 配置项数据
+const configCategories = {
+  basic: {
+    name: '基础服务',
+    items: [
+      { id: 'configFile', name: '配置管理', component: ConfigFileDynamic },
+      { id: 'siteConfig', name: '站点配置', component: SiteConfigDynamic },
+      { id: 'userConfig', name: '用户配置', component: UserConfigDynamic },
+    ],
+  },
+  content: {
+    name: '内容管理',
+    items: [
+      { id: 'videoConfig', name: '视频采集', component: VideoConfigDynamic },
+      { id: 'liveConfig', name: '直播配置', component: LiveConfigDynamic },
+      {
+        id: 'categoryConfig',
+        name: '分类配置',
+        component: CategoryConfigDynamic,
+      },
+      { id: 'yellowConfig', name: '18+过滤', component: YellowConfigDynamic },
+    ],
+  },
+  service: {
+    name: '服务配置',
+    items: [
+      { id: 'tmdbConfig', name: 'TMDB配置', component: TMDBConfigDynamic },
+      { id: 'aiConfig', name: 'AI配置', component: AIConfigDynamic },
+      { id: 'tvboxConfig', name: 'TVBox配置', component: TVBoxConfigDynamic },
+      {
+        id: 'netdiskConfig',
+        name: '网盘配置',
+        component: NetdiskConfigDynamic,
+      },
+      {
+        id: 'adFilterConfig',
+        name: '广告过滤',
+        component: AdFilterConfigDynamic,
+      },
+    ],
+  },
+  tools: {
+    name: '系统工具',
+    items: [
+      { id: 'cacheManager', name: '缓存管理', component: CacheManagerDynamic },
+      {
+        id: 'dataMigration',
+        name: '数据迁移',
+        component: DataMigrationDynamic,
+      },
+    ],
+  },
+  owner: {
+    name: '站长管理',
+    items: [
+      { id: 'ownerConfig', name: '站长配置', component: OwnerConfigDynamic },
+    ],
+  },
+};
 
 function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
+
+  const [activeCategory, setActiveCategory] =
+    useState<keyof typeof configCategories>('basic');
+  const [activeItem, setActiveItem] = useState<string>('configFile');
+
+  // 为分类选择器创建refs和状态
+  const categoryContainerRef = useRef<HTMLDivElement>(null);
+  const categoryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [categoryIndicatorStyle, setCategoryIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+  }>({ left: 0, width: 0 });
+
+  // 为项目选择器创建refs和状态
+  const itemContainerRef = useRef<HTMLDivElement>(null);
+  const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [itemIndicatorStyle, setItemIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+  }>({ left: 0, width: 0 });
+
+  // 更新指示器位置的函数
+  const updateIndicatorPosition = (
+    activeIndex: number,
+    containerRef: React.RefObject<HTMLDivElement>,
+    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
+    setIndicatorStyle: React.Dispatch<
+      React.SetStateAction<{ left: number; width: number }>
+    >,
+  ) => {
+    if (activeIndex >= 0 && buttonRefs.current[activeIndex]) {
+      const button = buttonRefs.current[activeIndex];
+      const container = containerRef.current;
+      if (button && container) {
+        const buttonRect = button.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        setIndicatorStyle({
+          left: buttonRect.left - containerRect.left,
+          width: buttonRect.width,
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -44,7 +331,6 @@ function AdminContent() {
           if (!res.ok) {
             if (res.status === 401) {
               console.warn('无权限访问管理页面');
-              // 可以在这里显示警告，但不重置页面
             } else {
               console.warn('服务器验证失败:', res.status);
             }
@@ -58,352 +344,204 @@ function AdminContent() {
         })
         .catch((error) => {
           console.warn('权限验证网络错误:', error);
-          // 网络错误时不做任何操作，保持原有状态
         });
     };
     checkAccess();
   }, []);
+
+  // 无权限跳转逻辑
+  useEffect(() => {
+    if (isClient && hasAccess === false) {
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isClient, hasAccess, router]);
+
+  // 监听分类变化
+  useEffect(() => {
+    const categories = Object.keys(
+      configCategories,
+    ) as (keyof typeof configCategories)[];
+    const activeIndex = categories.findIndex((cat) => cat === activeCategory);
+    updateIndicatorPosition(
+      activeIndex,
+      categoryContainerRef,
+      categoryButtonRefs,
+      setCategoryIndicatorStyle,
+    );
+  }, [activeCategory]);
+
+  // 监听项目变化
+  useEffect(() => {
+    const items = configCategories[activeCategory].items;
+    const activeIndex = items.findIndex((item) => item.id === activeItem);
+    updateIndicatorPosition(
+      activeIndex,
+      itemContainerRef,
+      categoryButtonRefs,
+      setItemIndicatorStyle,
+    );
+  }, [activeItem, activeCategory]);
+
   // 在客户端渲染之前，显示加载状态
   if (!isClient || hasAccess === null) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-600 dark:text-gray-400'>验证权限中...</span>
       </div>
     );
   }
 
+  // 无权限状态
   if (!hasAccess) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='text-center'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
-            访问被拒绝
+      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900'>
+        <div className='text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg'>
+          <div className='text-6xl mb-4'>🔒</div>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
+            无权限访问
           </h1>
-          <p className='text-gray-600 dark:text-gray-400'>
-            您没有权限访问此页面
+          <p className='text-gray-600 dark:text-gray-400 mb-4'>
+            您没有权限访问管理中心
+          </p>
+          <p className='text-sm text-gray-500 dark:text-gray-500'>
+            3秒后自动跳转到首页...
           </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className='p-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/20 min-h-screen'>
-      <div className='max-w-7xl mx-auto'>
-        {/* 管理员设置区域 */}
-        <div className='bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-xl backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-6 mb-8'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg'>
-                <svg
-                  className='w-6 h-6 text-white'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z'
-                  />
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
-                  />
-                </svg>
-              </div>
-              <h1 className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
-                管理员设置
-              </h1>
-            </div>
+  // 渲染胶囊式选择器
+  const renderCapsuleSelector = (
+    options: Array<{ id: string; name: string }>,
+    activeValue: string,
+    onChange: (value: string) => void,
+    containerRef: React.RefObject<HTMLDivElement>,
+    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
+    indicatorStyle: { left: number; width: number },
+  ) => {
+    return (
+      <div
+        ref={containerRef}
+        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
+      >
+        {/* 滑动的白色背景指示器 */}
+        {indicatorStyle.width > 0 && (
+          <div
+            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            style={{
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+            }}
+          />
+        )}
 
-            {/* 主题切换按钮 */}
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {/* 管理模块卡片网格布局 */}
-        <div className='max-w-7xl mx-auto'>
-          {/* 基础配置组 */}
-          <div className='mb-8'>
-            <h3 className='text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center'>
-              <div className='w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-2 shadow-sm'></div>
-              <svg
-                className='w-5 h-5 text-blue-500 mr-2'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                />
-              </svg>
-              基础服务
-            </h3>
-            {/* 配置组件网格*/}
-            <div className='space-y-6'>
-              {/* 配置管理 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <ConfigFile />
-              </Suspense>
-
-              {/* 站点配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <SiteConfig />
-              </Suspense>
-
-              {/* 用户配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <UserConfig />
-              </Suspense>
-            </div>
-          </div>
-
-          {/* 内容配置组 */}
-          <div className='mb-8'>
-            <h3 className='text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4 flex items-center'>
-              <div className='w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mr-2 shadow-sm'></div>
-              <svg
-                className='w-5 h-5 text-green-500 mr-2'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
-                />
-              </svg>
-              内容管理
-            </h3>
-            {/* 配置组件网格 - 所有配置始终可见 */}
-            <div className='space-y-6'>
-              {/* 视频配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <VideoConfig />
-              </Suspense>
-
-              {/* 直播配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <LiveConfig />
-              </Suspense>
-
-              {/* 分类配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <CategoryConfig />
-              </Suspense>
-
-              {/* 18+配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <YellowConfig />
-              </Suspense>
-            </div>
-          </div>
-
-          {/* 服务配置组 */}
-          <div className='mb-8'>
-            <h3 className='text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4 flex items-center'>
-              <div className='w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full mr-2 shadow-sm'></div>
-              <svg
-                className='w-5 h-5 text-purple-500 mr-2'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4'
-                />
-              </svg>
-              服务配置
-            </h3>
-            {/* 配置组件网格 - 所有配置始终可见 */}
-            <div className='space-y-6'>
-              {/* TMDB配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <TMDBConfig />
-              </Suspense>
-
-              {/* AI配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <AIConfig />
-              </Suspense>
-
-              {/* TVBox配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <TVBoxConfig />
-              </Suspense>
-
-              {/* 网盘配置 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <NetdiskConfig />
-              </Suspense>
-
-              {/* 自定义广告过滤 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <CustomAdFilterConfig />
-              </Suspense>
-            </div>
-          </div>
-
-          {/* 系统工具组 */}
-          <div className='mb-8'>
-            <h3 className='text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-4 flex items-center'>
-              <div className='w-2 h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mr-2 shadow-sm'></div>
-              <svg
-                className='w-5 h-5 text-orange-500 mr-2'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z'
-                />
-              </svg>
-              系统工具
-            </h3>
-            {/* 配置组件网格 - 所有配置始终可见 */}
-            <div className='space-y-6'>
-              {/* 缓存管理 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <CacheManager />
-              </Suspense>
-
-              {/* 数据迁移 */}
-              <Suspense
-                fallback={
-                  <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                    加载中...
-                  </div>
-                }
-              >
-                <DataMigration />
-              </Suspense>
-            </div>
-          </div>
-
-          {/* 站长工具 */}
-          <div className='mb-8'>
-            <h3 className='text-lg font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-4 flex items-center'>
-              <div className='w-2 h-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-full mr-2 shadow-sm'></div>
-              <svg
-                className='w-5 h-5 text-red-500 mr-2'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
-                />
-              </svg>
-              站长工具
-            </h3>
-            {/* 站长配置组件 - 只有站长可见 */}
-            <Suspense
-              fallback={
-                <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
-                  加载中...
-                </div>
-              }
+        {options.map((option, index) => {
+          const isActive = activeValue === option.id;
+          return (
+            <button
+              key={option.id}
+              ref={(el) => {
+                buttonRefs.current[index] = el;
+              }}
+              onClick={() => onChange(option.id)}
+              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+                isActive
+                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
+                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
+              }`}
             >
-              <OwnerConfig />
-            </Suspense>
+              {option.name}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 获取当前选中的组件
+  const currentCategory = configCategories[activeCategory];
+  const currentItem = currentCategory.items.find(
+    (item) => item.id === activeItem,
+  );
+  const CurrentComponent = currentItem?.component;
+
+  return (
+    <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
+      {/* 页面标题 */}
+      <div className='mb-6 sm:mb-8 space-y-4 sm:space-y-6'>
+        <div>
+          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
+            管理中心
+          </h1>
+          <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
+            配置和管理您的站点
+          </p>
+        </div>
+      </div>
+
+      {/* 筛选器区域 */}
+      <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 mb-6'>
+        {/* 装饰性光晕 */}
+        <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
+        <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-green-300/20 to-teal-300/20 rounded-full blur-3xl pointer-events-none'></div>
+
+        <div className='relative space-y-4'>
+          {/* 分类选择器 */}
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
+            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+              分类
+            </span>
+            <div className='overflow-x-auto'>
+              {renderCapsuleSelector(
+                Object.entries(configCategories).map(([key, value]) => ({
+                  id: key,
+                  name: value.name,
+                })),
+                activeCategory,
+                (value) => {
+                  setActiveCategory(value as keyof typeof configCategories);
+                  // 自动选择第一个项目
+                  const firstItem =
+                    configCategories[value as keyof typeof configCategories]
+                      .items[0];
+                  if (firstItem) {
+                    setActiveItem(firstItem.id);
+                  }
+                },
+                categoryContainerRef,
+                categoryButtonRefs,
+                categoryIndicatorStyle,
+              )}
+            </div>
+          </div>
+
+          {/* 项目选择器 */}
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
+            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+              配置
+            </span>
+            <div className='overflow-x-auto'>
+              {renderCapsuleSelector(
+                currentCategory.items,
+                activeItem,
+                setActiveItem,
+                itemContainerRef,
+                itemButtonRefs,
+                itemIndicatorStyle,
+              )}
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* 内容展示区域 */}
+      <div className='max-w-7xl mx-auto rounded-2xl shadow-sm border border-gray-200/30 dark:border-gray-700/30'>
+        {CurrentComponent && <CurrentComponent />}
       </div>
     </div>
   );

@@ -105,7 +105,6 @@ export async function POST(request: NextRequest) {
             !apiUrl.includes('/rpc/2.0/ai_custom/v1')
           ) {
             // 百度文心例外
-
             // 记录可能的配置问题，但不阻止保存
           }
         } catch {

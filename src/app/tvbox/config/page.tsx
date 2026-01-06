@@ -46,6 +46,14 @@ export default function TVBoxConfigPage() {
 
       setSecurityConfig(data.securityConfig || null);
       setSiteName(data.siteName || 'Vidora');
+
+      // 使用管理员设置的默认值（如果存在）
+      if (data.securityConfig?.configGenerator) {
+        setFormat(data.securityConfig.configGenerator.format || 'json');
+        setConfigMode(
+          data.securityConfig.configGenerator.configMode || 'standard',
+        );
+      }
     } catch (error) {
     } finally {
       setLoading(false);
@@ -227,7 +235,8 @@ export default function TVBoxConfigPage() {
                       {securityConfig.enableDeviceBinding && (
                         <div className='flex items-center justify-between'>
                           <p>
-                            • 绑定设备数量：{devices.length}/{securityConfig.maxDevices}
+                            • 绑定设备数量：{devices.length}/
+                            {securityConfig.maxDevices}
                           </p>
                           <button
                             onClick={() => setShowDeviceList(!showDeviceList)}
@@ -389,10 +398,20 @@ export default function TVBoxConfigPage() {
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value as 'json' | 'base64')}
-              className='w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              className='w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
             >
-              <option value='json'>JSON 格式（推荐）</option>
-              <option value='base64'>Base64 格式</option>
+              <option
+                value='json'
+                className='bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+              >
+                JSON 格式（推荐）
+              </option>
+              <option
+                value='base64'
+                className='bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+              >
+                Base64 格式
+              </option>
             </select>
             <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
               {format === 'json'

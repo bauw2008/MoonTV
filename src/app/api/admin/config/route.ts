@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 
+import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-
-import { AdminConfigResult } from '@/types/admin';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const config = await getConfig();
-    const result: AdminConfigResult = {
+    const result = {
       Role: 'owner',
       Config: config,
     };
@@ -81,34 +81,37 @@ export async function POST(request: NextRequest) {
   }
   const username = authInfo.username;
 
+  // 只有站长可以修改配置
+  if (username !== process.env.USERNAME) {
+    return NextResponse.json(
+      { error: '只有站长可以修改配置' },
+      { status: 403 },
+    );
+  }
+
   try {
-    // 获取请求体
-    const newConfig = await request.json();
+    const newConfig: AdminConfig = await request.json();
 
-    // 验证配置
-    if (!newConfig || typeof newConfig !== 'object') {
-      return NextResponse.json({ error: '配置格式错误' }, { status: 400 });
-    }
-
-    // 保存配置
+    // 保存新配置
     await db.saveAdminConfig(newConfig);
 
-    // 清除缓存
-    const { clearConfigCache } = await import('@/lib/config');
+    // 清除缓存，强制下次重新从数据库读取
     clearConfigCache();
-    
+
     // 清除18+词汇缓存，确保新添加的关键词立即生效
     const { clearYellowWordsCache } = await import('@/lib/yellow');
     clearYellowWordsCache();
+    // 🔥 刷新所有页面的缓存，使新配置立即生效（无需重启Docker）
+    revalidatePath('/', 'layout');
 
+    // 🔥 添加 no-cache headers，防止 Docker 环境下 Next.js Router Cache 问题
+    // 参考：https://github.com/vercel/next.js/issues/61184
     return NextResponse.json(
-      {
-        success: true,
-        message: '配置保存成功',
-      },
+      { success: true },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Cache-Control':
+            'no-store, no-cache, must-revalidate, proxy-revalidate',
           Pragma: 'no-cache',
           Expires: '0',
         },

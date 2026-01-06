@@ -656,7 +656,7 @@ export async function GET(request: NextRequest) {
                       enableAuth: false,
                       token: '',
                       enableRateLimit: false,
-                      rateLimit: 60,
+                      rateLimit: 30,
                       enableDeviceBinding: false,
                       maxDevices: 1,
                       enableUserAgentWhitelist: false,

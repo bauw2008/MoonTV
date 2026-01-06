@@ -131,5 +131,9 @@ export interface AdminConfig {
         bindTime: number;
       }>;
     }>;
+    configGenerator?: {
+      configMode: 'standard' | 'advanced' | 'custom';
+      format: 'json' | 'txt' | 'm3u';
+    };
   };
 }

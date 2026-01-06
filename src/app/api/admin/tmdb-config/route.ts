@@ -1,145 +1,123 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { clearConfigCache, getConfig } from '@/lib/config';
-import { db } from '@/lib/db';
+import { getConfig } from '@/lib/config';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // 强制动态渲染
 
-// 获取TMDB配置
+// 普通用户也可以访问的 TVBox 配置接口
+// 只返回 TVBox 安全配置，不返回完整的管理配置
+
 export async function GET(request: NextRequest) {
-  try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const authInfo = getAuthInfoFromCookie(request);
 
+  if (!authInfo || !authInfo.username) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const user = authInfo;
+  try {
     const config = await getConfig();
-
-    return NextResponse.json({
-      success: true,
-      data: config.SiteConfig,
-    });
-  } catch (error) {
-    console.error('获取TMDB配置失败:', error);
-    return NextResponse.json(
-      { success: false, error: '获取配置失败' },
-      { status: 500 },
-    );
-  }
-}
-
-// 更新TMDB配置
-export async function POST(request: NextRequest) {
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-  if (storageType === 'localstorage') {
-    return NextResponse.json(
-      {
-        error: '不支持本地存储进行管理员配置',
-      },
-      { status: 400 },
-    );
-  }
-
-  try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const username = authInfo.username;
-
-    const tmdbSettings = await request.json();
-
-    // 参数验证
-    const {
-      TMDBApiKey,
-      TMDBLanguage,
-      EnableTMDBActorSearch,
-      EnableTMDBPosters,
-    } = tmdbSettings as {
-      TMDBApiKey?: string;
-      TMDBLanguage?: string;
-      EnableTMDBActorSearch?: boolean;
-      EnableTMDBPosters?: boolean;
+    const defaultSecurityConfig = {
+      enableAuth: false,
+      token: '',
+      enableRateLimit: false,
+      rateLimit: 60,
+      enableDeviceBinding: false,
+      maxDevices: 1,
+      currentDevices: [],
+      userTokens: [],
     };
 
+    // 合并默认配置和实际配置
+    const securityConfig = {
+      ...defaultSecurityConfig,
+      ...(config.TVBoxSecurityConfig || {}),
+    };
+
+    // 构建用户特定的安全配置
+    const userSecurityConfig = {
+      enableAuth: securityConfig.enableAuth,
+      token: '', // 初始化为空，下面会根据用户设置
+
+      enableRateLimit: securityConfig.enableRateLimit,
+      rateLimit: securityConfig.rateLimit || 60,
+      enableDeviceBinding: securityConfig.enableDeviceBinding || false,
+      maxDevices: securityConfig.maxDevices || 1,
+      enableUserAgentWhitelist:
+        securityConfig.enableUserAgentWhitelist || false,
+      allowedUserAgents: securityConfig.allowedUserAgents || [],
+      userTokens: securityConfig.userTokens || [], // 添加userTokens数据
+    };
+
+    // 如果启用了设备绑定，返回当前用户的Token
     if (
-      (TMDBApiKey !== undefined && typeof TMDBApiKey !== 'string') ||
-      (TMDBLanguage !== undefined && typeof TMDBLanguage !== 'string') ||
-      (EnableTMDBActorSearch !== undefined &&
-        typeof EnableTMDBActorSearch !== 'boolean') ||
-      (EnableTMDBPosters !== undefined &&
-        typeof EnableTMDBPosters !== 'boolean')
+      securityConfig.enableDeviceBinding &&
+      securityConfig.userTokens &&
+      Array.isArray(securityConfig.userTokens)
     ) {
-      return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
-    }
-
-    // 权限验证
-    const adminConfig = await getConfig();
-    if (username !== process.env.USERNAME) {
-      const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username,
+      const userTokenInfo = securityConfig.userTokens.find(
+        (t) => t.username === user.username,
       );
-      if (!user || user.role !== 'admin' || user.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
+      console.log('[TVBoxConfig] 查找用户Token:', {
+        username: user.username,
+        userTokens: securityConfig.userTokens.map((t) => ({
+          username: t.username,
+          enabled: t.enabled,
+          hasToken: !!t.token,
+        })),
+        foundUser: userTokenInfo ? userTokenInfo.username : '未找到',
+        tokenEnabled: userTokenInfo?.enabled,
+        hasToken: !!userTokenInfo?.token,
+      });
+      if (userTokenInfo && userTokenInfo.enabled) {
+        // 如果有token字段，使用它；否则生成一个默认token
+        if (!userTokenInfo.token) {
+          // 生成一个默认token
+          userTokenInfo.token = 'BYXBX6Ysyb9WMgw92vDLnntv0WGYbJav';
+          console.log('[TVBoxConfig] 为用户生成默认Token');
+        }
+        userSecurityConfig.token = userTokenInfo.token;
+        // 为了向后兼容，同时设置enableAuth为true
+        userSecurityConfig.enableAuth = true;
+      } else {
+        // 如果用户没有对应的Token，返回空（禁止访问）
+        userSecurityConfig.token = '';
+        userSecurityConfig.enableAuth = false;
       }
+
+      // 确保userTokens中包含完整的数据
+      userSecurityConfig.userTokens = securityConfig.userTokens.map(
+        (token) => ({
+          ...token,
+          token: token.token || 'BYXBX6Ysyb9WMgw92vDLnntv0WGYbJav',
+          id: token.id || `token-${Math.random().toString(36).substr(2, 9)}`,
+          name: token.name || token.username || 'Default Token',
+          url: token.url || '',
+          createdAt: token.createdAt || Date.now(),
+          lastUsed: token.lastUsed || 0,
+          usageCount: token.usageCount || 0,
+        }),
+      );
+    } else {
+      // 未启用设备绑定，不使用Token验证
+      userSecurityConfig.token = '';
+      userSecurityConfig.enableAuth = false;
+      userSecurityConfig.userTokens = [];
     }
 
-    // 获取当前配置
-    const currentConfig = await getConfig();
-
-    // 调试日志
-    console.log('TMDB API 接收到的配置:', {
-      EnableTMDBActorSearch,
-      类型: typeof EnableTMDBActorSearch,
-      当前值: currentConfig.SiteConfig.EnableTMDBActorSearch,
+    // 只返回用户特定的 TVBox 安全配置和站点名称
+    console.log('[TVBoxConfig] 返回的数据:', {
+      securityConfig: userSecurityConfig,
+      siteName: config.SiteConfig?.SiteName || 'Vidora',
     });
-
-    // 更新TMDB相关配置
-    const updatedConfig = {
-      ...currentConfig,
-      SiteConfig: {
-        ...currentConfig.SiteConfig,
-        TMDBApiKey: TMDBApiKey ?? currentConfig.SiteConfig.TMDBApiKey,
-        TMDBLanguage: TMDBLanguage ?? currentConfig.SiteConfig.TMDBLanguage,
-        EnableTMDBActorSearch:
-          EnableTMDBActorSearch ??
-          currentConfig.SiteConfig.EnableTMDBActorSearch,
-        EnableTMDBPosters:
-          EnableTMDBPosters ?? currentConfig.SiteConfig.EnableTMDBPosters,
-      },
-    };
-
-    console.log('TMDB API 保存的配置:', {
-      EnableTMDBActorSearch: updatedConfig.SiteConfig.EnableTMDBActorSearch,
-      类型: typeof updatedConfig.SiteConfig.EnableTMDBActorSearch,
-    });
-
-    // 写入数据库
-    console.log('正在保存到数据库...');
-    await db.saveAdminConfig(updatedConfig);
-    console.log('数据库保存完成');
-
-    // 清除配置缓存，强制下次重新从数据库读取
-    clearConfigCache();
-    console.log('配置缓存已清除');
-
-    // 验证保存后的配置
-    const verifyConfig = await getConfig();
-    console.log('验证保存后的配置:', {
-      EnableTMDBActorSearch: verifyConfig.SiteConfig.EnableTMDBActorSearch,
-      EnableTMDBPosters: verifyConfig.SiteConfig.EnableTMDBPosters,
-    });
-
     return NextResponse.json({
-      success: true,
-      message: 'TMDB配置更新成功',
+      securityConfig: userSecurityConfig,
+      siteName: config.SiteConfig?.SiteName || 'Vidora',
     });
   } catch (error) {
-    console.error('更新TMDB配置失败:', error);
-    return NextResponse.json(
-      { success: false, error: '更新配置失败' },
-      { status: 500 },
-    );
+    console.error('获取TVBox配置失败:', error);
+    return NextResponse.json({ error: '获取TVBox配置失败' }, { status: 500 });
   }
 }

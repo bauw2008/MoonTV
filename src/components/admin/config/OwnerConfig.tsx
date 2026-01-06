@@ -3,49 +3,21 @@
 import { useEffect, useState } from 'react';
 
 import {
-  useAdminAuthSimple,
+  useAdminAuth,
   useAdminLoading,
   useToastNotification,
 } from '@/hooks/admin';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
 function OwnerConfigContent() {
   // 使用统一的 hooks
-  const { isOwner } = useAdminAuthSimple();
+  const { loading, error, isOwner } = useAdminAuth();
+
+  // 调试信息
+  console.log('OwnerConfig debug:', { loading, error, isOwner });
   const { withLoading, isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  // 只有站长可以访问
-  if (!isOwner) {
-    return (
-      <CollapsibleTab
-        title='站长配置'
-        theme='red'
-        icon={
-          <svg
-            className='w-5 h-5 text-red-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
-            />
-          </svg>
-        }
-        defaultCollapsed={true}
-      >
-        <div className='p-6 text-center text-red-500'>
-          <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
-          <p>此功能仅站长可用</p>
-        </div>
-      </CollapsibleTab>
-    );
-  }
 
+  // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState({
     siteMaintenance: false,
     debugMode: false,
@@ -55,7 +27,7 @@ function OwnerConfigContent() {
   // 重置弹窗状态
   const [showResetModal, setShowResetModal] = useState(false);
 
-  // 加载站长配置
+  // 加载配置
   const loadOwnerConfig = async () => {
     try {
       const response = await fetch('/api/admin/owner-config');
@@ -67,6 +39,41 @@ function OwnerConfigContent() {
       console.error('加载站长配置失败:', error);
     }
   };
+
+  // 初始化加载
+  useEffect(() => {
+    loadOwnerConfig();
+  }, []);
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div className='p-6 text-center text-gray-500'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2'></div>
+        <p>验证权限中...</p>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>加载失败</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // 只有站长可以访问
+  if (!isOwner) {
+    return (
+      <div className='p-6 text-center text-red-500'>
+        <h2 className='text-xl font-semibold mb-2'>访问受限</h2>
+        <p>此功能仅站长可用</p>
+      </div>
+    );
+  }
 
   // 重置所有配置到默认值
   const handleResetAllConfigs = async () => {
@@ -139,32 +146,9 @@ function OwnerConfigContent() {
     });
   };
 
-  useEffect(() => {
-    loadOwnerConfig();
-  }, []);
-
   return (
     <>
-      <CollapsibleTab
-        title='站长配置'
-        theme='red'
-        icon={
-          <svg
-            className='w-5 h-5 text-red-500'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
-            />
-          </svg>
-        }
-        defaultCollapsed={true}
-      >
+      <div className='p-6'>
         <div className='space-y-6'>
           <div className='space-y-6'>
             {/* 站点维护模式 */}
@@ -335,6 +319,58 @@ function OwnerConfigContent() {
                   )}
                 </button>
 
+                {/* 清理缓存和用户数据按钮组 */}
+                <div className='flex gap-2'>
+                  <button
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          '确定要清理配置缓存吗？这将清除所有缓存的配置数据。',
+                        )
+                      ) {
+                        return;
+                      }
+
+                      try {
+                        const response = await fetch(
+                          '/api/admin/clear-config-cache',
+                          {
+                            method: 'POST',
+                          },
+                        );
+
+                        if (response.ok) {
+                          showSuccess('配置缓存已清理');
+                          // 延迟刷新页面
+                          setTimeout(() => {
+                            window.location.reload();
+                          }, 500);
+                        } else {
+                          const error = await response.json();
+                          showError(error.error || '清理失败');
+                        }
+                      } catch (error) {
+                        showError('清理失败');
+                      }
+                    }}
+                    className='px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium flex items-center space-x-2'
+                  >
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                      />
+                    </svg>
+                    <span>清理缓存</span>
+                  </button>
+                </div>
                 {/* 保存按钮 */}
                 <button
                   onClick={handleSave}
@@ -369,7 +405,7 @@ function OwnerConfigContent() {
             </div>
           </div>{' '}
         </div>
-      </CollapsibleTab>
+      </div>
 
       {/* 重置弹窗 - 美观的弹窗效果 */}
       {showResetModal && (
@@ -452,6 +488,8 @@ function OwnerConfigContent() {
 }
 
 // 导出组件
-export function OwnerConfig() {
+function OwnerConfig() {
   return <OwnerConfigContent />;
 }
+
+export default OwnerConfig;

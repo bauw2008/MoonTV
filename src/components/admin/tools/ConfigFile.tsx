@@ -28,9 +28,7 @@ import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { CollapsibleTab } from '@/components/admin/ui/CollapsibleTab';
-
-export function ConfigFile() {
+function ConfigFile() {
   // 权限已经在父组件检查，这里直接使用
   const { isLoading } = useAdminLoading(); // 加载状态
   const { showError, showSuccess } = useToastNotification(); // 通知系统
@@ -78,7 +76,7 @@ export function ConfigFile() {
         setLastCheckTime(configSub.LastCheck || '');
       }
 
-      console.log('ConfigFile - 最终组件状态:', {
+      setConfig({
         configContent: configContent,
         subscriptionUrl,
         autoUpdate,
@@ -143,7 +141,6 @@ export function ConfigFile() {
 
       // 再次延迟刷新确保数据同步
       setTimeout(async () => {
-        console.log('ConfigFile - 延迟二次刷新配置');
         await loadConfig();
       }, 1000);
     } catch (error) {
@@ -181,12 +178,7 @@ export function ConfigFile() {
   };
 
   return (
-    <CollapsibleTab
-      title='配置管理'
-      theme='blue'
-      icon={<FileText className='w-5 h-5 text-blue-500' />}
-      defaultCollapsed={true}
-    >
+    <div className='p-6'>
       <div className='space-y-6'>
         {/* 订阅配置区域 */}
         <div className='bg-gradient-to-r from-blue-50/60 via-indigo-50/50 to-purple-50/40 dark:from-blue-900/40 dark:via-indigo-900/30 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-800/50 backdrop-blur-sm'>
@@ -374,6 +366,8 @@ export function ConfigFile() {
           </div>
         </div>
       </div>
-    </CollapsibleTab>
+    </div>
   );
 }
+
+export default ConfigFile;
