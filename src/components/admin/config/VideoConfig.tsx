@@ -648,57 +648,57 @@ function VideoConfigContent() {
   };
 
   return (
-    <div className='p-6'>
-      <div className='space-y-6'>
+    <div className='p-2'>
+      <div className='space-y-4'>
         {/* 统计信息 */}
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-4 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+        <div className='grid grid-cols-4 gap-2'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg font-bold text-blue-600 dark:text-blue-400'>
               {sources.length}
             </div>
-            <div className='text-sm text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
               总视频源
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-4 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg font-bold text-green-600 dark:text-green-400'>
               {sources.filter((s) => !s.disabled).length}
             </div>
-            <div className='text-sm text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
               已启用
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-4 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg font-bold text-red-600 dark:text-red-400'>
               {sources.filter((s) => s.disabled).length}
             </div>
-            <div className='text-sm text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
               已禁用
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-4 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-2xl font-bold text-purple-600 dark:text-purple-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg font-bold text-purple-600 dark:text-purple-400'>
               {selectedSources.size}
             </div>
-            <div className='text-sm text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
               已选择
             </div>
           </div>
         </div>
 
         {/* 操作按钮 */}
-        <div className='flex flex-wrap gap-3'>
+        <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className='flex items-center space-x-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+            className='flex items-center space-x-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
           >
-            <Plus size={16} />
+            <Plus size={14} />
             <span>添加视频源</span>
           </button>
 
           <button
             onClick={handleSelectAll}
-            className='px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+            className='px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
           >
             {selectedSources.size === sources.length ? '取消全选' : '全选'}
           </button>
@@ -706,9 +706,9 @@ function VideoConfigContent() {
           <button
             onClick={handleBatchDelete}
             disabled={selectedSources.size === 0}
-            className='flex items-center space-x-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
+            className='flex items-center space-x-1.5 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm'
           >
-            <Trash2 size={16} />
+            <Trash2 size={14} />
             <span>批量删除</span>
             {selectedSources.size > 0 && (
               <span className='ml-1 px-2 py-0.5 bg-red-700 text-white text-xs rounded-full'>
@@ -719,14 +719,14 @@ function VideoConfigContent() {
 
           <button
             onClick={handleExport}
-            className='flex items-center space-x-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+            className='flex items-center space-x-1.5 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
           >
-            <Download size={16} />
+            <Download size={14} />
             <span>导出</span>
           </button>
 
-          <label className='flex items-center space-x-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer'>
-            <Upload size={16} />
+          <label className='flex items-center space-x-1.5 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer text-sm'>
+            <Upload size={14} />
             <span>导入</span>
             <input
               type='file'
@@ -740,9 +740,9 @@ function VideoConfigContent() {
             <button
               onClick={handleSaveOrder}
               disabled={isLoading('saveSourceOrder')}
-              className='flex items-center space-x-2 px-4 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:transform-none animate-pulse'
+              className='flex items-center space-x-1.5 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:transform-none animate-pulse text-sm'
             >
-              <Save size={16} />
+              <Save size={14} />
               <span>
                 {isLoading('saveSourceOrder') ? '保存中...' : '保存顺序'}
               </span>
@@ -752,13 +752,13 @@ function VideoConfigContent() {
 
         {/* 添加表单 */}
         {showAddForm && (
-          <div className='bg-white dark:bg-gray-800 border rounded-lg p-6 shadow-sm'>
-            <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100'>
+          <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm'>
+            <h3 className='text-base font-semibold mb-3 text-gray-900 dark:text-gray-100'>
               添加新视频源
             </h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
               <div>
-                <label className='block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300'>
                   名称
                 </label>
                 <input
@@ -767,12 +767,12 @@ function VideoConfigContent() {
                   onChange={(e) =>
                     setNewSource({ ...newSource, name: e.target.value })
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm'
                   placeholder='视频源名称'
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300'>
                   标识
                 </label>
                 <input
@@ -781,12 +781,12 @@ function VideoConfigContent() {
                   onChange={(e) =>
                     setNewSource({ ...newSource, key: e.target.value })
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm'
                   placeholder='唯一标识'
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300'>
                   API地址
                 </label>
                 <input
@@ -795,12 +795,12 @@ function VideoConfigContent() {
                   onChange={(e) =>
                     setNewSource({ ...newSource, api: e.target.value })
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm'
                   placeholder='API地址'
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300'>
                   描述
                 </label>
                 <input
@@ -809,22 +809,22 @@ function VideoConfigContent() {
                   onChange={(e) =>
                     setNewSource({ ...newSource, detail: e.target.value })
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm'
                   placeholder='可选描述'
                 />
               </div>
             </div>
-            <div className='flex justify-end space-x-3 mt-6'>
+            <div className='flex justify-end space-x-2 mt-4'>
               <button
                 onClick={() => setShowAddForm(false)}
-                className='px-6 py-2.5 border border-pink-300 dark:border-pink-600 text-pink-700 dark:text-pink-300 rounded-lg hover:bg-pink-100 dark:hover:bg-pink-700 transition-all hover:scale-105 font-medium'
+                className='px-4 py-2 border border-pink-300 dark:border-pink-600 text-pink-700 dark:text-pink-300 rounded-lg hover:bg-pink-100 dark:hover:bg-pink-700 transition-all hover:scale-105 font-medium text-sm'
               >
                 取消
               </button>
               <button
                 onClick={handleAddSource}
                 disabled={isLoading('addSource')}
-                className='px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+                className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
               >
                 {isLoading('addSource') ? '添加中...' : '添加'}
               </button>
@@ -833,61 +833,39 @@ function VideoConfigContent() {
         )}
 
         {/* 有效性检测 - 移到拖拽区域外面 */}
-        <div className='bg-gradient-to-br from-pink-50/40 via-rose-50/30 to-purple-50/20 dark:from-pink-900/20 dark:via-rose-900/15 dark:to-purple-900/10 border border-pink-200/50 dark:border-pink-800/50 rounded-lg p-6 shadow-sm backdrop-blur-sm'>
-          <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+        <div className='bg-gradient-to-br from-pink-50/40 via-rose-50/30 to-purple-50/20 dark:from-pink-900/20 dark:via-rose-900/15 dark:to-purple-900/10 border border-pink-200/50 dark:border-pink-800/50 rounded-lg p-4 shadow-sm backdrop-blur-sm'>
+          <div className='flex items-center justify-between mb-3'>
+            <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
               视频源有效性检测
             </h3>
           </div>
 
-          {/* PC端布局 - 水平排列 */}
-          <div className='hidden md:flex space-x-2'>
+          {/* 统一布局 - 水平排列 */}
+          <div className='flex space-x-2'>
             <input
               type='text'
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               placeholder='输入搜索关键词进行检测'
-              className='flex-1 px-4 py-3 border border-pink-300/50 dark:border-pink-600/50 rounded-lg bg-white/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500/50 focus:border-transparent backdrop-blur-sm'
+              className='flex-1 px-3 py-2.5 border border-pink-300/50 dark:border-pink-600/50 rounded-lg bg-white/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500/50 focus:border-transparent backdrop-blur-sm text-sm'
             />
             <button
               onClick={handleValidateSources}
               disabled={isValidating || !searchKeyword.trim()}
-              className='flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md'
+              className='flex items-center space-x-2 px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
             >
-              <Search size={16} />
-              <span>{isValidating ? '检测中...' : '开始检测'}</span>
-            </button>
-          </div>
-
-          {/* 移动端布局 - 垂直排列 */}
-          <div className='md:hidden space-y-3'>
-            <input
-              type='text'
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder='输入搜索关键词进行检测'
-              className='w-full px-4 py-3 border border-pink-300/50 dark:border-pink-600/50 rounded-lg bg-white/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-pink-500/50 focus:border-transparent text-base backdrop-blur-sm'
-            />
-            <button
-              onClick={handleValidateSources}
-              disabled={isValidating || !searchKeyword.trim()}
-              className='w-full flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all font-medium'
-            >
-              <Search size={16} />
+              <Search size={14} />
               <span>{isValidating ? '检测中...' : '开始检测'}</span>
             </button>
           </div>
         </div>
 
         {/* 视频源列表 */}
-        <div className='bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-6 shadow-sm'>
+        <div className='bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-4 shadow-sm'>
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
               视频源列表
             </h3>
-            <span className='text-sm text-gray-500 dark:text-gray-400'>
-              拖拽可调整顺序 · 点击复选框可批量操作
-            </span>
           </div>
 
           {sources.length === 0 ? (

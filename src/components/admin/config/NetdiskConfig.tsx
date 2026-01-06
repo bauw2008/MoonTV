@@ -183,7 +183,7 @@ function NetdiskConfigContent() {
   };
 
   return (
-    <div className='p-6'>
+    <div className='p-3 sm:p-6'>
       {isLoading('loadNetdiskConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...

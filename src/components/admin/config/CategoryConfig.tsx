@@ -218,7 +218,7 @@ function CategoryConfigContent() {
   };
 
   return (
-    <div className='p-6'>
+    <div className='p-2 sm:p-6'>
       {isLoading('loadCategoryConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...
@@ -342,7 +342,7 @@ function CategoryConfigContent() {
           {/* 分类列表 */}
           <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden'>
             <div className='overflow-x-auto'>
-              <table className='w-full'>
+              <table className='w-full min-w-full'>
                 <thead className='bg-purple-50 dark:bg-purple-800'>
                   <tr>
                     <th className='px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>

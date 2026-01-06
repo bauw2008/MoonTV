@@ -447,10 +447,10 @@ function TVBoxConfigContent() {
   };
 
   return (
-    <div className='p-6'>
+    <div className='p-3 sm:p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
           <div className='bg-teal-50 dark:bg-teal-900/30 p-4 rounded-lg border border-teal-200 dark:border-teal-700'>
             <div className='flex items-center justify-between'>
               <Shield className='text-blue-500' size={24} />

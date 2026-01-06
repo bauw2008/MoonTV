@@ -256,7 +256,7 @@ function AIConfigContent() {
   };
 
   return (
-    <div className='p-6'>
+    <div className='p-2 sm:p-6'>
       {isLoading('loadAIConfig') ? (
         <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
           加载中...

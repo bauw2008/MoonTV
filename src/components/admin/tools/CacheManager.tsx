@@ -213,7 +213,7 @@ function CacheManager() {
   }
 
   return (
-    <div className='p-6'>
+    <div className='p-2 sm:p-6'>
       <div className='space-y-6'>
         {/* 操作按钮 */}
         <div className='flex items-center justify-end'>

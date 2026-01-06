@@ -148,7 +148,7 @@ function OwnerConfigContent() {
 
   return (
     <>
-      <div className='p-6'>
+      <div className='p-2 sm:p-6'>
         <div className='space-y-6'>
           <div className='space-y-6'>
             {/* 站点维护模式 */}
@@ -292,7 +292,7 @@ function OwnerConfigContent() {
                 <button
                   onClick={handleResetAllConfigs}
                   disabled={isLoading('resetAllConfigs')}
-                  className='px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center space-x-2 disabled:opacity-50'
+                  className='px-2 py-1.5 sm:px-4 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center space-x-2 disabled:opacity-50'
                 >
                   {isLoading('resetAllConfigs') ? (
                     <>
@@ -314,7 +314,7 @@ function OwnerConfigContent() {
                           d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
                         />
                       </svg>
-                      <span>重置所有配置</span>
+                      <span>重置配置</span>
                     </>
                   )}
                 </button>
@@ -353,7 +353,7 @@ function OwnerConfigContent() {
                         showError('清理失败');
                       }
                     }}
-                    className='px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium flex items-center space-x-2'
+                    className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium flex items-center space-x-2'
                   >
                     <svg
                       className='w-4 h-4'
@@ -375,7 +375,7 @@ function OwnerConfigContent() {
                 <button
                   onClick={handleSave}
                   disabled={isLoading('saveOwnerConfig')}
-                  className='px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
+                  className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all shadow hover:shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
                 >
                   {isLoading('saveOwnerConfig') ? (
                     <>

@@ -143,7 +143,7 @@ function DataMigration() {
 
   return (
     <>
-      <div className='p-6'>
+      <div className='p-2 sm:p-6'>
         <div className='max-w-6xl mx-auto space-y-6'>
           {/* 警告提示 */}
           <div className='flex items-center gap-3 p-4 border border-amber-200 dark:border-amber-700 rounded-lg bg-amber-50/30 dark:bg-amber-900/5'>

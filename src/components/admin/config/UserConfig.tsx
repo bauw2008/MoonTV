@@ -1174,10 +1174,10 @@ function UserConfigContent() {
   }
 
   return (
-    <div className='p-6'>
+    <div className='p-2 sm:p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
           <div className='bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center'>
