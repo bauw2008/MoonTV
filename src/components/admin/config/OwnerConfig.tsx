@@ -292,7 +292,7 @@ function OwnerConfigContent() {
                 <button
                   onClick={handleResetAllConfigs}
                   disabled={isLoading('resetAllConfigs')}
-                  className='px-2 py-1.5 sm:px-4 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm font-medium flex items-center space-x-2 disabled:opacity-50'
+                  className='px-2 py-1.5 sm:px-6 sm:py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs sm:text-sm font-medium flex items-center space-x-2 disabled:opacity-50'
                 >
                   {isLoading('resetAllConfigs') ? (
                     <>

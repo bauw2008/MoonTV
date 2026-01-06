@@ -9,25 +9,10 @@ declare global {
   }
 }
 
-import {
-  closestCenter,
-  DndContext,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+
 import {
   CheckCircle,
   Download,
-  GripVertical,
   Play,
   Plus,
   Power,
@@ -52,8 +37,10 @@ interface DataSource {
   from?: string;
 }
 
-// 拖拽排序项组件
-const SortableSourceItem = ({
+
+
+// 视频源项组件
+const SourceItem = ({
   source,
   onToggleEnable,
   onDelete,
@@ -68,84 +55,64 @@ const SortableSourceItem = ({
   onSelect: (key: string) => void;
   validationResult?: any;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: source.key });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-3 mb-2 transition-all hover:shadow-sm hover:bg-pink-100 dark:hover:bg-pink-800 ${
+      className={`bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-2 sm:p-3 mb-2 transition-all hover:shadow-sm hover:bg-pink-100 dark:hover:bg-pink-800 ${
         selected
           ? 'ring-2 ring-blue-500 border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'
           : 'border-gray-200 dark:border-gray-700'
       } ${source.disabled ? 'opacity-60' : ''}`}
     >
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-2 flex-1 min-w-0'>
-          <button
-            {...attributes}
-            {...listeners}
-            className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-move p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-          >
-            <GripVertical size={16} />
-          </button>
-
+      <div className='flex flex-col gap-2'>
+        <div className='flex items-start space-x-2 flex-1 min-w-0'>
           <input
             type='checkbox'
             checked={selected}
             onChange={() => onSelect(source.key)}
-            className='w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 flex-shrink-0'
+            className='w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 flex-shrink-0 mt-0.5'
           />
 
           <div className='flex-1 min-w-0'>
-            <div className='flex items-center space-x-2 mb-1'>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1'>
               <h3 className='font-semibold text-gray-900 dark:text-white text-sm truncate'>
                 {source.name}
               </h3>
-              <span className='text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded font-medium flex-shrink-0'>
+              <span className='text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded font-medium flex-shrink-0 w-fit'>
                 {source.key}
               </span>
             </div>
 
-            <div className='flex items-center space-x-2 mb-1'>
-              <code className='text-xs bg-pink-100 dark:bg-pink-800 text-pink-700 dark:text-pink-300 px-2 py-0.5 rounded border border-pink-200 dark:border-pink-600 font-mono flex-1 truncate'>
+            <div className='mb-2 sm:mb-1'>
+              <code className='text-xs bg-pink-100 dark:bg-pink-800 text-pink-700 dark:text-pink-300 px-2 py-1 rounded border border-pink-200 dark:border-pink-600 font-mono block w-full truncate'>
                 {source.api}
               </code>
             </div>
 
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center space-x-2'>
-                {source.disabled ? (
-                  <div className='flex items-center space-x-1 text-red-600 dark:text-red-400'>
-                    <div className='w-1.5 h-1.5 rounded-full bg-red-500'></div>
-                    <span className='text-xs font-medium'>已禁用</span>
-                  </div>
-                ) : (
-                  <div className='flex items-center space-x-1 text-green-600 dark:text-green-400'>
-                    <div className='w-1.5 h-1.5 rounded-full bg-green-500'></div>
-                    <span className='text-xs font-medium'>已启用</span>
-                  </div>
-                )}
+            <div className='flex flex-wrap items-center gap-2'>
+              {source.disabled ? (
+                <div className='flex items-center space-x-1 text-red-600 dark:text-red-400'>
+                  <div className='w-1.5 h-1.5 rounded-full bg-red-500'></div>
+                  <span className='text-xs font-medium'>禁用</span>
+                </div>
+              ) : (
+                <div className='flex items-center space-x-1 text-green-600 dark:text-green-400'>
+                  <div className='w-1.5 h-1.5 rounded-full bg-green-500'></div>
+                  <span className='text-xs font-medium'>启用</span>
+                </div>
+              )}
 
-                {source.detail && (
-                  <span
-                    className='text-xs text-gray-500 dark:text-gray-400 truncate'
-                    title={source.detail}
-                  >
-                    {source.detail}
-                  </span>
-                )}
-
-                <span className='text-xs text-gray-400 dark:text-gray-500'>
-                  {source.from || 'custom'}
+              {source.detail && (
+                <span
+                  className='text-xs text-gray-500 dark:text-gray-400 truncate'
+                  title={source.detail}
+                >
+                  {source.detail}
                 </span>
-              </div>
+              )}
+
+              <span className='text-xs text-gray-400 dark:text-gray-500'>
+                {source.from || 'custom'}
+              </span>
 
               {/* 有效性检测结果 */}
               {validationResult && (
@@ -190,7 +157,7 @@ const SortableSourceItem = ({
           </div>
         </div>
 
-        <div className='flex items-center space-x-1 ml-2'>
+        <div className='flex items-center justify-end space-x-1 ml-auto'>
           <button
             onClick={() => onToggleEnable(source.key)}
             className={`p-1.5 rounded transition-all hover:scale-105 ${
@@ -225,7 +192,7 @@ function VideoConfigContent() {
   const [config, setConfig] = useState<any>(null);
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [orderChanged, setOrderChanged] = useState(false);
+  
   const [selectedSources, setSelectedSources] = useState<Set<string>>(
     new Set(),
   );
@@ -251,17 +218,7 @@ function VideoConfigContent() {
     mode: 'export',
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 5,
-      },
-    }),
-  );
+  
 
   useEffect(() => {
     loadConfig();
@@ -277,7 +234,6 @@ function VideoConfigContent() {
       setConfig(data.Config);
       if (data.Config?.SourceConfig) {
         setSources(data.Config.SourceConfig);
-        setOrderChanged(false);
         setSelectedSources(new Set());
       }
     } catch (error) {
@@ -401,29 +357,7 @@ function VideoConfigContent() {
     }
   };
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = sources.findIndex((s) => s.key === active.id);
-    const newIndex = sources.findIndex((s) => s.key === over.id);
-    setSources((prev) => arrayMove(prev, oldIndex, newIndex));
-    setOrderChanged(true);
-  };
-
-  const handleSaveOrder = async () => {
-    const order = sources.map((s) => s.key);
-    try {
-      await withLoading('saveSourceOrder', () =>
-        callSourceApi({ action: 'sort', order }),
-      );
-      setOrderChanged(false);
-      showSuccess('保存顺序成功');
-    } catch (error) {
-      showError('保存顺序失败');
-      console.error('操作失败', 'sort', order);
-    }
-  };
+  
 
   // 有效性检测处理
   const handleValidateSources = async () => {
@@ -546,7 +480,7 @@ function VideoConfigContent() {
   // 虚拟滚动状态
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
   const [containerHeight, setContainerHeight] = useState(600);
-  const itemHeight = 80; // 每个视频源项的高度
+  const itemHeight = typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 80; // 移动端增加高度
 
   // 计算可见范围
   const updateVisibleRange = useCallback(
@@ -648,107 +582,151 @@ function VideoConfigContent() {
   };
 
   return (
-    <div className='p-2'>
+    <div className='p-1'>
       <div className='space-y-4'>
         {/* 统计信息 */}
-        <div className='grid grid-cols-4 gap-2'>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-lg font-bold text-blue-600 dark:text-blue-400'>
+        <div className='grid grid-cols-2 sm:grid-cols-4 gap-2'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 sm:p-3 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400'>
               {sources.length}
             </div>
-            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium'>
               总视频源
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-lg font-bold text-green-600 dark:text-green-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 sm:p-3 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg sm:text-xl font-bold text-green-600 dark:text-green-400'>
               {sources.filter((s) => !s.disabled).length}
             </div>
-            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium'>
               已启用
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-lg font-bold text-red-600 dark:text-red-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 sm:p-3 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg sm:text-xl font-bold text-red-600 dark:text-red-400'>
               {sources.filter((s) => s.disabled).length}
             </div>
-            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium'>
               已禁用
             </div>
           </div>
-          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='text-lg font-bold text-purple-600 dark:text-purple-400'>
+          <div className='bg-pink-50 dark:bg-pink-900/30 p-2 sm:p-3 rounded-lg border border-pink-200 dark:border-pink-700 shadow-sm hover:shadow-md transition-shadow'>
+            <div className='text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400'>
               {selectedSources.size}
             </div>
-            <div className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
+            <div className='text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium'>
               已选择
             </div>
           </div>
         </div>
 
         {/* 操作按钮 */}
-        <div className='flex flex-wrap gap-2'>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className='flex items-center space-x-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
-          >
-            <Plus size={14} />
-            <span>添加视频源</span>
-          </button>
 
-          <button
-            onClick={handleSelectAll}
-            className='px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
-          >
-            {selectedSources.size === sources.length ? '取消全选' : '全选'}
-          </button>
+                <div className='grid grid-cols-2 sm:flex sm:flex-wrap gap-2'>
 
-          <button
-            onClick={handleBatchDelete}
-            disabled={selectedSources.size === 0}
-            className='flex items-center space-x-1.5 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm'
-          >
-            <Trash2 size={14} />
-            <span>批量删除</span>
-            {selectedSources.size > 0 && (
-              <span className='ml-1 px-2 py-0.5 bg-red-700 text-white text-xs rounded-full'>
-                {selectedSources.size}
-              </span>
-            )}
-          </button>
+                  <button
 
-          <button
-            onClick={handleExport}
-            className='flex items-center space-x-1.5 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
-          >
-            <Download size={14} />
-            <span>导出</span>
-          </button>
+                    onClick={() => setShowAddForm(!showAddForm)}
 
-          <label className='flex items-center space-x-1.5 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer text-sm'>
-            <Upload size={14} />
-            <span>导入</span>
-            <input
-              type='file'
-              accept='.json'
-              onChange={handleImport}
-              className='hidden'
-            />
-          </label>
+                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
 
-          {orderChanged && (
-            <button
-              onClick={handleSaveOrder}
-              disabled={isLoading('saveSourceOrder')}
-              className='flex items-center space-x-1.5 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:transform-none animate-pulse text-sm'
-            >
-              <Save size={14} />
-              <span>
-                {isLoading('saveSourceOrder') ? '保存中...' : '保存顺序'}
-              </span>
-            </button>
-          )}
-        </div>
+                  >
+
+                    <Plus size={14} />
+
+                    <span className='hidden sm:inline'>添加视频源</span>
+
+                    <span className='sm:hidden'>添加</span>
+
+                  </button>
+
+        
+
+                  <button
+
+                    onClick={handleSelectAll}
+
+                    className='px-2 sm:px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+
+                  >
+
+                    {selectedSources.size === sources.length ? '取消全选' : '全选'}
+
+                  </button>
+
+        
+
+                  <button
+
+                    onClick={handleBatchDelete}
+
+                    disabled={selectedSources.size === 0}
+
+                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-sm'
+
+                  >
+
+                    <Trash2 size={14} />
+
+                    <span className='hidden sm:inline'>批量删除</span>
+
+                    <span className='sm:hidden'>删除</span>
+
+                    {selectedSources.size > 0 && (
+
+                      <span className='ml-1 px-2 py-0.5 bg-red-700 text-white text-xs rounded-full'>
+
+                        {selectedSources.size}
+
+                      </span>
+
+                    )}
+
+                  </button>
+
+        
+
+                  <button
+
+                    onClick={handleExport}
+
+                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+
+                  >
+
+                    <Download size={14} />
+
+                    <span className='hidden sm:inline'>导出</span>
+
+                    <span className='sm:hidden'>导出</span>
+
+                  </button>
+
+        
+
+                  <label className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer text-xs sm:text-sm'>
+
+                    <Upload size={14} />
+
+                    <span className='hidden sm:inline'>导入</span>
+
+                    <span className='sm:hidden'>导入</span>
+
+                    <input
+
+                      type='file'
+
+                      accept='.json'
+
+                      onChange={handleImport}
+
+                      className='hidden'
+
+                    />
+
+                  </label>
+
+                </div>
 
         {/* 添加表单 */}
         {showAddForm && (
@@ -855,15 +833,15 @@ function VideoConfigContent() {
               className='flex items-center space-x-2 px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-sm'
             >
               <Search size={14} />
-              <span>{isValidating ? '检测中...' : '开始检测'}</span>
+              <span>{isValidating ? '检测中...' : '检测'}</span>
             </button>
           </div>
         </div>
 
         {/* 视频源列表 */}
-        <div className='bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-4 shadow-sm'>
-          <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+        <div className='bg-pink-50 dark:bg-pink-900/30 border rounded-lg p-3 sm:p-4 shadow-sm'>
+          <div className='flex items-center justify-between mb-3 sm:mb-4'>
+            <h3 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100'>
               视频源列表
             </h3>
           </div>
@@ -899,45 +877,34 @@ function VideoConfigContent() {
                       transform: `translateY(${visibleRange.start * itemHeight}px)`,
                     }}
                   >
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={visibleSources.map((s) => s.key)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className='px-4'>
-                          {visibleSources.map((source, index) => (
-                            <div
-                              key={source.key}
-                              className='border-b border-gray-100 dark:border-gray-700 last:border-b-0'
-                              style={{ height: `${itemHeight}px` }}
-                            >
-                              <SortableSourceItem
-                                source={source}
-                                onToggleEnable={handleToggleEnable}
-                                onDelete={handleDelete}
-                                selected={selectedSources.has(source.key)}
-                                validationResult={validationResults.find(
-                                  (r) => r.key === source.key,
-                                )}
-                                onSelect={(key) => {
-                                  const newSelected = new Set(selectedSources);
-                                  if (newSelected.has(key)) {
-                                    newSelected.delete(key);
-                                  } else {
-                                    newSelected.add(key);
-                                  }
-                                  setSelectedSources(newSelected);
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </DndContext>
+                    <div className='px-0.5'>
+                        {visibleSources.map((source, index) => (
+                          <div
+                            key={source.key}
+                            className='border-b border-gray-100 dark:border-gray-700 last:border-b-0 py-1 sm:py-0'
+                            style={{ minHeight: `${itemHeight}px` }}
+                          >
+                            <SourceItem
+                              source={source}
+                              onToggleEnable={handleToggleEnable}
+                              onDelete={handleDelete}
+                              selected={selectedSources.has(source.key)}
+                              validationResult={validationResults.find(
+                                (r) => r.key === source.key,
+                              )}
+                              onSelect={(key) => {
+                                const newSelected = new Set(selectedSources);
+                                if (newSelected.has(key)) {
+                                  newSelected.delete(key);
+                                } else {
+                                  newSelected.add(key);
+                                }
+                                setSelectedSources(newSelected);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                   </div>
                 </div>
               </div>

@@ -277,13 +277,13 @@ function ConfigFile() {
             )}
           </div>
 
-          <div className='p-3 sm:p-6'>
+          <div className='p-0.1 sm:p-6'>
             <textarea
               value={configContent}
               onChange={(e) => setConfigContent(e.target.value)}
               rows={20}
               placeholder='JSON配置内容...'
-              className='w-full px-2 py-2.5 sm:px-4 sm:py-4 border border-emerald-200/50 dark:border-emerald-700/50 rounded-lg sm:rounded-2xl bg-white/90 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 font-mono text-xs sm:text-sm leading-relaxed resize-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 backdrop-blur-sm transition-all'
+              className='w-full px-1 py-2.5 sm:px-4 sm:py-4 border border-emerald-200/50 dark:border-emerald-700/50 rounded-lg sm:rounded-2xl bg-white/90 dark:bg-gray-800/60 text-gray-900 dark:text-gray-100 font-mono text-xs sm:text-sm leading-relaxed resize-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 backdrop-blur-sm transition-all'
               style={{
                 fontFamily:
                   'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',

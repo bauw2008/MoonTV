@@ -249,21 +249,34 @@ function CacheManager() {
 
         {/* 总览统计 */}
         {stats && (
-          <div className='bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white'>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-              <div className='text-center'>
-                <div className='text-3xl font-bold'>{stats.total.count}</div>
-                <div className='text-blue-100'>缓存项总数</div>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4'>
+            <div className='bg-blue-50 dark:bg-blue-900/30 p-3 sm:p-4 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm hover:shadow-md transition-shadow'>
+              <div className='flex items-center justify-between mb-2'>
+                <Database className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                <span className='text-xs text-blue-600 dark:text-blue-400 font-medium'>缓存总数</span>
               </div>
-              <div className='text-center'>
-                <div className='text-3xl font-bold'>
-                  {stats.formattedSizes.total}
-                </div>
-                <div className='text-blue-100'>占用存储空间</div>
+              <div className='text-2xl sm:text-3xl font-bold text-blue-700 dark:text-blue-300'>
+                {stats.total.count}
               </div>
-              <div className='text-center'>
-                <div className='text-3xl font-bold'>{CACHE_TYPES.length}</div>
-                <div className='text-blue-100'>缓存类型</div>
+            </div>
+            
+            <div className='bg-purple-50 dark:bg-purple-900/30 p-3 sm:p-4 rounded-lg border border-purple-200 dark:border-purple-700 shadow-sm hover:shadow-md transition-shadow'>
+              <div className='flex items-center justify-between mb-2'>
+                <Folder className='h-5 w-5 text-purple-600 dark:text-purple-400' />
+                <span className='text-xs text-purple-600 dark:text-purple-400 font-medium'>存储占用</span>
+              </div>
+              <div className='text-2xl sm:text-3xl font-bold text-purple-700 dark:text-purple-300'>
+                {stats.formattedSizes.total}
+              </div>
+            </div>
+            
+            <div className='bg-green-50 dark:bg-green-900/30 p-3 sm:p-4 rounded-lg border border-green-200 dark:border-green-700 shadow-sm hover:shadow-md transition-shadow'>
+              <div className='flex items-center justify-between mb-2'>
+                <Film className='h-5 w-5 text-green-600 dark:text-green-400' />
+                <span className='text-xs text-green-600 dark:text-green-400 font-medium'>缓存类型</span>
+              </div>
+              <div className='text-2xl sm:text-3xl font-bold text-green-700 dark:text-green-300'>
+                {CACHE_TYPES.length}
               </div>
             </div>
           </div>

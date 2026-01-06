@@ -1,24 +1,9 @@
 'use client';
 
-import {
-  closestCenter,
-  DndContext,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+
 import {
   Calendar,
   Edit,
-  GripVertical,
   Plus,
   Power,
   RefreshCw,
@@ -45,7 +30,7 @@ interface LiveDataSource {
 }
 
 // 拖拽排序项组件
-const SortableLiveItem = ({
+const LiveItem = ({
   liveSource,
   onToggleEnable,
   onDelete,
@@ -64,13 +49,6 @@ const SortableLiveItem = ({
   onSaveEdit: () => void;
   onCancelEdit: () => void;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: liveSource.key });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   if (isEditing && editingSource?.key === liveSource.key) {
     return (
@@ -165,8 +143,6 @@ const SortableLiveItem = ({
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
       className={`bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-3 transition-all hover:shadow-md ${
         liveSource.disabled ? 'opacity-60' : ''
       }`}
@@ -174,13 +150,6 @@ const SortableLiveItem = ({
       {/* 布局 - 水平排列 */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center space-x-3 flex-1'>
-          <button
-            {...attributes}
-            {...listeners}
-            className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-move'
-          >
-            <GripVertical size={18} />
-          </button>
 
           <div className='flex-1'>
             <div className='flex items-center space-x-2'>
@@ -202,7 +171,7 @@ const SortableLiveItem = ({
 
               {liveSource.channelNumber !== undefined && (
                 <span className='text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded'>
-                  {liveSource.channelNumber} 个频道
+                  {liveSource.channelNumber}频道
                 </span>
               )}
             </div>
@@ -280,7 +249,7 @@ function LiveConfigContent() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLiveSource, setEditingLiveSource] =
     useState<LiveDataSource | null>(null);
-  const [orderChanged, setOrderChanged] = useState(false);
+  
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [newLiveSource, setNewLiveSource] = useState<LiveDataSource>({
@@ -293,17 +262,7 @@ function LiveConfigContent() {
     from: 'custom',
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 5,
-      },
-    }),
-  );
+  
 
   useEffect(() => {
     loadConfig();
@@ -319,7 +278,6 @@ function LiveConfigContent() {
       setConfig(data.Config);
       if (data.Config?.LiveConfig) {
         setLiveSources(data.Config.LiveConfig);
-        setOrderChanged(false);
       }
     } catch (error) {
       console.error('加载直播配置失败:', error);
@@ -472,40 +430,14 @@ function LiveConfigContent() {
     });
   };
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-
-    if (active.id !== over?.id) {
-      const oldIndex = liveSources.findIndex((s) => s.key === active.id);
-      const newIndex = liveSources.findIndex((s) => s.key === over.id);
-
-      const newSources = arrayMove(liveSources, oldIndex, newIndex);
-      setLiveSources(newSources);
-      setOrderChanged(true);
-    }
-  };
-
-  const handleSaveOrder = async () => {
-    const order = liveSources.map((s) => s.key);
-    try {
-      await withLoading('saveLiveSourceOrder', () =>
-        callLiveSourceApi({ action: 'sort', order }),
-      );
-      setOrderChanged(false);
-      // 显示成功提示
-      showSuccess('直播源顺序已保存');
-    } catch (error) {
-      console.error('操作失败', 'sort', order);
-      showError('保存顺序失败');
-    }
-  };
+  
 
   return (
-    <div className='p-3 sm:p-6'>
+    <div className='p-0.1 sm:p-6'>
       <div className='space-y-6'>
         {/* 统计信息 */}
         <div className='grid grid-cols-3 gap-4'>
-          <div className='bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-200 dark:border-red-700'>
+          <div className='bg-red-50 dark:bg-red-900/30 p-3 sm:p-4 rounded-lg border border-red-200 dark:border-red-700'>
             <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
               {liveSources.length}
             </div>
@@ -513,19 +445,19 @@ function LiveConfigContent() {
               总直播源
             </div>
           </div>
-          <div className='bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-200 dark:border-red-700'>
-            <div className='text-2xl font-bold text-green-600 dark:text-green-400'>
+          <div className='bg-red-50 dark:bg-red-900/30 p-3 sm:p-4 rounded-lg border border-red-200 dark:border-red-700'>
+            <div className='text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400'>
               {liveSources.filter((s) => !s.disabled).length}
             </div>
-            <div className='text-sm text-gray-600 dark:text-gray-400'>
+            <div className='text-xs sm:text-sm text-gray-600 dark:text-gray-400'>
               已启用
             </div>
           </div>
-          <div className='bg-red-50 dark:bg-red-900/30 p-4 rounded-lg border border-red-200 dark:border-red-700'>
-            <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
+          <div className='bg-red-50 dark:bg-red-900/30 p-3 sm:p-4 rounded-lg border border-red-200 dark:border-red-700'>
+            <div className='text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400'>
               {liveSources.filter((s) => s.disabled).length}
             </div>
-            <div className='text-sm text-gray-600 dark:text-gray-400'>
+            <div className='text-xs sm:text-sm text-gray-600 dark:text-gray-400'>
               已禁用
             </div>
           </div>
@@ -561,18 +493,7 @@ function LiveConfigContent() {
             </span>
           </button>
 
-          {orderChanged && (
-            <button
-              onClick={handleSaveOrder}
-              disabled={isLoading('saveLiveSourceOrder')}
-              className='flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50'
-            >
-              <Save size={16} />
-              <span>
-                {isLoading('saveLiveSourceOrder') ? '保存中...' : '保存顺序'}
-              </span>
-            </button>
-          )}
+          
         </div>
 
         {/* 添加表单 */}
@@ -672,18 +593,9 @@ function LiveConfigContent() {
         )}
 
         {/* 直播源列表 */}
-        <div className='bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-teal-50/10 dark:from-blue-900/15 dark:via-cyan-900/10 dark:to-teal-900/5 border border-blue-200/40 dark:border-blue-800/40 rounded-lg p-3 sm:p-6 backdrop-blur-sm overflow-x-auto'>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={liveSources.map((s) => s.key)}
-              strategy={verticalListSortingStrategy}
-            >
-              {liveSources.map((liveSource) => (
-                <SortableLiveItem
+        <div className='bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-teal-50/10 dark:from-blue-900/15 dark:via-cyan-900/10 dark:to-teal-900/5 border border-blue-200/40 dark:border-blue-800/40 rounded-lg p-0.1 sm:p-6 backdrop-blur-sm overflow-x-auto'>
+          {liveSources.map((liveSource) => (
+                <LiveItem
                   key={liveSource.key}
                   liveSource={liveSource}
                   onToggleEnable={handleToggleEnable}
@@ -695,8 +607,6 @@ function LiveConfigContent() {
                   onCancelEdit={() => setEditingLiveSource(null)}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
         </div>
       </div>
     </div>
