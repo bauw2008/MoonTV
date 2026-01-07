@@ -230,139 +230,139 @@ function NetdiskConfigContent() {
 
           {/* 基础设置 */}
           <div className='bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6 border border-purple-200 dark:border-purple-700'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                  基础设置
-                </h3>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+              基础设置
+            </h3>
 
-                {/* PanSou服务地址 */}
-                <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    PanSou服务地址
-                  </label>
+            {/* PanSou服务地址 */}
+            <div className='space-y-2'>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                PanSou服务地址
+              </label>
+              <input
+                type='url'
+                value={netDiskSettings.pansouUrl}
+                onChange={(e) =>
+                  setNetDiskSettings((prev) => ({
+                    ...prev,
+                    pansouUrl: e.target.value,
+                  }))
+                }
+                placeholder='https://so.252035.xyz'
+                className='w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-purple-500 focus:border-purple-500'
+              />
+              <p className='text-sm text-gray-500 dark:text-gray-400'>
+                默认使用公益服务，您也可以填入自己搭建的PanSou服务地址
+              </p>
+            </div>
+
+            {/* 请求超时时间 */}
+            <div className='space-y-2 mt-4'>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                请求超时时间（秒）
+              </label>
+              <div className='flex items-center space-x-2'>
+                <Clock size={16} className='text-gray-500' />
+                <input
+                  type='number'
+                  min='5'
+                  max='120'
+                  value={netDiskSettings.timeout}
+                  onChange={(e) =>
+                    setNetDiskSettings((prev) => ({
+                      ...prev,
+                      timeout: parseInt(e.target.value) || 30,
+                    }))
+                  }
+                  className='w-24 px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-purple-500 focus:border-purple-500'
+                />
+                <span className='text-sm text-gray-500 dark:text-gray-400'>
+                  秒
+                </span>
+              </div>
+              <p className='text-sm text-gray-500 dark:text-gray-400'>
+                网盘搜索请求的超时时间，建议设置为30秒
+              </p>
+            </div>
+          </div>
+
+          {/* 网盘类型选择 */}
+          <div className='bg-green-50 dark:bg-green-900/30 rounded-lg p-6 border border-green-200 dark:border-green-700'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+              网盘类型选择
+            </h3>
+
+            {/* 全选/清空按钮 */}
+            <div className='flex items-center justify-between mb-4'>
+              <p className='text-sm text-gray-600 dark:text-gray-400'>
+                已选择 {netDiskSettings.enabledCloudTypes.length} /{' '}
+                {CLOUD_TYPE_OPTIONS.length} 种类型
+              </p>
+              <div className='flex space-x-2'>
+                <button
+                  onClick={() => handleSelectAll(true)}
+                  className='px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
+                >
+                  全选
+                </button>
+                <button
+                  onClick={() => handleSelectAll(false)}
+                  className='px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors'
+                >
+                  清空
+                </button>
+              </div>
+            </div>
+
+            {/* 网盘类型网格 */}
+            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+              {CLOUD_TYPE_OPTIONS.map((option) => (
+                <label
+                  key={option.key}
+                  className='flex items-center space-x-3 p-3 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800 cursor-pointer transition-colors'
+                >
                   <input
-                    type='url'
-                    value={netDiskSettings.pansouUrl}
+                    type='checkbox'
+                    checked={netDiskSettings.enabledCloudTypes.includes(
+                      option.key,
+                    )}
                     onChange={(e) =>
-                      setNetDiskSettings((prev) => ({
-                        ...prev,
-                        pansouUrl: e.target.value,
-                      }))
+                      handleCloudTypeChange(option.key, e.target.checked)
                     }
-                    placeholder='https://so.252035.xyz'
-                    className='w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-purple-500 focus:border-purple-500'
+                    className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
                   />
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
-                    默认使用公益服务，您也可以填入自己搭建的PanSou服务地址
-                  </p>
-                </div>
-
-                {/* 请求超时时间 */}
-                <div className='space-y-2 mt-4'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    请求超时时间（秒）
-                  </label>
-                  <div className='flex items-center space-x-2'>
-                    <Clock size={16} className='text-gray-500' />
-                    <input
-                      type='number'
-                      min='5'
-                      max='120'
-                      value={netDiskSettings.timeout}
-                      onChange={(e) =>
-                        setNetDiskSettings((prev) => ({
-                          ...prev,
-                          timeout: parseInt(e.target.value) || 30,
-                        }))
-                      }
-                      className='w-24 px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-purple-500 focus:border-purple-500'
-                    />
-                    <span className='text-sm text-gray-500 dark:text-gray-400'>
-                      秒
-                    </span>
-                  </div>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
-                    网盘搜索请求的超时时间，建议设置为30秒
-                  </p>
-                </div>
-              </div>
-
-              {/* 网盘类型选择 */}
-              <div className='bg-green-50 dark:bg-green-900/30 rounded-lg p-6 border border-green-200 dark:border-green-700'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                  网盘类型选择
-                </h3>
-
-                {/* 全选/清空按钮 */}
-                <div className='flex items-center justify-between mb-4'>
-                  <p className='text-sm text-gray-600 dark:text-gray-400'>
-                    已选择 {netDiskSettings.enabledCloudTypes.length} /{' '}
-                    {CLOUD_TYPE_OPTIONS.length} 种类型
-                  </p>
-                  <div className='flex space-x-2'>
-                    <button
-                      onClick={() => handleSelectAll(true)}
-                      className='px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
-                    >
-                      全选
-                    </button>
-                    <button
-                      onClick={() => handleSelectAll(false)}
-                      className='px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors'
-                    >
-                      清空
-                    </button>
-                  </div>
-                </div>
-
-                {/* 网盘类型网格 */}
-                <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-                  {CLOUD_TYPE_OPTIONS.map((option) => (
-                    <label
-                      key={option.key}
-                      className='flex items-center space-x-3 p-3 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800 cursor-pointer transition-colors'
-                    >
-                      <input
-                        type='checkbox'
-                        checked={netDiskSettings.enabledCloudTypes.includes(
-                          option.key,
-                        )}
-                        onChange={(e) =>
-                          handleCloudTypeChange(option.key, e.target.checked)
-                        }
-                        className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
-                      />
-                      <span className='text-lg'>{option.icon}</span>
-                      <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {option.name}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+                  <span className='text-lg'>{option.icon}</span>
+                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    {option.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* 保存按钮 */}
           <div className='flex justify-end mt-6'>
-              <button
-                onClick={handleSave}
-                disabled={isLoading('saveNetDiskConfig')}
-                className='flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium'
-              >
-                <div className='flex items-center justify-center gap-2'>
-                  {isLoading('saveNetDiskConfig') ? (
-                    <>
-                      <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-                      保存中...
-                    </>
-                  ) : (
-                    <>
-                      <Save className='w-4 h-4' />
-                      保存配置
-                    </>
-                  )}
-                </div>
-              </button>
-            </div>
+            <button
+              onClick={handleSave}
+              disabled={isLoading('saveNetDiskConfig')}
+              className='flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium'
+            >
+              <div className='flex items-center justify-center gap-2'>
+                {isLoading('saveNetDiskConfig') ? (
+                  <>
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <Save className='w-4 h-4' />
+                    保存配置
+                  </>
+                )}
+              </div>
+            </button>
           </div>
+        </div>
       )}
     </div>
   );

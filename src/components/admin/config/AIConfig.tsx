@@ -328,260 +328,257 @@ function AIConfigContent() {
 
             {/* API配置 */}
             <div className='space-y-4'>
-                {/* API地址 */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    API地址
-                  </label>
-                  <div className='relative'>
-                    <input
-                      type='url'
-                      value={aiSettings.apiUrl}
-                      onChange={(e) =>
-                        setAiSettings((prev) => ({
-                          ...prev,
-                          apiUrl: e.target.value,
-                        }))
-                      }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                      placeholder='https://api.openai.com/v1'
-                    />
-                    <button
-                      type='button'
-                      onClick={async () => await addV1Suffix()}
-                      className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded transition-colors'
-                    >
-                      +/v1
-                    </button>
-                  </div>
+              {/* API地址 */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  API地址
+                </label>
+                <div className='relative'>
+                  <input
+                    type='url'
+                    value={aiSettings.apiUrl}
+                    onChange={(e) =>
+                      setAiSettings((prev) => ({
+                        ...prev,
+                        apiUrl: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    placeholder='https://api.openai.com/v1'
+                  />
+                  <button
+                    type='button'
+                    onClick={async () => await addV1Suffix()}
+                    className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded transition-colors'
+                  >
+                    +/v1
+                  </button>
+                </div>
 
-                  {/* API提供商列表 */}
-                  <details className='mt-2'>
-                    <summary className='text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'>
-                      📝 常见API地址
-                    </summary>
-                    <div className='mt-2 space-y-2 pl-4 border-l-2 border-gray-200 dark:border-gray-700'>
-                      {API_PROVIDERS.map((provider) => (
-                        <div
-                          key={provider.name}
-                          className='group hover:bg-orange-100 dark:hover:bg-orange-800/50 -ml-4 pl-4 pr-2 py-2 rounded transition-colors'
-                        >
-                          {/* PC端布局 - 水平排列 */}
-                          <div className='hidden sm:flex items-center justify-between'>
-                            <div className='flex items-center space-x-2 flex-1 min-w-0'>
-                              <span className='text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap'>
-                                {provider.name}:
-                              </span>
-                              <code className='text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded flex-1 truncate'>
-                                {provider.url}
-                              </code>
-                            </div>
-                            <button
-                              type='button'
-                              onClick={async () =>
-                                await setProviderUrl(
-                                  provider.url,
-                                  provider.name,
-                                )
-                              }
-                              className='opacity-0 group-hover:opacity-100 ml-2 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded transition-all whitespace-nowrap'
-                            >
-                              使用
-                            </button>
+                {/* API提供商列表 */}
+                <details className='mt-2'>
+                  <summary className='text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300'>
+                    📝 常见API地址
+                  </summary>
+                  <div className='mt-2 space-y-2 pl-4 border-l-2 border-gray-200 dark:border-gray-700'>
+                    {API_PROVIDERS.map((provider) => (
+                      <div
+                        key={provider.name}
+                        className='group hover:bg-orange-100 dark:hover:bg-orange-800/50 -ml-4 pl-4 pr-2 py-2 rounded transition-colors'
+                      >
+                        {/* PC端布局 - 水平排列 */}
+                        <div className='hidden sm:flex items-center justify-between'>
+                          <div className='flex items-center space-x-2 flex-1 min-w-0'>
+                            <span className='text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap'>
+                              {provider.name}:
+                            </span>
+                            <code className='text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded flex-1 truncate'>
+                              {provider.url}
+                            </code>
                           </div>
+                          <button
+                            type='button'
+                            onClick={async () =>
+                              await setProviderUrl(provider.url, provider.name)
+                            }
+                            className='opacity-0 group-hover:opacity-100 ml-2 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded transition-all whitespace-nowrap'
+                          >
+                            使用
+                          </button>
+                        </div>
 
-                          {/* 移动端布局 - 垂直排列 */}
-                          <div className='sm:hidden space-y-2'>
-                            <div className='flex items-center justify-between'>
-                              <span className='text-xs font-medium text-gray-700 dark:text-gray-300'>
-                                {provider.name}
-                              </span>
-                              <div className='flex space-x-1'>
-                                <button
-                                  type='button'
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    await setProviderUrl(
-                                      provider.url,
-                                      provider.name,
-                                    );
-                                  }}
-                                  className='px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors'
-                                >
-                                  使用
-                                </button>
-                                <button
-                                  type='button'
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    if (
-                                      typeof window !== 'undefined' &&
-                                      navigator.clipboard
-                                    ) {
-                                      try {
-                                        await navigator.clipboard.writeText(
-                                          provider.url,
-                                        );
-                                        showSuccess('API地址已复制到剪贴板');
-                                      } catch (err) {
-                                        console.error('复制失败:', err);
-                                      }
+                        {/* 移动端布局 - 垂直排列 */}
+                        <div className='sm:hidden space-y-2'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-xs font-medium text-gray-700 dark:text-gray-300'>
+                              {provider.name}
+                            </span>
+                            <div className='flex space-x-1'>
+                              <button
+                                type='button'
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await setProviderUrl(
+                                    provider.url,
+                                    provider.name,
+                                  );
+                                }}
+                                className='px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors'
+                              >
+                                使用
+                              </button>
+                              <button
+                                type='button'
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    typeof window !== 'undefined' &&
+                                    navigator.clipboard
+                                  ) {
+                                    try {
+                                      await navigator.clipboard.writeText(
+                                        provider.url,
+                                      );
+                                      showSuccess('API地址已复制到剪贴板');
+                                    } catch (err) {
+                                      console.error('复制失败:', err);
                                     }
-                                  }}
-                                  className='px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors'
-                                >
-                                  复制
-                                </button>
-                              </div>
+                                  }
+                                }}
+                                className='px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors'
+                              >
+                                复制
+                              </button>
                             </div>
-                            <div className='bg-gray-100 dark:bg-gray-700 p-2 rounded'>
-                              <code className='text-xs text-gray-800 dark:text-gray-200 break-all'>
-                                {provider.url}
-                              </code>
-                            </div>
+                          </div>
+                          <div className='bg-gray-100 dark:bg-gray-700 p-2 rounded'>
+                            <code className='text-xs text-gray-800 dark:text-gray-200 break-all'>
+                              {provider.url}
+                            </code>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </details>
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </div>
 
-                {/* API密钥 */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    API密钥
-                  </label>
-                  <input
-                    type='password'
-                    value={aiSettings.apiKey}
-                    onChange={(e) =>
-                      setAiSettings((prev) => ({
-                        ...prev,
-                        apiKey: e.target.value,
-                      }))
-                    }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                    placeholder='sk-...'
-                  />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    请妥善保管API密钥，不要泄露给他人
+              {/* API密钥 */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  API密钥
+                </label>
+                <input
+                  type='password'
+                  value={aiSettings.apiKey}
+                  onChange={(e) =>
+                    setAiSettings((prev) => ({
+                      ...prev,
+                      apiKey: e.target.value,
+                    }))
+                  }
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  placeholder='sk-...'
+                />
+                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                  请妥善保管API密钥，不要泄露给他人
+                </p>
+              </div>
+
+              {/* 模型名称 */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  模型名称
+                </label>
+                <input
+                  type='text'
+                  value={aiSettings.model}
+                  onChange={(e) =>
+                    setAiSettings((prev) => ({
+                      ...prev,
+                      model: e.target.value,
+                    }))
+                  }
+                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  placeholder='请自行填入正确的官方API模型名称，如：gpt-5'
+                />
+                <div className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='mb-1'>
+                    常用模型参考（建议使用支持联网搜索的模型）：
                   </p>
-                </div>
-
-                {/* 模型名称 */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    模型名称
-                  </label>
-                  <input
-                    type='text'
-                    value={aiSettings.model}
-                    onChange={(e) =>
-                      setAiSettings((prev) => ({
-                        ...prev,
-                        model: e.target.value,
-                      }))
-                    }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                    placeholder='请自行填入正确的官方API模型名称，如：gpt-5'
-                  />
-                  <div className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
-                    <p className='mb-1'>
-                      常用模型参考（建议使用支持联网搜索的模型）：
-                    </p>
-                    <p className='mb-2 text-orange-600 dark:text-orange-400'>
-                      ⚠️ 请确保填入的模型名称与API提供商的官方文档一致
-                    </p>
-                    <div className='flex flex-wrap gap-2'>
-                      {MODEL_EXAMPLES.map((example, index) => (
-                        <button
-                          key={index}
-                          type='button'
-                          onClick={() => {
-                            const modelName = example.split(' (')[0];
-                            setModel(modelName);
-                          }}
-                          className='inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer transition-colors'
-                        >
-                          {example}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 高级参数 */}
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      温度参数: {aiSettings.temperature}
-                    </label>
-                    <input
-                      type='range'
-                      min='0'
-                      max='2'
-                      step='0.1'
-                      value={aiSettings.temperature}
-                      onChange={(e) =>
-                        setAiSettings((prev) => ({
-                          ...prev,
-                          temperature: parseFloat(e.target.value),
-                        }))
-                      }
-                      className='w-full'
-                    />
-                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                      控制回复的随机性，0=确定性，2=最随机
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      最大Token数
-                    </label>
-                    <input
-                      type='number'
-                      min='1'
-                      max='4000'
-                      value={aiSettings.maxTokens}
-                      onChange={(e) =>
-                        setAiSettings((prev) => ({
-                          ...prev,
-                          maxTokens: parseInt(e.target.value),
-                        }))
-                      }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                    />
-                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                      限制AI回复的最大长度。推荐设置：GPT-5/o1/o3/o4推理模型建议2000+，普通模型500-4000即可。
-                      <span className='text-yellow-600 dark:text-yellow-400'>
-                        ⚠️ 设置过低可能导致空回复！
-                      </span>
-                    </p>
+                  <p className='mb-2 text-orange-600 dark:text-orange-400'>
+                    ⚠️ 请确保填入的模型名称与API提供商的官方文档一致
+                  </p>
+                  <div className='flex flex-wrap gap-2'>
+                    {MODEL_EXAMPLES.map((example, index) => (
+                      <button
+                        key={index}
+                        type='button'
+                        onClick={() => {
+                          const modelName = example.split(' (')[0];
+                          setModel(modelName);
+                        }}
+                        className='inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer transition-colors'
+                      >
+                        {example}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* 高级参数 */}
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    温度参数: {aiSettings.temperature}
+                  </label>
+                  <input
+                    type='range'
+                    min='0'
+                    max='2'
+                    step='0.1'
+                    value={aiSettings.temperature}
+                    onChange={(e) =>
+                      setAiSettings((prev) => ({
+                        ...prev,
+                        temperature: parseFloat(e.target.value),
+                      }))
+                    }
+                    className='w-full'
+                  />
+                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                    控制回复的随机性，0=确定性，2=最随机
+                  </p>
+                </div>
+
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    最大Token数
+                  </label>
+                  <input
+                    type='number'
+                    min='1'
+                    max='4000'
+                    value={aiSettings.maxTokens}
+                    onChange={(e) =>
+                      setAiSettings((prev) => ({
+                        ...prev,
+                        maxTokens: parseInt(e.target.value),
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  />
+                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                    限制AI回复的最大长度。推荐设置：GPT-5/o1/o3/o4推理模型建议2000+，普通模型500-4000即可。
+                    <span className='text-yellow-600 dark:text-yellow-400'>
+                      ⚠️ 设置过低可能导致空回复！
+                    </span>
+                  </p>
+                </div>
+              </div>
             </div>
+          </div>
 
           {/* 操作按钮 */}
           <div className='flex flex-wrap gap-3'>
             <button
-                onClick={testConnection}
-                disabled={isLoading('testAIConnection')}
-                className='flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
-              >
-                <CheckCircle className='h-4 w-4 mr-2' />
-                {isLoading('testAIConnection') ? '测试中...' : '测试连接'}
-              </button>
+              onClick={testConnection}
+              disabled={isLoading('testAIConnection')}
+              className='flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
+            >
+              <CheckCircle className='h-4 w-4 mr-2' />
+              {isLoading('testAIConnection') ? '测试中...' : '测试连接'}
+            </button>
 
             <button
-                onClick={saveConfig}
-                disabled={isLoading('saveAIConfig')}
-                className='flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
-              >
-                <AlertCircle className='h-4 w-4 mr-2' />
-                {isLoading('saveAIConfig') ? '保存中...' : '保存配置'}
-              </button>
+              onClick={saveConfig}
+              disabled={isLoading('saveAIConfig')}
+              className='flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
+            >
+              <AlertCircle className='h-4 w-4 mr-2' />
+              {isLoading('saveAIConfig') ? '保存中...' : '保存配置'}
+            </button>
           </div>
         </div>
       )}

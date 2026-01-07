@@ -1073,7 +1073,11 @@ function UserConfigContent() {
     }
   };
 
-  const handleUpdateUserGroup = async (index: number, field: string, value: any) => {
+  const handleUpdateUserGroup = async (
+    index: number,
+    field: string,
+    value: any,
+  ) => {
     setUserSettings((prev) => {
       const newTags = [...prev.Tags];
       newTags[index] = {

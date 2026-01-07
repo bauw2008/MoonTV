@@ -649,7 +649,10 @@ function PlayPageClient() {
         .replace(/。/g, '.')
         .replace(/！/g, '!')
         .replace(/？/g, '?');
-      if (englishPunctuation !== trimmed && !variants.includes(englishPunctuation)) {
+      if (
+        englishPunctuation !== trimmed &&
+        !variants.includes(englishPunctuation)
+      ) {
         variants.push(englishPunctuation);
       }
     }
@@ -1936,7 +1939,7 @@ function PlayPageClient() {
           try {
             const response = await fetch(
               `/api/search?q=${encodeURIComponent(variant)}`,
-              { signal: controller.signal }
+              { signal: controller.signal },
             );
             clearTimeout(timeoutId);
 
@@ -1985,9 +1988,11 @@ function PlayPageClient() {
                     : true;
                   const typeMatch = searchType
                     ? (searchType === 'tv' && result.episodes.length > 1) ||
-                      (searchType === 'movie' && result.episodes.length === 1) ||
+                      (searchType === 'movie' &&
+                        result.episodes.length === 1) ||
                       (searchType === 'anime' && result.episodes.length > 1) ||
-                      (searchType === 'variety' && result.episodes.length > 1) ||
+                      (searchType === 'variety' &&
+                        result.episodes.length > 1) ||
                       searchType === 'shortdrama'
                     : true;
 

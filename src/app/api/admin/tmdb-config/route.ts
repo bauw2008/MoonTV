@@ -146,7 +146,8 @@ export async function POST(request: NextRequest) {
     if (config.SiteConfig) {
       config.SiteConfig.TMDBApiKey = tmdbSettings.TMDBApiKey;
       config.SiteConfig.TMDBLanguage = tmdbSettings.TMDBLanguage;
-      config.SiteConfig.EnableTMDBActorSearch = tmdbSettings.EnableTMDBActorSearch;
+      config.SiteConfig.EnableTMDBActorSearch =
+        tmdbSettings.EnableTMDBActorSearch;
       config.SiteConfig.EnableTMDBPosters = tmdbSettings.EnableTMDBPosters;
     }
 

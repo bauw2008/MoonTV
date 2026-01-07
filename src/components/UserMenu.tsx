@@ -566,7 +566,11 @@ export const UserMenu: React.FC = () => {
         <div className='px-4 py-4 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-white/60 to-white/30 dark:from-gray-800/60 dark:to-gray-800/30 shadow-sm'>
           <div className='flex items-center gap-3'>
             {/* 用户头像 - 菜单面板中使用中等尺寸 */}
-            <OptimizedAvatar onClick={() => setIsOpen(!isOpen)} size='menu' username={authInfo?.username} />
+            <OptimizedAvatar
+              onClick={() => setIsOpen(!isOpen)}
+              size='menu'
+              username={authInfo?.username}
+            />
 
             {/* 用户信息 - 垂直布局 */}
             <div className='flex-1 min-w-0'>
@@ -1272,7 +1276,11 @@ export const UserMenu: React.FC = () => {
   return (
     <>
       <div className='relative'>
-        <OptimizedAvatar onClick={() => setIsOpen(!isOpen)} size='nav' username={authInfo?.username} />
+        <OptimizedAvatar
+          onClick={() => setIsOpen(!isOpen)}
+          size='nav'
+          username={authInfo?.username}
+        />
       </div>
 
       {/* 使用 Portal 将菜单面板渲染到 document.body */}

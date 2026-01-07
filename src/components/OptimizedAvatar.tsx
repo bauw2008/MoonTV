@@ -29,21 +29,54 @@ const generateDefaultAvatar = (username?: string) => {
     return {
       gradient: 'from-blue-400 to-blue-600',
       letter: '',
-      bgClass: 'bg-gradient-to-br from-blue-400/20 to-blue-600/20 dark:from-blue-600/20 dark:to-blue-800/20',
+      bgClass:
+        'bg-gradient-to-br from-blue-400/20 to-blue-600/20 dark:from-blue-600/20 dark:to-blue-800/20',
       avatarUrl: '',
     };
   }
 
   // 预设的颜色组合
   const gradients = [
-    { from: 'from-pink-400', to: 'to-rose-600', bg: 'from-pink-400/20 to-rose-600/20 dark:from-pink-600/20 dark:to-rose-800/20' },
-    { from: 'from-purple-400', to: 'to-violet-600', bg: 'from-purple-400/20 to-violet-600/20 dark:from-purple-600/20 dark:to-violet-800/20' },
-    { from: 'from-blue-400', to: 'to-cyan-600', bg: 'from-blue-400/20 to-cyan-600/20 dark:from-blue-600/20 dark:to-cyan-800/20' },
-    { from: 'from-green-400', to: 'to-emerald-600', bg: 'from-green-400/20 to-emerald-600/20 dark:from-green-600/20 dark:to-emerald-800/20' },
-    { from: 'from-yellow-400', to: 'to-orange-600', bg: 'from-yellow-400/20 to-orange-600/20 dark:from-yellow-600/20 dark:to-orange-800/20' },
-    { from: 'from-red-400', to: 'to-pink-600', bg: 'from-red-400/20 to-pink-600/20 dark:from-red-600/20 dark:to-pink-800/20' },
-    { from: 'from-indigo-400', to: 'to-blue-600', bg: 'from-indigo-400/20 to-blue-600/20 dark:from-indigo-600/20 dark:to-blue-800/20' },
-    { from: 'from-teal-400', to: 'to-cyan-600', bg: 'from-teal-400/20 to-cyan-600/20 dark:from-teal-600/20 dark:to-cyan-800/20' },
+    {
+      from: 'from-pink-400',
+      to: 'to-rose-600',
+      bg: 'from-pink-400/20 to-rose-600/20 dark:from-pink-600/20 dark:to-rose-800/20',
+    },
+    {
+      from: 'from-purple-400',
+      to: 'to-violet-600',
+      bg: 'from-purple-400/20 to-violet-600/20 dark:from-purple-600/20 dark:to-violet-800/20',
+    },
+    {
+      from: 'from-blue-400',
+      to: 'to-cyan-600',
+      bg: 'from-blue-400/20 to-cyan-600/20 dark:from-blue-600/20 dark:to-cyan-800/20',
+    },
+    {
+      from: 'from-green-400',
+      to: 'to-emerald-600',
+      bg: 'from-green-400/20 to-emerald-600/20 dark:from-green-600/20 dark:to-emerald-800/20',
+    },
+    {
+      from: 'from-yellow-400',
+      to: 'to-orange-600',
+      bg: 'from-yellow-400/20 to-orange-600/20 dark:from-yellow-600/20 dark:to-orange-800/20',
+    },
+    {
+      from: 'from-red-400',
+      to: 'to-pink-600',
+      bg: 'from-red-400/20 to-pink-600/20 dark:from-red-600/20 dark:to-pink-800/20',
+    },
+    {
+      from: 'from-indigo-400',
+      to: 'to-blue-600',
+      bg: 'from-indigo-400/20 to-blue-600/20 dark:from-indigo-600/20 dark:to-blue-800/20',
+    },
+    {
+      from: 'from-teal-400',
+      to: 'to-cyan-600',
+      bg: 'from-teal-400/20 to-cyan-600/20 dark:from-teal-600/20 dark:to-cyan-800/20',
+    },
   ];
 
   // 根据用户名的哈希值选择颜色
@@ -165,12 +198,13 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
               onError={(e) => {
                 // 如果网络头像加载失败，显示本地生成的头像
                 e.currentTarget.style.display = 'none';
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                const fallback = e.currentTarget
+                  .nextElementSibling as HTMLElement;
                 if (fallback) fallback.style.display = 'flex';
               }}
             />
           ) : null}
-          
+
           {/* 本地生成的头像（作为备用） */}
           <div
             className={`w-full h-full rounded-full flex items-center justify-center ring-2 ring-transparent group-hover:ring-blue-400/50 transition-all duration-300 bg-gradient-to-br ${defaultAvatar.bgClass} ${defaultAvatar.avatarUrl ? 'hidden' : ''}`}
@@ -203,7 +237,9 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
       {displayImage && (
         <div
           className={`${sizeClasses.container} p-0.5 rounded-full overflow-hidden ${
-            size === 'menu' ? 'ring-2 ring-white/50 dark:ring-gray-700/50 shadow-lg' : ''
+            size === 'menu'
+              ? 'ring-2 ring-white/50 dark:ring-gray-700/50 shadow-lg'
+              : ''
           }`}
         >
           <img

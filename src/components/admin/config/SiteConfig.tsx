@@ -134,7 +134,7 @@ function SiteConfigContent() {
 
         setSiteSettings({
           SiteName: siteConfigData.SiteName || '',
-          Announcement: siteConfigData.Announcement ?? '',  // 使用 ?? 而不是 ||，允许空字符串
+          Announcement: siteConfigData.Announcement ?? '', // 使用 ?? 而不是 ||，允许空字符串
           SearchDownstreamMaxPage: siteConfigData.SearchDownstreamMaxPage || 1,
           SiteInterfaceCacheTime: siteConfigData.SiteInterfaceCacheTime || 7200,
           DoubanProxyType: siteConfigData.DoubanProxyType || 'direct',
@@ -157,10 +157,13 @@ function SiteConfigContent() {
             showVariety: siteConfigData.MenuSettings?.showVariety ?? true,
             showLive: siteConfigData.MenuSettings?.showLive ?? false,
             showTvbox: siteConfigData.MenuSettings?.showTvbox ?? false,
-            showShortDrama: siteConfigData.MenuSettings?.showShortDrama ?? false,
+            showShortDrama:
+              siteConfigData.MenuSettings?.showShortDrama ?? false,
             showAI: siteConfigData.MenuSettings?.showAI ?? false,
-            showNetDiskSearch: siteConfigData.MenuSettings?.showNetDiskSearch ?? false,
-            showTMDBActorSearch: siteConfigData.MenuSettings?.showTMDBActorSearch ?? false,
+            showNetDiskSearch:
+              siteConfigData.MenuSettings?.showNetDiskSearch ?? false,
+            showTMDBActorSearch:
+              siteConfigData.MenuSettings?.showTMDBActorSearch ?? false,
           },
         });
       }
