@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 强制动态渲染
@@ -119,5 +120,42 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('获取TVBox配置失败:', error);
     return NextResponse.json({ error: '获取TVBox配置失败' }, { status: 500 });
+  }
+}
+
+// POST 请求：保存 TMDB 配置
+export async function POST(request: NextRequest) {
+  const authInfo = getAuthInfoFromCookie(request);
+
+  if (!authInfo || !authInfo.username) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 检查权限：只有管理员或站长可以修改 TMDB 配置
+  if (authInfo.role !== 'admin' && authInfo.role !== 'owner') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  try {
+    const tmdbSettings = await request.json();
+
+    // 获取完整配置
+    const config = await getConfig();
+
+    // 更新 SiteConfig 中的 TMDB 相关字段
+    if (config.SiteConfig) {
+      config.SiteConfig.TMDBApiKey = tmdbSettings.TMDBApiKey;
+      config.SiteConfig.TMDBLanguage = tmdbSettings.TMDBLanguage;
+      config.SiteConfig.EnableTMDBActorSearch = tmdbSettings.EnableTMDBActorSearch;
+      config.SiteConfig.EnableTMDBPosters = tmdbSettings.EnableTMDBPosters;
+    }
+
+    // 保存完整配置
+    await db.saveAdminConfig(config);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('保存TMDB配置失败:', error);
+    return NextResponse.json({ error: '保存TMDB配置失败' }, { status: 500 });
   }
 }

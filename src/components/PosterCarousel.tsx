@@ -151,13 +151,6 @@ export default function PosterCarousel({
           transition: 'none',
         }}
       >
-        {/* 计数器 - 优化样式 */}
-        <div className='absolute top-4 right-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full text-white text-xs sm:text-sm font-medium z-30 shadow-lg border border-white/10'>
-          <span className='text-white/90'>{currentIndex + 1}</span>
-          <span className='text-white/60 mx-1'>/</span>
-          <span className='text-white/70'>{posters.length}</span>
-        </div>
-
         <div
           ref={carouselRef}
           className='flex h-full transition-transform duration-1000 ease-in-out'
@@ -286,18 +279,18 @@ export default function PosterCarousel({
       </div>
 
       {/* 底部切换和指示器 - 移动端优化 */}
-      <div className='absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-2 sm:space-x-4'>
+      <div className='absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-1.5 sm:space-x-3'>
         {/* 左侧切换按钮 - 优化样式 */}
         <button
           onClick={goToPrevious}
-          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1.5 sm:p-2 rounded-full backdrop-blur-sm'
+          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1 sm:p-1.5 rounded-full backdrop-blur-sm'
           aria-label='上一个'
         >
-          <ChevronLeft className='w-4 h-4 sm:w-5 sm:h-5' />
+          <ChevronLeft className='w-3 h-3 sm:w-4 sm:h-4' />
         </button>
 
         {/* 指示器 - 增强视觉效果 */}
-        <div className='flex space-x-1.5 sm:space-x-2'>
+        <div className='flex space-x-1 sm:space-x-1.5'>
           {posters.map((_, index) => (
             <button
               key={index}
@@ -307,10 +300,10 @@ export default function PosterCarousel({
                 setCurrentIndex(index);
                 setTimeout(() => setIsTransitioning(false), 500);
               }}
-              className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ease-out ${
+              className={`h-1 sm:h-1.5 rounded-full transition-all duration-500 ease-out ${
                 index === currentIndex
-                  ? 'w-6 sm:w-8 bg-white shadow-lg shadow-white/30'
-                  : 'w-1.5 sm:w-2 bg-white/30 hover:bg-white/50'
+                  ? 'w-5 sm:w-6 bg-white shadow-lg shadow-white/30'
+                  : 'w-1 sm:w-1.5 bg-white/30 hover:bg-white/50'
               }`}
               aria-label={`切换到第${index + 1}张海报`}
             />
@@ -320,10 +313,10 @@ export default function PosterCarousel({
         {/* 右侧切换按钮 - 优化样式 */}
         <button
           onClick={goToNext}
-          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1.5 sm:p-2 rounded-full backdrop-blur-sm'
+          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1 sm:p-1.5 rounded-full backdrop-blur-sm'
           aria-label='下一个'
         >
-          <ChevronRight className='w-4 h-4 sm:w-5 sm:h-5' />
+          <ChevronRight className='w-3 h-3 sm:w-4 sm:h-4' />
         </button>
       </div>
     </div>

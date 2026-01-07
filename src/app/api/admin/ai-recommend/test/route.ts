@@ -183,8 +183,30 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
-    // 检查返回结果格式
+    // 检查返回结果格式 - 兼容非标准格式
     if (!result.choices || result.choices.length === 0) {
+      // 检查是否是错误响应（某些 API 返回非标准格式）
+      if (result.error) {
+        return NextResponse.json(
+          {
+            error: result.error.message || result.error,
+            rawResponse: JSON.stringify(result).substring(0, 500),
+          },
+          { status: 400 },
+        );
+      }
+
+      // 检查是否是其他非标准错误格式
+      if (result.msg || result.message) {
+        return NextResponse.json(
+          {
+            error: result.msg || result.message,
+            rawResponse: JSON.stringify(result).substring(0, 500),
+          },
+          { status: 400 },
+        );
+      }
+
       return NextResponse.json(
         {
           error: 'API返回无choices数据',

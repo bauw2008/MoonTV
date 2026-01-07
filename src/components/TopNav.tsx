@@ -664,7 +664,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       }`}
     >
       {/* 透明背景层 */}
-      <div className='absolute inset-0 backdrop-blur-md border-b shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+      <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
         {/* 页面切换进度条 */}
         <div
           className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${

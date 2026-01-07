@@ -33,6 +33,7 @@ const MODEL_EXAMPLES = [
   'llama-4 (Meta)',
   'grok-4 (xAI)',
   'GLM-4.6 (recommend)',
+  'iFlow-ROME-30BA3B',
   'DeepSeek-V3.2',
   'Qwen3-Coder-Plus',
   'Kimi-K2-Thinking',
@@ -326,8 +327,7 @@ function AIConfigContent() {
             </div>
 
             {/* API配置 */}
-            {aiSettings.enabled && (
-              <div className='space-y-4'>
+            <div className='space-y-4'>
                 {/* API地址 */}
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
@@ -561,13 +561,11 @@ function AIConfigContent() {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
           {/* 操作按钮 */}
           <div className='flex flex-wrap gap-3'>
-            {aiSettings.enabled && (
-              <button
+            <button
                 onClick={testConnection}
                 disabled={isLoading('testAIConnection')}
                 className='flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
@@ -575,10 +573,8 @@ function AIConfigContent() {
                 <CheckCircle className='h-4 w-4 mr-2' />
                 {isLoading('testAIConnection') ? '测试中...' : '测试连接'}
               </button>
-            )}
 
-            {aiSettings.enabled && (
-              <button
+            <button
                 onClick={saveConfig}
                 disabled={isLoading('saveAIConfig')}
                 className='flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors'
@@ -586,7 +582,6 @@ function AIConfigContent() {
                 <AlertCircle className='h-4 w-4 mr-2' />
                 {isLoading('saveAIConfig') ? '保存中...' : '保存配置'}
               </button>
-            )}
           </div>
         </div>
       )}

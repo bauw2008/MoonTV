@@ -129,51 +129,38 @@ function SiteConfigContent() {
       setConfig(data.Config);
 
       if (data.Config?.SiteConfig) {
+        // 使用从服务器返回的数据，避免闭包陷阱
+        const siteConfigData = data.Config.SiteConfig;
+
         setSiteSettings({
-          SiteName:
-            data.Config.SiteConfig.SiteName ||
-            process.env.NEXT_PUBLIC_SITE_NAME ||
-            '',
-          Announcement:
-            data.Config.SiteConfig.Announcement ||
-            process.env.ANNOUNCEMENT ||
-            '',
-          SearchDownstreamMaxPage:
-            data.Config.SiteConfig.SearchDownstreamMaxPage || 1,
-          SiteInterfaceCacheTime:
-            data.Config.SiteConfig.SiteInterfaceCacheTime || 7200,
-          DoubanProxyType: data.Config.SiteConfig.DoubanProxyType || 'direct',
-          DoubanProxy: data.Config.SiteConfig.DoubanProxy || '',
-          DoubanImageProxyType:
-            data.Config.SiteConfig.DoubanImageProxyType || 'direct',
-          DoubanImageProxy: data.Config.SiteConfig.DoubanImageProxy || '',
-          DisableYellowFilter:
-            data.Config.SiteConfig.DisableYellowFilter || false,
+          SiteName: siteConfigData.SiteName || '',
+          Announcement: siteConfigData.Announcement ?? '',  // 使用 ?? 而不是 ||，允许空字符串
+          SearchDownstreamMaxPage: siteConfigData.SearchDownstreamMaxPage || 1,
+          SiteInterfaceCacheTime: siteConfigData.SiteInterfaceCacheTime || 7200,
+          DoubanProxyType: siteConfigData.DoubanProxyType || 'direct',
+          DoubanProxy: siteConfigData.DoubanProxy || '',
+          DoubanImageProxyType: siteConfigData.DoubanImageProxyType || 'direct',
+          DoubanImageProxy: siteConfigData.DoubanImageProxy || '',
+          DisableYellowFilter: siteConfigData.DisableYellowFilter || false,
           FluidSearch:
-            data.Config.SiteConfig.FluidSearch !== undefined
-              ? data.Config.SiteConfig.FluidSearch
+            siteConfigData.FluidSearch !== undefined
+              ? siteConfigData.FluidSearch
               : true,
-          TMDBApiKey: data.Config.SiteConfig.TMDBApiKey || '',
-          TMDBLanguage: data.Config.SiteConfig.TMDBLanguage || 'zh-CN',
-          EnableTMDBActorSearch:
-            data.Config.SiteConfig.EnableTMDBActorSearch || false,
-          EnableTMDBPosters: data.Config.SiteConfig.EnableTMDBPosters || true,
+          TMDBApiKey: siteConfigData.TMDBApiKey || '',
+          TMDBLanguage: siteConfigData.TMDBLanguage || 'zh-CN',
+          EnableTMDBActorSearch: siteConfigData.EnableTMDBActorSearch || false,
+          EnableTMDBPosters: siteConfigData.EnableTMDBPosters || true,
           MenuSettings: {
-            showMovies: data.Config.SiteConfig.MenuSettings?.showMovies ?? true,
-            showTVShows:
-              data.Config.SiteConfig.MenuSettings?.showTVShows ?? true,
-            showAnime: data.Config.SiteConfig.MenuSettings?.showAnime ?? true,
-            showVariety:
-              data.Config.SiteConfig.MenuSettings?.showVariety ?? true,
-            showLive: data.Config.SiteConfig.MenuSettings?.showLive ?? false,
-            showTvbox: data.Config.SiteConfig.MenuSettings?.showTvbox ?? false,
-            showShortDrama:
-              data.Config.SiteConfig.MenuSettings?.showShortDrama ?? false,
-            showAI: data.Config.SiteConfig.MenuSettings?.showAI ?? false,
-            showNetDiskSearch:
-              data.Config.SiteConfig.MenuSettings?.showNetDiskSearch ?? false,
-            showTMDBActorSearch:
-              data.Config.SiteConfig.MenuSettings?.showTMDBActorSearch ?? false,
+            showMovies: siteConfigData.MenuSettings?.showMovies ?? true,
+            showTVShows: siteConfigData.MenuSettings?.showTVShows ?? true,
+            showAnime: siteConfigData.MenuSettings?.showAnime ?? true,
+            showVariety: siteConfigData.MenuSettings?.showVariety ?? true,
+            showLive: siteConfigData.MenuSettings?.showLive ?? false,
+            showTvbox: siteConfigData.MenuSettings?.showTvbox ?? false,
+            showShortDrama: siteConfigData.MenuSettings?.showShortDrama ?? false,
+            showAI: siteConfigData.MenuSettings?.showAI ?? false,
+            showNetDiskSearch: siteConfigData.MenuSettings?.showNetDiskSearch ?? false,
+            showTMDBActorSearch: siteConfigData.MenuSettings?.showTMDBActorSearch ?? false,
           },
         });
       }
@@ -234,14 +221,13 @@ function SiteConfigContent() {
         throw new Error(errorData.error || '保存失败');
       }
 
-      showSuccess('站点配置保存成功，请刷新页面');
+      showSuccess('站点配置保存成功');
 
       // 更新菜单设置，让导航立即生效
       updateMenuSettings(updatedMenuSettings);
       forceUpdate();
 
-      // 重新加载配置，确保两个组件同步
-      await loadConfig(true);
+      // 不重新加载配置，避免读到旧数据覆盖用户编辑的内容
     } catch (error) {
       console.error('保存站点配置失败:', error);
       showError('保存失败: ' + (error as Error).message);

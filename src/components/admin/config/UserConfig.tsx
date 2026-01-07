@@ -1073,7 +1073,7 @@ function UserConfigContent() {
     }
   };
 
-  const handleUpdateUserGroup = (index: number, field: string, value: any) => {
+  const handleUpdateUserGroup = async (index: number, field: string, value: any) => {
     setUserSettings((prev) => {
       const newTags = [...prev.Tags];
       newTags[index] = {
@@ -1084,12 +1084,14 @@ function UserConfigContent() {
         ...prev,
         Tags: newTags,
       };
-      setTimeout(() => saveConfig(), 100);
       return newSettings;
     });
+
+    // 直接保存，避免延迟保存导致的竞态条件
+    await saveConfig();
   };
 
-  const handleToggleUserGroupPermission = (
+  const handleToggleUserGroupPermission = async (
     index: number,
     permissionType: PermissionType,
     value: any,
@@ -1115,9 +1117,11 @@ function UserConfigContent() {
         ...prev,
         Tags: newTags,
       };
-      setTimeout(() => saveConfig(), 100);
       return newSettings;
     });
+
+    // 直接保存，避免延迟保存导致的竞态条件
+    await saveConfig();
   };
 
   const handleDeleteUserGroup = async (index: number) => {

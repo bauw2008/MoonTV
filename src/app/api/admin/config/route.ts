@@ -92,8 +92,46 @@ export async function POST(request: NextRequest) {
   try {
     const newConfig: AdminConfig = await request.json();
 
-    // 保存新配置
-    await db.saveAdminConfig(newConfig);
+    // 先获取完整配置
+    const adminConfig = await getConfig();
+
+    // 只更新传入的部分，保留其他配置
+    if (newConfig.UserConfig) {
+      adminConfig.UserConfig = newConfig.UserConfig;
+    }
+    if (newConfig.SiteConfig) {
+      adminConfig.SiteConfig = newConfig.SiteConfig;
+    }
+    if (newConfig.SourceConfig) {
+      adminConfig.SourceConfig = newConfig.SourceConfig;
+    }
+    if (newConfig.CustomCategories) {
+      adminConfig.CustomCategories = newConfig.CustomCategories;
+    }
+    if (newConfig.LiveConfig) {
+      adminConfig.LiveConfig = newConfig.LiveConfig;
+    }
+    if (newConfig.NetDiskConfig) {
+      adminConfig.NetDiskConfig = newConfig.NetDiskConfig;
+    }
+    if (newConfig.AIRecommendConfig) {
+      adminConfig.AIRecommendConfig = newConfig.AIRecommendConfig;
+    }
+    if (newConfig.TVBoxSecurityConfig) {
+      adminConfig.TVBoxSecurityConfig = newConfig.TVBoxSecurityConfig;
+    }
+    if (newConfig.ConfigFile !== undefined) {
+      adminConfig.ConfigFile = newConfig.ConfigFile;
+    }
+    if (newConfig.ConfigSubscribtion) {
+      adminConfig.ConfigSubscribtion = newConfig.ConfigSubscribtion;
+    }
+    if (newConfig.YellowWords !== undefined) {
+      adminConfig.YellowWords = newConfig.YellowWords;
+    }
+
+    // 保存完整配置
+    await db.saveAdminConfig(adminConfig);
 
     // 清除缓存，强制下次重新从数据库读取
     clearConfigCache();

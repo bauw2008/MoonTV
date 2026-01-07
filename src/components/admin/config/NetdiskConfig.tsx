@@ -228,11 +228,8 @@ function NetdiskConfigContent() {
             </div>
           </div>
 
-          {/* 只有在开关开启时才显示其他内容 */}
-          {netDiskSettings.enabled && (
-            <>
-              {/* 基础设置 */}
-              <div className='bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6 border border-purple-200 dark:border-purple-700'>
+          {/* 基础设置 */}
+          <div className='bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6 border border-purple-200 dark:border-purple-700'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
                   基础设置
                 </h3>
@@ -342,12 +339,9 @@ function NetdiskConfigContent() {
                   ))}
                 </div>
               </div>
-            </>
-          )}
 
-          {/* 保存按钮 - 只在开启时显示 */}
-          {netDiskSettings.enabled && (
-            <div className='flex justify-end mt-6'>
+          {/* 保存按钮 */}
+          <div className='flex justify-end mt-6'>
               <button
                 onClick={handleSave}
                 disabled={isLoading('saveNetDiskConfig')}
@@ -368,8 +362,7 @@ function NetdiskConfigContent() {
                 </div>
               </button>
             </div>
-          )}
-        </div>
+          </div>
       )}
     </div>
   );
