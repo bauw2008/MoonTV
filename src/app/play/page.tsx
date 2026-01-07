@@ -19,6 +19,7 @@ import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
 import artplayerPluginSkipSettings from '@/lib/artplayer-plugin-skip-settings';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { ClientCache } from '@/lib/client-cache';
+import { useUserSettings } from '@/hooks/useUserSettings';
 import {
   deleteFavorite,
   deletePlayRecord,
@@ -376,20 +377,9 @@ function PlayPageClient() {
     null,
   );
 
-  // 优选和测速开关
-  const [optimizationEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
-      if (saved !== null) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    return false;
-  });
+  // 使用 useUserSettings hook 管理优化设置
+  const { settings } = useUserSettings();
+  const optimizationEnabled = settings.enableOptimization;
 
   // 保存优选时的测速结果，避免EpisodeSelector重复测速
   const [precomputedVideoInfo, setPrecomputedVideoInfo] = useState<

@@ -255,23 +255,20 @@ function SiteConfigContent() {
       [menuKey]: !siteSettings.MenuSettings[menuKey],
     };
 
-    // 更新本地状态
+    // 只更新本地状态，不立即更新导航
+    // 用户需要手动保存才能使配置生效
     setSiteSettings((prev) => ({
       ...prev,
       MenuSettings: newMenuSettings,
     }));
-
-    // 立即更新导航配置
-    updateMenuSettings(newMenuSettings);
-
-    // 不自动保存，让用户手动保存
   };
 
-  // 监听菜单设置变化，同步到 NavigationConfig（仅在初始化时执行）
+  // 初始化时同步菜单配置到 NavigationConfig（仅在首次加载时执行）
   useEffect(() => {
     if (siteSettings.MenuSettings && config) {
       updateMenuSettings(siteSettings.MenuSettings);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 处理豆瓣数据源变化

@@ -34,9 +34,6 @@ interface ThemeSettings {
   isCustom: boolean;
   backgroundImage?: string;
   backgroundMode: 'gradient' | 'image';
-  navigationMenuColor: string; // 导航菜单文字颜色（现在使用首页字体）
-  sectionTitleColor: string; // 首页标题字体颜色
-  homeFavoritesColor: string; // 首页和收藏颜色
   enableDynamicBackground: boolean; // 启用动态背景
   dynamicIntensity: number; // 动态效果强度
 }
@@ -287,27 +284,6 @@ const gradientOptions: GradientOption[] = [
   },
 ];
 
-// 颜色选项
-const colorOptions = [
-  { name: 'AI蓝紫渐变', value: '#3b82f6' }, // AI推荐按钮的蓝色主色调
-  { name: '黑色', value: '#000000' },
-  { name: '纯白', value: '#ffffff' },
-  { name: '深灰', value: '#333333' },
-  { name: '中灰', value: '#666666' },
-  { name: '浅灰', value: '#999999' },
-  { name: '红色', value: '#ff0000' },
-  { name: '绿色', value: '#00ff00' },
-  { name: '蓝色', value: '#0000ff' },
-  { name: '黄色', value: '#ffff00' },
-  { name: '紫色', value: '#800080' },
-  { name: '橙色', value: '#ffa500' },
-  { name: '粉色', value: '#ffc0cb' },
-  { name: '棕色', value: '#a52a2a' },
-  { name: '青色', value: '#00ffff' },
-  { name: '深蓝', value: '#00008b' },
-  { name: '深绿', value: '#006400' },
-];
-
 export const ThemeSettingsPanel: React.FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -324,9 +300,6 @@ export const ThemeSettingsPanel: React.FC<{
     lightness: gradientOptions[0].lightness,
     isCustom: false,
     backgroundMode: 'gradient',
-    navigationMenuColor: '#ec4899', // AI推荐按钮的背景颜色 - 改为粉色
-    sectionTitleColor: '#333333', // 新增首页标题字体颜色
-    homeFavoritesColor: '#06b6d4', // 首页收藏的颜色 - 改为青色
     enableDynamicBackground: false,
     dynamicIntensity: 50,
   });
@@ -334,11 +307,6 @@ export const ThemeSettingsPanel: React.FC<{
   const [isAdvancedMenuOpen, setIsAdvancedMenuOpen] = useState(false);
   const [isBackgroundModeMenuOpen, setIsBackgroundModeMenuOpen] =
     useState(false);
-
-  const [isTextColorMenuOpen, setIsTextColorMenuOpen] = useState(false);
-  const [selectedColorType, setSelectedColorType] = useState<
-    'navigationMenu' | 'sectionTitle' | 'homeFavorites'
-  >('navigationMenu');
 
   // 获取预览动画类
   const getPreviewAnimationClass = (intensity: number) => {
@@ -391,8 +359,6 @@ export const ThemeSettingsPanel: React.FC<{
     settings.lightGradient,
     settings.darkGradient,
     settings.isCustom,
-    settings.navigationMenuColor,
-    settings.homeFavoritesColor,
   ]);
 
   // 添加页面加载时的初始化
@@ -438,12 +404,6 @@ export const ThemeSettingsPanel: React.FC<{
               isCustom: parsed.isCustom || false,
               backgroundImage: parsed.backgroundImage || undefined,
               backgroundMode: parsed.backgroundMode || 'gradient',
-              navigationMenuColor:
-                parsed.navigationMenuColor ||
-                parsed.navigationTextColor ||
-                '#000000',
-              sectionTitleColor: parsed.sectionTitleColor || '#333333',
-              homeFavoritesColor: parsed.homeFavoritesColor || '#000000',
               enableDynamicBackground: parsed.enableDynamicBackground || false,
               dynamicIntensity: parsed.dynamicIntensity || 50,
             });
@@ -919,17 +879,6 @@ export const ThemeSettingsPanel: React.FC<{
       // 应用全局UI透明度到所有UI元素
       root.style.setProperty('--ui-opacity', `${settings.globalUIOpacity}%`);
 
-      // 应用导航文字颜色
-      root.style.setProperty('--nav-menu-color', settings.navigationMenuColor);
-      root.style.setProperty(
-        '--section-title-color',
-        settings.sectionTitleColor,
-      );
-      root.style.setProperty(
-        '--home-favorites-color',
-        settings.homeFavoritesColor,
-      );
-
       // 强制触发重绘，确保主题应用生效
       requestAnimationFrame(() => {
         document.body.style.display = 'none';
@@ -1076,40 +1025,6 @@ export const ThemeSettingsPanel: React.FC<{
     setSettings(newSettings);
     saveSettings(newSettings);
     setIsBackgroundModeMenuOpen(false);
-  };
-
-  const getCurrentColor = () => {
-    switch (selectedColorType) {
-      case 'navigationMenu':
-        return settings.homeFavoritesColor; // 导航菜单使用首页字体
-      case 'sectionTitle':
-        return settings.sectionTitleColor;
-      case 'homeFavorites':
-        return settings.homeFavoritesColor;
-      default:
-        return settings.homeFavoritesColor;
-    }
-  };
-
-  const handleColorChange = (color: string) => {
-    let newSettings;
-    switch (selectedColorType) {
-      case 'navigationMenu':
-        // 导航菜单使用AI推荐按钮的渐变效果，不直接使用颜色值
-        // 这里存储基础颜色，实际样式使用固定的渐变
-        newSettings = { ...settings, navigationMenuColor: color };
-        break;
-      case 'sectionTitle':
-        newSettings = { ...settings, sectionTitleColor: color };
-        break;
-      case 'homeFavorites':
-        newSettings = { ...settings, homeFavoritesColor: color };
-        break;
-      default:
-        newSettings = { ...settings, homeFavoritesColor: color };
-    }
-    setSettings(newSettings);
-    saveSettings(newSettings);
   };
 
   const handleBackgroundImageUpload = async (
@@ -1377,9 +1292,6 @@ export const ThemeSettingsPanel: React.FC<{
       isCustom: false,
       backgroundImage: undefined,
       backgroundMode: 'gradient',
-      navigationMenuColor: '#ec4899', // AI推荐按钮的背景颜色 - 改为粉色
-      sectionTitleColor: '#333333',
-      homeFavoritesColor: '#06b6d4', // 首页收藏的颜色 - 改为青色
       enableDynamicBackground: false,
       dynamicIntensity: 50,
     };
@@ -1788,132 +1700,6 @@ export const ThemeSettingsPanel: React.FC<{
                       </p>
                     </div>
                   )}
-                </div>
-              )}
-            </div>
-
-            {/* 分割线 */}
-            <div className='border-t border-gray-200 dark:border-gray-700' />
-
-            {/* 文字颜色设置 */}
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between w-full group'>
-                <button
-                  onClick={() => setIsTextColorMenuOpen(!isTextColorMenuOpen)}
-                  className='flex items-center gap-2'
-                >
-                  <Palette className='w-4 h-4 text-gray-500' />
-                  <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    文字颜色
-                  </h4>
-                </button>
-                <button
-                  onClick={() => setIsTextColorMenuOpen(!isTextColorMenuOpen)}
-                  className='p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors'
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isTextColorMenuOpen ? 'rotate-180' : ''
-                    }`}
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M19 9l-7 7-7-7'
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {isTextColorMenuOpen && (
-                <div className='space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700'>
-                  {/* 颜色类型选择 */}
-                  <div className='space-y-3'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                        选择要调整的颜色类型
-                      </span>
-                    </div>
-                    <div className='grid grid-cols-3 gap-2'>
-                      <button
-                        onClick={() => setSelectedColorType('navigationMenu')}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedColorType === 'navigationMenu'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        AI推荐按钮
-                      </button>
-                      <button
-                        onClick={() => setSelectedColorType('sectionTitle')}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedColorType === 'sectionTitle'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        首页标题
-                      </button>
-                      <button
-                        onClick={() => setSelectedColorType('homeFavorites')}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedColorType === 'homeFavorites'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        首页收藏
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 当前颜色预览 */}
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                      当前颜色
-                    </span>
-                    <div className='flex items-center gap-2'>
-                      <div
-                        className='w-6 h-6 rounded border border-gray-300 dark:border-gray-600'
-                        style={{ backgroundColor: getCurrentColor() }}
-                      />
-                      <span className='text-xs text-gray-500 dark:text-gray-400'>
-                        {colorOptions.find((c) => c.value === getCurrentColor())
-                          ?.name || '自定义'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 颜色选择器 */}
-                  <div className='space-y-3'>
-                    <div className='grid grid-cols-6 gap-2'>
-                      {colorOptions.map((color) => (
-                        <button
-                          key={color.value}
-                          onClick={() => handleColorChange(color.value)}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
-                            getCurrentColor() === color.value
-                              ? 'border-blue-500 scale-110'
-                              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      AI推荐按钮：主页顶部AI推荐按钮的背景颜色
-                      <br />
-                      首页标题：主页上的"热门电影"、"热门剧集"等标题颜色
-                      <br />
-                      首页收藏：页面顶部的首页和收藏夹切换按钮颜色
-                    </p>
-                  </div>
                 </div>
               )}
             </div>

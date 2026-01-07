@@ -28,17 +28,13 @@ import 'react-image-crop/dist/ReactCrop.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
-import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
-import {
-  getCachedWatchingUpdates,
-  getDetailedWatchingUpdates,
-  subscribeToWatchingUpdatesEvent,
-  type WatchingUpdate,
-} from '@/lib/watching-updates';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
 
 import { ThemeSettingsPanel } from './ThemeSettingsPanel';
 import { useToast } from './Toast';
 import { VersionPanel } from './VersionPanel';
+import { OptimizedAvatar } from './OptimizedAvatar';
 
 interface AuthInfo {
   username?: string;
@@ -70,17 +66,8 @@ export const UserMenu: React.FC = () => {
     return 'localstorage';
   });
   const [mounted, setMounted] = useState(false);
-  const [showLiveSetting, setShowLiveSetting] = useState(false);
-  // 保留基础状态用于徽章显示
-  const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
-    null,
-  );
-  const [hasUnreadUpdates, setHasUnreadUpdates] = useState(false);
 
-  const [pendingUsersCount, setPendingUsersCount] = useState(0);
-  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const avatarFetchRef = useRef<string>(''); // 缓存已获取头像的用户名
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 裁剪相关状态
@@ -138,15 +125,13 @@ export const UserMenu: React.FC = () => {
     isThemeSettingsOpen,
   ]);
 
-  // 设置相关状态
-  const [defaultAggregateSearch, setDefaultAggregateSearch] = useState(true);
-  const [doubanProxyUrl, setDoubanProxyUrl] = useState('');
-  const [enableOptimization, setEnableOptimization] = useState(false);
-  const [fluidSearch, setFluidSearch] = useState(true);
-  const [liveDirectConnect, setLiveDirectConnect] = useState(false);
-  const [doubanDataSource, setDoubanDataSource] = useState('direct');
-  const [doubanImageProxyType, setDoubanImageProxyType] = useState('direct');
-  const [doubanImageProxyUrl, setDoubanImageProxyUrl] = useState('');
+  // 使用自定义 hook 管理所有设置
+  const { settings, updateSetting, resetSettings } = useUserSettings();
+
+  // 使用 NavigationConfigContext 检查菜单是否启用
+  const { isMenuEnabled } = useNavigationConfig();
+
+  // 下拉框状态
   const [isDoubanDropdownOpen, setIsDoubanDropdownOpen] = useState(false);
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
     useState(false);
@@ -183,7 +168,6 @@ export const UserMenu: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
 
   // 版本检查相关状态
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
   // 确保组件已挂载
@@ -191,181 +175,6 @@ export const UserMenu: React.FC = () => {
     setMounted(true);
   }, []);
 
-  // 获取头像和菜单设置
-  useEffect(() => {
-    if (typeof window !== 'undefined' && authInfo?.username) {
-      // 只在用户名变化时获取头像
-      if (avatarFetchRef.current !== authInfo.username) {
-        fetchUserAvatar(authInfo.username);
-      }
-
-      // 读取菜单设置，检查是否显示直播
-      const menuSettings = (window as any).RUNTIME_CONFIG?.MenuSettings;
-      if (menuSettings) {
-        setShowLiveSetting(menuSettings.showLive === true);
-      }
-    }
-  }, [authInfo?.username]); // 只依赖用户名，而不是整个 authInfo 对象
-
-  // 从 localStorage 读取设置
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedAggregateSearch = localStorage.getItem(
-        'defaultAggregateSearch',
-      );
-      if (savedAggregateSearch !== null) {
-        setDefaultAggregateSearch(JSON.parse(savedAggregateSearch));
-      }
-
-      const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
-      const defaultDoubanProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'direct';
-      if (savedDoubanDataSource !== null) {
-        setDoubanDataSource(savedDoubanDataSource);
-      } else if (defaultDoubanProxyType) {
-        setDoubanDataSource(defaultDoubanProxyType);
-      }
-
-      const savedDoubanProxyUrl = localStorage.getItem('doubanProxyUrl');
-      const defaultDoubanProxy =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
-      if (savedDoubanProxyUrl !== null) {
-        setDoubanProxyUrl(savedDoubanProxyUrl);
-      } else if (defaultDoubanProxy) {
-        setDoubanProxyUrl(defaultDoubanProxy);
-      }
-
-      const savedDoubanImageProxyType = localStorage.getItem(
-        'doubanImageProxyType',
-      );
-      const defaultDoubanImageProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'direct';
-      if (savedDoubanImageProxyType !== null) {
-        setDoubanImageProxyType(savedDoubanImageProxyType);
-      } else if (defaultDoubanImageProxyType) {
-        setDoubanImageProxyType(defaultDoubanImageProxyType);
-      }
-
-      const savedDoubanImageProxyUrl = localStorage.getItem(
-        'doubanImageProxyUrl',
-      );
-      const defaultDoubanImageProxyUrl =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
-      if (savedDoubanImageProxyUrl !== null) {
-        setDoubanImageProxyUrl(savedDoubanImageProxyUrl);
-      } else if (defaultDoubanImageProxyUrl) {
-        setDoubanImageProxyUrl(defaultDoubanImageProxyUrl);
-      }
-
-      const savedEnableOptimization =
-        localStorage.getItem('enableOptimization');
-      if (savedEnableOptimization !== null) {
-        setEnableOptimization(JSON.parse(savedEnableOptimization));
-      }
-
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
-      if (savedFluidSearch !== null) {
-        setFluidSearch(JSON.parse(savedFluidSearch));
-      } else if (defaultFluidSearch !== undefined) {
-        setFluidSearch(defaultFluidSearch);
-      }
-
-      const savedLiveDirectConnect = localStorage.getItem('liveDirectConnect');
-      if (savedLiveDirectConnect !== null) {
-        setLiveDirectConnect(JSON.parse(savedLiveDirectConnect));
-      }
-    }
-  }, []);
-
-  // 版本检查
-  useEffect(() => {
-    const checkUpdate = async () => {
-      try {
-        const status = await checkForUpdates();
-        setUpdateStatus(status);
-      } catch (error) {
-        console.warn('版本检查失败:', error);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkUpdate();
-  }, []);
-
-  // 获取观看更新信息（仅读取缓存，不主动检查）
-  useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      authInfo?.username &&
-      storageType !== 'localstorage'
-    ) {
-      const updateWatchingUpdates = () => {
-        const updates = getDetailedWatchingUpdates();
-
-        setWatchingUpdates(updates);
-
-        // 检测是否有新更新（只检查新剧集更新，不包括继续观看）
-        if (updates && (updates.updatedCount || 0) > 0) {
-          const lastViewed = parseInt(
-            localStorage.getItem('watchingUpdatesLastViewed') || '0',
-          );
-          const currentTime = Date.now();
-
-          // 如果从未查看过，或者距离上次查看超过1分钟，认为有新更新
-          const hasNewUpdates =
-            lastViewed === 0 || currentTime - lastViewed > 60000;
-          setHasUnreadUpdates(hasNewUpdates);
-        } else {
-          setHasUnreadUpdates(false);
-        }
-      };
-
-      // 只从缓存加载
-      const cachedUpdates = getCachedWatchingUpdates();
-      if (cachedUpdates) {
-        updateWatchingUpdates();
-      }
-
-      // 订阅更新事件（被动监听）
-      const unsubscribe = subscribeToWatchingUpdatesEvent(() => {
-        updateWatchingUpdates();
-      });
-
-      return unsubscribe;
-    }
-  }, [authInfo?.username, storageType]); // 移除 enableWatchingUpdates 依赖
-
-  // 获取留言回复信息和待审核用户数量
-  useEffect(() => {
-    if (typeof window !== 'undefined' && authInfo?.username) {
-      // 获取待审核用户数量 - 已移至 TopNav.tsx 统一管理
-      // const fetchPendingUsersCount = async () => {
-      //   console.log('UserMenu fetchPendingUsersCount:', { user: state.user });
-      //   if (state.user?.role === 'admin' || state.user?.role === 'owner') {
-      //     try {
-      //       console.log('尝试获取管理员配置...');
-      //       const response = await fetch('/api/admin/config');
-      //       console.log('管理员配置响应:', response.status);
-      //       if (response.ok) {
-      //         const data = await response.json();
-      //         const pendingUsers = data.Config?.UserConfig?.PendingUsers || [];
-      //         setPendingUsersCount(pendingUsers.length);
-      //       } else {
-      //         console.error('获取管理员配置失败:', response.status);
-      //       }
-      //     } catch (error) {
-      //       console.error('获取管理员配置异常:', error);
-      //     }
-      //   }
-      // };
-
-      // 设置为0，因为提醒功能已移至 TopNav.tsx
-      setPendingUsersCount(0);
-    }
-  }, [authInfo]);
   // 点击外部区域关闭下拉框
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -411,15 +220,12 @@ export const UserMenu: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      console.log('开始登出...');
       // 清除认证cookie
       document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      console.log('登出成功，跳转到登录页面');
 
       // 直接跳转到登录页面，避免中间状态
       window.location.href = '/login';
     } catch (error) {
-      console.error('注销请求失败:', error);
       // 即使出错也要跳转到登录页面
       window.location.href = '/login';
     }
@@ -459,30 +265,6 @@ export const UserMenu: React.FC = () => {
     setPasswordError('');
   };
 
-  // 头像相关处理函数
-  const fetchUserAvatar = async (username: string) => {
-    // 避免重复请求同一用户的头像
-    if (avatarFetchRef.current === username) {
-      return;
-    }
-
-    try {
-      avatarFetchRef.current = username; // 标记正在获取
-      const response = await fetch(
-        `/api/avatar?user=${encodeURIComponent(username)}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.avatar) {
-          setAvatarUrl(data.avatar);
-        }
-      }
-    } catch (error) {
-      // 忽略获取用户头像的错误
-      console.warn('获取头像失败:', error);
-    }
-  };
-
   const handleChangeAvatar = () => {
     setIsOpen(false);
     setIsChangeAvatarOpen(true);
@@ -514,20 +296,57 @@ export const UserMenu: React.FC = () => {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      showError('图片大小不能超过 2MB，请选择较小的图片文件');
+    if (file.size > 1 * 1024 * 1024) {
+      showError('图片大小不能超过 1MB，请选择较小的图片文件');
       return;
     }
 
-    // 将图片转换为 base64 格式用于裁剪
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setSelectedImage(event.target.result.toString());
-        setShowCropper(true);
-      }
-    };
-    reader.readAsDataURL(file);
+    // GIF 直接上传，不走裁剪流程
+    // 检查 MIME type 和文件扩展名，确保 GIF 不会被误判
+    const isGif =
+      file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+
+    if (isGif) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        if (event.target?.result) {
+          try {
+            setIsUploadingAvatar(true);
+            const gifBase64 = event.target.result.toString();
+
+            // 调用 API 上传头像
+            const response = await fetch('/api/avatar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatar: gifBase64 }),
+            });
+
+            if (!response.ok) {
+              showError('头像上传失败，请稍后重试');
+              return;
+            }
+
+            showSuccess('头像上传成功，您的头像已更新');
+            handleCloseChangeAvatar();
+          } catch (error) {
+            showError('头像上传失败，请稍后重试');
+          } finally {
+            setIsUploadingAvatar(false);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // 静态图片走裁剪流程
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setSelectedImage(event.target.result.toString());
+          setShowCropper(true);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // 生成裁剪后的图片
@@ -612,7 +431,7 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleConfirmCrop = async () => {
-    if (!completedCrop || !imageRef.current || !authInfo?.username) {
+    if (!completedCrop || !imageRef.current) {
       return;
     }
 
@@ -624,28 +443,22 @@ export const UserMenu: React.FC = () => {
         completedCrop,
       );
 
-      // 上传到服务器
+      // 调用 API 上传头像
       const response = await fetch('/api/avatar', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          avatar: croppedImageBase64,
-          targetUser: authInfo.username,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: croppedImageBase64 }),
       });
 
-      if (response.ok) {
-        setAvatarUrl(croppedImageBase64);
-        showSuccess('头像上传成功，您的头像已更新');
-        handleCloseChangeAvatar();
-      } else {
-        const errorData = await response.json();
-        showError('头像上传失败', errorData.error || '请稍后重试');
+      if (!response.ok) {
+        showError('头像上传失败，请稍后重试');
+        return;
       }
+
+      showSuccess('头像上传成功，您的头像已更新');
+      handleCloseChangeAvatar();
     } catch (error) {
-      showError('头像上传失败，网络错误，请稍后重试');
+      showError('头像上传失败，请稍后重试');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -713,115 +526,6 @@ export const UserMenu: React.FC = () => {
     setIsThemeSettingsOpen(false);
   };
 
-  // 设置相关的处理函数
-  const handleAggregateToggle = (value: boolean) => {
-    setDefaultAggregateSearch(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('defaultAggregateSearch', JSON.stringify(value));
-    }
-  };
-
-  const handleDoubanProxyUrlChange = (value: string) => {
-    setDoubanProxyUrl(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanProxyUrl', value);
-    }
-  };
-
-  const handleOptimizationToggle = (value: boolean) => {
-    setEnableOptimization(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('enableOptimization', JSON.stringify(value));
-    }
-  };
-
-  const handleFluidSearchToggle = (value: boolean) => {
-    setFluidSearch(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('fluidSearch', JSON.stringify(value));
-    }
-  };
-
-  const handleLiveDirectConnectToggle = (value: boolean) => {
-    setLiveDirectConnect(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('liveDirectConnect', JSON.stringify(value));
-    }
-  };
-
-  const handleDoubanDataSourceChange = (value: string) => {
-    setDoubanDataSource(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanDataSource', value);
-    }
-  };
-
-  const handleDoubanImageProxyTypeChange = (value: string) => {
-    setDoubanImageProxyType(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyType', value);
-    }
-  };
-
-  const handleDoubanImageProxyUrlChange = (value: string) => {
-    setDoubanImageProxyUrl(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyUrl', value);
-    }
-  };
-
-  // 获取感谢信息
-  const getThanksInfo = (dataSource: string) => {
-    switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
-      case 'cmliussss-cdn-tencent':
-      case 'cmliussss-cdn-ali':
-        return {
-          text: 'Thanks to @CMLiussss',
-          url: 'https://github.com/cmliu',
-        };
-      default:
-        return null;
-    }
-  };
-
-  const handleResetSettings = () => {
-    const defaultDoubanProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'direct';
-    const defaultDoubanProxy =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
-    const defaultDoubanImageProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'direct';
-    const defaultDoubanImageProxyUrl =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
-    const defaultFluidSearch =
-      (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
-
-    setDefaultAggregateSearch(true);
-    setEnableOptimization(false);
-    setFluidSearch(defaultFluidSearch);
-    setLiveDirectConnect(false);
-    setDoubanProxyUrl(defaultDoubanProxy);
-    setDoubanDataSource(defaultDoubanProxyType);
-    setDoubanImageProxyType(defaultDoubanImageProxyType);
-    setDoubanImageProxyUrl(defaultDoubanImageProxyUrl);
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('defaultAggregateSearch', JSON.stringify(true));
-      localStorage.setItem('enableOptimization', JSON.stringify(false));
-      localStorage.setItem('fluidSearch', JSON.stringify(defaultFluidSearch));
-      localStorage.setItem('liveDirectConnect', JSON.stringify(false));
-      localStorage.setItem('doubanProxyUrl', defaultDoubanProxy);
-      localStorage.setItem('doubanDataSource', defaultDoubanProxyType);
-      localStorage.setItem('doubanImageProxyType', defaultDoubanImageProxyType);
-      localStorage.setItem('doubanImageProxyUrl', defaultDoubanImageProxyUrl);
-    }
-  };
-
   // 检查是否显示管理面板按钮
   const showAdminPanel =
     authInfo?.role === 'owner' || authInfo?.role === 'admin';
@@ -861,29 +565,8 @@ export const UserMenu: React.FC = () => {
         {/* 用户信息区域 */}
         <div className='px-4 py-4 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-white/60 to-white/30 dark:from-gray-800/60 dark:to-gray-800/30 shadow-sm'>
           <div className='flex items-center gap-3'>
-            {/* 用户头像容器 */}
-            <div className='relative flex-shrink-0'>
-              {/* 圆形头像 */}
-              <div className='w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/50 dark:ring-gray-700/50 shadow-lg'>
-                {avatarUrl ? (
-                  <img
-                    src={
-                      avatarUrl.startsWith('data:')
-                        ? avatarUrl
-                        : `data:image/jpeg;base64,${avatarUrl}`
-                    }
-                    alt='用户头像'
-                    width={48}
-                    height={48}
-                    className='w-full h-full object-cover rounded-full'
-                  />
-                ) : (
-                  <div className='w-full h-full rounded-full bg-gradient-to-br from-blue-400/30 to-blue-600/30 dark:from-blue-600/30 dark:to-blue-800/30 flex items-center justify-center'>
-                    <User className='w-7 h-7 text-blue-500 dark:text-blue-400' />
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* 用户头像 - 菜单面板中使用中等尺寸 */}
+            <OptimizedAvatar onClick={() => setIsOpen(!isOpen)} size='menu' />
 
             {/* 用户信息 - 垂直布局 */}
             <div className='flex-1 min-w-0'>
@@ -1024,14 +707,6 @@ export const UserMenu: React.FC = () => {
             >
               <Shield className='w-4 h-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>管理面板</span>
-              {/* 待审核用户提醒已移至导航栏 Bell 图标 */}
-              {/* {pendingUsersCount > 0 && (
-                <div className='ml-auto flex items-center gap-1'>
-                  <span className='inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full'>
-                    {pendingUsersCount > 99 ? '99+' : pendingUsersCount}
-                  </span>
-                </div>
-              )} */}
             </button>
           )}
 
@@ -1162,7 +837,7 @@ export const UserMenu: React.FC = () => {
                 本地设置
               </h3>
               <button
-                onClick={handleResetSettings}
+                onClick={resetSettings}
                 className='px-2 py-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors'
                 title='重置为默认设置'
               >
@@ -1199,7 +874,7 @@ export const UserMenu: React.FC = () => {
                 >
                   {
                     doubanDataSourceOptions.find(
-                      (option) => option.value === doubanDataSource,
+                      (option) => option.value === settings.doubanDataSource,
                     )?.label
                   }
                 </button>
@@ -1221,17 +896,17 @@ export const UserMenu: React.FC = () => {
                         key={option.value}
                         type='button'
                         onClick={() => {
-                          handleDoubanDataSourceChange(option.value);
+                          updateSetting('doubanDataSource', option.value);
                           setIsDoubanDropdownOpen(false);
                         }}
                         className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          doubanDataSource === option.value
+                          settings.doubanDataSource === option.value
                             ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
                             : 'text-gray-900 dark:text-gray-100'
                         }`}
                       >
                         <span className='truncate'>{option.label}</span>
-                        {doubanDataSource === option.value && (
+                        {settings.doubanDataSource === option.value && (
                           <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
                         )}
                       </button>
@@ -1239,31 +914,10 @@ export const UserMenu: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* 感谢信息 */}
-              {getThanksInfo(doubanDataSource) && (
-                <div className='mt-3'>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      window.open(
-                        getThanksInfo(doubanDataSource)!.url,
-                        '_blank',
-                      )
-                    }
-                    className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-                  >
-                    <span className='font-medium'>
-                      {getThanksInfo(doubanDataSource)!.text}
-                    </span>
-                    <ExternalLink className='w-3.5 opacity-70' />
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
-            {doubanDataSource === 'custom' && (
+            {settings.doubanDataSource === 'custom' && (
               <div className='space-y-3'>
                 <div>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -1277,8 +931,10 @@ export const UserMenu: React.FC = () => {
                   type='text'
                   className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
                   placeholder='例如: https://proxy.example.com/fetch?url='
-                  value={doubanProxyUrl}
-                  onChange={(e) => handleDoubanProxyUrlChange(e.target.value)}
+                  value={settings.doubanProxyUrl}
+                  onChange={(e) =>
+                    updateSetting('doubanProxyUrl', e.target.value)
+                  }
                 />
               </div>
             )}
@@ -1309,7 +965,8 @@ export const UserMenu: React.FC = () => {
                 >
                   {
                     doubanImageProxyTypeOptions.find(
-                      (option) => option.value === doubanImageProxyType,
+                      (option) =>
+                        option.value === settings.doubanImageProxyType,
                     )?.label
                   }
                 </button>
@@ -1331,17 +988,17 @@ export const UserMenu: React.FC = () => {
                         key={option.value}
                         type='button'
                         onClick={() => {
-                          handleDoubanImageProxyTypeChange(option.value);
+                          updateSetting('doubanImageProxyType', option.value);
                           setIsDoubanImageProxyDropdownOpen(false);
                         }}
                         className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          doubanImageProxyType === option.value
+                          settings.doubanImageProxyType === option.value
                             ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
                             : 'text-gray-900 dark:text-gray-100'
                         }`}
                       >
                         <span className='truncate'>{option.label}</span>
-                        {doubanImageProxyType === option.value && (
+                        {settings.doubanImageProxyType === option.value && (
                           <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
                         )}
                       </button>
@@ -1349,31 +1006,10 @@ export const UserMenu: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* 感谢信息 */}
-              {getThanksInfo(doubanImageProxyType) && (
-                <div className='mt-3'>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      window.open(
-                        getThanksInfo(doubanImageProxyType)!.url,
-                        '_blank',
-                      )
-                    }
-                    className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
-                  >
-                    <span className='font-medium'>
-                      {getThanksInfo(doubanImageProxyType)!.text}
-                    </span>
-                    <ExternalLink className='w-3.5 opacity-70' />
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* 豆瓣图片代理地址设置 - 仅在选择自定义代理时显示 */}
-            {doubanImageProxyType === 'custom' && (
+            {settings.doubanImageProxyType === 'custom' && (
               <div className='space-y-3'>
                 <div>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -1387,9 +1023,9 @@ export const UserMenu: React.FC = () => {
                   type='text'
                   className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
                   placeholder='例如: https://proxy.example.com/fetch?url='
-                  value={doubanImageProxyUrl}
+                  value={settings.doubanImageProxyUrl}
                   onChange={(e) =>
-                    handleDoubanImageProxyUrlChange(e.target.value)
+                    updateSetting('doubanImageProxyUrl', e.target.value)
                   }
                 />
               </div>
@@ -1413,8 +1049,10 @@ export const UserMenu: React.FC = () => {
                   <input
                     type='checkbox'
                     className='sr-only peer'
-                    checked={defaultAggregateSearch}
-                    onChange={(e) => handleAggregateToggle(e.target.checked)}
+                    checked={settings.defaultAggregateSearch}
+                    onChange={(e) =>
+                      updateSetting('defaultAggregateSearch', e.target.checked)
+                    }
                   />
                   <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
                   <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
@@ -1437,8 +1075,10 @@ export const UserMenu: React.FC = () => {
                   <input
                     type='checkbox'
                     className='sr-only peer'
-                    checked={enableOptimization}
-                    onChange={(e) => handleOptimizationToggle(e.target.checked)}
+                    checked={settings.enableOptimization}
+                    onChange={(e) =>
+                      updateSetting('enableOptimization', e.target.checked)
+                    }
                   />
                   <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
                   <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
@@ -1461,8 +1101,10 @@ export const UserMenu: React.FC = () => {
                   <input
                     type='checkbox'
                     className='sr-only peer'
-                    checked={fluidSearch}
-                    onChange={(e) => handleFluidSearchToggle(e.target.checked)}
+                    checked={settings.fluidSearch}
+                    onChange={(e) =>
+                      updateSetting('fluidSearch', e.target.checked)
+                    }
                   />
                   <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
                   <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
@@ -1471,7 +1113,7 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* 直播视频浏览器直连 */}
-            {showLiveSetting && (
+            {isMenuEnabled('showLive') && (
               <div className='flex items-center justify-between'>
                 <div>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -1486,9 +1128,9 @@ export const UserMenu: React.FC = () => {
                     <input
                       type='checkbox'
                       className='sr-only peer'
-                      checked={liveDirectConnect}
+                      checked={settings.liveDirectConnect}
                       onChange={(e) =>
-                        handleLiveDirectConnectToggle(e.target.checked)
+                        updateSetting('liveDirectConnect', e.target.checked)
                       }
                     />
                     <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
@@ -1630,35 +1272,7 @@ export const UserMenu: React.FC = () => {
   return (
     <>
       <div className='relative'>
-        <button
-          onClick={handleMenuClick}
-          className='w-9 h-9 sm:w-12 sm:h-12 p-0.5 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200/50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-all duration-300 hover:scale-105 overflow-hidden group'
-          aria-label='User Menu'
-        >
-          {avatarUrl ? (
-            <div className='w-full h-full rounded-full overflow-hidden relative ring-2 ring-transparent group-hover:ring-blue-400/50 transition-all duration-300'>
-              <img
-                src={
-                  avatarUrl.startsWith('data:')
-                    ? avatarUrl
-                    : `data:image/jpeg;base64,${avatarUrl}`
-                }
-                alt='用户头像'
-                width={36}
-                height={36}
-                className='w-full h-full object-cover'
-              />
-            </div>
-          ) : (
-            <div className='w-full h-full rounded-full bg-gradient-to-br from-blue-400/20 to-blue-600/20 dark:from-blue-600/20 dark:to-blue-800/20 flex items-center justify-center ring-2 ring-transparent group-hover:ring-blue-400/50 transition-all duration-300'>
-              <User className='w-5 h-5 sm:w-7 sm:h-7 text-blue-500 dark:text-blue-400' />
-            </div>
-          )}
-        </button>
-        {/* 版本更新提醒点 */}
-        {updateStatus === UpdateStatus.HAS_UPDATE && (
-          <div className='absolute top-[2px] right-[2px] w-2 h-2 bg-yellow-500 rounded-full'></div>
-        )}
+        <OptimizedAvatar onClick={() => setIsOpen(!isOpen)} size='nav' />
       </div>
 
       {/* 使用 Portal 将菜单面板渲染到 document.body */}
@@ -1707,25 +1321,10 @@ export const UserMenu: React.FC = () => {
                   <>
                     {/* 头像预览 */}
                     <div className='flex flex-col items-center justify-center gap-6 my-6'>
-                      <div className='w-24 h-24 rounded-full overflow-hidden relative'>
-                        {avatarUrl ? (
-                          <img
-                            src={
-                              avatarUrl.startsWith('data:')
-                                ? avatarUrl
-                                : `data:image/jpeg;base64,${avatarUrl}`
-                            }
-                            alt='用户头像'
-                            width={96}
-                            height={96}
-                            className='w-full h-full object-cover'
-                          />
-                        ) : (
-                          <div className='w-full h-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center'>
-                            <User className='w-12 h-12 text-blue-500 dark:text-blue-400' />
-                          </div>
-                        )}
-                      </div>
+                      <OptimizedAvatar
+                        size='large'
+                        selectedImage={selectedImage}
+                      />
 
                       {/* 上传按钮 */}
                       <div>

@@ -3,12 +3,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import PageLayout from '@/components/PageLayout';
 import { useToast } from '@/components/Toast';
+import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 
 interface Comment {
   id: string;
@@ -36,14 +35,11 @@ interface CommentReply {
 export default function MessageBoard() {
   const router = useRouter();
   const { error: showError, success: showSuccess } = useToast();
-  const authInfo = useMemo(() => {
-    const auth = getAuthInfoFromBrowserCookie();
-    return {
-      isAuthenticated: !!auth?.username,
-      user: auth ? { username: auth.username, role: auth.role } : null,
-      loading: false,
-    };
-  }, []);
+  const { user, loading: authLoading, isAuthenticated } = useCurrentAuth();
+
+  // 用于跟踪是否已经加载过评论
+  const hasLoadedComments = useRef(false);
+
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -97,49 +93,54 @@ export default function MessageBoard() {
         setTotalPages(data.pagination?.totalPages || 1);
         setHasNextPage(data.pagination?.hasNextPage || false);
         setHasPrevPage(data.pagination?.hasPrevPage || false);
+
+        // 标记已加载
+        hasLoadedComments.current = true;
       } catch {
-        showError('获取评论失败，请稍后重试');
+        console.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [], // 移除showError依赖，避免无限循环
+    [], // 空依赖数组，避免频繁重新创建
   );
 
   useEffect(() => {
     // 等待认证状态加载完成
-    if (authInfo.loading) {
+    if (authLoading) {
       return;
     }
 
     // 如果未认证，跳转到登录页
-    if (!authInfo.isAuthenticated || !authInfo.user?.username) {
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    // 直接在这里调用fetch逻辑，避免依赖useCallback
+    // 如果已经加载过评论，不再重复加载
+    if (hasLoadedComments.current) {
+      return;
+    }
+
+    // 只在认证完成后加载一次评论
     const loadComments = async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/message');
         const data = await response.json();
         setComments(data.comments || []);
+        hasLoadedComments.current = true; // 标记已加载
       } catch {
-        showError('获取评论失败，请稍后重试');
+        console.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
       }
     };
 
     loadComments();
-  }, [
-    router,
-    authInfo.isAuthenticated,
-    authInfo.user?.username,
-    authInfo.loading,
-  ]); // 使用loading而不是isLoading
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, isAuthenticated, router]);
 
   // 处理分类筛选
   useEffect(() => {
@@ -158,7 +159,7 @@ export default function MessageBoard() {
   };
 
   const handlePostComment = async () => {
-    if (!newComment.trim() || !authInfo.user?.username) {
+    if (!newComment.trim() || !user?.username) {
       return;
     }
 
@@ -188,7 +189,7 @@ export default function MessageBoard() {
   };
 
   const handlePostReply = async (commentId: string) => {
-    if (!replyContent.trim() || !authInfo.user?.username) {
+    if (!replyContent.trim() || !user?.username) {
       return;
     }
 
@@ -216,10 +217,7 @@ export default function MessageBoard() {
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (
-      !authInfo.user?.role ||
-      !['owner', 'admin'].includes(authInfo.user.role)
-    ) {
+    if (!user?.role || !['owner', 'admin'].includes(user.role)) {
       return;
     }
 
@@ -246,10 +244,7 @@ export default function MessageBoard() {
   };
 
   const handleDeleteReply = async (commentId: string, replyId: string) => {
-    if (
-      !authInfo.user?.role ||
-      !['owner', 'admin'].includes(authInfo.user.role)
-    ) {
+    if (!user?.role || !['owner', 'admin'].includes(user.role)) {
       return;
     }
 
@@ -279,10 +274,7 @@ export default function MessageBoard() {
   };
 
   const handleClearAllComments = async () => {
-    if (
-      !authInfo.user?.role ||
-      !['owner', 'admin'].includes(authInfo.user.role)
-    ) {
+    if (!user?.role || !['owner', 'admin'].includes(user.role)) {
       return;
     }
 
@@ -307,10 +299,7 @@ export default function MessageBoard() {
 
   // 处理置顶/取消置顶
   const handleTogglePin = async (commentId: string) => {
-    if (
-      !authInfo.user?.role ||
-      !['owner', 'admin'].includes(authInfo.user.role)
-    ) {
+    if (!user?.role || !['owner', 'admin'].includes(user.role)) {
       return;
     }
 
@@ -732,10 +721,8 @@ export default function MessageBoard() {
                                 </p>
                               </div>
                               {/* 管理员操作按钮 */}
-                              {authInfo.user?.role &&
-                                ['owner', 'admin'].includes(
-                                  authInfo.user.role,
-                                ) && (
+                              {user?.role &&
+                                ['owner', 'admin'].includes(user.role) && (
                                   <div className='flex flex-col gap-1'>
                                     {/* 置顶按钮 */}
                                     <button
@@ -973,9 +960,9 @@ export default function MessageBoard() {
                                             </p>
                                           </div>
                                           {/* 删除按钮 - 仅管理员可见 */}
-                                          {authInfo.user?.role &&
+                                          {user?.role &&
                                             ['owner', 'admin'].includes(
-                                              authInfo.user.role,
+                                              user.role,
                                             ) && (
                                               <button
                                                 onClick={() =>
@@ -1228,8 +1215,8 @@ export default function MessageBoard() {
                 </div>
 
                 {/* 管理菜单模块 - 仅管理员可见 */}
-                {authInfo.user?.role &&
-                  ['owner', 'admin'].includes(authInfo.user.role) &&
+                {user?.role &&
+                  ['owner', 'admin'].includes(user.role) &&
                   comments.length > 0 && (
                     <div className='bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg shadow-sm p-3 border border-gray-200/50 dark:border-gray-700/50 mt-3'>
                       <h3 className='text-base font-semibold text-gray-900 dark:text-white mb-3'>

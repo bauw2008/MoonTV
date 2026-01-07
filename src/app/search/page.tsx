@@ -20,6 +20,7 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 import FloatingTools from '@/components/FloatingTools';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
@@ -57,9 +58,11 @@ function SearchPageClient() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const [totalSources, setTotalSources] = useState(0);
   const [completedSources, setCompletedSources] = useState(0);
+  // 使用 useUserSettings hook 管理设置
+  const { settings } = useUserSettings();
   const pendingResultsRef = useRef<SearchResult[]>([]);
   const flushTimerRef = useRef<number | null>(null);
-  const [useFluidSearch, setUseFluidSearch] = useState(true);
+  const [useFluidSearch, setUseFluidSearch] = useState(settings.fluidSearch);
   // 虚拟化开关状态
   const [useVirtualization, setUseVirtualization] = useState(true);
 
@@ -201,28 +204,9 @@ function SearchPageClient() {
     yearOrder: 'none',
   });
 
-  // 获取默认聚合设置：只读取用户本地设置，默认为 true
-  const getDefaultAggregate = () => {
-    if (typeof window !== 'undefined') {
-      const userSetting = localStorage.getItem('defaultAggregateSearch');
-      if (userSetting !== null) {
-        return JSON.parse(userSetting);
-      }
-    }
-    return true; // 默认启用聚合
-  };
-
-  const [viewMode, setViewMode] = useState<'agg' | 'all'>('agg');
-
-  // 客户端加载时从localStorage读取聚合设置
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const userSetting = localStorage.getItem('defaultAggregateSearch');
-      if (userSetting !== null) {
-        setViewMode(JSON.parse(userSetting) ? 'agg' : 'all');
-      }
-    }
-  }, []);
+  const [viewMode, setViewMode] = useState<'agg' | 'all'>(
+    settings.defaultAggregateSearch ? 'agg' : 'all',
+  );
 
   // 保存虚拟化设置
   const toggleVirtualization = () => {
@@ -605,17 +589,8 @@ function SearchPageClient() {
       }
     }
 
-    // 读取流式搜索设置
-    if (typeof window !== 'undefined') {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
-      if (savedFluidSearch !== null) {
-        setUseFluidSearch(JSON.parse(savedFluidSearch));
-      } else if (defaultFluidSearch !== undefined) {
-        setUseFluidSearch(defaultFluidSearch);
-      }
-    }
+    // 使用 useUserSettings hook 中的 fluidSearch 设置
+    let currentFluidSearch = settings.fluidSearch;
 
     // 监听搜索历史更新事件
     const unsubscribe = subscribeToDataUpdates(

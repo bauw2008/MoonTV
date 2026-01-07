@@ -8,7 +8,6 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
 
@@ -24,21 +23,10 @@ export function ThemeToggle({ className }: { className?: string }) {
     }
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // 监听主题变化和路由变化，确保主题色始终同步
   useEffect(() => {
-    if (mounted) {
-      setThemeColor(resolvedTheme);
-    }
-  }, [mounted, resolvedTheme, pathname]);
-
-  if (!mounted) {
-    // 渲染一个占位符以避免布局偏移
-    return <div className='w-10 h-10' />;
-  }
+    setThemeColor(resolvedTheme);
+  }, [resolvedTheme, pathname]);
 
   const toggleTheme = () => {
     // 检查浏览器是否支持 View Transitions API

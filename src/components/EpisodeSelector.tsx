@@ -11,6 +11,7 @@ import React, {
 
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 // 定义视频信息类型
 interface VideoInfo {
@@ -173,20 +174,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     }
   }, [precomputedVideoInfo]);
 
-  // 读取本地"优选和测速"开关，默认开启
-  const [optimizationEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
-      if (saved !== null) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    return true;
-  });
+  // 使用 useUserSettings hook 管理优化设置
+  const { settings } = useUserSettings();
+  const optimizationEnabled = settings.enableOptimization;
 
   // 当切换到换源tab并且有源数据时，异步获取视频信息 - 移除 attemptedSources 依赖避免循环触发
   useEffect(() => {

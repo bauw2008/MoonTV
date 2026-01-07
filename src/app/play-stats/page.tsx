@@ -3,10 +3,11 @@
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { PlayRecord, PlayStatsResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
+import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 // 用户等级系统
 const USER_LEVELS = [
   {
@@ -124,32 +125,28 @@ function formatLoginDisplay(loginCount: number) {
 
 const PlayStatsPage: React.FC = () => {
   const router = useRouter();
+  const { state } = useCurrentAuth();
+  const { user, loading: authLoading } = state;
+  const { fetchWithAuth } = useAuthenticatedFetch();
+
   const [statsData, setStatsData] = useState<PlayStatsResult | null>(null);
   const [userStats, setUserStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const [authInfo, setAuthInfo] = useState<{
-    username?: string;
-    role?: string;
-  } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'users' | 'personal'>(
     'personal', // 默认显示个人统计
   );
 
-  // 检查用户权限 - 支持普通用户查看个人播放记录
+  // 自动处理未登录
   useEffect(() => {
-    const auth = getAuthInfoFromBrowserCookie();
-    if (!auth || !auth.username) {
+    if (!authLoading && !user) {
       router.push('/login');
-      return;
     }
+  }, [authLoading, user, router]);
 
-    setAuthInfo(auth);
-    const adminRole = auth.role === 'admin' || auth.role === 'owner';
-    setIsAdmin(adminRole);
-  }, [router]);
+  // 简化的权限检查
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   // 时间格式化函数
   const formatTime = (seconds: number): string => {
@@ -215,11 +212,10 @@ const PlayStatsPage: React.FC = () => {
         }
       }
 
-      const response = await fetch('/api/admin/play-stats');
+      const response = await fetchWithAuth('/api/admin/play-stats');
 
-      if (response.status === 401) {
-        router.push('/login');
-        return;
+      if (!response) {
+        return; // 401 错误已自动处理
       }
 
       if (!response.ok) {
@@ -243,7 +239,7 @@ const PlayStatsPage: React.FC = () => {
         err instanceof Error ? err.message : '获取播放统计失败';
       setError(errorMessage);
     }
-  }, [router]);
+  }, [fetchWithAuth]);
 
   // 获取用户个人统计数据（带缓存）
   const fetchUserStats = useCallback(async () => {
@@ -261,11 +257,10 @@ const PlayStatsPage: React.FC = () => {
         }
       }
 
-      const response = await fetch('/api/user/my-stats');
+      const response = await fetchWithAuth('/api/user/my-stats');
 
-      if (response.status === 401) {
-        router.push('/login');
-        return;
+      if (!response) {
+        return; // 401 错误已自动处理
       }
 
       if (!response.ok) {
@@ -290,7 +285,7 @@ const PlayStatsPage: React.FC = () => {
         err instanceof Error ? err.message : '获取个人统计失败';
       setError(errorMessage);
     }
-  }, [router]);
+  }, [fetchWithAuth]);
 
   // 根据用户角色获取数据
   const fetchStats = useCallback(async () => {
@@ -387,11 +382,11 @@ const PlayStatsPage: React.FC = () => {
       : 'localstorage';
 
   useEffect(() => {
-    if (authInfo) {
+    if (user) {
       fetchStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authInfo]); // ✅ 只在 authInfo 变化时调用
+  }, [user]); // ✅ 只在 user 变化时调用
 
   // 格式化更新时间
   const formatLastUpdate = (timestamp: number): string => {
@@ -416,7 +411,7 @@ const PlayStatsPage: React.FC = () => {
   };
 
   // 未授权时显示加载
-  if (!authInfo) {
+  if (authLoading || !user) {
     return (
       <PageLayout activePath='/play-stats'>
         <div className='text-center py-12'>
@@ -887,7 +882,7 @@ const PlayStatsPage: React.FC = () => {
                                         .toUpperCase()}
                                     </span>
                                   </div>
-                                )}
+                                )}{' '}
                                 {/* 用户状态指示器 */}
                                 <div
                                   className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${

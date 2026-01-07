@@ -267,7 +267,10 @@ async function fetchWithTimeout(
   }
 }
 
-function getDoubanProxyConfig(): {
+function getDoubanProxyConfig(settings?: {
+  doubanDataSource?: string;
+  doubanProxyUrl?: string;
+}): {
   proxyType:
     | 'direct'
     | 'cors-proxy-zwei'
@@ -277,14 +280,20 @@ function getDoubanProxyConfig(): {
     | 'custom';
   proxyUrl: string;
 } {
-  // 优先使用管理员设置的全局配置
+  // 优先使用传入的设置，其次是管理员设置的全局配置，最后是 localStorage
   const doubanProxyType =
+    settings?.doubanDataSource ||
     (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-    localStorage.getItem('doubanDataSource') ||
+    (typeof window !== 'undefined'
+      ? localStorage.getItem('doubanDataSource')
+      : null) ||
     'cmliussss-cdn-tencent';
   const doubanProxy =
+    settings?.doubanProxyUrl ||
     (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
-    localStorage.getItem('doubanProxyUrl') ||
+    (typeof window !== 'undefined'
+      ? localStorage.getItem('doubanProxyUrl')
+      : null) ||
     '';
   return {
     proxyType: doubanProxyType,

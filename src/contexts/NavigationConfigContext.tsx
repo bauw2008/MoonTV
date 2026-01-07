@@ -25,13 +25,7 @@ interface NavigationConfigContextType {
   customCategories: CustomCategory[];
   updateCustomCategories: (categories: CustomCategory[]) => void;
   refreshConfig: () => void;
-  forceUpdate: () => void; // 新加强制更新方法
-  checkCurrentPageAccess: () => boolean; // 检查当前页面访问权限
-  updateAIEnabled: (enabled: boolean) => void; // 更新AI功能开关状态
-  updateSearchFeatures: (features: {
-    netDiskSearch?: boolean;
-    tmdbActorSearch?: boolean;
-  }) => void; // 更新搜索功能开关状态
+  forceUpdate: () => void;
 }
 
 const NavigationConfigContext =
@@ -65,9 +59,6 @@ export const useNavigationConfig = () => {
       updateCustomCategories: () => {},
       refreshConfig: () => {},
       forceUpdate: () => {},
-      checkCurrentPageAccess: () => true,
-      updateAIEnabled: () => {},
-      updateSearchFeatures: () => {},
     };
 
     return defaultContext;
@@ -97,7 +88,6 @@ export const NavigationConfigProvider: React.FC<
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>(
     [],
   );
-  const [_updateKey, setUpdateKey] = useState(0); // 用于强制更新
 
   // 初始化配置
   const refreshConfig = () => {
@@ -269,9 +259,6 @@ export const NavigationConfigProvider: React.FC<
 
   // 强制更新（用于立即生效）
   const forceUpdate = () => {
-    // 静默处理强制更新
-    setUpdateKey((prev) => prev + 1); // 改变key值强制重新渲染
-
     // 确保RUNTIME_CONFIG是最新的
     if (typeof window !== 'undefined') {
       const runtimeConfig =
@@ -286,7 +273,6 @@ export const NavigationConfigProvider: React.FC<
       );
       (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
         runtimeConfig;
-      // 静默处理RUNTIME_CONFIG强制更新
 
       // 触发storage事件，通知其他页面更新
       window.dispatchEvent(
@@ -298,74 +284,9 @@ export const NavigationConfigProvider: React.FC<
     }
   };
 
-  // 检查当前页面访问权限
-  const checkCurrentPageAccess = () => {
-    if (typeof window === 'undefined') return true;
-
-    const pathname = window.location.pathname;
-    const search = window.location.search;
-
-    // 路径访问映射
-    const pathAccessMap: Record<string, keyof MenuSettings> = {
-      '/douban': 'showMovies', // 默认检查电影
-      '/live': 'showLive',
-      '/tvbox': 'showTvbox',
-    };
-
-    // 特殊处理douban页面
-    if (pathname.startsWith('/douban')) {
-      const type = new URLSearchParams(search).get('type');
-      switch (type) {
-        case 'movie':
-          return menuSettings.showMovies;
-        case 'tv':
-          return menuSettings.showTVShows;
-        case 'anime':
-          return menuSettings.showAnime;
-        case 'show':
-          return menuSettings.showVariety;
-        case 'short-drama':
-          return menuSettings.showShortDrama;
-        default:
-          return menuSettings.showMovies;
-      }
-    }
-
-    // 检查其他路径
-    for (const [path, menuKey] of Object.entries(pathAccessMap)) {
-      if (pathname.startsWith(path)) {
-        return menuSettings[menuKey];
-      }
-    }
-
-    return true; // 默认允许访问
-  };
-
   // 检查菜单是否启用
   const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
     return menuSettings[menuKey];
-  };
-
-  // 更新AI功能开关状态
-  const updateAIEnabled = (enabled: boolean) => {
-    // 静默处理AI功能状态更新
-    updateMenuSettings({ showAI: enabled });
-  };
-
-  // 更新搜索功能开关状态
-  const updateSearchFeatures = (features: {
-    netDiskSearch?: boolean;
-    tmdbActorSearch?: boolean;
-  }) => {
-    // 静默处理搜索功能状态更新
-    const updates: Partial<MenuSettings> = {};
-    if (features.netDiskSearch !== undefined) {
-      updates.showNetDiskSearch = features.netDiskSearch;
-    }
-    if (features.tmdbActorSearch !== undefined) {
-      updates.showTMDBActorSearch = features.tmdbActorSearch;
-    }
-    updateMenuSettings(updates);
   };
 
   // 初始化配置并监听localStorage变化（跨窗口同步）
@@ -430,9 +351,6 @@ export const NavigationConfigProvider: React.FC<
     updateCustomCategories,
     refreshConfig,
     forceUpdate,
-    checkCurrentPageAccess,
-    updateAIEnabled,
-    updateSearchFeatures,
   };
 
   return (

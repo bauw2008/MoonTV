@@ -55,19 +55,66 @@ interface TopNavProps {
 }
 
 const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
-  const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
   const pathname = usePathname();
   const router = useRouter();
   const { siteName } = useSite();
   const { menuSettings, isMenuEnabled, customCategories } =
     useNavigationConfig();
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+
+  // 使用 useMemo 缓存 auth，避免每次渲染都调用 getAuthInfoFromBrowserCookie
+  const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
+
+  // 缓存 auth.username，避免引用变化
+  const username = useMemo(() => auth?.username, [auth?.username]);
+
+  // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = [];
+
+    // 添加首页
+    items.push({ icon: Home, label: '首页', href: '/' });
+
+    // 根据配置添加菜单项
+    if (isMenuEnabled('showMovies')) {
+      items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
+    }
+    if (isMenuEnabled('showTVShows')) {
+      items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
+    }
+    if (isMenuEnabled('showShortDrama')) {
+      items.push({
+        icon: PlayCircle,
+        label: '短剧',
+        href: '/douban?type=short-drama',
+      });
+    }
+    if (isMenuEnabled('showAnime')) {
+      items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
+    }
+    if (isMenuEnabled('showVariety')) {
+      items.push({ icon: Clover, label: '综艺', href: '/douban?type=show' });
+    }
+    if (isMenuEnabled('showLive')) {
+      items.push({ icon: Radio, label: '直播', href: '/live' });
+    }
+    if (isMenuEnabled('showTvbox')) {
+      items.push({ icon: Box, label: '盒子', href: '/tvbox' });
+    }
+
+    // 添加收藏菜单
+    items.push({ icon: Star, label: '收藏', href: '/favorites' });
+
+    // 检查自定义分类
+    if (customCategories && customCategories.length > 0) {
+      items.push({ icon: Star, label: '其他', href: '/douban?type=custom' });
+    }
+
+    return items;
+  }, [menuSettings, customCategories, isMenuEnabled]);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [updateKey, setUpdateKey] = useState(0); // 用于强制重新渲染
   const [isVisible, setIsVisible] = useState(true);
 
-  const [_updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
-  const [_isCheckingUpdate, setIsCheckingUpdate] = useState(true);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isNotificationMuted, setIsNotificationMuted] = useState(false);
   const [notifications, setNotifications] = useState({
@@ -75,33 +122,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     pendingUsers: { count: 0 },
     messages: { count: 0, hasUnread: false },
   });
-
-  // 访问控制检查
-  const checkAccessAndRedirect = (targetPath: string) => {
-    // 检查路径访问权限
-    const pathAccessMap: Record<string, keyof typeof menuSettings> = {
-      '/douban?type=movie': 'showMovies',
-      '/douban?type=tv': 'showTVShows',
-      '/douban?type=anime': 'showAnime',
-      '/douban?type=show': 'showVariety',
-      '/douban?type=short-drama': 'showShortDrama',
-      '/live': 'showLive',
-      '/tvbox': 'showTvbox',
-    };
-
-    const menuKey = pathAccessMap[targetPath];
-    if (menuKey && !isMenuEnabled(menuKey)) {
-      return false;
-    }
-    return true;
-  };
-
-  // 安全导航函数
-  const safeNavigate = (targetPath: string, _item?: MenuItem) => {
-    if (checkAccessAndRedirect(targetPath)) {
-      router.push(targetPath);
-    }
-  };
 
   // 鼠标滚轮隐藏逻辑
   useEffect(() => {
@@ -267,8 +287,16 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   // 获取未读消息数量
   useEffect(() => {
+    // 如果用户正在留言页面，不检查未读消息
+    if (
+      typeof window !== 'undefined' &&
+      window.location.pathname === '/message'
+    ) {
+      return;
+    }
+
     const checkUnreadMessages = async () => {
-      // 如果用户正在留言页面，不检查未读消息
+      // 再次检查页面，避免在页面切换后仍然调用
       if (
         typeof window !== 'undefined' &&
         window.location.pathname === '/message'
@@ -333,35 +361,34 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       }
     };
 
-    if (auth) {
+    if (auth?.username) {
       checkUnreadMessages();
-      // 每2分钟检查一次未读消息，减少频率
-      const interval = setInterval(checkUnreadMessages, 120000);
+      // 每6小时检查一次未读消息，留言不需要实时查看
+      const interval = setInterval(checkUnreadMessages, 21600000);
       return () => clearInterval(interval);
     }
-  }, [auth]);
+  }, [auth?.username]); // 只依赖 username，避免 auth 对象引用变化
 
   // 版本检查
   useEffect(() => {
     const checkUpdate = async () => {
       try {
-        const status = await checkForUpdates();
-        setUpdateStatus(status);
+        const updateStatus = await checkForUpdates();
 
         // 更新通知状态
         setNotifications((prev) => ({
           ...prev,
           versionUpdate: {
-            hasUpdate: status === UpdateStatus.HAS_UPDATE,
+            hasUpdate: updateStatus === UpdateStatus.HAS_UPDATE,
             version: CURRENT_VERSION,
-            count: status === UpdateStatus.HAS_UPDATE ? 1 : 0,
+            count: updateStatus === UpdateStatus.HAS_UPDATE ? 1 : 0,
           },
         }));
 
         // 保存检查时间
         localStorage.setItem('lastVersionCheck', Date.now().toString());
-      } finally {
-        setIsCheckingUpdate(false);
+      } catch (_error) {
+        // 忽略版本检查错误
       }
     };
 
@@ -380,13 +407,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     // 立即检查（如果需要）
     if (shouldCheckVersion()) {
       checkUpdate();
-    } else {
-      // 从缓存读取状态
-      const cachedStatus = localStorage.getItem('versionUpdateStatus');
-      if (cachedStatus) {
-        setUpdateStatus(cachedStatus as UpdateStatus);
-        setIsCheckingUpdate(false);
-      }
     }
 
     // 设置定期检查（每12小时）
@@ -399,75 +419,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     return () => clearInterval(interval);
   }, []);
-
-  // 当菜单设置变化时更新菜单项
-  useEffect(() => {
-    const items: MenuItem[] = [];
-
-    // 添加首页
-    items.push({ icon: Home, label: '首页', href: '/' });
-
-    // 根据配置添加菜单项
-    if (isMenuEnabled('showMovies')) {
-      items.push({ icon: Film, label: '电影', href: '/douban?type=movie' });
-    }
-    if (isMenuEnabled('showTVShows')) {
-      items.push({ icon: Tv, label: '剧集', href: '/douban?type=tv' });
-    }
-    if (isMenuEnabled('showShortDrama')) {
-      items.push({
-        icon: PlayCircle,
-        label: '短剧',
-        href: '/douban?type=short-drama',
-      });
-    }
-    if (isMenuEnabled('showAnime')) {
-      items.push({ icon: Cat, label: '动漫', href: '/douban?type=anime' });
-    }
-    if (isMenuEnabled('showVariety')) {
-      items.push({ icon: Clover, label: '综艺', href: '/douban?type=show' });
-    }
-    if (isMenuEnabled('showLive')) {
-      items.push({ icon: Radio, label: '直播', href: '/live' });
-    }
-    if (isMenuEnabled('showTvbox')) {
-      items.push({ icon: Box, label: '盒子', href: '/tvbox' });
-    }
-
-    // 添加收藏菜单
-    items.push({ icon: Star, label: '收藏', href: '/favorites' });
-
-    // 检查自定义分类
-    if (customCategories && customCategories.length > 0) {
-      items.push({ icon: Star, label: '其他', href: '/douban?type=custom' });
-    }
-
-    setMenuItems(items);
-  }, [menuSettings, customCategories, isMenuEnabled]);
-
-  // 监听menuSettings变化，强制更新TopNav
-  useEffect(() => {
-    // 当菜单设置变化时，更新key值强制重新渲染
-    setUpdateKey((prev) => prev + 1);
-  }, [menuSettings, isMenuEnabled]);
-
-  // 当前路径访问控制检查
-  useEffect(() => {
-    const pathAccessMap: Record<string, keyof typeof menuSettings> = {
-      '/douban': 'showMovies', // 默认检查电影
-      '/live': 'showLive',
-      '/tvbox': 'showTvbox',
-    };
-
-    // 检查当前路径是否需要访问控制
-    for (const [path, menuKey] of Object.entries(pathAccessMap)) {
-      if (pathname.startsWith(path) && !isMenuEnabled(menuKey)) {
-        // 可以选择重定向或显示提示
-        // router.push('/');
-        break;
-      }
-    }
-  }, [pathname, menuSettings, isMenuEnabled]);
 
   // 页面切换动画效果
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
@@ -704,7 +655,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   return (
     <nav
-      key={`topnav-${updateKey}`}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
@@ -713,58 +663,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           : 'scale-100 opacity-100'
       }`}
     >
-      {/* 动态渐变背景层 - 跟随主题背景 */}
-      <div
-        className='absolute inset-0 backdrop-blur-md backdrop-saturate-150 border-b shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'
-        ref={(el) => {
-          if (el) {
-            // 监听body的背景变化并应用到导航栏
-            const updateBackground = () => {
-              const bodyBg = window.getComputedStyle(document.body).background;
-              const htmlBg = window.getComputedStyle(
-                document.documentElement,
-              ).background;
-
-              // 优先使用body的背景，如果没有则使用html的背景
-              const currentBg = bodyBg && bodyBg !== 'none' ? bodyBg : htmlBg;
-
-              if (currentBg && currentBg !== 'none') {
-                el.style.background = currentBg;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundAttachment = 'fixed';
-                el.style.backgroundColor = 'transparent';
-                el.style.opacity = '0.9'; // 稍微透明以保持可读性
-              }
-            };
-
-            // 初始设置
-            updateBackground();
-
-            // 监听主题变化
-            const observer = new MutationObserver(updateBackground);
-            observer.observe(document.body, {
-              attributes: true,
-              attributeFilter: ['style'],
-            });
-            observer.observe(document.documentElement, {
-              attributes: true,
-              attributeFilter: ['style'],
-            });
-
-            // 清理函数
-            return () => observer.disconnect();
-          }
-        }}
-      >
-        {/* 动态光效流动 */}
-        <div className='absolute inset-0 overflow-hidden'>
-          <div className='absolute -top-2 -left-2 w-96 h-96 bg-gradient-to-br from-blue-400/20 via-purple-400/10 to-pink-400/20 rounded-full blur-3xl animate-pulse'></div>
-          <div className='absolute -top-2 -right-2 w-96 h-96 bg-gradient-to-bl from-purple-400/20 via-pink-400/10 to-blue-400/20 rounded-full blur-3xl animate-pulse animation-delay-2000'></div>
-          <div className='absolute -bottom-2 left-1/2 w-96 h-96 bg-gradient-to-tr from-pink-400/20 via-blue-400/10 to-purple-400/20 rounded-full blur-3xl animate-pulse animation-delay-4000'></div>
-        </div>
-        {/* 渐变光晕扫描效果 */}
-        <div className='absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/10 to-transparent animate-shimmer pointer-events-none'></div>
-
+      {/* 透明背景层 */}
+      <div className='absolute inset-0 backdrop-blur-md border-b shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
         {/* 页面切换进度条 */}
         <div
           className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
@@ -791,12 +691,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     V
                   </span>
                 </div>
-
-                {/* 悬停时的粒子效果 - 无浮动动画 */}
-                <div className='absolute -inset-2 pointer-events-none'>
-                  <div className='absolute top-0 left-0 w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300'></div>
-                  <div className='absolute bottom-0 right-0 w-2 h-2 bg-purple-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500'></div>
-                </div>
               </div>
 
               {/* 站点名称 */}
@@ -815,33 +709,23 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
             {menuItems.map((item, _index) => {
               const Icon = item.icon;
-              const isAccessible = checkAccessAndRedirect(item.href);
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    safeNavigate(item.href, item);
-                  }}
                   className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
                     isActive(item.href)
                       ? 'text-blue-600 dark:text-blue-400'
-                      : isAccessible
-                        ? 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
-                        : 'text-gray-400 cursor-not-allowed'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
                   }`}
-                  title={!isAccessible ? '该功能已被管理员禁用' : ''}
                 >
                   {/* 悬停背景效果 */}
                   <div
                     className={`absolute inset-0 rounded-lg transition-all duration-300 ${
                       isActive(item.href)
                         ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30'
-                        : isAccessible
-                          ? 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
-                          : ''
+                        : 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
                     }`}
                   ></div>
 
@@ -852,43 +736,34 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                       className={`relative w-4 h-4 transition-all duration-500 z-10 ${
                         isActive(item.href)
                           ? 'text-white drop-shadow-sm'
-                          : isAccessible
-                            ? (() => {
-                                // 根据不同的菜单项设置不同的颜色
-                                const colorMap: Record<string, string> = {
-                                  '/': 'text-purple-500 dark:text-purple-400',
-                                  '/douban?type=movie':
-                                    'text-red-500 dark:text-red-400',
-                                  '/douban?type=tv':
-                                    'text-blue-500 dark:text-blue-400',
-                                  '/douban?type=short-drama':
-                                    'text-pink-500 dark:text-pink-400',
-                                  '/douban?type=anime':
-                                    'text-indigo-500 dark:text-indigo-400',
-                                  '/douban?type=show':
-                                    'text-orange-500 dark:text-orange-400',
-                                  '/live': 'text-green-500 dark:text-green-400',
-                                  '/tvbox': 'text-cyan-500 dark:text-cyan-400',
-                                  '/favorites':
-                                    'text-yellow-500 dark:text-yellow-400',
-                                  '/douban?type=custom':
-                                    'text-teal-500 dark:text-teal-400',
-                                };
-                                return (
-                                  colorMap[item.href] ||
-                                  'text-gray-500 dark:text-gray-400'
-                                );
-                              })()
-                            : 'text-gray-400'
+                          : (() => {
+                              // 根据不同的菜单项设置不同的颜色
+                              const colorMap: Record<string, string> = {
+                                '/': 'text-purple-500 dark:text-purple-400',
+                                '/douban?type=movie':
+                                  'text-red-500 dark:text-red-400',
+                                '/douban?type=tv':
+                                  'text-blue-500 dark:text-blue-400',
+                                '/douban?type=short-drama':
+                                  'text-pink-500 dark:text-pink-400',
+                                '/douban?type=anime':
+                                  'text-indigo-500 dark:text-indigo-400',
+                                '/douban?type=show':
+                                  'text-orange-500 dark:text-orange-400',
+                                '/live': 'text-green-500 dark:text-green-400',
+                                '/tvbox': 'text-cyan-500 dark:text-cyan-400',
+                                '/favorites':
+                                  'text-yellow-500 dark:text-yellow-400',
+                                '/douban?type=custom':
+                                  'text-teal-500 dark:text-teal-400',
+                              };
+                              return (
+                                colorMap[item.href] ||
+                                'text-gray-500 dark:text-gray-400'
+                              );
+                            })()
                       } group-hover:rotate-12`}
                     />
-                    {/* 悬停时的粒子效果 */}
-                    {isAccessible && !isActive(item.href) && (
-                      <div className='absolute -inset-1 pointer-events-none'>
-                        <div className='absolute top-0 left-0 w-1 h-1 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-hover:animate-ping'></div>
-                        <div className='absolute bottom-0 right-0 w-1 h-1 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 group-hover:animate-ping'></div>
-                      </div>
-                    )}
                   </div>
 
                   {/* 文字 */}
@@ -896,9 +771,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     className={`relative transition-all duration-300 z-10 whitespace-nowrap text-sm ${
                       isActive(item.href)
                         ? 'text-blue-600 dark:text-blue-400 font-medium'
-                        : isAccessible
-                          ? 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                          : 'text-gray-400'
+                        : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
                     }`}
                   >
                     {item.label}
@@ -916,79 +789,56 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           {/* Right side items */}
           <div className='flex items-center justify-end flex-1 space-x-3 sm:space-x-4'>
             {/* Search icon */}
-            <div className='relative group flex items-center justify-center'>
-              {/* 粒子效果 */}
-              <div className='absolute -inset-1 pointer-events-none'>
-                <div className='absolute top-0 left-0 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300'></div>
-                <div className='absolute bottom-0 right-0 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500'></div>
-              </div>
-              <button
-                onClick={() => router.push('/search')}
-                className='relative transition-all duration-200 flex items-center justify-center'
-                title='搜索'
-              >
-                <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/search')}
+              className='relative transition-all duration-200 flex items-center justify-center'
+              title='搜索'
+            >
+              <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
+            </button>
 
             {/* 主题切换按钮 */}
-            <div className='relative group flex items-center justify-center'>
-              {/* 粒子效果 */}
-              <div className='absolute -inset-1 pointer-events-none'>
-                <div className='absolute top-0 left-0 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300'></div>
-                <div className='absolute bottom-0 right-0 w-1.5 h-1.5 bg-purple-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500'></div>
-              </div>
-              <button
-                className='relative transition-all duration-200 flex items-center justify-center'
-                title='切换主题'
-              >
-                <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
-              </button>
-            </div>
+            <button
+              className='relative transition-all duration-200 flex items-center justify-center'
+              title='切换主题'
+            >
+              <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
+            </button>
 
             {/* 提醒图标按钮 - 只在有通知时显示 */}
             {hasAnyNotifications && (
-              <div className='relative group'>
-                {/* 粒子效果 */}
-                <div className='absolute -inset-1 pointer-events-none'>
-                  <div className='absolute top-0 left-0 w-1.5 h-1.5 bg-orange-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-300'></div>
-                  <div className='absolute bottom-0 right-0 w-1.5 h-1.5 bg-red-400 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500'></div>
-                </div>
-                <button
-                  onClick={() => setShowNotificationModal(true)}
-                  className={`relative transition-all duration-200 ${
-                    !isNotificationMuted ? 'animate-pulse' : ''
+              <button
+                onClick={() => setShowNotificationModal(true)}
+                className={`relative transition-all duration-200 ${
+                  !isNotificationMuted ? 'animate-pulse' : ''
+                }`}
+                title='提醒'
+              >
+                <Bell
+                  className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-12 ${
+                    isNotificationMuted
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-orange-500 dark:text-orange-400'
                   }`}
-                  title='提醒'
-                >
-                  <Bell
-                    className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-12 ${
-                      isNotificationMuted
-                        ? 'text-gray-400 dark:text-gray-500'
-                        : 'text-orange-500 dark:text-orange-400'
-                    }`}
-                  />
-                  {/* 统一提醒徽章 */}
-                  {(() => {
-                    const totalCount =
-                      notifications.versionUpdate.count +
-                      notifications.pendingUsers.count +
-                      notifications.messages.count;
+                />
+                {/* 统一提醒徽章 */}
+                {(() => {
+                  const totalCount =
+                    notifications.versionUpdate.count +
+                    notifications.pendingUsers.count +
+                    notifications.messages.count;
 
-                    // 只有有提醒且未静音时才显示徽章
-                    if (totalCount > 0 && !isNotificationMuted) {
-                      return (
-                        <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
-                          {totalCount > 99 ? '99+' : totalCount}
-                        </span>
-                      );
-                    }
-                    return null;
-                  })()}
-                  {/* 悬停效果 */}
-                  <div className='absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400/0 via-blue-400/10 to-blue-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
-                </button>
-              </div>
+                  // 只有有提醒且未静音时才显示徽章
+                  if (totalCount > 0 && !isNotificationMuted) {
+                    return (
+                      <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
+                        {totalCount > 99 ? '99+' : totalCount}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </button>
             )}
 
             {/* 用户菜单 */}
@@ -1019,37 +869,27 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           }`}
         >
           <div className='relative border-t border-white/20 dark:border-gray-700/20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl backdrop-saturate-180'>
-            {/* 移动端菜单背景动画 */}
-            <div className='absolute inset-0 overflow-hidden'>
-              <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-400/5 via-purple-400/5 to-pink-400/5 animate-pulse'></div>
-            </div>
-
             <div className='relative px-3 pt-3 pb-4 space-y-1'>
               {menuItems.map((item, _index) => {
                 const Icon = item.icon;
-                const isAccessible = checkAccessAndRedirect(item.href);
 
                 return (
                   <button
                     key={item.href}
                     onClick={() => {
-                      safeNavigate(item.href, item);
+                      router.push(item.href);
                       setIsMobileMenuOpen(false);
                     }}
-                    disabled={!isAccessible}
                     className={`nav-item flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group ${
                       isActive(item.href)
                         ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:from-blue-500/25 dark:to-purple-500/25 dark:text-blue-300 shadow-md shadow-blue-500/20 dark:shadow-blue-500/25 border border-blue-200/25 dark:border-blue-700/25'
-                        : isAccessible
-                          ? 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
-                          : 'text-gray-400 cursor-not-allowed opacity-50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
                     }`}
                     style={{
                       animationDelay: isMobileMenuOpen
                         ? `${_index * 30}ms`
                         : '0ms',
                     }}
-                    title={!isAccessible ? '该功能已被管理员禁用' : ''}
                   >
                     {/* 图标容器 */}
                     <div

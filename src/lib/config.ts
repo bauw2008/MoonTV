@@ -231,7 +231,7 @@ async function getInitConfig(
         showTVShows: process.env.NEXT_PUBLIC_MENU_SHOW_TVSHOWS === 'true',
         showAnime: process.env.NEXT_PUBLIC_MENU_SHOW_ANIME === 'true',
         showVariety: process.env.NEXT_PUBLIC_MENU_SHOW_VARIETY === 'true',
-        showLive: process.env.NEXT_PUBLIC_MENU_SHOW_LIVE === 'true',
+        showLive: false, // 默认关闭，可在管理界面配置
         showTvbox: process.env.NEXT_PUBLIC_MENU_SHOW_TVBOX === 'true',
         showShortDrama: process.env.NEXT_PUBLIC_MENU_SHOW_SHORTDRAMA === 'true',
         showAI: false, // 默认隐藏，可在管理界面配置
@@ -531,7 +531,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         showTVShows: true,
         showAnime: true,
         showVariety: true,
-        showLive: false,
+        showLive: false, // 默认关闭，可在管理界面配置
         showTvbox: false,
         showShortDrama: false,
         showAI: false,

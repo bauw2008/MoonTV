@@ -59,13 +59,12 @@ function ConfigFile() {
     try {
       const data = await configApi.getConfig();
 
-      setConfig(data);
-
       // 直接从Config对象获取数据
       const configData = (data as any).Config || {};
       const configFile = configData.ConfigFile;
       const configSub = configData.ConfigSubscribtion;
 
+      // 使用从服务器返回的数据，避免闭包陷阱
       if (configFile) {
         setConfigContent(configFile);
       }
@@ -76,12 +75,7 @@ function ConfigFile() {
         setLastCheckTime(configSub.LastCheck || '');
       }
 
-      setConfig({
-        configContent: configContent,
-        subscriptionUrl,
-        autoUpdate,
-        lastCheckTime,
-      });
+      setConfig(data);
     } catch (error) {
       console.error('加载配置失败:', error);
     }
@@ -137,14 +131,10 @@ function ConfigFile() {
         lastCheckTime || new Date().toISOString(),
       );
 
-      await loadConfig();
-
-      // 再次延迟刷新确保数据同步
-      setTimeout(async () => {
-        await loadConfig();
-      }, 1000);
+      showSuccess('配置保存成功');
     } catch (error) {
       console.error('保存配置失败:', error);
+      showError('保存失败: ' + (error as Error).message);
     }
   };
 

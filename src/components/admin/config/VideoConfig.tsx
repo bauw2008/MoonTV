@@ -9,7 +9,6 @@ declare global {
   }
 }
 
-
 import {
   CheckCircle,
   Download,
@@ -36,8 +35,6 @@ interface DataSource {
   disabled?: boolean;
   from?: string;
 }
-
-
 
 // 视频源项组件
 const SourceItem = ({
@@ -192,7 +189,7 @@ function VideoConfigContent() {
   const [config, setConfig] = useState<any>(null);
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  
+
   const [selectedSources, setSelectedSources] = useState<Set<string>>(
     new Set(),
   );
@@ -217,8 +214,6 @@ function VideoConfigContent() {
     isOpen: false,
     mode: 'export',
   });
-
-  
 
   useEffect(() => {
     loadConfig();
@@ -357,8 +352,6 @@ function VideoConfigContent() {
     }
   };
 
-  
-
   // 有效性检测处理
   const handleValidateSources = async () => {
     if (!searchKeyword.trim()) {
@@ -480,7 +473,8 @@ function VideoConfigContent() {
   // 虚拟滚动状态
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
   const [containerHeight, setContainerHeight] = useState(600);
-  const itemHeight = typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 80; // 移动端增加高度
+  const itemHeight =
+    typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 80; // 移动端增加高度
 
   // 计算可见范围
   const updateVisibleRange = useCallback(
@@ -622,111 +616,69 @@ function VideoConfigContent() {
 
         {/* 操作按钮 */}
 
-                <div className='grid grid-cols-2 sm:flex sm:flex-wrap gap-2'>
+        <div className='grid grid-cols-2 sm:flex sm:flex-wrap gap-2'>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+          >
+            <Plus size={14} />
 
-                  <button
+            <span className='hidden sm:inline'>添加视频源</span>
 
-                    onClick={() => setShowAddForm(!showAddForm)}
+            <span className='sm:hidden'>添加</span>
+          </button>
 
-                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+          <button
+            onClick={handleSelectAll}
+            className='px-2 sm:px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+          >
+            {selectedSources.size === sources.length ? '取消全选' : '全选'}
+          </button>
 
-                  >
+          <button
+            onClick={handleBatchDelete}
+            disabled={selectedSources.size === 0}
+            className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-sm'
+          >
+            <Trash2 size={14} />
 
-                    <Plus size={14} />
+            <span className='hidden sm:inline'>批量删除</span>
 
-                    <span className='hidden sm:inline'>添加视频源</span>
+            <span className='sm:hidden'>删除</span>
 
-                    <span className='sm:hidden'>添加</span>
+            {selectedSources.size > 0 && (
+              <span className='ml-1 px-2 py-0.5 bg-red-700 text-white text-xs rounded-full'>
+                {selectedSources.size}
+              </span>
+            )}
+          </button>
 
-                  </button>
+          <button
+            onClick={handleExport}
+            className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+          >
+            <Download size={14} />
 
-        
+            <span className='hidden sm:inline'>导出</span>
 
-                  <button
+            <span className='sm:hidden'>导出</span>
+          </button>
 
-                    onClick={handleSelectAll}
+          <label className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer text-xs sm:text-sm'>
+            <Upload size={14} />
 
-                    className='px-2 sm:px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
+            <span className='hidden sm:inline'>导入</span>
 
-                  >
+            <span className='sm:hidden'>导入</span>
 
-                    {selectedSources.size === sources.length ? '取消全选' : '全选'}
-
-                  </button>
-
-        
-
-                  <button
-
-                    onClick={handleBatchDelete}
-
-                    disabled={selectedSources.size === 0}
-
-                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xs sm:text-sm'
-
-                  >
-
-                    <Trash2 size={14} />
-
-                    <span className='hidden sm:inline'>批量删除</span>
-
-                    <span className='sm:hidden'>删除</span>
-
-                    {selectedSources.size > 0 && (
-
-                      <span className='ml-1 px-2 py-0.5 bg-red-700 text-white text-xs rounded-full'>
-
-                        {selectedSources.size}
-
-                      </span>
-
-                    )}
-
-                  </button>
-
-        
-
-                  <button
-
-                    onClick={handleExport}
-
-                    className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md text-xs sm:text-sm'
-
-                  >
-
-                    <Download size={14} />
-
-                    <span className='hidden sm:inline'>导出</span>
-
-                    <span className='sm:hidden'>导出</span>
-
-                  </button>
-
-        
-
-                  <label className='flex items-center justify-center space-x-1.5 px-2 sm:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 font-medium shadow-sm hover:shadow-md cursor-pointer text-xs sm:text-sm'>
-
-                    <Upload size={14} />
-
-                    <span className='hidden sm:inline'>导入</span>
-
-                    <span className='sm:hidden'>导入</span>
-
-                    <input
-
-                      type='file'
-
-                      accept='.json'
-
-                      onChange={handleImport}
-
-                      className='hidden'
-
-                    />
-
-                  </label>
-
-                </div>
+            <input
+              type='file'
+              accept='.json'
+              onChange={handleImport}
+              className='hidden'
+            />
+          </label>
+        </div>
 
         {/* 添加表单 */}
         {showAddForm && (
@@ -878,33 +830,33 @@ function VideoConfigContent() {
                     }}
                   >
                     <div className='px-0.5'>
-                        {visibleSources.map((source, index) => (
-                          <div
-                            key={source.key}
-                            className='border-b border-gray-100 dark:border-gray-700 last:border-b-0 py-1 sm:py-0'
-                            style={{ minHeight: `${itemHeight}px` }}
-                          >
-                            <SourceItem
-                              source={source}
-                              onToggleEnable={handleToggleEnable}
-                              onDelete={handleDelete}
-                              selected={selectedSources.has(source.key)}
-                              validationResult={validationResults.find(
-                                (r) => r.key === source.key,
-                              )}
-                              onSelect={(key) => {
-                                const newSelected = new Set(selectedSources);
-                                if (newSelected.has(key)) {
-                                  newSelected.delete(key);
-                                } else {
-                                  newSelected.add(key);
-                                }
-                                setSelectedSources(newSelected);
-                              }}
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      {visibleSources.map((source, index) => (
+                        <div
+                          key={source.key}
+                          className='border-b border-gray-100 dark:border-gray-700 last:border-b-0 py-1 sm:py-0'
+                          style={{ minHeight: `${itemHeight}px` }}
+                        >
+                          <SourceItem
+                            source={source}
+                            onToggleEnable={handleToggleEnable}
+                            onDelete={handleDelete}
+                            selected={selectedSources.has(source.key)}
+                            validationResult={validationResults.find(
+                              (r) => r.key === source.key,
+                            )}
+                            onSelect={(key) => {
+                              const newSelected = new Set(selectedSources);
+                              if (newSelected.has(key)) {
+                                newSelected.delete(key);
+                              } else {
+                                newSelected.add(key);
+                              }
+                              setSelectedSources(newSelected);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

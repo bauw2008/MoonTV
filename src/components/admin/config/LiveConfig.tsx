@@ -1,6 +1,5 @@
 'use client';
 
-
 import {
   Calendar,
   Edit,
@@ -49,7 +48,6 @@ const LiveItem = ({
   onSaveEdit: () => void;
   onCancelEdit: () => void;
 }) => {
-
   if (isEditing && editingSource?.key === liveSource.key) {
     return (
       <div className='bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-3'>
@@ -150,7 +148,6 @@ const LiveItem = ({
       {/* 布局 - 水平排列 */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center space-x-3 flex-1'>
-
           <div className='flex-1'>
             <div className='flex items-center space-x-2'>
               <Tv size={16} className='text-blue-500' />
@@ -249,7 +246,7 @@ function LiveConfigContent() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLiveSource, setEditingLiveSource] =
     useState<LiveDataSource | null>(null);
-  
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [newLiveSource, setNewLiveSource] = useState<LiveDataSource>({
@@ -261,8 +258,6 @@ function LiveConfigContent() {
     disabled: false,
     from: 'custom',
   });
-
-  
 
   useEffect(() => {
     loadConfig();
@@ -430,8 +425,6 @@ function LiveConfigContent() {
     });
   };
 
-  
-
   return (
     <div className='p-0.1 sm:p-6'>
       <div className='space-y-6'>
@@ -492,8 +485,6 @@ function LiveConfigContent() {
                 : '刷新直播源'}
             </span>
           </button>
-
-          
         </div>
 
         {/* 添加表单 */}
@@ -595,18 +586,18 @@ function LiveConfigContent() {
         {/* 直播源列表 */}
         <div className='bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-teal-50/10 dark:from-blue-900/15 dark:via-cyan-900/10 dark:to-teal-900/5 border border-blue-200/40 dark:border-blue-800/40 rounded-lg p-0.1 sm:p-6 backdrop-blur-sm overflow-x-auto'>
           {liveSources.map((liveSource) => (
-                <LiveItem
-                  key={liveSource.key}
-                  liveSource={liveSource}
-                  onToggleEnable={handleToggleEnable}
-                  onDelete={handleDelete}
-                  onEdit={setEditingLiveSource}
-                  isEditing={!!editingLiveSource}
-                  editingSource={editingLiveSource}
-                  onSaveEdit={handleEditLiveSource}
-                  onCancelEdit={() => setEditingLiveSource(null)}
-                />
-              ))}
+            <LiveItem
+              key={liveSource.key}
+              liveSource={liveSource}
+              onToggleEnable={handleToggleEnable}
+              onDelete={handleDelete}
+              onEdit={setEditingLiveSource}
+              isEditing={!!editingLiveSource}
+              editingSource={editingLiveSource}
+              onSaveEdit={handleEditLiveSource}
+              onCancelEdit={() => setEditingLiveSource(null)}
+            />
+          ))}
         </div>
       </div>
     </div>

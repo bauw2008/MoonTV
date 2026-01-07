@@ -13,15 +13,29 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
+import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
+
+// 去重辅助函数：按 title 和 director 去重
+function removeDuplicateItems(
+  items: ReleaseCalendarItem[],
+): ReleaseCalendarItem[] {
+  return items.filter(
+    (item, index, self) =>
+      index ===
+      self.findIndex(
+        (t) => t.title === item.title && t.director === item.director,
+      ),
+  );
+}
 
 export default function ReleaseCalendarPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
+  const { user, loading: authLoading, isAuthenticated } = useCurrentAuth();
+  const { fetchWithAuth } = useAuthenticatedFetch();
 
   // 所有状态 hooks 必须在条件判断之前声明
   const [data, setData] = useState<ReleaseCalendarResult | null>(null);
@@ -77,7 +91,12 @@ export default function ReleaseCalendarPage() {
       const apiUrl = reset
         ? '/api/release-calendar?refresh=true'
         : '/api/release-calendar';
-      const response = await fetch(apiUrl);
+      const response = await fetchWithAuth(apiUrl);
+
+      if (!response) {
+        // 401 错误已由 fetchWithAuth 处理
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('获取数据失败');
@@ -246,52 +265,6 @@ export default function ReleaseCalendarPage() {
       fetchData();
     }
   }, [isAuthenticated]);
-
-  // 检查用户权限 - 普通用户即可访问
-  useEffect(() => {
-    // 在客户端检查认证状态
-    const authInfo = getAuthInfoFromBrowserCookie();
-    const authenticated = !!authInfo?.username;
-    setIsAuthenticated(authenticated);
-    setAuthChecked(true);
-
-    // 检查用户是否已认证（普通用户权限即可）
-    if (!authenticated) {
-      router.push('/login');
-      return;
-    }
-  }, [router]);
-
-  // 认证检查中不渲染内容
-  if (!authChecked) {
-    return (
-      <PageLayout activePath='/release-calendar'>
-        <div className='text-center py-12'>
-          <div className='inline-flex items-center space-x-2 text-gray-600 dark:text-gray-400'>
-            <svg
-              className='w-6 h-6 animate-spin'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
-              />
-            </svg>
-            <span>检查权限中...</span>
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // 未认证用户不渲染内容（等待重定向）
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <PageLayout activePath='/release-calendar'>
@@ -548,19 +521,7 @@ export default function ReleaseCalendarPage() {
               {/* 网格视图 */}
               {viewMode === 'grid' && (
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6'>
-                  {(() => {
-                    // 去重：按title和director去重
-                    const uniqueCurrentItems = currentItems.filter(
-                      (item, index, self) =>
-                        index ===
-                        self.findIndex(
-                          (t) =>
-                            t.title === item.title &&
-                            t.director === item.director,
-                        ),
-                    );
-                    return uniqueCurrentItems;
-                  })().map((item) => {
+                  {removeDuplicateItems(currentItems).map((item) => {
                     const isToday =
                       item.releaseDate ===
                       new Date().toISOString().split('T')[0];
@@ -772,15 +733,8 @@ export default function ReleaseCalendarPage() {
                                 (item) => item.releaseDate === dateStr,
                               );
                               // 去重：按title和director去重
-                              const uniqueDayItems = dayItems.filter(
-                                (item, index, self) =>
-                                  index ===
-                                  self.findIndex(
-                                    (t) =>
-                                      t.title === item.title &&
-                                      t.director === item.director,
-                                  ),
-                              );
+                              const uniqueDayItems =
+                                removeDuplicateItems(dayItems);
 
                               days.push(
                                 <div
@@ -890,15 +844,7 @@ export default function ReleaseCalendarPage() {
                             (item) => item.releaseDate === dateStr,
                           );
                           // 去重：按title和director去重
-                          const uniqueDayItems = dayItems.filter(
-                            (item, index, self) =>
-                              index ===
-                              self.findIndex(
-                                (t) =>
-                                  t.title === item.title &&
-                                  t.director === item.director,
-                              ),
-                          );
+                          const uniqueDayItems = removeDuplicateItems(dayItems);
 
                           if (uniqueDayItems.length > 0) {
                             daysWithMovies.push({
@@ -1009,15 +955,7 @@ export default function ReleaseCalendarPage() {
                     );
 
                     // 去重：按title和director去重
-                    const uniqueTodayItems = todayItems.filter(
-                      (item, index, self) =>
-                        index ===
-                        self.findIndex(
-                          (t) =>
-                            t.title === item.title &&
-                            t.director === item.director,
-                        ),
-                    );
+                    const uniqueTodayItems = removeDuplicateItems(todayItems);
 
                     if (uniqueTodayItems.length > 0) {
                       return (
@@ -1094,15 +1032,7 @@ export default function ReleaseCalendarPage() {
                         const isUpcoming = currentDate > today;
 
                         // 去重：按title和director去重
-                        const uniqueItems = items.filter(
-                          (item, index, self) =>
-                            index ===
-                            self.findIndex(
-                              (t) =>
-                                t.title === item.title &&
-                                t.director === item.director,
-                            ),
-                        );
+                        const uniqueItems = removeDuplicateItems(items);
 
                         return (
                           <div key={date} className='relative pl-20'>

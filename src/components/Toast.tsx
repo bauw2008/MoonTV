@@ -10,6 +10,41 @@ export interface ToastProps {
   onClose?: () => void;
 }
 
+// 统一的 Toast 样式配置
+export const ToastStyles = {
+  success: {
+    bg: 'bg-green-500',
+    text: 'text-white',
+    icon: '✓',
+    gradient: 'from-green-500 to-emerald-600',
+  },
+  error: {
+    bg: 'bg-red-500',
+    text: 'text-white',
+    icon: '✕',
+    gradient: 'from-red-500 to-rose-600',
+  },
+  warning: {
+    bg: 'bg-yellow-500',
+    text: 'text-black',
+    icon: '⚠',
+    gradient: 'from-yellow-500 to-orange-500',
+  },
+  info: {
+    bg: 'bg-blue-500',
+    text: 'text-white',
+    icon: 'ℹ',
+    gradient: 'from-blue-500 to-indigo-600',
+  },
+} as const;
+
+export const ToastPositions = {
+  'top-right': 'top-20 right-4',
+  'top-left': 'top-20 left-4',
+  'bottom-right': 'bottom-4 right-4',
+  'bottom-left': 'bottom-4 left-4',
+} as const;
+
 export default function Toast({
   type,
   message,
@@ -39,35 +74,16 @@ export default function Toast({
     }, 300); // 300ms 退场动画
   };
 
-  // 样式配置
-  const typeStyles = {
-    success: 'bg-green-500 text-white',
-    error: 'bg-red-500 text-white',
-    warning: 'bg-yellow-500 text-black',
-    info: 'bg-blue-500 text-white',
-  };
-
-  const positionStyles = {
-    'top-right': 'top-20 right-4',
-    'top-left': 'top-20 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-  };
-
-  const iconMap = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
-  };
+  const style = ToastStyles[type];
+  const positionStyle = ToastPositions[position];
 
   return (
     <div
       className={`
         fixed z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg
         transform transition-all duration-300 ease-in-out
-        ${typeStyles[type]}
-        ${positionStyles[position]}
+        bg-gradient-to-r ${style.gradient} ${style.text}
+        ${positionStyle}
         ${
           isVisible && !isLeaving
             ? 'translate-x-0 opacity-100 scale-100'
@@ -77,7 +93,7 @@ export default function Toast({
         }
       `}
     >
-      <span className='text-lg font-semibold'>{iconMap[type]}</span>
+      <span className='text-lg font-semibold'>{style.icon}</span>
       <span className='text-sm font-medium'>{message}</span>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
@@ -40,5 +40,18 @@ export function useCurrentAuth() {
     checkAuth();
   }, []);
 
-  return { state };
+  // 使用 useMemo 稳定返回值
+  const user = useMemo(() => state.user, [state.user]);
+  const loading = useMemo(() => state.loading, [state.loading]);
+  const isAuthenticated = useMemo(
+    () => !!state.user?.username,
+    [state.user?.username],
+  );
+
+  return {
+    state,
+    user,
+    loading,
+    isAuthenticated,
+  };
 }
