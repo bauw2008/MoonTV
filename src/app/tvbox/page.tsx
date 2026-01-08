@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { UnifiedVideoItem } from '@/lib/types';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 
 import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
@@ -635,6 +636,15 @@ function VideoList({
 
 // ==================== 映射函数 ====================
 function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
+  // 使用 TypeInferenceService 推断类型
+  const inference = TypeInferenceService.infer({
+    type: v.type,
+    type_name: v.type_name,
+    source: v.source,
+    title: v.title || '',
+    episodes: v.episodes?.length || 0,
+  });
+
   return {
     id: v.douban_id?.toString() || v.id,
     title: v.title || '',
@@ -642,12 +652,11 @@ function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
     rate: v.rate?.toString() || '',
     year: v.year || '',
     episodes: v.episodes?.length || 0,
-    type:
-      (v.type as 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama') || 'tv', // 使用API推断的类型
+    type: inference.type as 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama',
     source: v.source,
     videoId: v.id,
     source_name: v.source_name,
-    douban_id: v.douban_id, // 添加豆瓣ID
+    douban_id: v.douban_id,
   };
 }
 

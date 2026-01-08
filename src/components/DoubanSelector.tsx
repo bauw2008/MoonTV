@@ -115,7 +115,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       React.SetStateAction<{ transform: string; width: string }>
     >,
   ) => {
-    if (activeIndex < 0 || !buttonRefs.current[activeIndex] || !containerRef.current) {
+    if (
+      activeIndex < 0 ||
+      !buttonRefs.current[activeIndex] ||
+      !containerRef.current
+    ) {
       return;
     }
 
