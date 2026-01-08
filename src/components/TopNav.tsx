@@ -101,13 +101,13 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       items.push({ icon: Box, label: '盒子', href: '/tvbox' });
     }
 
-    // 添加收藏菜单
-    items.push({ icon: Star, label: '收藏', href: '/favorites' });
-
     // 检查自定义分类
     if (customCategories && customCategories.length > 0) {
       items.push({ icon: Star, label: '其他', href: '/douban?type=custom' });
     }
+
+    // 添加收藏菜单
+    items.push({ icon: Star, label: '收藏', href: '/favorites' });
 
     return items;
   }, [menuSettings, customCategories, isMenuEnabled]);

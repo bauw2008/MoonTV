@@ -529,6 +529,38 @@ function DoubanPageClient() {
               show: 'variety',
               anime: 'anime',
             };
+
+            // 处理 custom 类型
+            if (pageType === 'custom') {
+              if (primarySelection === 'movie') {
+                return 'movie';
+              }
+              if (primarySelection === 'tv' && secondarySelection) {
+                // 纪录片
+                if (
+                  secondarySelection.includes('纪录') ||
+                  secondarySelection.includes('documentary')
+                ) {
+                  return 'documentary';
+                }
+                // 日本动画
+                if (
+                  secondarySelection.includes('日本动画') ||
+                  secondarySelection.includes('动漫')
+                ) {
+                  return 'anime';
+                }
+                // 综艺
+                if (
+                  secondarySelection.includes('综艺') ||
+                  secondarySelection.includes('show')
+                ) {
+                  return 'variety';
+                }
+              }
+              return 'tv';
+            }
+
             return typeMap[pageType] || '';
           };
 

@@ -611,9 +611,8 @@ function PlayPageClient() {
 
   /**
    * 生成搜索查询的多种变体，提高搜索命中率
-   * 优化版本：减少变体数量（最多5个），按优先级排序，降低资源占用
    * @param originalQuery 原始查询
-   * @returns 按优先级排序的搜索变体数组（最多5个）
+   * @returns 按优先级排序的搜索变体数组
    */
   const generateSearchVariants = (originalQuery: string): string[] => {
     const variants: string[] = [];
@@ -622,48 +621,60 @@ function PlayPageClient() {
     // 1. 原始查询（最高优先级）
     variants.push(trimmed);
 
-    // 2. 如果包含空格，生成空格变冒号的变体
-    // 例如："电影名 副标题" -> "电影名：副标题"
-    if (trimmed.includes(' ')) {
-      const withColon = trimmed.replace(/\s+/g, '：');
-      if (!variants.includes(withColon)) {
-        variants.push(withColon);
+    // 2. 处理中文标点符号变体
+    const chinesePunctuationVariants =
+      generateChinesePunctuationVariants(trimmed);
+    chinesePunctuationVariants.forEach((variant) => {
+      if (!variants.includes(variant)) {
+        variants.push(variant);
       }
+    });
 
-      // 3. 去除所有空格
-      // 例如："电影名 副标题" -> "电影名副标题"
+    // 如果包含空格，生成额外变体
+    if (trimmed.includes(' ')) {
+      // 4. 去除所有空格
       const noSpaces = trimmed.replace(/\s+/g, '');
-      if (noSpaces !== trimmed && !variants.includes(noSpaces)) {
+      if (noSpaces !== trimmed) {
         variants.push(noSpaces);
       }
-    }
 
-    // 4. 处理中文标点符号变体（仅当原始查询包含标点时）
-    // 将中文标点转换为英文标点
-    const chinesePunctuation = /[：；，。！？、""''（）【】《》]/;
-    if (chinesePunctuation.test(trimmed)) {
-      const englishPunctuation = trimmed
-        .replace(/：/g, ':')
-        .replace(/；/g, ';')
-        .replace(/，/g, ',')
-        .replace(/。/g, '.')
-        .replace(/！/g, '!')
-        .replace(/？/g, '?');
+      // 5. 标准化空格（多个空格合并为一个）
+      const normalizedSpaces = trimmed.replace(/\s+/g, ' ');
       if (
-        englishPunctuation !== trimmed &&
-        !variants.includes(englishPunctuation)
+        normalizedSpaces !== trimmed &&
+        !variants.includes(normalizedSpaces)
       ) {
-        variants.push(englishPunctuation);
+        variants.push(normalizedSpaces);
       }
-    }
 
-    // 5. 如果包含多个关键词，尝试仅主关键词
-    // 例如："节目名 第X季" -> "节目名"
-    if (trimmed.includes(' ')) {
+      // 6. 提取关键词组合（针对"中餐厅 第九季"这种情况）
       const keywords = trimmed.split(/\s+/);
       if (keywords.length >= 2) {
+        // 主要关键词 + 季/集等后缀
         const mainKeyword = keywords[0];
-        // 过滤无意义的词
+        const lastKeyword = keywords[keywords.length - 1];
+
+        // 如果最后一个词包含"第"、"季"、"集"等，尝试组合
+        if (/第|季|集|部|篇|章/.test(lastKeyword)) {
+          const combined = mainKeyword + lastKeyword;
+          if (!variants.includes(combined)) {
+            variants.push(combined);
+          }
+        }
+
+        // 7. 空格变冒号的变体（重要！针对"死神来了 血脉诅咒" -> "死神来了：血脉诅咒"）
+        const withColon = trimmed.replace(/\s+/g, '：');
+        if (!variants.includes(withColon)) {
+          variants.push(withColon);
+        }
+
+        // 8. 空格变英文冒号的变体
+        const withEnglishColon = trimmed.replace(/\s+/g, ':');
+        if (!variants.includes(withEnglishColon)) {
+          variants.push(withEnglishColon);
+        }
+
+        // 仅使用主关键词搜索（过滤无意义的词）
         const meaninglessWords = [
           'the',
           'a',
@@ -689,8 +700,8 @@ function PlayPageClient() {
       }
     }
 
-    // 去重并返回最多5个变体
-    return Array.from(new Set(variants)).slice(0, 5);
+    // 去重并返回
+    return Array.from(new Set(variants));
   };
 
   /**
@@ -1923,99 +1934,81 @@ function PlayPageClient() {
       try {
         console.log('开始智能搜索，原始查询:', query);
         const searchVariants = generateSearchVariants(query.trim());
-        console.log('生成的搜索变体（最多5个）:', searchVariants);
+        console.log('生成的搜索变体:', searchVariants);
 
         const allResults: SearchResult[] = [];
         let bestResults: SearchResult[] = [];
 
-        // 依次尝试每个搜索变体（串行，保持最低资源占用）
+        // 依次尝试每个搜索变体
         for (const variant of searchVariants) {
           console.log('尝试搜索变体:', variant);
 
-          // 设置超时控制器，避免单个请求卡住
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5秒超时
-
-          try {
-            const response = await fetch(
-              `/api/search?q=${encodeURIComponent(variant)}`,
-              { signal: controller.signal },
-            );
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-              console.warn(`搜索变体 "${variant}" 失败:`, response.statusText);
-              continue;
-            }
-            const data = await response.json();
-
-            if (data.results && data.results.length > 0) {
-              allResults.push(...data.results);
-
-              // 处理搜索结果，根据规则过滤
-              const filteredResults = data.results.filter(
-                (result: SearchResult) => {
-                  // 如果有 douban_id，优先使用 douban_id 精确匹配
-                  if (
-                    videoDoubanIdRef.current &&
-                    videoDoubanIdRef.current > 0 &&
-                    result.douban_id
-                  ) {
-                    return result.douban_id === videoDoubanIdRef.current;
-                  }
-
-                  const queryTitle = videoTitleRef.current
-                    .replaceAll(' ', '')
-                    .toLowerCase();
-                  const resultTitle = result.title
-                    .replaceAll(' ', '')
-                    .toLowerCase();
-
-                  // 智能标题匹配：支持数字变体和标点符号变化
-                  const titleMatch =
-                    resultTitle.includes(queryTitle) ||
-                    queryTitle.includes(resultTitle) ||
-                    // 移除数字和标点后匹配
-                    resultTitle.replace(/\d+|[：:]/g, '') ===
-                      queryTitle.replace(/\d+|[：:]/g, '') ||
-                    // 通用关键词匹配：仅当查询标题较长时（4个字符以上）才使用关键词匹配
-                    (queryTitle.length > 4 &&
-                      checkAllKeywordsMatch(queryTitle, resultTitle));
-
-                  const yearMatch = videoYearRef.current
-                    ? result.year.toLowerCase() ===
-                      videoYearRef.current.toLowerCase()
-                    : true;
-                  const typeMatch = searchType
-                    ? (searchType === 'tv' && result.episodes.length > 1) ||
-                      (searchType === 'movie' &&
-                        result.episodes.length === 1) ||
-                      (searchType === 'anime' && result.episodes.length > 1) ||
-                      (searchType === 'variety' &&
-                        result.episodes.length > 1) ||
-                      searchType === 'shortdrama'
-                    : true;
-
-                  return titleMatch && yearMatch && typeMatch;
-                },
-              );
-
-              if (filteredResults.length > 0) {
-                console.log(
-                  `变体 "${variant}" 找到 ${filteredResults.length} 个匹配结果`,
-                );
-                bestResults = filteredResults;
-                break; // 找到精确匹配就停止
-              }
-            }
-          } catch (error) {
-            clearTimeout(timeoutId);
-            if (error instanceof Error && error.name === 'AbortError') {
-              console.warn(`搜索变体 "${variant}" 超时`);
-            } else {
-              console.warn(`搜索变体 "${variant}" 出错:`, error);
-            }
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(variant)}`,
+          );
+          if (!response.ok) {
+            console.warn(`搜索变体 "${variant}" 失败:`, response.statusText);
             continue;
+          }
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            allResults.push(...data.results);
+
+            // 处理搜索结果，根据规则过滤
+            const filteredResults = data.results.filter(
+              (result: SearchResult) => {
+                // 如果有 douban_id，优先使用 douban_id 精确匹配
+                if (
+                  videoDoubanIdRef.current &&
+                  videoDoubanIdRef.current > 0 &&
+                  result.douban_id
+                ) {
+                  return result.douban_id === videoDoubanIdRef.current;
+                }
+
+                const queryTitle = videoTitleRef.current
+                  .replaceAll(' ', '')
+                  .toLowerCase();
+                const resultTitle = result.title
+                  .replaceAll(' ', '')
+                  .toLowerCase();
+
+                // 智能标题匹配：支持数字变体和标点符号变化
+                const titleMatch =
+                  resultTitle.includes(queryTitle) ||
+                  queryTitle.includes(resultTitle) ||
+                  // 移除数字和标点后匹配（针对"死神来了：血脉诅咒" vs "死神来了6：血脉诅咒"）
+                  resultTitle.replace(/\d+|[：:]/g, '') ===
+                    queryTitle.replace(/\d+|[：:]/g, '') ||
+                  // 通用关键词匹配：仅当查询标题较长时（4个字符以上）才使用关键词匹配
+                  // 避免短标题（如"玫瑰"2字）被拆分匹配
+                  (queryTitle.length > 4 &&
+                    checkAllKeywordsMatch(queryTitle, resultTitle));
+
+                const yearMatch = videoYearRef.current
+                  ? result.year.toLowerCase() ===
+                    videoYearRef.current.toLowerCase()
+                  : true;
+                const typeMatch = searchType
+                  ? (searchType === 'tv' && result.episodes.length > 1) ||
+                    (searchType === 'movie' && result.episodes.length === 1) ||
+                    (searchType === 'anime' && result.episodes.length > 1) || // 动漫视为多集内容
+                    (searchType === 'variety' && result.episodes.length > 1) || // 综艺视为多集内容
+                    searchType === 'shortdrama' // 短剧可能是单集或多集
+                  : true;
+
+                return titleMatch && yearMatch && typeMatch;
+              },
+            );
+
+            if (filteredResults.length > 0) {
+              console.log(
+                `变体 "${variant}" 找到 ${filteredResults.length} 个匹配结果`,
+              );
+              bestResults = filteredResults;
+              break; // 找到精确匹配就停止
+            }
           }
         }
         // 智能匹配：英文标题严格匹配，中文标题宽松匹配
@@ -2189,21 +2182,19 @@ function PlayPageClient() {
 
       let sourcesInfo: SearchResult[] = [];
 
-      // 如果明确指定了源和ID
+      // 如果明确指定了源和ID，先获取该源的详情，然后搜索所有源
       if (currentSource && currentId) {
         const detailSources = await fetchSourceDetail(currentSource, currentId);
 
-        // 只有在需要换源或优选时，才搜索所有源
-        // 否则直接使用详情源，避免不必要的搜索延迟
-        if (needPreferRef.current || optimizationEnabled) {
-          const allSources = await fetchSourcesData(searchTitle || videoTitle);
-          sourcesInfo = allSources.length > 0 ? allSources : detailSources;
-        } else {
-          // 不需要换源或优选，直接使用详情源
-          sourcesInfo = detailSources;
-        }
+        // 总是搜索所有源，确保换源功能正常
+
+        const allSources = await fetchSourcesData(searchTitle || videoTitle);
+
+        // 如果搜索到了源，使用搜索结果；否则使用详情源
+        sourcesInfo = allSources.length > 0 ? allSources : detailSources;
       } else {
         // 没有指定源和ID，进行搜索
+
         sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
       }
 

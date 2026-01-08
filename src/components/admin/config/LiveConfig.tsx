@@ -146,43 +146,83 @@ const LiveItem = ({
       }`}
     >
       {/* 布局 - 水平排列 */}
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-3 flex-1'>
-          <div className='flex-1'>
-            <div className='flex items-center space-x-2'>
-              <Tv size={16} className='text-blue-500' />
+      <div className='flex items-center'>
+        <div className='flex items-center space-x-3 flex-1 min-w-0'>
+          <div className='flex-1 min-w-0'>
+            <div className='flex items-center justify-between mb-2'>
+              <div className='flex items-center space-x-2 flex-wrap'>
+                <Tv size={16} className='text-blue-500' />
 
-              <h3 className='font-medium text-gray-900 dark:text-white'>
-                {liveSource.name}
-              </h3>
+                <h3 className='font-medium text-gray-900 dark:text-white'>
+                  {liveSource.name}
+                </h3>
 
-              <span className='text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded'>
-                {liveSource.key}
-              </span>
-
-              {liveSource.disabled && (
-                <span className='text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded'>
-                  已禁用
+                <span className='text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded'>
+                  {liveSource.key}
                 </span>
-              )}
 
-              {liveSource.channelNumber !== undefined && (
-                <span className='text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded'>
-                  {liveSource.channelNumber}频道
-                </span>
-              )}
+                {liveSource.channelNumber !== undefined && (
+                  <span className='text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded'>
+                    {liveSource.channelNumber}频道
+                  </span>
+                )}
+
+                {liveSource.disabled && (
+                  <span className='text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded'>
+                    已禁用
+                  </span>
+                )}
+              </div>
+
+              <div className='flex items-center space-x-2 flex-shrink-0'>
+                <button
+                  onClick={() => onEdit(liveSource)}
+                  className='p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors'
+                  title='编辑'
+                >
+                  <Edit size={16} />
+                </button>
+
+                <button
+                  onClick={() => onToggleEnable(liveSource.key)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    liveSource.disabled
+                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                      : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                  }`}
+                  title={liveSource.disabled ? '启用' : '禁用'}
+                >
+                  <Power size={16} />
+                </button>
+
+                <button
+                  onClick={() => onDelete(liveSource.key)}
+                  className='p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors'
+                  title='删除'
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
 
             <p
-              className='hidden md:block text-sm text-gray-600 dark:text-gray-400 mt-1 truncate'
+              className='text-sm text-gray-600 dark:text-gray-400 break-all mb-1'
               title={liveSource.url}
             >
               {liveSource.url}
             </p>
 
-            <div className='flex items-center space-x-4 mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <div className='flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap'>
               {liveSource.ua && (
-                <span title={liveSource.ua}>
+                <span
+                  className='hidden md:inline break-all'
+                  title={liveSource.ua}
+                >
+                  UA: {liveSource.ua}
+                </span>
+              )}
+              {liveSource.ua && (
+                <span className='md:hidden' title={liveSource.ua}>
                   UA: {liveSource.ua.substring(0, 30)}...
                 </span>
               )}
@@ -199,36 +239,6 @@ const LiveItem = ({
               )}
             </div>
           </div>
-        </div>
-
-        <div className='flex items-center space-x-2'>
-          <button
-            onClick={() => onEdit(liveSource)}
-            className='p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors'
-            title='编辑'
-          >
-            <Edit size={16} />
-          </button>
-
-          <button
-            onClick={() => onToggleEnable(liveSource.key)}
-            className={`p-2 rounded-lg transition-colors ${
-              liveSource.disabled
-                ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-            }`}
-            title={liveSource.disabled ? '启用' : '禁用'}
-          >
-            <Power size={16} />
-          </button>
-
-          <button
-            onClick={() => onDelete(liveSource.key)}
-            className='p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors'
-            title='删除'
-          >
-            <Trash2 size={16} />
-          </button>
         </div>
       </div>
     </div>

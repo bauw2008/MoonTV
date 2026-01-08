@@ -77,8 +77,8 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     { label: '欧美', value: 'tv_american' },
     { label: '日本', value: 'tv_japanese' },
     { label: '韩国', value: 'tv_korean' },
-    { label: '动漫', value: 'tv_animation' },
-    { label: '纪录片', value: 'tv_documentary' },
+    // { label: '动漫', value: 'tv_animation' },
+    // { label: '纪录片', value: 'tv_documentary' },
   ];
 
   // 综艺一级选择器选项

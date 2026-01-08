@@ -256,10 +256,10 @@ function OwnerConfigContent() {
                 </div>
                 <div>
                   <h3 className='font-semibold text-purple-700 dark:text-purple-400'>
-                    用户数限制（测试）
+                    用户数限制
                   </h3>
                   <p className='text-sm text-purple-600 dark:text-purple-500'>
-                    限制站点最大用户数量
+                    限制站点最大用户注册数量
                   </p>
                 </div>
               </div>

@@ -82,6 +82,7 @@ function SourceSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [debounceId, setDebounceId] = useState<NodeJS.Timeout | null>(null);
   const selectedSourceData = sources.find((s) => s.key === selectedSource);
 
   // 无可用视频源提示
@@ -107,6 +108,34 @@ function SourceSelector({
     onSearch('');
     setIsSearchMode(false);
   };
+
+  // 搜索防抖：500ms 后自动触发搜索
+  const handleSearchInputChange = (value: string) => {
+    setSearchKeyword(value);
+
+    // 清除之前的防抖定时器
+    if (debounceId) {
+      clearTimeout(debounceId);
+    }
+
+    // 设置新的防抖定时器
+    const newDebounceId = setTimeout(() => {
+      if (value.trim()) {
+        onSearch(value.trim());
+      }
+    }, 500);
+
+    setDebounceId(newDebounceId);
+  };
+
+  // 组件卸载时清除防抖定时器
+  useEffect(() => {
+    return () => {
+      if (debounceId) {
+        clearTimeout(debounceId);
+      }
+    };
+  }, [debounceId]);
 
   return (
     <div className='relative max-w-3xl'>
@@ -163,12 +192,16 @@ function SourceSelector({
               <input
                 type='text'
                 value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
                 placeholder={`在 ${selectedSourceData?.name} 中搜索...`}
                 className='flex-1 h-12 px-3 bg-transparent text-gray-900 dark:text-gray-100 border-0 outline-none focus:ring-0 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500'
                 style={{ boxShadow: 'none' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
+                    // 回车立即搜索，清除防抖
+                    if (debounceId) {
+                      clearTimeout(debounceId);
+                    }
                     handleSearch();
                   }
                   if (e.key === 'Escape') {
@@ -578,7 +611,7 @@ function VideoList({
           title={video.title}
           poster={video.poster || ''}
           episodes={video.episodes || 0}
-          from='search'
+          from='douban'
           type={video.type}
           isAggregate={false}
           source={video.source || '未知源'}
@@ -639,6 +672,7 @@ export default function TVBoxPage() {
   const virtualGridRef = useRef<any>(null);
   const hasMore = currentPage < totalPages;
   const lastSourceRef = useRef<string>('');
+  const lastFetchAtRef = useRef<number>(0); // 记录上次加载时间，用于节流
 
   const [useVirtualization, setUseVirtualization] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -676,7 +710,13 @@ export default function TVBoxPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          setCurrentPage((prev) => prev + 1);
+          const now = Date.now();
+          const intervalOk = now - lastFetchAtRef.current > 700; // 700ms 节流
+
+          if (intervalOk) {
+            lastFetchAtRef.current = now;
+            setCurrentPage((prev) => prev + 1);
+          }
         }
       },
       { threshold: 0.1 },
@@ -845,6 +885,8 @@ export default function TVBoxPage() {
     } finally {
       setLoading(false);
       setIsLoadingMore(false);
+      // 更新最后加载时间，用于节流控制
+      lastFetchAtRef.current = Date.now();
     }
   }, [
     selectedSource,
