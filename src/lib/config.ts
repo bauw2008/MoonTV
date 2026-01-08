@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
 
+import fs from 'fs';
+import path from 'path';
+
 import { db } from '@/lib/db';
 
 import { AdminConfig } from './admin.types';
@@ -201,6 +204,25 @@ async function getInitConfig(
   } catch (e) {
     cfgFile = {} as ConfigFileStruct;
   }
+
+  // 从 default-config.json 读取站长配置（MaxUsers 等）
+  let ownerConfig: any = {};
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const ownerConfigPath = path.join(
+      process.cwd(),
+      'data',
+      'default-config.json',
+    );
+    if (fs.existsSync(ownerConfigPath)) {
+      const ownerConfigContent = fs.readFileSync(ownerConfigPath, 'utf-8');
+      ownerConfig = JSON.parse(ownerConfigContent);
+    }
+  } catch (e) {
+    // 读取站长配置失败，使用默认值
+  }
+
   const adminConfig: AdminConfig = {
     ConfigFile: configFile,
     ConfigSubscribtion: subConfig,
@@ -225,6 +247,8 @@ async function getInitConfig(
       TMDBLanguage: 'zh-CN',
       EnableTMDBActorSearch: false, // 默认关闭，需要配置API Key后手动开启
       EnableTMDBPosters: false, // 默认关闭，需要配置API Key后手动开启
+      // 从 default-config.json 读取 MaxUsers
+      MaxUsers: ownerConfig.MaxUsers || 1000,
       // 添加 MenuSettings 默认值
       MenuSettings: {
         showMovies: process.env.NEXT_PUBLIC_MENU_SHOW_MOVIES === 'true',
@@ -539,6 +563,29 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         showTMDBActorSearch: false,
       },
     };
+  }
+
+  // 从 default-config.json 读取 MaxUsers（站长配置）
+  try {
+    const ownerConfigPath = path.join(
+      process.cwd(),
+      'data',
+      'default-config.json',
+    );
+    if (fs.existsSync(ownerConfigPath)) {
+      const ownerConfigContent = fs.readFileSync(ownerConfigPath, 'utf-8');
+      const ownerConfig = JSON.parse(ownerConfigContent);
+      if (ownerConfig.MaxUsers !== undefined) {
+        adminConfig.SiteConfig.MaxUsers = ownerConfig.MaxUsers;
+      }
+    }
+  } catch (e) {
+    // 读取失败，使用默认值
+  }
+
+  // 确保 MaxUsers 有默认值
+  if (adminConfig.SiteConfig.MaxUsers === undefined) {
+    adminConfig.SiteConfig.MaxUsers = 1000;
   }
 
   // 确保AI推荐配置有默认值

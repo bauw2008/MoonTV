@@ -10,6 +10,12 @@ import { useEffect, useState } from 'react';
 export function ThemeToggle({ className }: { className?: string }) {
   const { setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  // 确保只在客户端挂载后才渲染
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const setThemeColor = (theme?: string) => {
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -25,8 +31,10 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   // 监听主题变化和路由变化，确保主题色始终同步
   useEffect(() => {
-    setThemeColor(resolvedTheme);
-  }, [resolvedTheme, pathname]);
+    if (mounted) {
+      setThemeColor(resolvedTheme);
+    }
+  }, [resolvedTheme, pathname, mounted]);
 
   const toggleTheme = () => {
     // 检查浏览器是否支持 View Transitions API
@@ -41,6 +49,16 @@ export function ThemeToggle({ className }: { className?: string }) {
       setTheme(targetTheme);
     });
   };
+
+  // 避免服务端渲染时不匹配
+  if (!mounted) {
+    return (
+      <div
+        className={`w-5 h-5 flex items-center justify-center cursor-pointer hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded transition-colors ${className || 'text-gray-600 dark:text-gray-300'}`}
+        aria-label='Toggle theme'
+      />
+    );
+  }
 
   return (
     <div

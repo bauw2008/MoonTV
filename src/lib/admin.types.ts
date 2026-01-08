@@ -23,6 +23,7 @@ export interface AdminConfig {
     TMDBLanguage?: string;
     EnableTMDBActorSearch?: boolean;
     EnableTMDBPosters?: boolean;
+    MaxUsers?: number; // 最大用户数限制
     MenuSettings: MenuSettings;
   };
   YellowWords?: string[]; // 18+内容过滤词

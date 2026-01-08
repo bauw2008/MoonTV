@@ -91,6 +91,17 @@ export async function POST(req: NextRequest) {
           { status: 403 },
         );
       }
+
+      // 检查用户数限制
+      const maxUsers = config.SiteConfig?.MaxUsers || 1000;
+      const currentUserCount = config.UserConfig?.Users?.length || 0;
+
+      if (currentUserCount >= maxUsers) {
+        return NextResponse.json(
+          { error: '注册人数已达上限，请联系管理员' },
+          { status: 403 },
+        );
+      }
     } catch (err) {
       console.error('检查注册配置失败', err);
       return NextResponse.json(

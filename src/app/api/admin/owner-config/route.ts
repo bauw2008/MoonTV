@@ -2,6 +2,7 @@ import fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 
+import { clearConfigCache } from '@/lib/config';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 
 // 获取站长配置
@@ -92,6 +93,9 @@ export const POST = async (request: NextRequest) => {
         updatedBy: 'owner',
         timestamp: new Date().toISOString(),
       });
+
+      // 清除配置缓存，确保下次读取时获取最新的 MaxUsers
+      clearConfigCache();
     } catch (saveError) {
       console.error('保存配置文件失败:', saveError);
       throw new Error('保存配置文件失败');
