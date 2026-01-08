@@ -28,6 +28,7 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { TypeInferenceService } from '@/lib/type-inference.service';
 import { isSeriesCompleted, processImageUrl } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
@@ -45,12 +46,13 @@ export interface VideoCardProps {
   source_names?: string[];
   progress?: number;
   year?: string;
-  from: 'playrecord' | 'favorite' | 'search' | 'douban';
+  from: 'playrecord' | 'favorite' | 'search' | 'douban' | 'tvbox';
   currentEpisode?: number;
   douban_id?: number;
   onDelete?: () => void;
   rate?: string;
   type?: string;
+  type_name?: string; // 用于TVBox页面点击时推断类型
   isBangumi?: boolean;
   isAggregate?: boolean;
   origin?: 'vod' | 'live';
@@ -83,6 +85,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       onDelete,
       rate,
       type = '',
+      type_name,
       isBangumi = false,
       isAggregate = false,
       origin = 'vod',
@@ -140,11 +143,23 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const actualEpisodes = dynamicEpisodes;
     const actualYear = year;
     const actualQuery = query || '';
-    const actualSearchType = type || 'tv';
+
+    // 如果 type 为空且 type_name 存在，使用 TypeInferenceService 推断类型
+    let actualSearchType = type;
+    if (!type && type_name && actualSource) {
+      const inference = TypeInferenceService.infer({
+        type: '',
+        type_name: type_name,
+        source: actualSource,
+        title: actualTitle || '',
+        episodes: actualEpisodes || 0,
+      });
+      actualSearchType = inference.type;
+    }
 
     // 获取收藏状态
     useEffect(() => {
-      if (from === 'douban' || !actualSource || !actualId) {
+      if (from === 'douban' || from === 'tvbox' || !actualSource || !actualId) {
         return;
       }
 
@@ -182,7 +197,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (from === 'douban' || !actualSource || !actualId) {
+        if (
+          from === 'douban' ||
+          from === 'tvbox' ||
+          !actualSource ||
+          !actualId
+        ) {
           return;
         }
 
@@ -265,19 +285,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     );
 
     const handleClick = useCallback(() => {
-      // 调试日志:输出点击时的关键参数
-      if (process.env.NODE_ENV === 'development') {
-        console.log('VideoCard点击:', {
-          from,
-          origin,
-          isAggregate,
-          actualSource,
-          actualId,
-          actualTitle,
-          actualYear,
-        });
-      }
-
       // 构建豆瓣ID参数
       const doubanIdParam =
         actualDoubanId && actualDoubanId > 0
@@ -491,6 +498,16 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           showDoubanLink: true,
           showRating: !!rate,
           showYear: false,
+        },
+        tvbox: {
+          showSourceName: true,
+          showProgress: false,
+          showPlayButton: true,
+          showHeart: false, // TVBox不显示收藏按钮
+          showCheckCircle: false,
+          showDoubanLink: false,
+          showRating: true,
+          showYear: true,
         },
       };
       return configs[from] || configs.search;

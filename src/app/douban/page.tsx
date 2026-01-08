@@ -530,7 +530,7 @@ function DoubanPageClient() {
               anime: 'anime',
             };
 
-            // 处理 custom 类型
+            // 处理 custom 类型（其他菜单功能）
             if (pageType === 'custom') {
               if (primarySelection === 'movie') {
                 return 'movie';
@@ -650,21 +650,37 @@ function DoubanPageClient() {
           let data: DoubanResult;
           if (type === 'custom') {
             // 自定义分类模式：根据选中的一级和二级选项获取对应的分类
-            const selectedCategory = customCategories.find(
-              (cat) =>
-                cat.type === primarySelection &&
-                cat.query === secondarySelection,
-            );
-
-            if (selectedCategory) {
-              data = await getDoubanList({
-                tag: selectedCategory.query,
-                type: selectedCategory.type,
-                pageLimit: 25,
-                pageStart: currentPage * 25,
-              });
+            // 如果没有自定义分类，返回空数据
+            if (customCategories.length === 0) {
+              data = {
+                code: 200,
+                message: 'success',
+                list: [],
+              };
             } else {
-              throw new Error('没有找到对应的分类');
+              const selectedCategory = customCategories.find(
+                (cat) =>
+                  cat.type === primarySelection &&
+                  cat.query === secondarySelection,
+              );
+
+              if (selectedCategory) {
+                data = await getDoubanList({
+                  tag: selectedCategory.query,
+                  type: selectedCategory.type,
+                  pageLimit: 25,
+                  pageStart: currentPage * 25,
+                });
+              } else {
+                // 如果没找到，使用第一个可用的分类
+                const fallbackCategory = customCategories[0];
+                data = await getDoubanList({
+                  tag: fallbackCategory.query,
+                  type: fallbackCategory.type,
+                  pageLimit: 25,
+                  pageStart: currentPage * 25,
+                });
+              }
             }
           } else if (type === 'short-drama') {
             // 短剧加载更多数据
@@ -1008,7 +1024,10 @@ function DoubanPageClient() {
           </div>
 
           {/* 选择器组件 */}
-          {type === 'movie' || type === 'tv' || type === 'anime' ? (
+          {type === 'movie' ||
+          type === 'tv' ||
+          type === 'anime' ||
+          type === 'show' ? (
             <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
               {/* 装饰性光晕 */}
               <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>

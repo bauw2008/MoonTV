@@ -8,7 +8,6 @@ interface CustomCategory {
   name: string;
   type: 'movie' | 'tv';
   query: string;
-  disabled?: boolean;
 }
 
 interface DoubanCustomSelectorProps {
@@ -63,7 +62,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   const secondaryOptions = React.useMemo(() => {
     if (!primarySelection) return [];
     return customCategories
-      .filter((cat) => cat.type === primarySelection && !cat.disabled)
+      .filter((cat) => cat.type === primarySelection)
       .map((cat) => ({
         label: cat.name || cat.query,
         value: cat.query,

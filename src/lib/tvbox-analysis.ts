@@ -110,7 +110,7 @@ export async function getVideosByCategory(
           ? item.vod_year.match(/\d{4}/)?.[0] || ''
           : 'unknown',
         desc: cleanHtmlTags(item.vod_content || ''),
-        type_name: item.type_name,
+        type_name: item.type_name || item.vod_class, // 如果 type_name 为空，使用 vod_class
         douban_id: item.vod_douban_id,
       };
     });

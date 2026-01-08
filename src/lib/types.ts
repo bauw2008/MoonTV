@@ -131,7 +131,7 @@ export interface UnifiedVideoItem {
   id: string;
   title: string;
   poster: string;
-  type: 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama';
+  type: 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama' | ''; // 允许空字符串，在 VideoCard 中推断
   source?: string;
   videoId?: string;
   source_name?: string;
@@ -140,6 +140,7 @@ export interface UnifiedVideoItem {
   rate?: string;
   remarks?: string;
   douban_id?: number;
+  type_name?: string; // 用于TVBox页面点击时推断类型
   // 豆瓣特有字段（可选）
   directors?: string[];
   screenwriters?: string[];

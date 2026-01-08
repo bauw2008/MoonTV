@@ -39,6 +39,8 @@ interface VirtualVideoGridProps {
   onLoadMore: () => void;
   loading: boolean;
   isBangumi?: boolean;
+  from?: 'playrecord' | 'favorite' | 'search' | 'douban' | 'tvbox';
+  rate?: string;
 }
 
 const INITIAL_BATCH_SIZE = 25;
@@ -50,7 +52,16 @@ export const VirtualVideoGrid = React.forwardRef<
   VirtualVideoGridProps
 >(
   (
-    { videos, hasMore, isLoadingMore, onLoadMore, loading, isBangumi = false },
+    {
+      videos,
+      hasMore,
+      isLoadingMore,
+      onLoadMore,
+      loading,
+      isBangumi = false,
+      from = 'douban',
+      rate,
+    },
     ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -199,17 +210,17 @@ export const VirtualVideoGrid = React.forwardRef<
         return (
           <div style={{ ...style, padding: '8px' }} {...ariaAttributes}>
             <VideoCard
-              //from={item.source && item.videoId ? 'search' : 'douban'}
-              from='douban'
-              source={item.source || 'douban'}
+              from={from}
+              source={item.source || '未知源'}
               id={item.videoId || item.id}
-              source_name={item.source_name || '豆瓣'}
+              source_name={item.source_name || item.source || '未知源'}
               title={item.title}
               poster={item.poster}
               douban_id={item.douban_id}
               rate={item.rate}
               year={item.year}
               type={item.type}
+              type_name={item.type_name}
               isBangumi={cellIsBangumi}
               episodes={item.episodes}
               isAggregate={false}
