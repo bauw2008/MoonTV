@@ -341,50 +341,57 @@ function CategoryFilter({
   onSecondaryChange: (categoryId: number) => void;
 }) {
   // ------------------- 主分类指示器相关 -------------------
-  const primaryContainerRef = useRef<HTMLDivElement>(null); // 主分类容器 ref
-  const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]); // 每个主分类按钮 ref
+  const primaryContainerRef = useRef<HTMLDivElement>(null);
+  const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [primaryIndicatorStyle, setPrimaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 8 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
   // ------------------- 二级分类指示器相关 -------------------
-  const secondaryContainerRef = useRef<HTMLDivElement>(null); // 二级分类容器 ref
-  const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]); // 每个二级分类按钮 ref
+  const secondaryContainerRef = useRef<HTMLDivElement>(null);
+  const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [secondaryIndicatorStyle, setSecondaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 8 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
-  // ------------------- 更新指示器位置 -------------------
+  // ------------------- 更新指示器位置（优化版）-------------------
   const updateIndicatorPosition = (
     activeIndex: number,
     containerRef: React.RefObject<HTMLDivElement>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ left: number; width: number }>
+      React.SetStateAction<{ transform: string; width: string }>
     >,
   ) => {
     if (
-      activeIndex >= 0 &&
-      buttonRefs.current[activeIndex] &&
-      containerRef.current
+      activeIndex < 0 ||
+      !buttonRefs.current[activeIndex] ||
+      !containerRef.current
     ) {
-      // 延迟执行，保证 DOM 更新完成
-      setTimeout(() => {
-        const button = buttonRefs.current[activeIndex];
-        const container = containerRef.current;
-        if (button && container) {
-          const buttonRect = button.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          // 设置指示器 left 和 width，实现滑动动画效果
-          setIndicatorStyle({
-            left: buttonRect.left - containerRect.left,
-            width: buttonRect.width,
-          });
-        }
-      }, 0);
+      return;
     }
+
+    // 使用 requestAnimationFrame 确保在正确的时机更新
+    requestAnimationFrame(() => {
+      const button = buttonRefs.current[activeIndex];
+      const container = containerRef.current;
+      if (!button || !container) return;
+
+      const buttonRect = button.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // 计算相对位置
+      const left = buttonRect.left - containerRect.left;
+      const width = buttonRect.width;
+
+      // 使用 transform 代替 left，GPU加速
+      setIndicatorStyle({
+        transform: `translateX(${left}px)`,
+        width: `${width}px`,
+      });
+    });
   };
 
   // ------------------- 渲染胶囊选择器 -------------------
@@ -407,13 +414,14 @@ function CategoryFilter({
         ref={containerRef}
         className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm overflow-x-auto'
       >
-        {/* 背景指示器 */}
-        {indicatorStyle.width > 0 && (
+        {/* 背景指示器 - 使用 transform 优化性能 */}
+        {indicatorStyle.width !== '0px' && (
           <div
-            className='absolute top-1 bottom-1 bg-white dark:bg-gray-600 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute top-1 bottom-1 left-0 bg-white dark:bg-gray-600 rounded-full shadow-sm will-change-transform'
             style={{
-              left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`,
+              transform: indicatorStyle.transform,
+              width: indicatorStyle.width,
+              transition: 'transform 300ms ease-out, width 300ms ease-out',
             }}
           />
         )}

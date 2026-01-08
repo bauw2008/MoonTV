@@ -35,16 +35,16 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   const primaryContainerRef = useRef<HTMLDivElement>(null);
   const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [primaryIndicatorStyle, setPrimaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
   const secondaryContainerRef = useRef<HTMLDivElement>(null);
   const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [secondaryIndicatorStyle, setSecondaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
   // 电影的一级选择器选项
   const moviePrimaryOptions: SelectorOption[] = [
@@ -106,37 +106,38 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     onMultiLevelChange?.(values);
   };
 
-  // 更新指示器位置的通用函数
+  // 更新指示器位置的通用函数（优化版）
   const updateIndicatorPosition = (
     activeIndex: number,
     containerRef: React.RefObject<HTMLDivElement>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ left: number; width: number }>
+      React.SetStateAction<{ transform: string; width: string }>
     >,
   ) => {
-    if (
-      activeIndex >= 0 &&
-      buttonRefs.current[activeIndex] &&
-      containerRef.current
-    ) {
-      const timeoutId = setTimeout(() => {
-        const button = buttonRefs.current[activeIndex];
-        const container = containerRef.current;
-        if (button && container) {
-          const buttonRect = button.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-
-          if (buttonRect.width > 0) {
-            setIndicatorStyle({
-              left: buttonRect.left - containerRect.left,
-              width: buttonRect.width,
-            });
-          }
-        }
-      }, 0);
-      return () => clearTimeout(timeoutId);
+    if (activeIndex < 0 || !buttonRefs.current[activeIndex] || !containerRef.current) {
+      return;
     }
+
+    // 使用 requestAnimationFrame 确保在正确的时机更新
+    requestAnimationFrame(() => {
+      const button = buttonRefs.current[activeIndex];
+      const container = containerRef.current;
+      if (!button || !container) return;
+
+      const buttonRect = button.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // 计算相对位置
+      const left = buttonRect.left - containerRect.left;
+      const width = buttonRect.width;
+
+      // 使用 transform 代替 left，GPU加速
+      setIndicatorStyle({
+        transform: `translateX(${left}px)`,
+        width: `${width}px`,
+      });
+    });
   };
 
   // 组件挂载时立即计算初始位置
@@ -318,13 +319,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
         ref={containerRef}
         className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
       >
-        {/* 滑动的白色背景指示器 */}
-        {indicatorStyle.width > 0 && (
+        {/* 滑动的白色背景指示器 - 使用 transform 优化性能 */}
+        {indicatorStyle.width !== '0px' && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 left-0 bg-white dark:bg-gray-500 rounded-full shadow-sm will-change-transform'
             style={{
-              left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`,
+              transform: indicatorStyle.transform,
+              width: indicatorStyle.width,
+              transition: 'transform 300ms ease-out, width 300ms ease-out',
             }}
           />
         )}

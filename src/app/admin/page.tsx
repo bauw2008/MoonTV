@@ -278,39 +278,50 @@ function AdminContent() {
   const categoryContainerRef = useRef<HTMLDivElement>(null);
   const categoryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [categoryIndicatorStyle, setCategoryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
   // 为项目选择器创建refs和状态
   const itemContainerRef = useRef<HTMLDivElement>(null);
   const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [itemIndicatorStyle, setItemIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
+    transform: string;
+    width: string;
+  }>({ transform: 'translateX(0)', width: '0px' });
 
-  // 更新指示器位置的函数
+  // 更新指示器位置的函数（优化版）
   const updateIndicatorPosition = (
     activeIndex: number,
     containerRef: React.RefObject<HTMLDivElement>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
     setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ left: number; width: number }>
+      React.SetStateAction<{ transform: string; width: string }>
     >,
   ) => {
-    if (activeIndex >= 0 && buttonRefs.current[activeIndex]) {
+    if (activeIndex < 0 || !buttonRefs.current[activeIndex] || !containerRef.current) {
+      return;
+    }
+
+    // 使用 requestAnimationFrame 确保在正确的时机更新
+    requestAnimationFrame(() => {
       const button = buttonRefs.current[activeIndex];
       const container = containerRef.current;
-      if (button && container) {
-        const buttonRect = button.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        setIndicatorStyle({
-          left: buttonRect.left - containerRect.left,
-          width: buttonRect.width,
-        });
-      }
-    }
+      if (!button || !container) return;
+
+      const buttonRect = button.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // 计算相对位置
+      const left = buttonRect.left - containerRect.left;
+      const width = buttonRect.width;
+
+      // 使用 transform 代替 left，GPU加速
+      setIndicatorStyle({
+        transform: `translateX(${left}px)`,
+        width: `${width}px`,
+      });
+    });
   };
 
   useEffect(() => {
@@ -422,20 +433,21 @@ function AdminContent() {
     onChange: (value: string) => void,
     containerRef: React.RefObject<HTMLDivElement>,
     buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    indicatorStyle: { left: number; width: number },
+    indicatorStyle: { transform: string; width: string },
   ) => {
     return (
       <div
         ref={containerRef}
         className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
       >
-        {/* 滑动的白色背景指示器 */}
-        {indicatorStyle.width > 0 && (
+        {/* 滑动的白色背景指示器 - 使用 transform 优化性能 */}
+        {indicatorStyle.width !== '0px' && (
           <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
+            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 left-0 bg-white dark:bg-gray-500 rounded-full shadow-sm will-change-transform'
             style={{
-              left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`,
+              transform: indicatorStyle.transform,
+              width: indicatorStyle.width,
+              transition: 'transform 300ms ease-out, width 300ms ease-out',
             }}
           />
         )}
