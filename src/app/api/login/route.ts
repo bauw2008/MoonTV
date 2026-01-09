@@ -138,6 +138,14 @@ export async function POST(req: NextRequest) {
       username === process.env.USERNAME &&
       password === process.env.PASSWORD
     ) {
+      // 更新用户登录统计
+      try {
+        await db.updateUserLoginStats(username, Date.now(), true);
+      } catch (error) {
+        console.error('更新登录统计失败:', error);
+        // 更新失败不影响登录流程
+      }
+
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
       const cookieValue = await generateAuthCookie(
@@ -176,6 +184,14 @@ export async function POST(req: NextRequest) {
           { error: '用户名或密码错误' },
           { status: 401 },
         );
+      }
+
+      // 更新用户登录统计
+      try {
+        await db.updateUserLoginStats(username, Date.now(), false);
+      } catch (error) {
+        console.error('更新登录统计失败:', error);
+        // 更新失败不影响登录流程
       }
 
       // 验证成功，设置认证cookie
