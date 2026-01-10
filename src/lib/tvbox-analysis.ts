@@ -31,6 +31,7 @@ export async function getVideosByCategory(
   apiSite: ApiSite,
   category?: string,
   page = 1,
+  pagesize?: number,
 ): Promise<{ results: SearchResult[]; pageCount: number }> {
   let timeoutId: NodeJS.Timeout | null = null;
   const controller = new AbortController();
@@ -51,6 +52,10 @@ export async function getVideosByCategory(
       params.append('ac', 'videolist');
       params.append('pg', page.toString());
 
+      if (pagesize) {
+        params.append('pagesize', pagesize.toString());
+      }
+
       if (category) {
         params.append('t', category);
       }
@@ -61,6 +66,10 @@ export async function getVideosByCategory(
       const params = new URLSearchParams();
       params.append('ac', 'videolist');
       params.append('pg', page.toString());
+
+      if (pagesize) {
+        params.append('pagesize', pagesize.toString());
+      }
 
       if (category) {
         params.append('t', category);

@@ -14,14 +14,12 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
-import { getShortDramaData } from '@/lib/short-drama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import FloatingTools from '@/components/FloatingTools';
-import MultiLevelSelector from '@/components/MultiLevelSelector';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 import VirtualDoubanGrid, {
@@ -84,9 +82,6 @@ function DoubanPageClient() {
     if (type === 'anime') {
       return '每日放送';
     }
-    if (type === 'short-drama') {
-      return '热门';
-    }
     return '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
@@ -98,9 +93,6 @@ function DoubanPageClient() {
     }
     if (type === 'show') {
       return 'show';
-    }
-    if (type === 'short-drama') {
-      return '全部';
     }
     return '全部';
   });
@@ -264,9 +256,6 @@ function DoubanPageClient() {
         setSecondarySelection('show');
       } else if (type === 'anime') {
         setPrimarySelection('每日放送');
-        setSecondarySelection('全部');
-      } else if (type === 'short-drama') {
-        setPrimarySelection('热门');
         setSecondarySelection('全部');
       } else {
         setPrimarySelection('');
@@ -445,23 +434,6 @@ function DoubanPageClient() {
         } else {
           throw new Error('没有找到对应的日期');
         }
-      } else if (type === 'short-drama') {
-        // 短剧数据处理
-        const shortDramaResponse = await getShortDramaData({
-          type:
-            multiLevelValues.type !== 'all' ? multiLevelValues.type : undefined,
-          region:
-            multiLevelValues.region !== 'all'
-              ? multiLevelValues.region
-              : undefined,
-          year:
-            multiLevelValues.year !== 'all' ? multiLevelValues.year : undefined,
-          start: 0,
-          limit: 25,
-        });
-
-        // 直接使用API返回的数据，
-        data = shortDramaResponse;
       } else if (type === 'anime') {
         data = await getDoubanRecommends({
           kind: primarySelection === '番剧' ? 'tv' : 'movie',
@@ -525,11 +497,9 @@ function DoubanPageClient() {
             const typeMap: Record<string, string> = {
               movie: 'movie',
               tv: 'tv',
-              'short-drama': 'shortdrama',
               show: 'variety',
               anime: 'anime',
             };
-
             // 处理 custom 类型（其他菜单功能）
             if (pageType === 'custom') {
               if (primarySelection === 'movie') {
@@ -682,27 +652,6 @@ function DoubanPageClient() {
                 });
               }
             }
-          } else if (type === 'short-drama') {
-            // 短剧加载更多数据
-            const shortDramaResponse = await getShortDramaData({
-              type:
-                multiLevelValues.type !== 'all'
-                  ? multiLevelValues.type
-                  : undefined,
-              region:
-                multiLevelValues.region !== 'all'
-                  ? multiLevelValues.region
-                  : undefined,
-              year:
-                multiLevelValues.year !== 'all'
-                  ? multiLevelValues.year
-                  : undefined,
-              start: currentPage * 25,
-              limit: 25,
-            });
-
-            // 转换为豆瓣数据格式
-            data = shortDramaResponse;
           } else if (type === 'anime' && primarySelection === '每日放送') {
             // 每日放送模式下，不进行数据请求，返回空数据
             data = {
@@ -784,7 +733,6 @@ function DoubanPageClient() {
                 const typeMap: Record<string, string> = {
                   movie: 'movie',
                   tv: 'tv',
-                  'short-drama': 'shortdrama',
                   show: 'variety',
                   anime: 'anime',
                 };
@@ -982,17 +930,12 @@ function DoubanPageClient() {
           ? '动漫'
           : type === 'show'
             ? '综艺'
-            : type === 'short-drama'
-              ? '短剧'
-              : '其他';
+            : '其他';
   };
 
   const getPageDescription = () => {
     if (type === 'anime' && primarySelection === '每日放送') {
       return '来自 Bangumi 番组计划的精选内容';
-    }
-    if (type === 'short-drama') {
-      return '来自豆瓣的短剧标签内容';
     }
     return '来自豆瓣的精选内容';
   };
@@ -1042,19 +985,6 @@ function DoubanPageClient() {
                   onSecondaryChange={handleSecondaryChange}
                   onMultiLevelChange={handleMultiLevelChange}
                   onWeekdayChange={handleWeekdayChange}
-                />
-              </div>
-            </div>
-          ) : type === 'short-drama' ? (
-            <div className='relative bg-gradient-to-br from-white/80 via-pink-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-pink-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-pink-200/40 dark:border-pink-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
-              {/* 装饰性光晕 */}
-              <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-pink-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
-              <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-300/20 to-pink-300/20 rounded-full blur-3xl pointer-events-none'></div>
-
-              <div className='relative'>
-                <MultiLevelSelector
-                  onChange={handleMultiLevelChange}
-                  contentType='anime-tv'
                 />
               </div>
             </div>

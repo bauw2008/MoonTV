@@ -9,6 +9,7 @@ import CategoryConfig from '@/components/admin/config/CategoryConfig';
 import LiveConfig from '@/components/admin/config/LiveConfig';
 import NetdiskConfig from '@/components/admin/config/NetdiskConfig';
 import OwnerConfig from '@/components/admin/config/OwnerConfig';
+import ShortDramaConfig from '@/components/admin/config/ShortDramaConfig';
 import SiteConfig from '@/components/admin/config/SiteConfig';
 import TMDBConfig from '@/components/admin/config/TMDBConfig';
 import TVBoxConfig from '@/components/admin/config/TVBoxConfig';
@@ -204,6 +205,18 @@ const OwnerConfigDynamic = dynamic(
     ssr: false,
   },
 );
+const ShortDramaConfigDynamic = dynamic(
+  () => import('@/components/admin/config/ShortDramaConfig'),
+  {
+    loading: () => (
+      <div className='flex items-center justify-center py-16'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3'></div>
+        <span className='text-gray-500'>加载中...</span>
+      </div>
+    ),
+    ssr: false,
+  },
+);
 
 // 配置项数据
 const configCategories = {
@@ -224,6 +237,11 @@ const configCategories = {
         id: 'categoryConfig',
         name: '分类配置',
         component: CategoryConfigDynamic,
+      },
+      {
+        id: 'shortDramaConfig',
+        name: '短剧API',
+        component: ShortDramaConfigDynamic,
       },
       { id: 'yellowConfig', name: '18+过滤', component: YellowConfigDynamic },
     ],

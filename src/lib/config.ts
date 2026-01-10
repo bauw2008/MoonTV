@@ -736,6 +736,15 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       ),
     );
 
+  // 确保短剧配置有默认值
+  if (!adminConfig.ShortDramaConfig) {
+    adminConfig.ShortDramaConfig = {
+      primaryApiUrl: 'https://api.r2afosne.dpdns.org',
+      alternativeApiUrl: '',
+      enableAlternative: false,
+    };
+  }
+
   return adminConfig;
 }
 

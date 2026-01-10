@@ -85,7 +85,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       items.push({
         icon: PlayCircle,
         label: '短剧',
-        href: '/douban?type=short-drama',
+        href: '/shortdrama',
       });
     }
     if (isMenuEnabled('showAnime')) {

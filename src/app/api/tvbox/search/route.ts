@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get('source');
     const keyword = searchParams.get('keyword');
     const page = searchParams.get('page') || '1';
+    const pagesize = searchParams.get('pagesize')
+      ? parseInt(searchParams.get('pagesize')!)
+      : undefined;
 
     if (!source || !keyword) {
       return NextResponse.json(
@@ -55,6 +58,10 @@ export async function GET(request: NextRequest) {
       params.append('ac', 'list');
       params.append('wd', keyword);
       params.append('pg', page);
+
+      if (pagesize) {
+        params.append('pagesize', pagesize.toString());
+      }
 
       // 根据不同的API类型调整URL
       if (sourceConfig.api.includes('/provide/vod')) {

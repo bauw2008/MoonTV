@@ -124,6 +124,7 @@ export interface SearchResult {
   type?: string; // 内容类型，由 TypeInferenceService 推断
   douban_id?: number;
   remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
+  drama_name?: string; // 短剧剧名（用于备用API fallback）
 }
 
 // 统一的视频数据结构（用于所有视频场景）
@@ -343,4 +344,54 @@ export interface PersonalizedReleaseRecommendation {
     matchedPreferences: string[]; // 匹配的用户偏好
   }>;
   generatedAt: number; // 生成时间戳
+}
+
+// 短剧分类
+export interface ShortDramaCategory {
+  type_id: number;
+  type_name: string;
+}
+
+// 短剧项目
+export interface ShortDramaItem {
+  id: number | string;
+  name: string;
+  cover: string;
+  update_time: string;
+  score: number;
+  episode_count: number;
+  description: string;
+  author: string;
+  backdrop: string;
+  vote_average: number;
+  tmdb_id?: number;
+}
+
+// 短剧解析结果
+export interface ShortDramaParseResult {
+  code: number;
+  msg?: string;
+  data?: {
+    videoId: number | string;
+    videoName: string;
+    currentEpisode: number;
+    totalEpisodes: number;
+    parsedUrl: string;
+    proxyUrl: string;
+    cover: string;
+    description: string;
+    episode?: {
+      index: number;
+      label: string;
+      parsedUrl: string;
+      proxyUrl: string;
+      title: string;
+    };
+  };
+  metadata?: {
+    author: string;
+    backdrop: string;
+    vote_average: number;
+    tmdb_id?: number;
+  };
 }

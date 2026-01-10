@@ -65,7 +65,9 @@ export class DatabaseCacheManager {
       tmdb: { count: 0, size: 0, types: {} as Record<string, number> },
       danmu: { count: 0, size: 0 },
       netdisk: { count: 0, size: 0 },
-      youtube: { count: 0, size: 0 },
+      search: { count: 0, size: 0 },
+      tvbox: { count: 0, size: 0 },
+      other: { count: 0, size: 0 },
       total: { count: 0, size: 0 },
     };
 
@@ -246,6 +248,21 @@ export class DatabaseCacheManager {
 
           const type = key.split('-')[1];
           stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
+        } else if (key.startsWith('trending:')) {
+          stats.tmdb.count++;
+          stats.tmdb.size += size;
+
+          const type = `trending-${key.split(':')[1]}`;
+          stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
+        } else if (
+          key.startsWith('search:') &&
+          (key.includes('-movie-') || key.includes('-tv-'))
+        ) {
+          stats.tmdb.count++;
+          stats.tmdb.size += size;
+
+          const type = `search-${key.split(':')[1].split('-')[1]}`;
+          stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
         } else if (
           key.startsWith('danmu-cache') ||
           key === 'lunatv_danmu_cache'
@@ -255,11 +272,16 @@ export class DatabaseCacheManager {
         } else if (key.startsWith('netdisk-search')) {
           stats.netdisk.count++;
           stats.netdisk.size += size;
-        } else if (key.startsWith('youtube-search')) {
-          stats.youtube.count++;
-          stats.youtube.size += size;
+        } else if (key.startsWith('search-') || key.startsWith('cache-')) {
+          stats.search.count++;
+          stats.search.size += size;
+        } else if (key.startsWith('tvbox-')) {
+          stats.tvbox.count++;
+          stats.tvbox.size += size;
+        } else {
+          stats.other.count++;
+          stats.other.size += size;
         }
-        // 移除了search和other分类，只统计明确的缓存类型
 
         stats.total.count++;
         stats.total.size += size;
@@ -293,7 +315,9 @@ export class DatabaseCacheManager {
           tmdb: formatBytes(redisStats.tmdb.size),
           danmu: formatBytes(redisStats.danmu.size),
           netdisk: formatBytes(redisStats.netdisk.size),
-          youtube: formatBytes(redisStats.youtube.size),
+          search: formatBytes(redisStats.search?.size || 0),
+          tvbox: formatBytes(redisStats.tvbox?.size || 0),
+          other: formatBytes(redisStats.other?.size || 0),
           total: formatBytes(redisStats.total.size),
         },
       };
@@ -306,7 +330,9 @@ export class DatabaseCacheManager {
       tmdb: { count: 0, size: 0, types: {} as Record<string, number> },
       danmu: { count: 0, size: 0 },
       netdisk: { count: 0, size: 0 },
-      youtube: { count: 0, size: 0 },
+      search: { count: 0, size: 0 },
+      tvbox: { count: 0, size: 0 },
+      other: { count: 0, size: 0 },
       total: { count: 0, size: 0 },
     };
 
@@ -319,9 +345,9 @@ export class DatabaseCacheManager {
           key.startsWith('tmdb-') ||
           key.startsWith('danmu-cache') ||
           key.startsWith('netdisk-search') ||
-          key.startsWith('youtube-search') ||
           key.startsWith('search-') ||
           key.startsWith('cache-') ||
+          key.startsWith('tvbox-') ||
           key === 'lunatv_danmu_cache',
       );
 
@@ -352,6 +378,21 @@ export class DatabaseCacheManager {
 
           const type = key.split('-')[1];
           stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
+        } else if (key.startsWith('trending:')) {
+          stats.tmdb.count++;
+          stats.tmdb.size += size;
+
+          const type = `trending-${key.split(':')[1]}`;
+          stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
+        } else if (
+          key.startsWith('search:') &&
+          (key.includes('-movie-') || key.includes('-tv-'))
+        ) {
+          stats.tmdb.count++;
+          stats.tmdb.size += size;
+
+          const type = `search-${key.split(':')[1].split('-')[1]}`;
+          stats.tmdb.types[type] = (stats.tmdb.types[type] || 0) + 1;
         } else if (
           key.startsWith('danmu-cache') ||
           key === 'lunatv_danmu_cache'
@@ -361,11 +402,16 @@ export class DatabaseCacheManager {
         } else if (key.startsWith('netdisk-search')) {
           stats.netdisk.count++;
           stats.netdisk.size += size;
-        } else if (key.startsWith('youtube-search')) {
-          stats.youtube.count++;
-          stats.youtube.size += size;
+        } else if (key.startsWith('search-') || key.startsWith('cache-')) {
+          stats.search.count++;
+          stats.search.size += size;
+        } else if (key.startsWith('tvbox-')) {
+          stats.tvbox.count++;
+          stats.tvbox.size += size;
+        } else {
+          stats.other.count++;
+          stats.other.size += size;
         }
-        // 移除了search和other分类，只统计明确的缓存类型
 
         stats.total.count++;
         stats.total.size += size;
@@ -383,7 +429,9 @@ export class DatabaseCacheManager {
         tmdb: formatBytes(stats.tmdb.size),
         danmu: formatBytes(stats.danmu.size),
         netdisk: formatBytes(stats.netdisk.size),
-        youtube: formatBytes(stats.youtube.size),
+        search: formatBytes(stats.search?.size || 0),
+        tvbox: formatBytes(stats.tvbox?.size || 0),
+        other: formatBytes(stats.other?.size || 0),
         total: formatBytes(stats.total.size),
       },
     };
@@ -391,7 +439,7 @@ export class DatabaseCacheManager {
 
   // 清理指定类型的缓存
   static async clearCacheByType(
-    type: 'douban' | 'shortdrama' | 'tmdb' | 'danmu' | 'netdisk' | 'youtube',
+    type: 'douban' | 'shortdrama' | 'tmdb' | 'danmu' | 'netdisk',
   ): Promise<number> {
     let clearedCount = 0;
 
@@ -418,17 +466,8 @@ export class DatabaseCacheManager {
           break;
         case 'tmdb':
           await db.clearExpiredCache('tmdb-');
-          // 清理localStorage中的TMDB缓存（兜底）
-          if (typeof localStorage !== 'undefined') {
-            const keys = Object.keys(localStorage).filter((key) =>
-              key.startsWith('tmdb-'),
-            );
-            keys.forEach((key) => {
-              localStorage.removeItem(key);
-              clearedCount++;
-            });
-            console.log(`🗑️ localStorage中清理了 ${keys.length} 个TMDB缓存项`);
-          }
+          await db.clearExpiredCache('trending:');
+          // 搜索缓存不按前缀清理，避免误删其他搜索
           console.log('🗑️ TMDB缓存清理完成');
           break;
         case 'danmu':
@@ -451,23 +490,6 @@ export class DatabaseCacheManager {
             );
           }
           console.log('🗑️ 网盘搜索缓存清理完成');
-          break;
-        case 'youtube':
-          await db.clearExpiredCache('youtube-search');
-          // 清理localStorage中的YouTube缓存（兜底）
-          if (typeof localStorage !== 'undefined') {
-            const keys = Object.keys(localStorage).filter((key) =>
-              key.startsWith('youtube-search'),
-            );
-            keys.forEach((key) => {
-              localStorage.removeItem(key);
-              clearedCount++;
-            });
-            console.log(
-              `🗑️ localStorage中清理了 ${keys.length} 个YouTube搜索缓存项`,
-            );
-          }
-          console.log('🗑️ YouTube搜索缓存清理完成');
           break;
       }
 

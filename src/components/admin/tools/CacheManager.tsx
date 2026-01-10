@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Trash2,
   Video,
+  PlayIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -21,6 +22,7 @@ import {
 
 interface CacheStats {
   douban: { count: number; size: number; types: Record<string, number> };
+  shortdrama: { count: number; size: number; types: Record<string, number> };
   tmdb: { count: number; size: number; types: Record<string, number> };
   danmu: { count: number; size: number };
   netdisk: { count: number; size: number };
@@ -31,6 +33,7 @@ interface CacheStats {
   timestamp: string;
   formattedSizes: {
     douban: string;
+    shortdrama: string;
     tmdb: string;
     danmu: string;
     netdisk: string;
@@ -56,6 +59,13 @@ const CACHE_TYPES: CacheType[] = [
     description: '电影/电视剧详情、分类、推荐、短剧等数据缓存',
     icon: Film,
     color: 'text-green-600 bg-green-100',
+  },
+  {
+    key: 'shortdrama',
+    name: '短剧数据',
+    description: '短剧分类、推荐、列表、集数等数据缓存',
+    icon: PlayIcon,
+    color: 'text-orange-600 bg-orange-100',
   },
   {
     key: 'tmdb',
@@ -343,6 +353,28 @@ function CacheManager() {
 
                   {/* 豆瓣缓存子类型统计 */}
                   {cacheType.key === 'douban' && typeStats?.types && (
+                    <div className='mb-4 space-y-1'>
+                      <div className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        类型分布：
+                      </div>
+                      {Object.entries(typeStats.types).map(([type, count]) => (
+                        <div
+                          key={type}
+                          className='flex justify-between text-xs'
+                        >
+                          <span className='text-gray-600 dark:text-gray-400'>
+                            {type}:
+                          </span>
+                          <span className='font-mono text-gray-900 dark:text-gray-100'>
+                            {count as number}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 短剧缓存子类型统计 */}
+                  {cacheType.key === 'shortdrama' && typeStats?.types && (
                     <div className='mb-4 space-y-1'>
                       <div className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
                         类型分布：

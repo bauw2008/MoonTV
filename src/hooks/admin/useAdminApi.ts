@@ -78,6 +78,20 @@ export const useAdminApi = () => {
         },
         { showSuccess: true, successMessage: '配置拉取成功' },
       ),
+
+    updateShortDramaConfig: (config: {
+      primaryApiUrl: string;
+      alternativeApiUrl: string;
+      enableAlternative: boolean;
+    }) =>
+      callApi(
+        '/api/admin/shortdrama',
+        {
+          method: 'POST',
+          body: JSON.stringify(config),
+        },
+        { showSuccess: true, successMessage: '短剧配置已保存' },
+      ),
   };
 
   // 用户管理 API

@@ -97,8 +97,6 @@ async function checkRateLimit(
 async function _cleanExpiredRateLimitCache(): Promise<void> {
   try {
     await db.clearExpiredCache('tvbox-rate-limit');
-    // eslint-disable-next-line no-console
-    console.log('Cleaned expired TVBox rate limit cache');
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to clean expired rate limit cache:', error);
@@ -575,22 +573,11 @@ export async function GET(request: NextRequest) {
           { status: 403 },
         );
       }
-
-      // eslint-disable-next-line no-console
-      console.log(`[TVBox] User-Agent验证通过: ${userAgent}`);
     }
 
     // Token验证（从数据库配置读取） - 第三道防线
     // 如果启用了Token验证或设备绑定，都需要进行Token验证
     let tokenUsername: string | null = null; // 保存Token对应的用户名
-
-    // 添加调试日志
-    // eslint-disable-next-line no-console
-    console.log(
-      `[TVBox] 调试: enableAuth = ${securityConfig?.enableAuth}, enableDeviceBinding = ${securityConfig?.enableDeviceBinding}`,
-    );
-    // eslint-disable-next-line no-console
-    console.log(`[TVBox] 调试: 请求中的token = ${token}`);
 
     if (securityConfig?.enableAuth || securityConfig?.enableDeviceBinding) {
       let isValidToken = false;

@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { getShortDramaCategories } from '@/lib/shortdrama.client';
+
 interface MultiLevelOption {
   label: string;
   value: string;
@@ -17,7 +19,13 @@ interface MultiLevelCategory {
 
 interface MultiLevelSelectorProps {
   onChange: (values: Record<string, string>) => void;
-  contentType?: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie';
+  contentType?:
+    | 'movie'
+    | 'tv'
+    | 'show'
+    | 'anime-tv'
+    | 'anime-movie'
+    | 'short-drama';
 }
 
 const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
@@ -34,13 +42,54 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // 短剧分类数据
+  const [shortDramaCategories, setShortDramaCategories] = useState<
+    MultiLevelOption[]
+  >([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // 加载短剧分类
+  useEffect(() => {
+    if (contentType === 'short-drama') {
+      setLoadingCategories(true);
+      getShortDramaCategories()
+        .then((categories) => {
+          const options = categories.map((cat) => ({
+            label: cat.type_name,
+            value: cat.type_id.toString(),
+          }));
+          setShortDramaCategories([
+            { label: '全部', value: 'all' },
+            ...options,
+          ]);
+        })
+        .catch((error) => {
+          console.error('加载短剧分类失败:', error);
+        })
+        .finally(() => {
+          setLoadingCategories(false);
+        });
+    }
+  }, [contentType]);
+
   // 根据内容类型获取对应的类型选项
   const getTypeOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie',
+    contentType:
+      | 'movie'
+      | 'tv'
+      | 'show'
+      | 'anime-tv'
+      | 'anime-movie'
+      | 'short-drama',
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
 
     switch (contentType) {
+      case 'short-drama':
+        // 使用从 API 获取的真实分类数据
+        return shortDramaCategories.length > 0
+          ? shortDramaCategories
+          : baseOptions;
       case 'movie':
         return [
           ...baseOptions,
@@ -107,11 +156,20 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
 
   // 根据内容类型获取对应的地区选项
   const getRegionOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie',
+    contentType:
+      | 'movie'
+      | 'tv'
+      | 'show'
+      | 'anime-tv'
+      | 'anime-movie'
+      | 'short-drama',
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
 
     switch (contentType) {
+      case 'short-drama':
+        // 短剧暂时不提供地区筛选
+        return baseOptions;
       case 'movie':
       case 'anime-movie':
         return [
@@ -174,10 +232,19 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   };
 
   const getLabelOptions = (
-    contentType: 'movie' | 'tv' | 'show' | 'anime-tv' | 'anime-movie',
+    contentType:
+      | 'movie'
+      | 'tv'
+      | 'show'
+      | 'anime-tv'
+      | 'anime-movie'
+      | 'short-drama',
   ) => {
     const baseOptions = [{ label: '全部', value: 'all' }];
     switch (contentType) {
+      case 'short-drama':
+        // 短剧不使用 label 筛选
+        return baseOptions;
       case 'anime-movie':
         return [
           ...baseOptions,
@@ -276,33 +343,37 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
             options: getLabelOptions(contentType),
           },
         ]),
-    {
-      key: 'region',
-      label: '地区',
-      options: getRegionOptions(contentType),
-    },
-    {
-      key: 'year',
-      label: '年代',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '2020年代', value: '2020s' },
-        { label: '2025', value: '2025' },
-        { label: '2024', value: '2024' },
-        { label: '2023', value: '2023' },
-        { label: '2022', value: '2022' },
-        { label: '2021', value: '2021' },
-        { label: '2020', value: '2020' },
-        { label: '2019', value: '2019' },
-        { label: '2010年代', value: '2010s' },
-        { label: '2000年代', value: '2000s' },
-        { label: '90年代', value: '1990s' },
-        { label: '80年代', value: '1980s' },
-        { label: '70年代', value: '1970s' },
-        { label: '60年代', value: '1960s' },
-        { label: '更早', value: 'earlier' },
-      ],
-    },
+    ...(contentType !== 'short-drama'
+      ? [
+          {
+            key: 'region',
+            label: '地区',
+            options: getRegionOptions(contentType),
+          },
+          {
+            key: 'year',
+            label: '年代',
+            options: [
+              { label: '全部', value: 'all' },
+              { label: '2020年代', value: '2020s' },
+              { label: '2025', value: '2025' },
+              { label: '2024', value: '2024' },
+              { label: '2023', value: '2023' },
+              { label: '2022', value: '2022' },
+              { label: '2021', value: '2021' },
+              { label: '2020', value: '2020' },
+              { label: '2019', value: '2019' },
+              { label: '2010年代', value: '2010s' },
+              { label: '2000年代', value: '2000s' },
+              { label: '90年代', value: '1990s' },
+              { label: '80年代', value: '1980s' },
+              { label: '70年代', value: '1970s' },
+              { label: '60年代', value: '1960s' },
+              { label: '更早', value: 'earlier' },
+            ],
+          },
+        ]
+      : []),
     // 只在电视剧和综艺时显示平台选项
     ...(contentType === 'tv' ||
     contentType === 'show' ||

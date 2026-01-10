@@ -500,7 +500,7 @@ function CategoryFilter({
       {/* 一级分类 */}
       <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
         <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-          类型
+          分类
         </span>
         <div className='overflow-x-auto'>
           {renderCapsuleSelector(
@@ -516,7 +516,7 @@ function CategoryFilter({
       {secondaryOptions.length > 0 && (
         <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
           <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-            分类
+            类型
           </span>
           <div className='overflow-x-auto'>
             {renderCapsuleSelector(
@@ -584,7 +584,7 @@ function VideoList({
 }) {
   if (loading) {
     return (
-      <div className='grid grid-cols-2 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+      <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className='animate-pulse'>
             <div className='bg-gray-300 dark:bg-gray-700 rounded-lg aspect-video mb-3'></div>
@@ -611,24 +611,27 @@ function VideoList({
   }
 
   return (
-    <div className='grid grid-cols-2 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-      {videos.map((video) => (
-        <VideoCard
-          key={video.id}
-          id={video.videoId || video.id}
-          title={video.title}
-          poster={video.poster || ''}
-          episodes={video.episodes || 0}
-          from='tvbox'
-          type={video.type}
-          type_name={video.type_name}
-          isAggregate={false}
-          source={video.source || '未知源'}
-          source_name={video.source_name || video.source || '未知源'}
-          currentEpisode={0}
-          douban_id={video.douban_id}
-          onDelete={() => void 0}
-        />
+    <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+      {videos.map((video, index) => (
+        <div key={`${video.source}-${video.id}-${index}`} className='w-full'>
+          <VideoCard
+            id={video.videoId || video.id}
+            title={video.title}
+            poster={video.poster || ''}
+            episodes={video.episodes || 0}
+            from='tvbox'
+            type={video.type}
+            type_name={video.type_name}
+            isAggregate={false}
+            source={video.source || '未知源'}
+            source_name={video.source_name || video.source || '未知源'}
+            currentEpisode={0}
+            douban_id={video.douban_id}
+            rate={video.rate}
+            year={video.year}
+            onDelete={() => void 0}
+          />
+        </div>
       ))}
     </div>
   );
@@ -804,6 +807,7 @@ export default function TVBoxPage() {
       const params = new URLSearchParams({
         source: selectedSource,
         page: currentPage.toString(),
+        pagesize: '30', // 每页30个卡片
       });
 
       if (isSearchMode && searchKeyword) {
@@ -899,7 +903,7 @@ export default function TVBoxPage() {
         }
       }
 
-      setTotalPages(data.pagecount || 1);
+      setTotalPages(Math.min(data.pagecount || 1, 3)); // 限制最多3页
     } catch (err: any) {
       console.error('加载视频错误:', err);
       setError(err.message || '加载视频失败');
@@ -1051,7 +1055,7 @@ export default function TVBoxPage() {
 
         {/* 分类筛选器（搜索模式下隐藏，且只在有分类数据时显示） */}
         {!isSearchMode && categories.primary_categories.length > 0 && (
-          <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
+          <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 mb-8'>
             {/* 装饰性光晕 */}
             <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
             <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-green-300/20 to-teal-300/20 rounded-full blur-3xl pointer-events-none'></div>
@@ -1126,7 +1130,7 @@ export default function TVBoxPage() {
             />
           </div>
         ) : (
-          <>
+          <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
             <VideoList videos={videos} loading={loading} />
             {hasMore && (
               <div ref={loadingRef} className='flex justify-center py-4'>
@@ -1137,15 +1141,7 @@ export default function TVBoxPage() {
                 )}
               </div>
             )}
-          </>
-        )}
-
-        {!useVirtualization && totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          </div>
         )}
       </div>
 

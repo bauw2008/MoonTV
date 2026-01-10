@@ -103,8 +103,8 @@ export async function DELETE(request: NextRequest) {
         break;
 
       case 'shortdrama':
-        clearedCount = 0; // 短剧缓存功能已移除
-        message = '短剧缓存功能已移除';
+        clearedCount = await clearShortDramaCache();
+        message = `已清理 ${clearedCount} 个短剧缓存项`;
         break;
 
       case 'tmdb':
@@ -190,6 +190,7 @@ async function getCacheStats() {
       note: '数据库统计失败',
       formattedSizes: {
         douban: '0 B',
+        shortdrama: '0 B',
         tmdb: '0 B',
         danmu: '0 B',
         netdisk: '0 B',
@@ -229,6 +230,27 @@ async function clearDoubanCache(): Promise<number> {
 }
 
 // 清理短剧缓存
+async function clearShortDramaCache(): Promise<number> {
+  let clearedCount = 0;
+
+  // 清理数据库中的短剧缓存
+  const dbCleared = await DatabaseCacheManager.clearCacheByType('shortdrama');
+  clearedCount += dbCleared;
+
+  // 清理localStorage中的短剧缓存（兜底）
+  if (typeof localStorage !== 'undefined') {
+    const keys = Object.keys(localStorage).filter((key) =>
+      key.startsWith('shortdrama-'),
+    );
+    keys.forEach((key) => {
+      localStorage.removeItem(key);
+      clearedCount++;
+    });
+    console.log(`🗑️ localStorage中清理了 ${keys.length} 个短剧缓存项`);
+  }
+
+  return clearedCount;
+}
 
 // 清理TMDB缓存
 async function clearTmdbCache(): Promise<number> {
@@ -377,7 +399,7 @@ async function clearExpiredCache(): Promise<number> {
 // 清理所有缓存
 async function clearAllCache(): Promise<number> {
   const doubanCount = await clearDoubanCache();
-  const shortdramaCount = 0; // 短剧缓存功能已移除
+  const shortdramaCount = await clearShortDramaCache();
   const tmdbCount = await clearTmdbCache();
   const danmuCount = await clearDanmuCache();
   const netdiskCount = await clearNetdiskCache();

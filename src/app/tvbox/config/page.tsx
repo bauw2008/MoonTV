@@ -114,7 +114,6 @@ export default function TVBoxConfigPage() {
   };
 
   useEffect(() => {
-    console.log('TVBox配置页面加载，开始获取配置...');
     fetchSecurityConfig();
   }, [fetchSecurityConfig]);
 

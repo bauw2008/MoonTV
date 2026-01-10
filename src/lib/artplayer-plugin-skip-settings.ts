@@ -1150,7 +1150,7 @@ export default function artplayerPluginSkipSettings(
     shortDramaNotice.innerHTML = `
       <div class="art-short-drama-notice-content">
         <span class="art-short-drama-icon">🎬</span>
-        <span class="art-short-drama-text">短剧模式</span>
+        <span class="art-short-drama-text">短片模式</span>
         <button class="art-short-drama-close" id="shortDramaCloseBtn">✕</button>
       </div>
     `;

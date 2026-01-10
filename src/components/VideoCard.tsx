@@ -46,7 +46,13 @@ export interface VideoCardProps {
   source_names?: string[];
   progress?: number;
   year?: string;
-  from: 'playrecord' | 'favorite' | 'search' | 'douban' | 'tvbox';
+  from:
+    | 'playrecord'
+    | 'favorite'
+    | 'search'
+    | 'douban'
+    | 'tvbox'
+    | 'shortdrama';
   currentEpisode?: number;
   douban_id?: number;
   onDelete?: () => void;
@@ -159,7 +165,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
     // 获取收藏状态
     useEffect(() => {
-      if (from === 'douban' || from === 'tvbox' || !actualSource || !actualId) {
+      if (
+        from === 'douban' ||
+        from === 'tvbox' ||
+        from === 'shortdrama' ||
+        !actualSource ||
+        !actualId
+      ) {
         return;
       }
 
@@ -200,6 +212,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         if (
           from === 'douban' ||
           from === 'tvbox' ||
+          from === 'shortdrama' ||
           !actualSource ||
           !actualId
         ) {
@@ -297,6 +310,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           'live_',
           '',
         )}&id=${actualId.replace('live_', '')}`;
+        router.push(url);
+      } else if (from === 'shortdrama' && actualSource && actualId) {
+        // 短剧播放：使用 shortdrama_id 参数
+        const url = `/play?title=${encodeURIComponent(actualTitle.trim())}&shortdrama_id=${actualId}`;
         router.push(url);
       } else if (
         from === 'douban' ||
@@ -500,13 +517,23 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           showYear: false,
         },
         tvbox: {
-          showSourceName: true,
+          showSourceName: false,
           showProgress: false,
           showPlayButton: true,
           showHeart: false, // TVBox不显示收藏按钮
           showCheckCircle: false,
           showDoubanLink: false,
           showRating: true,
+          showYear: true,
+        },
+        shortdrama: {
+          showSourceName: false,
+          showProgress: false,
+          showPlayButton: true,
+          showHeart: false, // 短剧不显示收藏按钮
+          showCheckCircle: false,
+          showDoubanLink: false,
+          showRating: false,
           showYear: true,
         },
       };

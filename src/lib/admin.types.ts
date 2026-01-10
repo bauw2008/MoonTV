@@ -137,4 +137,9 @@ export interface AdminConfig {
       format: 'json' | 'txt' | 'm3u';
     };
   };
+  ShortDramaConfig?: {
+    primaryApiUrl: string;
+    alternativeApiUrl: string;
+    enableAlternative: boolean;
+  };
 }

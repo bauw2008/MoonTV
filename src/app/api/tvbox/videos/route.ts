@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
       category = '0';
     }
     const page = parseInt(url.searchParams.get('page') || '1');
+    const pagesize = url.searchParams.get('pagesize')
+      ? parseInt(url.searchParams.get('pagesize')!)
+      : undefined;
     const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
 
     if (!source) {
@@ -162,6 +165,7 @@ export async function GET(request: NextRequest) {
         site,
         category,
         page,
+        pagesize,
       );
 
       // 获取分类信息

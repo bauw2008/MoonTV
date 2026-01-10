@@ -243,10 +243,16 @@ export const VirtualDoubanGrid = React.forwardRef<
         return (
           <div style={{ ...style, padding: '8px' }} {...ariaAttributes}>
             <VideoCard
-              from={item.source && item.videoId ? 'search' : 'douban'}
+              from={
+                item.type === 'shortdrama'
+                  ? 'shortdrama'
+                  : item.source && item.videoId
+                    ? 'search'
+                    : 'douban'
+              }
               source={item.source || 'douban'}
               id={item.videoId || item.id}
-              source_name={item.source_name || '豆瓣'}
+              source_name={item.source_name || ''}
               title={item.title}
               poster={item.poster}
               douban_id={Number(item.id)}

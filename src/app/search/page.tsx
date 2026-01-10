@@ -359,18 +359,6 @@ function SearchPageClient() {
       }
     });
 
-    // 调试信息
-    console.log('搜索结果统计:', {
-      总数: searchResults.length,
-      类型分布: Array.from(typesSet.values()),
-      样本数据: searchResults.slice(0, 3).map((item) => ({
-        title: item.title,
-        type: item.type,
-        source: item.source,
-        完整对象: item,
-      })),
-    });
-
     const sourceOptions: { label: string; value: string }[] = [
       { label: '全部来源', value: 'all' },
       ...Array.from(sourcesSet.entries())
@@ -606,11 +594,127 @@ function SearchPageClient() {
   }, []);
 
   useEffect(() => {
-    // 当搜索参数变化时，只更新搜索框的值，不执行搜索
+    // 当搜索参数变化时更新搜索状态并执行搜索
     const query = searchParams.get('q') || '';
+    currentQueryRef.current = query.trim();
+
     if (query) {
       setSearchQuery(query);
+      // 新搜索：关闭旧连接并清空结果
+      if (eventSourceRef.current) {
+        try {
+          eventSourceRef.current.close();
+        } catch {}
+        eventSourceRef.current = null;
+      }
+      setSearchResults([]);
+      setTotalSources(0);
+      setCompletedSources(0);
+      // 清理缓冲
+      pendingResultsRef.current = [];
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      setIsLoading(true);
       setShowResults(true);
+
+      const trimmed = query.trim();
+
+      // 每次搜索时重新读取设置，确保使用最新的配置
+      let currentFluidSearch = useFluidSearch;
+      if (typeof window !== 'undefined') {
+        const savedFluidSearch = localStorage.getItem('fluidSearch');
+        if (savedFluidSearch !== null) {
+          currentFluidSearch = JSON.parse(savedFluidSearch);
+        } else {
+          const defaultFluidSearch =
+            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+          currentFluidSearch = defaultFluidSearch;
+        }
+      }
+
+      // 如果读取的配置与当前状态不同，更新状态
+      if (currentFluidSearch !== useFluidSearch) {
+        setUseFluidSearch(currentFluidSearch);
+      }
+
+      // 创建SSE连接，使用流式搜索端点
+      const es = new EventSource(
+        `/api/search/ws?q=${encodeURIComponent(trimmed)}`,
+      );
+      eventSourceRef.current = es;
+
+      es.onmessage = (event) => {
+        if (!event.data) return;
+        try {
+          const payload = JSON.parse(event.data);
+          if (currentQueryRef.current !== trimmed) return;
+          switch (payload.type) {
+            case 'start':
+              setTotalSources(payload.totalSources || 0);
+              setCompletedSources(0);
+              break;
+            case 'source_result': {
+              setCompletedSources((prev) => prev + 1);
+              if (
+                Array.isArray(payload.results) &&
+                payload.results.length > 0
+              ) {
+                // 缓冲新增结果，节流刷入，避免频繁重渲染导致闪烁
+                const incoming: SearchResult[] =
+                  payload.results as SearchResult[];
+                pendingResultsRef.current.push(...incoming);
+                if (!flushTimerRef.current) {
+                  flushTimerRef.current = window.setTimeout(() => {
+                    const toAppend = pendingResultsRef.current;
+                    pendingResultsRef.current = [];
+                    startTransition(() => {
+                      setSearchResults((prev) => prev.concat(toAppend));
+                    });
+                    flushTimerRef.current = null;
+                  }, 80);
+                }
+              }
+              break;
+            }
+            case 'complete': {
+              setIsLoading(false);
+              // 刷新剩余缓冲结果
+              if (pendingResultsRef.current.length > 0) {
+                setSearchResults((prev) =>
+                  prev.concat(pendingResultsRef.current),
+                );
+                pendingResultsRef.current = [];
+              }
+              if (flushTimerRef.current) {
+                clearTimeout(flushTimerRef.current);
+                flushTimerRef.current = null;
+              }
+              es.close();
+              eventSourceRef.current = null;
+              // 添加到搜索历史
+              addSearchHistory(trimmed);
+              break;
+            }
+            case 'error':
+              console.error('搜索错误:', payload.error);
+              setIsLoading(false);
+              es.close();
+              eventSourceRef.current = null;
+              break;
+          }
+        } catch (e) {
+          console.error('解析搜索结果失败:', e);
+        }
+      };
+
+      es.onerror = (err) => {
+        console.error('SSE 连接错误:', err);
+        setIsLoading(false);
+        es.close();
+        eventSourceRef.current = null;
+      };
     } else {
       setShowResults(false);
       setShowSuggestions(false);
