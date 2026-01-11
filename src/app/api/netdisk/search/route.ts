@@ -80,12 +80,38 @@ export async function GET(request: NextRequest) {
       types: Object.keys(data.data?.merged_by_type || {}),
     });
 
+    // 根据后台配置的启用网盘类型过滤结果
+    const enabledCloudTypes = config.NetDiskConfig?.enabledCloudTypes || [];
+    const mergedByType = data.data?.merged_by_type || {};
+    let filteredMergedByType = mergedByType;
+    let filteredTotal = data.data?.total || 0;
+
+    // 如果配置了启用的网盘类型，则过滤结果
+    if (enabledCloudTypes.length > 0) {
+      filteredMergedByType = {};
+      filteredTotal = 0;
+
+      for (const [cloudType, links] of Object.entries(mergedByType)) {
+        // 检查当前网盘类型是否在启用列表中
+        if (enabledCloudTypes.includes(cloudType)) {
+          filteredMergedByType[cloudType] = links;
+          filteredTotal += (links as any[]).length;
+        }
+      }
+
+      console.log('过滤后的网盘搜索结果:', {
+        enabledCloudTypes,
+        filteredTypes: Object.keys(filteredMergedByType),
+        filteredTotal,
+      });
+    }
+
     // 返回符合前端期望的数据格式
     return NextResponse.json({
       success: true,
       data: {
-        merged_by_type: data.data?.merged_by_type || {},
-        total: data.data?.total || 0,
+        merged_by_type: filteredMergedByType,
+        total: filteredTotal,
       },
     });
   } catch (fetchError) {
