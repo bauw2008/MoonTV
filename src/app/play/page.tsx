@@ -3,7 +3,7 @@
 'use client';
 
 import Hls from 'hls.js';
-import { Heart } from 'lucide-react';
+import { Cloud, Heart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -40,6 +40,7 @@ import EpisodeSelector from '@/components/EpisodeSelector';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 import PageLayout from '@/components/PageLayout';
 import { ToastManager } from '@/components/Toast';
+import AcgSearch from '@/components/AcgSearch';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
 
@@ -146,6 +147,8 @@ function PlayPageClient() {
   const [netdiskError, setNetdiskError] = useState<string | null>(null);
   const [netdiskTotal, setNetdiskTotal] = useState(0);
   const [showNetdiskModal, setShowNetdiskModal] = useState(false);
+  const [netdiskResourceType, setNetdiskResourceType] = useState<'netdisk' | 'acg'>('netdisk');
+  const [acgTriggerSearch, setAcgTriggerSearch] = useState(false);
 
   // 使用NavigationConfigContext获取功能启用状态
   const { menuSettings } = useNavigationConfig();
@@ -4161,19 +4164,10 @@ function PlayPageClient() {
                       setShowNetdiskModal(true);
                     }}
                     className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
+                    title='网盘资源'
                   >
-                    <div className='flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-md'>
-                      📁
-                      {netdiskLoading ? (
-                        <span className='flex items-center gap-1'>
-                          <span className='inline-block h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
-                          搜索中...
-                        </span>
-                      ) : netdiskTotal > 0 ? (
-                        <span>{netdiskTotal}个网盘资源</span>
-                      ) : (
-                        <span>网盘资源</span>
-                      )}
+                    <div className='w-7 h-7 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-md'>
+                      <Cloud className='w-4 h-4' />
                     </div>
                   </button>
                 )}
@@ -4628,10 +4622,10 @@ function PlayPageClient() {
             <div className='shrink-0 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6'>
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex items-center gap-2 sm:gap-3'>
-                  <div className='text-2xl sm:text-3xl'>📁</div>
+                  <div className='text-2xl sm:text-3xl'>{netdiskResourceType === 'netdisk' ? '📁' : '🎌'}</div>
                   <div>
                     <h3 className='text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                      资源搜索
+                      {netdiskResourceType === 'netdisk' ? '网盘资源' : '动漫磁力'}
                     </h3>
                     {videoTitle && (
                       <p className='text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5'>
@@ -4644,31 +4638,67 @@ function PlayPageClient() {
                       <span className='inline-block h-4 w-4 sm:h-5 sm:w-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin'></span>
                     </span>
                   )}
-                  {netdiskTotal > 0 && (
+                  {netdiskTotal > 0 && netdiskResourceType === 'netdisk' && (
                     <span className='inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 ml-2'>
                       {netdiskTotal} 个资源
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowNetdiskModal(false)}
-                  className='rounded-lg p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95'
-                  aria-label='关闭'
-                >
-                  <svg
-                    className='h-5 w-5 sm:h-6 sm:w-6 text-gray-500'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
+                <div className='flex items-center gap-2'>
+                  {/* 资源类型切换按钮 */}
+                  <div className='flex items-center gap-1 sm:gap-2 mr-2'>
+                    <button
+                      onClick={() => {
+                        setNetdiskResourceType('netdisk');
+                        setNetdiskResults(null);
+                        setNetdiskError(null);
+                      }}
+                      className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-lg border transition-all ${
+                        netdiskResourceType === 'netdisk'
+                          ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      💾 网盘资源
+                    </button>
+                    <button
+                      onClick={() => {
+                        setNetdiskResourceType('acg');
+                        setNetdiskResults(null);
+                        setNetdiskError(null);
+                        if (videoTitle) {
+                          setAcgTriggerSearch((prev) => !prev);
+                        }
+                      }}
+                      className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-lg border transition-all ${
+                        netdiskResourceType === 'acg'
+                          ? 'bg-purple-500 text-white border-purple-500 shadow-md'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      🎌 动漫磁力
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowNetdiskModal(false)}
+                    className='rounded-lg p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95'
+                    aria-label='关闭'
                   >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M6 18L18 6M6 6l12 12'
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className='h-5 w-5 sm:h-6 sm:w-6 text-gray-500'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M6 18L18 6M6 6l12 12'
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -4677,31 +4707,43 @@ function PlayPageClient() {
               ref={netdiskModalContentRef}
               className='flex-1 overflow-y-auto p-4 sm:p-6 relative'
             >
-              {videoTitle &&
-                !netdiskLoading &&
-                !netdiskResults &&
-                !netdiskError && (
-                  <div className='flex flex-col items-center justify-center py-12 sm:py-16 text-center'>
-                    <div className='text-5xl sm:text-6xl mb-4'>📁</div>
-                    <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
-                      点击搜索按钮开始查找网盘资源
-                    </p>
-                    <button
-                      onClick={() => handleNetDiskSearch(videoTitle)}
-                      disabled={netdiskLoading}
-                      className='mt-4 px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base font-medium'
-                    >
-                      开始搜索
-                    </button>
-                  </div>
-                )}
+              {/* 根据资源类型显示不同的内容 */}
+              {netdiskResourceType === 'netdisk' ? (
+                <>
+                  {videoTitle &&
+                    !netdiskLoading &&
+                    !netdiskResults &&
+                    !netdiskError && (
+                      <div className='flex flex-col items-center justify-center py-12 sm:py-16 text-center'>
+                        <div className='text-5xl sm:text-6xl mb-4'>📁</div>
+                        <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
+                          点击搜索按钮开始查找网盘资源
+                        </p>
+                        <button
+                          onClick={() => handleNetDiskSearch(videoTitle)}
+                          disabled={netdiskLoading}
+                          className='mt-4 px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base font-medium'
+                        >
+                          开始搜索
+                        </button>
+                      </div>
+                    )}
 
-              <NetDiskSearchResults
-                results={netdiskResults}
-                loading={netdiskLoading}
-                error={netdiskError}
-                total={netdiskTotal}
-              />
+                  <NetDiskSearchResults
+                    results={netdiskResults}
+                    loading={netdiskLoading}
+                    error={netdiskError}
+                    total={netdiskTotal}
+                  />
+                </>
+              ) : (
+                /* ACG 动漫磁力搜索 */
+                <AcgSearch
+                  keyword={videoTitle || ''}
+                  triggerSearch={acgTriggerSearch}
+                  onError={(error) => console.error('ACG搜索失败:', error)}
+                />
+              )}
             </div>
           </div>
         </div>

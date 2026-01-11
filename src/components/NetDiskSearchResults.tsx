@@ -117,6 +117,8 @@ export default function NetDiskSearchResults({
   const [expandedTitles, setExpandedTitles] = useState<{
     [key: string]: boolean;
   }>({});
+  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+  const [collapsedTypes, setCollapsedTypes] = useState<Set<string>>(new Set());
 
   const togglePasswordVisibility = (key: string) => {
     setVisiblePasswords((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -161,6 +163,19 @@ export default function NetDiskSearchResults({
     setSelectedFilter((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
+  };
+
+  // 切换网盘类型折叠状态
+  const toggleTypeCollapse = (type: string) => {
+    setCollapsedTypes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(type)) {
+        newSet.delete(type);
+      } else {
+        newSet.add(type);
+      }
+      return newSet;
+    });
   };
 
   // 获取有结果的网盘类型统计
@@ -312,193 +327,109 @@ export default function NetDiskSearchResults({
   }
 
   return (
-    <div className='space-y-6'>
-      {/* 快速筛选和导航栏 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 sticky top-4 z-10'>
-        <div className='p-4'>
-          {/* 筛选模式切换 */}
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0'>
-            <div className='flex items-center space-x-2'>
-              <h3 className='text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100'>
-                快速筛选
-              </h3>
-              <div className='group relative hidden sm:block'>
-                <svg
-                  className='h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help'
-                  fill='currentColor'
-                  viewBox='0 0 20 20'
+    <div className='space-y-4'>
+      {/* 可折叠的筛选栏 */}
+      <div className='rounded-xl border-2 border-purple-200 dark:border-purple-800 overflow-hidden'>
+        {/* 筛选栏标题 - 可点击折叠/展开 */}
+                <button
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                  className='w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white flex items-center justify-between hover:opacity-95 transition-opacity'
                 >
-                  <path
-                    fillRule='evenodd'
-                    d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-                <div className='absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20'>
-                  <div className='text-center'>
-                    💡 使用技巧：
-                    <br />
-                    • 显示全部：点击标签快速跳转
-                    <br />• 仅显示选中：点击标签筛选显示
+                  <div className='flex items-center space-x-3 flex-1'>
+                    <span className='text-xl'>🎯</span>
+                    <span className='font-semibold'>快速筛选</span>
+                    <span className='text-sm bg-white/20 px-2 py-0.5 rounded-full'>
+                      {availableTypes.length} 种类型
+                    </span>
                   </div>
-                  <div className='absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900'></div>
-                </div>
-              </div>
-            </div>
-            <div className='flex items-center justify-between sm:justify-end space-x-2'>
-              <span className='text-xs text-gray-500 dark:text-gray-400 hidden md:inline'>
-                {filterMode === 'all'
-                  ? '点击标签跳转到对应类型 →'
-                  : '点击标签筛选显示 →'}
-              </span>
-              <button
-                onClick={() => {
-                  setFilterMode(filterMode === 'all' ? 'selected' : 'all');
-                  if (filterMode === 'selected') {
-                    setSelectedFilter([]);
-                  }
-                }}
-                className={`px-3 py-1.5 sm:py-1 text-xs rounded-full transition-colors relative ${
-                  filterMode === 'selected'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                }`}
-                title={
-                  filterMode === 'all' ? '切换到筛选模式' : '切换到跳转模式'
-                }
-              >
-                {filterMode === 'all' ? '显示全部' : '仅显示选中'}
-                {filterMode === 'all' && (
-                  <span className='absolute -top-1 -right-1 h-2 w-2 bg-orange-400 rounded-full animate-pulse'></span>
-                )}
-              </button>
-            </div>
-          </div>
+                  <div className='flex items-center space-x-3'>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFilterMode(filterMode === 'all' ? 'selected' : 'all');
+                        if (filterMode === 'selected') {
+                          setSelectedFilter([]);
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded-md font-medium transition-all cursor-pointer ${
+                        filterMode === 'selected'
+                          ? 'bg-white text-purple-600 shadow-md'
+                          : 'bg-white/20 text-white hover:bg-white/30'
+                      }`}
+                    >
+                      {filterMode === 'all' ? '显示全部' : '仅显示选中'}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 transition-transform ${
+                        isFilterExpanded ? 'rotate-180' : ''
+                      }`}
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M19 9l-7 7-7-7'
+                      />
+                    </svg>
+                  </div>
+                </button>
+        
+                {/* 可折叠的筛选内容 */}
+                {isFilterExpanded && (
+                  <div className='p-4 bg-purple-50 dark:bg-purple-900/20'>
 
-          {/* 网盘类型标签 */}
-          <div className='flex flex-wrap gap-2'>
-            {availableTypes.map(({ type, count, info }) => (
-              <button
-                key={type}
-                onClick={() => {
-                  if (filterMode === 'all') {
-                    scrollToCloudType(type);
-                  } else {
-                    toggleFilterTag(type);
-                  }
-                }}
-                className={`inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border transition-colors ${
-                  filterMode === 'selected' && selectedFilter.includes(type)
-                    ? `${info.color} text-white border-transparent`
-                    : `${info.color} bg-opacity-10 border-gray-300 dark:border-gray-600 hover:bg-opacity-20`
-                } text-xs sm:text-sm font-medium`}
-                title={filterMode === 'all' ? '点击跳转' : '点击筛选'}
-              >
-                <span className='text-sm sm:text-lg'>{info.icon}</span>
-                <span className='whitespace-nowrap'>
-                  <span className='block sm:hidden'>
-                    {info.name.length > 4
-                      ? info.name.substring(0, 4)
-                      : info.name}
+            {/* 网盘类型标签 - 显示图标+文字 */}
+            <div className='flex flex-wrap gap-2'>
+              {availableTypes.map(({ type, count, info }) => (
+                <button
+                  key={type}
+                  onClick={() => {
+                    if (filterMode === 'all') {
+                      scrollToCloudType(type);
+                    } else {
+                      toggleFilterTag(type);
+                    }
+                  }}
+                  className={`flex items-center justify-between px-2 py-1.5 rounded-md border transition-all hover:scale-105 ${
+                    filterMode === 'selected' && selectedFilter.includes(type)
+                      ? `${info.color} text-gray-900 dark:text-gray-100 border-transparent shadow-lg`
+                      : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-500 text-gray-700 dark:text-gray-300'
+                  }`}
+                  title={filterMode === 'all' ? '点击跳转' : '点击筛选'}
+                >
+                  <div className='flex items-center space-x-1.5 flex-1 min-w-0'>
+                    <span className='text-base flex-shrink-0'>{info.icon}</span>
+                    <span className='text-xs font-medium truncate'>{info.name}</span>
+                  </div>
+                  <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-bold ${
+                    filterMode === 'selected' && selectedFilter.includes(type)
+                      ? 'bg-white/20 text-gray-900 dark:text-gray-100'
+                      : 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                  }`}>
+                    {count}
                   </span>
-                  <span className='hidden sm:block'>{info.name}</span>
-                </span>
-                <span className='bg-white/20 px-1 sm:px-1.5 py-0.5 rounded text-xs'>
-                  {count}
-                </span>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
           </div>
-
-          {/* 筛选状态提示 */}
-          <div className='mt-3'>
-            {filterMode === 'all' ? (
-              <div className='flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg'>
-                <svg
-                  className='h-4 w-4'
-                  fill='currentColor'
-                  viewBox='0 0 20 20'
-                >
-                  <path
-                    fillRule='evenodd'
-                    d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-                <span>
-                  🎯 <strong>快速跳转模式</strong> -
-                  点击任意标签快速滚动到对应网盘类型
-                </span>
-              </div>
-            ) : (
-              <div className='text-sm text-gray-600 dark:text-gray-400'>
-                {selectedFilter.length === 0 ? (
-                  <div className='flex items-center space-x-2 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg'>
-                    <svg
-                      className='h-4 w-4'
-                      fill='currentColor'
-                      viewBox='0 0 20 20'
-                    >
-                      <path
-                        fillRule='evenodd'
-                        d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                    <span>
-                      📌
-                      点击上方标签选择要显示的网盘类型，或切换到"显示全部"模式使用快速跳转
-                    </span>
-                  </div>
-                ) : (
-                  <div className='flex items-center space-x-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg'>
-                    <svg
-                      className='h-4 w-4'
-                      fill='currentColor'
-                      viewBox='0 0 20 20'
-                    >
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                    <span>
-                      ✅ 已选择 <strong>{selectedFilter.length}</strong>{' '}
-                      种网盘类型，点击标签可取消选择
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
+
       {/* 搜索结果统计 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
-        <div className='flex items-center'>
-          <svg
-            className='h-5 w-5 text-blue-500 mr-2'
-            fill='currentColor'
-            viewBox='0 0 20 20'
-          >
-            <path
-              fillRule='evenodd'
-              d='M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z'
-              clipRule='evenodd'
-            />
-          </svg>
-          <span className='text-sm text-blue-800 dark:text-blue-200'>
+      <div className='rounded-xl border-2 border-blue-200 dark:border-blue-800 p-4 bg-blue-50 dark:bg-blue-900/20'>
+        <div className='flex items-center space-x-2 text-sm text-blue-700 dark:text-blue-300'>
+          <span className='text-lg'>📊</span>
+          <span>
             {filterMode === 'selected' && selectedFilter.length > 0 ? (
               <>
-                显示{' '}
-                <strong>{Object.keys(filteredResults || {}).length}</strong>{' '}
-                种筛选的网盘类型 (总共 <strong>{total}</strong> 个资源)
+                显示 <strong>{Object.keys(filteredResults || {}).length}</strong> 种筛选的网盘类型 (总共 <strong>{total}</strong> 个资源)
               </>
             ) : (
               <>
-                共找到 <strong>{total}</strong> 个网盘资源，覆盖{' '}
-                <strong>{Object.keys(results).length}</strong> 种网盘类型
+                共找到 <strong>{total}</strong> 个网盘资源，覆盖 <strong>{Object.keys(results).length}</strong> 种网盘类型
               </>
             )}
           </span>
@@ -509,126 +440,77 @@ export default function NetDiskSearchResults({
       {Object.entries(filteredResults || {}).map(([type, links]) => {
         const cloudType =
           CLOUD_TYPES[type as keyof typeof CLOUD_TYPES] || CLOUD_TYPES.others;
+        const isCollapsed = collapsedTypes.has(type);
 
         return (
           <div
             key={type}
             id={`cloud-type-${type}`}
-            className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 scroll-mt-20'
+            className='rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden scroll-mt-24'
           >
             {/* 网盘类型头部 */}
-            <div
-              className={`${cloudType.color} text-white px-4 py-3 rounded-t-lg`}
+            <button
+              onClick={() => toggleTypeCollapse(type)}
+              className={`w-full bg-gradient-to-r ${cloudType.color} px-4 py-2 flex items-center justify-between text-white hover:opacity-95 transition-opacity`}
             >
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center space-x-2'>
-                  <span className='text-lg'>{cloudType.icon}</span>
-                  <h3 className='font-medium'>{cloudType.name}</h3>
-                  <span className='bg-white/20 px-2 py-1 rounded-full text-xs'>
-                    {links.length} 个链接
-                  </span>
-                </div>
+              <div className='flex items-center space-x-2'>
+                <span className='text-lg'>{cloudType.icon}</span>
+                <h3 className='font-medium text-sm'>{cloudType.name}</h3>
+                <span className='text-xs bg-white/20 px-2 py-0.5 rounded-full'>
+                  {links.length}
+                </span>
               </div>
-            </div>
+              <svg
+                className={`w-5 h-5 transition-transform ${
+                  isCollapsed ? '-rotate-90' : ''
+                }`}
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M19 9l-7 7-7-7'
+                />
+              </svg>
+            </button>
 
             {/* 链接列表 */}
-            <div className='divide-y divide-gray-200 dark:divide-gray-700'>
-              {links.map((link, index) => {
-                const linkKey = `${type}-${index}`;
-                const isPasswordVisible = visiblePasswords[linkKey];
-                const isCopied = copiedItems[linkKey];
-                const isTitleExpanded = expandedTitles[linkKey];
-                const title = link.note || '未命名资源';
+            {!isCollapsed && (
+              <div className='divide-y divide-gray-200 dark:divide-gray-700 bg-gray-50 dark:bg-gray-900/50'>
+                {links.map((link, index) => {
+                  const linkKey = `${type}-${index}`;
+                  const isPasswordVisible = visiblePasswords[linkKey];
+                  const isCopied = copiedItems[linkKey];
+                  const isTitleExpanded = expandedTitles[linkKey];
+                  const title = link.note || '未命名资源';
                 const shouldShowExpandMobile = title.length > 30;
                 const shouldShowExpandDesktop = title.length > 80;
 
                 return (
                   <div
                     key={index}
-                    className='p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'
+                    className='p-4 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors'
                   >
                     <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0'>
                       <div className='flex-1 min-w-0'>
                         {/* 资源标题 */}
-                        <div className='mb-2'>
-                          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 break-words pr-2'>
-                            {/* 移动端显示 */}
-                            <span className='block sm:hidden'>
-                              {shouldShowExpandMobile ? (
-                                <div className='space-y-2'>
-                                  <span>
-                                    {isTitleExpanded
-                                      ? title
-                                      : `${title.substring(0, 30)}...`}
-                                  </span>
-                                  <div className='flex justify-start'>
-                                    <button
-                                      onClick={() =>
-                                        toggleTitleExpansion(linkKey)
-                                      }
-                                      className='inline-flex items-center space-x-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-800/30 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs font-medium rounded-md border border-blue-200 dark:border-blue-700 transition-all duration-200 ease-in-out'
-                                    >
-                                      <span>
-                                        {isTitleExpanded ? '收起' : '展开'}
-                                      </span>
-                                      <svg
-                                        className={`h-3 w-3 transition-transform duration-200 ${
-                                          isTitleExpanded ? 'rotate-180' : ''
-                                        }`}
-                                        fill='currentColor'
-                                        viewBox='0 0 20 20'
-                                      >
-                                        <path
-                                          fillRule='evenodd'
-                                          d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
-                                          clipRule='evenodd'
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                title
-                              )}
+                        <div className='mb-3'>
+                          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 break-words pr-2'>
+                            {/* 移动端：点击展开/收起 */}
+                            <span 
+                              className='block sm:hidden cursor-pointer'
+                              onClick={() => toggleTitleExpansion(linkKey)}
+                            >
+                              {title.length > 30 ? (
+                                isTitleExpanded ? title : `${title.substring(0, 30)}...`
+                              ) : title}
                             </span>
-                            {/* 桌面端显示 */}
-                            <span className='hidden sm:block'>
-                              {shouldShowExpandDesktop ? (
-                                <div className='space-y-2'>
-                                  <span
-                                    className={`block ${
-                                      isTitleExpanded ? '' : 'line-clamp-2'
-                                    }`}
-                                  >
-                                    {title}
-                                  </span>
-                                  <button
-                                    onClick={() =>
-                                      toggleTitleExpansion(linkKey)
-                                    }
-                                    className='inline-flex items-center space-x-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-800/30 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs font-medium rounded-md border border-blue-200 dark:border-blue-700 transition-all duration-200 ease-in-out'
-                                  >
-                                    <span>
-                                      {isTitleExpanded ? '收起' : '展开'}
-                                    </span>
-                                    <svg
-                                      className={`h-3 w-3 transition-transform duration-200 ${
-                                        isTitleExpanded ? 'rotate-180' : ''
-                                      }`}
-                                      fill='currentColor'
-                                      viewBox='0 0 20 20'
-                                    >
-                                      <path
-                                        fillRule='evenodd'
-                                        d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
-                                        clipRule='evenodd'
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className='line-clamp-2'>{title}</span>
-                              )}
+                            {/* PC端：显示完整，限制行数 */}
+                            <span className='hidden sm:block line-clamp-2' title={title}>
+                              {title}
                             </span>
                           </h4>
                         </div>
@@ -636,9 +518,12 @@ export default function NetDiskSearchResults({
                         {/* 链接和密码 */}
                         <div className='space-y-2'>
                           <div className='flex items-start space-x-2'>
-                            <LinkIcon className='h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5' />
+                            <svg className='h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5' fill='currentColor' viewBox='0 0 20 20'>
+                              <path d='M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z' />
+                              <path d='M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z' />
+                            </svg>
                             <div className='flex-1 min-w-0'>
-                              <code className='text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono break-all block w-full'>
+                              <code className='text-xs bg-gray-200 dark:bg-gray-800 px-2 py-1.5 rounded font-mono break-all block w-full text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700'>
                                 <span className='block sm:hidden'>
                                   {link.url.length > 40
                                     ? `${link.url.substring(0, 40)}...`
@@ -653,10 +538,10 @@ export default function NetDiskSearchResults({
                               onClick={() =>
                                 copyToClipboard(link.url, `url-${linkKey}`)
                               }
-                              className={`p-1 transition-colors flex-shrink-0 ${
+                              className={`p-1.5 transition-colors flex-shrink-0 rounded-md hover:bg-purple-200 dark:hover:bg-purple-800 ${
                                 copiedItems[`url-${linkKey}`]
-                                  ? 'text-green-500'
-                                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-purple-500 hover:text-purple-700 dark:hover:text-purple-300'
                               }`}
                               title={
                                 copiedItems[`url-${linkKey}`]
@@ -684,19 +569,11 @@ export default function NetDiskSearchResults({
 
                           {link.password && (
                             <div className='flex items-start space-x-2'>
-                              <svg
-                                className='h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5'
-                                fill='currentColor'
-                                viewBox='0 0 20 20'
-                              >
-                                <path
-                                  fillRule='evenodd'
-                                  d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
-                                  clipRule='evenodd'
-                                />
+                              <svg className='h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z' clipRule='evenodd' />
                               </svg>
                               <div className='flex-1 min-w-0'>
-                                <code className='text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono block'>
+                                <code className='text-xs bg-gray-200 dark:bg-gray-800 px-2 py-1.5 rounded font-mono block text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700'>
                                   {isPasswordVisible ? link.password : '****'}
                                 </code>
                               </div>
@@ -705,7 +582,7 @@ export default function NetDiskSearchResults({
                                   onClick={() =>
                                     togglePasswordVisibility(linkKey)
                                   }
-                                  className='p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                                  className='p-1.5 text-purple-500 hover:text-purple-700 dark:hover:text-purple-300 transition-colors rounded-md hover:bg-purple-200 dark:hover:bg-purple-800'
                                   title={
                                     isPasswordVisible ? '隐藏密码' : '显示密码'
                                   }
@@ -723,10 +600,10 @@ export default function NetDiskSearchResults({
                                       `pwd-${linkKey}`,
                                     )
                                   }
-                                  className={`p-1 transition-colors ${
+                                  className={`p-1.5 transition-colors rounded-md hover:bg-purple-200 dark:hover:bg-purple-800 ${
                                     copiedItems[`pwd-${linkKey}`]
-                                      ? 'text-green-500'
-                                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : 'text-purple-500 hover:text-purple-700 dark:hover:text-purple-300'
                                   }`}
                                   title={
                                     copiedItems[`pwd-${linkKey}`]
@@ -756,7 +633,7 @@ export default function NetDiskSearchResults({
                         </div>
 
                         {/* 元信息 */}
-                        <div className='mt-3 flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs text-gray-500 dark:text-gray-400'>
+                        <div className='mt-3 flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs text-gray-600 dark:text-gray-400'>
                           <span className='truncate'>来源: {link.source}</span>
                           <span className='truncate'>
                             时间:{' '}
@@ -771,8 +648,11 @@ export default function NetDiskSearchResults({
                           href={link.url}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='inline-flex items-center px-3 py-2 sm:py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors w-full sm:w-auto justify-center'
+                          className='inline-flex items-center px-4 py-2 border-2 border-purple-500 rounded-lg text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors w-full sm:w-auto justify-center hover:scale-105'
                         >
+                          <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
+                          </svg>
                           访问链接
                         </a>
                       </div>
@@ -780,7 +660,8 @@ export default function NetDiskSearchResults({
                   </div>
                 );
               })}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}
