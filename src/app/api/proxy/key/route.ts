@@ -40,8 +40,11 @@ export async function GET(request: Request) {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Range, Origin, Accept, User-Agent',
+        'Cache-Control': 'public, max-age=300',
+        'Content-Length': keyData.byteLength.toString(),
       },
     });
   } catch (error) {

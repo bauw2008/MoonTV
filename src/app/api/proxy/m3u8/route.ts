@@ -70,15 +70,15 @@ export async function GET(request: Request) {
       const headers = new Headers();
       headers.set('Content-Type', contentType);
       headers.set('Access-Control-Allow-Origin', '*');
-      headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
       headers.set(
         'Access-Control-Allow-Headers',
-        'Content-Type, Range, Origin, Accept',
+        'Content-Type, Range, Origin, Accept, User-Agent',
       );
-      headers.set('Cache-Control', 'no-cache');
+      headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       headers.set(
         'Access-Control-Expose-Headers',
-        'Content-Length, Content-Range',
+        'Content-Length, Content-Range, Content-Type',
       );
       return new Response(modifiedContent, { headers });
     }
@@ -89,15 +89,15 @@ export async function GET(request: Request) {
       response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl',
     );
     headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
     headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Range, Origin, Accept',
+      'Content-Type, Range, Origin, Accept, User-Agent',
     );
-    headers.set('Cache-Control', 'no-cache');
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     headers.set(
       'Access-Control-Expose-Headers',
-      'Content-Length, Content-Range',
+      'Content-Length, Content-Range, Content-Type',
     );
 
     // 直接返回视频流

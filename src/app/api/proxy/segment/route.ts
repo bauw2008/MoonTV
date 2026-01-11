@@ -41,16 +41,17 @@ export async function GET(request: Request) {
     const headers = new Headers();
     headers.set('Content-Type', 'video/mp2t');
     headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
     headers.set(
       'Access-Control-Allow-Headers',
-      'Content-Type, Range, Origin, Accept',
+      'Content-Type, Range, Origin, Accept, User-Agent',
     );
     headers.set('Accept-Ranges', 'bytes');
     headers.set(
       'Access-Control-Expose-Headers',
-      'Content-Length, Content-Range',
+      'Content-Length, Content-Range, Content-Type, Accept-Ranges',
     );
+    headers.set('Cache-Control', 'public, max-age=300');
     const contentLength = response.headers.get('content-length');
     if (contentLength) {
       headers.set('Content-Length', contentLength);

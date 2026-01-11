@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
 
 'use client';
 
@@ -16,7 +16,6 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { parseCustomTimeFormat } from '@/lib/time';
-import { useUserSettings } from '@/hooks/useUserSettings';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
 import PageLayout from '@/components/PageLayout';
@@ -846,9 +845,10 @@ function LivePageClient() {
           (context as any).type === 'manifest' ||
           (context as any).type === 'level'
         ) {
-          // 判断是否浏览器直连 - 使用 useUserSettings hook
-          const { settings } = useUserSettings();
-          const isLiveDirectConnect = settings.liveDirectConnect;
+          // 判断是否浏览器直连
+          const isLiveDirectConnectStr =
+            localStorage.getItem('liveDirectConnect');
+          const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
           if (isLiveDirectConnect) {
             // 浏览器直连，使用 URL 对象处理参数
             try {
