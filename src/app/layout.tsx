@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 
 import './globals.css';
-import '../styles/webkit-scrollbar.css';
 
 import { getConfig } from '@/lib/config';
 
@@ -103,7 +102,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang='zh-CN' suppressHydrationWarning>
+    <html lang='zh-CN'>
       <head>
         <meta
           name='viewport'

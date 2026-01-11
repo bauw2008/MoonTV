@@ -94,8 +94,25 @@ function ShortDramaPageClient() {
     };
   }, [shortDramaCategory, shortDramaType, currentPage]);
 
-  // 初始化时标记选择器为准备好状态
+  // 初始化时标记选择器为准备好状态，并设置默认类型
   useEffect(() => {
+    const initDefaultType = async () => {
+      try {
+        const categories = await getShortDramaCategories();
+        if (
+          categories.length > 0 &&
+          shortDramaCategory === '全部' &&
+          shortDramaType === 'all'
+        ) {
+          setShortDramaType(categories[0].type_id.toString());
+        }
+      } catch (err) {
+        console.error('加载分类失败:', err);
+      }
+    };
+
+    initDefaultType();
+
     const timer = setTimeout(() => {
       setSelectorsReady(true);
     }, 50);
@@ -156,7 +173,8 @@ function ShortDramaPageClient() {
             title: item.name || '',
             poster: item.cover || '',
             rate: '',
-            year: item.update_time?.split(' ')?.[0]?.replace(/-/g, '.') || '',
+            year:
+              item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
             type: 'shortdrama',
             source: 'shortdrama',
             videoId: item.id?.toString() || '',
@@ -197,7 +215,8 @@ function ShortDramaPageClient() {
                 poster: item.cover || '',
                 rate: '',
                 year:
-                  item.update_time?.split(' ')?.[0]?.replace(/-/g, '.') || '',
+                  item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') ||
+                  '',
                 type: 'shortdrama',
                 source: 'shortdrama',
                 videoId: item.id?.toString() || '',
@@ -284,7 +303,8 @@ function ShortDramaPageClient() {
               title: item.name || '',
               poster: item.cover || '',
               rate: '',
-              year: item.update_time?.split(' ')?.[0]?.replace(/-/g, '.') || '',
+              year:
+                item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
               type: 'shortdrama',
               source: 'shortdrama',
               videoId: item.id?.toString() || '',
@@ -327,7 +347,8 @@ function ShortDramaPageClient() {
                   poster: item.cover || '',
                   rate: '',
                   year:
-                    item.update_time?.split(' ')?.[0]?.replace(/-/g, '.') || '',
+                    item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') ||
+                    '',
                   type: 'shortdrama',
                   source: 'shortdrama',
                   videoId: item.id?.toString() || '',
@@ -450,7 +471,8 @@ function ShortDramaPageClient() {
             title: item.name || '',
             poster: item.cover || '',
             rate: '',
-            year: item.update_time?.split(' ')?.[0]?.replace(/-/g, '.') || '',
+            year:
+              item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
             type: 'shortdrama',
             source: 'shortdrama',
             videoId: item.id?.toString() || '',

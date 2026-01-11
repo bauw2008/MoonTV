@@ -1118,7 +1118,10 @@ function SearchPageClient() {
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
         {/* 搜索框 */}
         <div className='mb-8'>
-          <form onSubmit={handleSearch} className='max-w-2xl mx-auto flex items-center gap-2'>
+          <form
+            onSubmit={handleSearch}
+            className='max-w-2xl mx-auto flex items-center gap-2'
+          >
             {/* 搜索类型选择器 - 放在搜索框左侧 */}
             <div className='flex items-center gap-2'>
               <button
@@ -1140,8 +1143,18 @@ function SearchPageClient() {
                 }`}
                 title='影视搜索'
               >
-                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z' />
+                <svg
+                  className='w-5 h-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z'
+                  />
                 </svg>
               </button>
 
@@ -1165,8 +1178,18 @@ function SearchPageClient() {
                   }`}
                   title='网盘搜索'
                 >
-                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z' />
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
+                    />
                   </svg>
                 </button>
               )}
@@ -1191,8 +1214,18 @@ function SearchPageClient() {
                   }`}
                   title='演员搜索'
                 >
-                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                    />
                   </svg>
                 </button>
               )}
@@ -1321,11 +1354,12 @@ function SearchPageClient() {
                         }`}
                       >
                         💾 网盘资源
-                        {netdiskLoading && netdiskResourceType === 'netdisk' && (
-                          <span className='ml-2 inline-block align-middle'>
-                            <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin'></span>
-                          </span>
-                        )}
+                        {netdiskLoading &&
+                          netdiskResourceType === 'netdisk' && (
+                            <span className='ml-2 inline-block align-middle'>
+                              <span className='inline-block h-3 w-3 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin'></span>
+                            </span>
+                          )}
                       </button>
                       <button
                         onClick={() => {
@@ -1358,7 +1392,9 @@ function SearchPageClient() {
                     />
                   ) : (
                     <AcgSearch
-                      keyword={searchQuery.trim() || searchParams?.get('q') || ''}
+                      keyword={
+                        searchQuery.trim() || searchParams?.get('q') || ''
+                      }
                       triggerSearch={acgTriggerSearch}
                       onError={(error) => setAcgError(error)}
                     />

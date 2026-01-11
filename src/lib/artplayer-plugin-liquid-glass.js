@@ -72,6 +72,12 @@ if (typeof document !== 'undefined') {
     align-items: center;  /* 官方唯一的对齐设置 */
 }
 
+/* 确保进度条层级足够高，避免被音量面板等遮挡 */
+.artplayer-plugin-liquid-glass .art-progress {
+    position: relative;
+    z-index: 1000 !important;
+}
+
 /* 移动端优化 */
 @media (max-width: 768px) {
     .artplayer-plugin-liquid-glass .art-control {

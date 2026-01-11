@@ -147,7 +147,9 @@ function PlayPageClient() {
   const [netdiskError, setNetdiskError] = useState<string | null>(null);
   const [netdiskTotal, setNetdiskTotal] = useState(0);
   const [showNetdiskModal, setShowNetdiskModal] = useState(false);
-  const [netdiskResourceType, setNetdiskResourceType] = useState<'netdisk' | 'acg'>('netdisk');
+  const [netdiskResourceType, setNetdiskResourceType] = useState<
+    'netdisk' | 'acg'
+  >('netdisk');
   const [acgTriggerSearch, setAcgTriggerSearch] = useState(false);
 
   // 使用NavigationConfigContext获取功能启用状态
@@ -3300,6 +3302,12 @@ function PlayPageClient() {
                     transform: translateZ(0) !important;
                     transition: transform linear !important;
                   }
+                  
+                  /* 确保进度条层级足够高，避免被音量面板等遮挡 */
+                  .art-progress {
+                    position: relative;
+                    z-index: 1000 !important;
+                  }
                 `;
                     document.head.appendChild(style);
                     console.log('🎨 已加载CSS硬件加速优化');
@@ -4622,10 +4630,14 @@ function PlayPageClient() {
             <div className='shrink-0 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6'>
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex items-center gap-2 sm:gap-3'>
-                  <div className='text-2xl sm:text-3xl'>{netdiskResourceType === 'netdisk' ? '📁' : '🎌'}</div>
+                  <div className='text-2xl sm:text-3xl'>
+                    {netdiskResourceType === 'netdisk' ? '📁' : '🎌'}
+                  </div>
                   <div>
                     <h3 className='text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                      {netdiskResourceType === 'netdisk' ? '网盘资源' : '动漫磁力'}
+                      {netdiskResourceType === 'netdisk'
+                        ? '网盘资源'
+                        : '动漫磁力'}
                     </h3>
                     {videoTitle && (
                       <p className='text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5'>
