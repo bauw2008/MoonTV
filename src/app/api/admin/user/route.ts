@@ -527,6 +527,9 @@ export async function POST(request: NextRequest) {
         // 更新用户的用户组
         if (userGroups && userGroups.length > 0) {
           targetEntry.tags = userGroups;
+          // 清除用户的独立配置，让用户继承用户组的配置
+          delete targetEntry.videoSources;
+          delete targetEntry.features;
         } else {
           // 如果为空数组或未提供，则删除该字段，表示无用户组
           delete targetEntry.tags;
@@ -574,6 +577,9 @@ export async function POST(request: NextRequest) {
           if (targetUser) {
             if (userGroups && userGroups.length > 0) {
               targetUser.tags = userGroups;
+              // 清除用户的独立配置，让用户继承用户组的配置
+              delete targetUser.videoSources;
+              delete targetUser.features;
             } else {
               // 如果为空数组或未提供，则删除该字段，表示无用户组
               delete targetUser.tags;

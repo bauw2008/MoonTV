@@ -53,6 +53,11 @@ export function useMenuSettings() {
         [menuKey]: !menuSettings[menuKey],
       });
 
+      // localstorage 模式：立即通知配置更新
+      if (storageType === 'localstorage') {
+        notifyConfigUpdated();
+      }
+
       // 触发自定义事件，通知其他组件更新
       window.dispatchEvent(
         new CustomEvent('vidora-config-update', {
@@ -65,7 +70,7 @@ export function useMenuSettings() {
         }),
       );
     },
-    [menuSettings, updateMenuSettings],
+    [menuSettings, updateMenuSettings, storageType],
   );
 
   const setMenuEnabled = useCallback(
@@ -73,6 +78,11 @@ export function useMenuSettings() {
       updateMenuSettings({
         [menuKey]: enabled,
       });
+
+      // localstorage 模式：立即通知配置更新
+      if (storageType === 'localstorage') {
+        notifyConfigUpdated();
+      }
 
       // 触发自定义事件，通知其他组件更新
       window.dispatchEvent(
@@ -86,7 +96,7 @@ export function useMenuSettings() {
         }),
       );
     },
-    [menuSettings, updateMenuSettings],
+    [menuSettings, updateMenuSettings, storageType],
   );
 
   return {

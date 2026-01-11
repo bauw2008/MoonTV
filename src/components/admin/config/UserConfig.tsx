@@ -388,11 +388,16 @@ function UserConfigContent() {
                 if (userVideoSources.length === 0 && tag.videoSources) {
                   userVideoSources = tag.videoSources;
                 }
-                // 如果用户没有独立的功能配置，则使用用户组的功能配置
-                if (!userFeatures.aiEnabled) userFeatures.aiEnabled = tag.aiEnabled;
-                if (!userFeatures.disableYellowFilter) userFeatures.disableYellowFilter = tag.disableYellowFilter;
-                if (!userFeatures.netDiskSearchEnabled) userFeatures.netDiskSearchEnabled = tag.netDiskSearchEnabled;
-                if (!userFeatures.tmdbActorSearchEnabled) userFeatures.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
+                // 继承用户组的功能配置（不管用户是否有独立配置）
+                if (tag.aiEnabled !== undefined)
+                  userFeatures.aiEnabled = tag.aiEnabled;
+                if (tag.disableYellowFilter !== undefined)
+                  userFeatures.disableYellowFilter = tag.disableYellowFilter;
+                if (tag.netDiskSearchEnabled !== undefined)
+                  userFeatures.netDiskSearchEnabled = tag.netDiskSearchEnabled;
+                if (tag.tmdbActorSearchEnabled !== undefined)
+                  userFeatures.tmdbActorSearchEnabled =
+                    tag.tmdbActorSearchEnabled;
               }
             }
 
@@ -694,7 +699,10 @@ function UserConfigContent() {
         );
 
         // 使用新的API系统
-        await userApi.updateUserVideoSources(selectedUser.username, selectedApis);
+        await userApi.updateUserVideoSources(
+          selectedUser.username,
+          selectedApis,
+        );
 
         // 更新本地状态
         const updatedUsers = userSettings.Users.map((u) => {
@@ -1032,9 +1040,12 @@ function UserConfigContent() {
       videoSources: selectedApis,
     };
     if (tag.aiEnabled) updates.aiEnabled = tag.aiEnabled;
-    if (tag.disableYellowFilter) updates.disableYellowFilter = tag.disableYellowFilter;
-    if (tag.netDiskSearchEnabled) updates.netDiskSearchEnabled = tag.netDiskSearchEnabled;
-    if (tag.tmdbActorSearchEnabled) updates.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
+    if (tag.disableYellowFilter)
+      updates.disableYellowFilter = tag.disableYellowFilter;
+    if (tag.netDiskSearchEnabled)
+      updates.netDiskSearchEnabled = tag.netDiskSearchEnabled;
+    if (tag.tmdbActorSearchEnabled)
+      updates.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
 
     await updateUserGroup(editingUserGroupIndex, updates);
 
@@ -2017,9 +2028,9 @@ function UserConfigContent() {
                       {userSettings.Tags.map((group) => (
                         <option key={`group-${group.name}`} value={group.name}>
                           {group.name}{' '}
-                          {(group.videoSources && group.videoSources.length > 0
+                          {group.videoSources && group.videoSources.length > 0
                             ? `(${group.videoSources.length} 个源)`
-                            : '')}
+                            : ''}
                         </option>
                       ))}
                     </select>
@@ -2293,7 +2304,8 @@ function UserConfigContent() {
                                   'netdisk-search',
                                   'tmdb-actor-search',
                                 ];
-                                const videoSourceCount = user.videoSources?.length || 0;
+                                const videoSourceCount =
+                                  user.videoSources?.length || 0;
 
                                 return (
                                   <span
@@ -2316,7 +2328,7 @@ function UserConfigContent() {
                               {(() => {
                                 // 检查用户或用户组是否启用了AI功能
                                 const hasAiEnabled =
-                                  (user.features?.aiEnabled) ||
+                                  user.features?.aiEnabled ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2334,7 +2346,7 @@ function UserConfigContent() {
                               {(() => {
                                 // 检查用户或用户组是否启用了18+功能
                                 const has18Enabled =
-                                  (user.features?.disableYellowFilter) ||
+                                  user.features?.disableYellowFilter ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2351,7 +2363,7 @@ function UserConfigContent() {
                               {/* 网盘搜索功能显示 */}
                               {(() => {
                                 const hasNetDiskSearchEnabled =
-                                  (user.features?.netDiskSearchEnabled) ||
+                                  user.features?.netDiskSearchEnabled ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2368,7 +2380,7 @@ function UserConfigContent() {
                               {/* TMDB演员搜索功能显示 */}
                               {(() => {
                                 const hasTmdbActorSearchEnabled =
-                                  (user.features?.tmdbActorSearchEnabled) ||
+                                  user.features?.tmdbActorSearchEnabled ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(

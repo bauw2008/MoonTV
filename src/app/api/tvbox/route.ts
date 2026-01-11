@@ -31,7 +31,9 @@ function filterSourcesByUserPermissions(
     user.tags.forEach((tagName) => {
       const tag = tagsConfig.find((t) => t.name === tagName);
       if (tag?.videoSources) {
-        tag.videoSources.forEach((source: string) => allowedSources.add(source));
+        tag.videoSources.forEach((source: string) =>
+          allowedSources.add(source),
+        );
       }
     });
 

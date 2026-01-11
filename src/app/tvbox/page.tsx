@@ -20,7 +20,6 @@ import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 import VirtualVideoGrid from '@/components/VirtualVideoGrid';
-import { checkAndRedirectMenuAccess } from '@/lib/menu-access';
 
 // ==================== 类型定义 ====================
 interface VideoSource {
@@ -671,7 +670,13 @@ function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
 // ==================== 主组件 ====================
 export default function TVBoxPage() {
   // 检查菜单访问权限
-  checkAndRedirectMenuAccess();
+  if (typeof window !== 'undefined') {
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    if (disabledMenus.showTvbox) {
+      window.location.href = '/';
+      return null;
+    }
+  }
 
   const { siteName: _siteName } = useSite();
   const [sourceList, setSourceList] = useState<VideoSource[]>([]);

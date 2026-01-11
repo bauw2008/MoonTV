@@ -804,16 +804,16 @@ export async function resetConfig() {
 
   // 重置 YellowWords 为默认值
   adminConfig.YellowWords = [
-      '伦理',
-      '福利',
-      '诱惑',
-      '传媒',
-      '无码',
-      '有码',
-      'SWAG',
-      '倫理',
-      '三级',
-      '乱伦',
+    '伦理',
+    '福利',
+    '诱惑',
+    '传媒',
+    '无码',
+    '有码',
+    'SWAG',
+    '倫理',
+    '三级',
+    '乱伦',
   ];
 
   // 清空其他配置数组
@@ -894,6 +894,8 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
 export async function getUserFeatures(user?: string): Promise<{
   aiEnabled: boolean;
   disableYellowFilter: boolean;
+  netDiskSearchEnabled: boolean;
+  tmdbActorSearchEnabled: boolean;
   specialFeatures: string[];
 }> {
   const config = await getConfig();
@@ -903,6 +905,8 @@ export async function getUserFeatures(user?: string): Promise<{
     return {
       aiEnabled: false,
       disableYellowFilter: false,
+      netDiskSearchEnabled: false,
+      tmdbActorSearchEnabled: false,
       specialFeatures: [],
     };
   }
@@ -912,6 +916,8 @@ export async function getUserFeatures(user?: string): Promise<{
     return {
       aiEnabled: false,
       disableYellowFilter: false,
+      netDiskSearchEnabled: false,
+      tmdbActorSearchEnabled: false,
       specialFeatures: [],
     };
   }
@@ -921,6 +927,8 @@ export async function getUserFeatures(user?: string): Promise<{
     return {
       aiEnabled: true,
       disableYellowFilter: true,
+      netDiskSearchEnabled: true,
+      tmdbActorSearchEnabled: true,
       specialFeatures: ['all'],
     };
   }
@@ -936,7 +944,8 @@ export async function getUserFeatures(user?: string): Promise<{
     if (userConfig.features.aiEnabled) aiEnabled = true;
     if (userConfig.features.disableYellowFilter) disableYellowFilter = true;
     if (userConfig.features.netDiskSearchEnabled) netDiskSearchEnabled = true;
-    if (userConfig.features.tmdbActorSearchEnabled) tmdbActorSearchEnabled = true;
+    if (userConfig.features.tmdbActorSearchEnabled)
+      tmdbActorSearchEnabled = true;
   }
 
   // 检查用户组的功能配置

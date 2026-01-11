@@ -70,6 +70,9 @@ interface NavigationConfigProviderProps {
 // BroadcastChannel 名称
 const CONFIG_CHANNEL = 'vidora-config-channel';
 
+// 记录最后一次配置更新时间
+let lastConfigUpdateTime = 0;
+
 export const NavigationConfigProvider: React.FC<
   NavigationConfigProviderProps
 > = ({ children }) => {
@@ -121,6 +124,11 @@ export const NavigationConfigProvider: React.FC<
 
         if (data?.MenuSettings) {
           setMenuSettings(data.MenuSettings);
+
+          // 同时更新 RUNTIME_CONFIG
+          if ((window as any).RUNTIME_CONFIG) {
+            (window as any).RUNTIME_CONFIG.MenuSettings = data.MenuSettings;
+          }
         }
 
         if (data?.CustomCategories) {
@@ -134,6 +142,11 @@ export const NavigationConfigProvider: React.FC<
             }),
           );
           setCustomCategories(categories);
+
+          // 同时更新 RUNTIME_CONFIG
+          if ((window as any).RUNTIME_CONFIG) {
+            (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES = categories;
+          }
         }
       }
     } catch {
@@ -157,6 +170,11 @@ export const NavigationConfigProvider: React.FC<
           if (savedSettings) {
             const parsedSettings = JSON.parse(savedSettings);
             setMenuSettings(parsedSettings);
+
+            // 同时更新 RUNTIME_CONFIG
+            if ((window as any).RUNTIME_CONFIG) {
+              (window as any).RUNTIME_CONFIG.MenuSettings = parsedSettings;
+            }
           }
 
           const savedCategories = localStorage.getItem(
@@ -165,10 +183,30 @@ export const NavigationConfigProvider: React.FC<
           if (savedCategories) {
             const parsedCategories = JSON.parse(savedCategories);
             setCustomCategories(parsedCategories);
+
+            // 同时更新 RUNTIME_CONFIG
+            if ((window as any).RUNTIME_CONFIG) {
+              (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES =
+                parsedCategories;
+            }
           }
         } catch {
           // 静默处理 localStorage 读取错误
         }
+      }
+
+      // 更新全局禁用菜单变量
+      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      if (runtimeConfig?.MenuSettings) {
+        (window as any).__DISABLED_MENUS = {
+          showLive: runtimeConfig.MenuSettings.showLive === false,
+          showTvbox: runtimeConfig.MenuSettings.showTvbox === false,
+          showShortDrama: runtimeConfig.MenuSettings.showShortDrama === false,
+          showMovies: runtimeConfig.MenuSettings.showMovies === false,
+          showTVShows: runtimeConfig.MenuSettings.showTVShows === false,
+          showAnime: runtimeConfig.MenuSettings.showAnime === false,
+          showVariety: runtimeConfig.MenuSettings.showVariety === false,
+        };
       }
     }
   };
@@ -240,16 +278,30 @@ export const NavigationConfigProvider: React.FC<
 
   // 初始化配置并监听配置变化
   useEffect(() => {
+    // 将 refreshConfig 挂载到 window 对象，供 notifyConfigUpdated 调用
+    if (typeof window !== 'undefined') {
+      (window as any).__refreshConfig = refreshConfig;
+    }
+
+    // 初始化配置
     refreshConfig();
 
     // 创建 BroadcastChannel 用于跨窗口通信
     const channel = new BroadcastChannel(CONFIG_CHANNEL);
 
     // 监听 BroadcastChannel 消息（配置变更通知）
-    const handleBroadcastMessage = (event: MessageEvent) => {
+    const handleBroadcastMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'config-updated') {
+        // 检查时间戳，避免重复处理旧的通知
+        if (
+          event.data.timestamp &&
+          event.data.timestamp < lastConfigUpdateTime
+        ) {
+          return;
+        }
+
         // 重新获取配置
-        refreshConfig();
+        await refreshConfig();
       }
     };
 
@@ -280,14 +332,26 @@ export const NavigationConfigProvider: React.FC<
 };
 
 // 导出通知配置更新的函数（供 API 调用后使用）
-export const notifyConfigUpdated = () => {
-  if (typeof window !== 'undefined') {
-    try {
-      const channel = new BroadcastChannel(CONFIG_CHANNEL);
-      channel.postMessage({ type: 'config-updated' });
-      channel.close();
-    } catch {
-      // BroadcastChannel 不支持，忽略
-    }
+export const notifyConfigUpdated = async () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  // 更新配置时间戳
+  lastConfigUpdateTime = Date.now();
+
+  try {
+    // 重新获取配置并更新全局变量
+    await (window as any).__refreshConfig?.();
+
+    // 通过 BroadcastChannel 通知其他标签页
+    const channel = new BroadcastChannel(CONFIG_CHANNEL);
+    channel.postMessage({
+      type: 'config-updated',
+      timestamp: lastConfigUpdateTime,
+    });
+    channel.close();
+  } catch (error) {
+    console.error('[notifyConfigUpdated] 失败:', error);
   }
 };

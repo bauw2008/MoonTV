@@ -27,14 +27,30 @@ import VirtualDoubanGrid, {
 } from '@/components/VirtualDoubanGrid';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-import { checkAndRedirectMenuAccess } from '@/lib/menu-access';
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
   const { menuSettings } = useNavigationConfig();
 
   // 检查菜单访问权限
-  checkAndRedirectMenuAccess();
+  if (typeof window !== 'undefined') {
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    const type = searchParams.get('type') || 'movie';
+
+    if (type === 'tv' && disabledMenus.showTVShows) {
+      window.location.href = '/';
+      return null;
+    } else if (type === 'anime' && disabledMenus.showAnime) {
+      window.location.href = '/';
+      return null;
+    } else if (type === 'show' && disabledMenus.showVariety) {
+      window.location.href = '/';
+      return null;
+    } else if (disabledMenus.showMovies) {
+      window.location.href = '/';
+      return null;
+    }
+  }
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);

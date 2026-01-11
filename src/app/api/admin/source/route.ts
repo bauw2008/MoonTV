@@ -134,7 +134,9 @@ export async function POST(request: NextRequest) {
         if (adminConfig.UserConfig.Tags) {
           adminConfig.UserConfig.Tags.forEach((tag) => {
             if (tag.videoSources) {
-              tag.videoSources = tag.videoSources.filter((source) => source !== key);
+              tag.videoSources = tag.videoSources.filter(
+                (source) => source !== key,
+              );
             }
           });
         }
@@ -142,7 +144,9 @@ export async function POST(request: NextRequest) {
         // 清理用户权限
         adminConfig.UserConfig.Users.forEach((user) => {
           if (user.videoSources) {
-            user.videoSources = user.videoSources.filter((source) => source !== key);
+            user.videoSources = user.videoSources.filter(
+              (source) => source !== key,
+            );
           }
         });
         break;
