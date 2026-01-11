@@ -24,10 +24,15 @@ import VirtualDoubanGrid, {
 } from '@/components/VirtualDoubanGrid';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import { checkAndRedirectMenuAccess } from '@/lib/menu-access';
 
 function ShortDramaPageClient() {
   const searchParams = useSearchParams();
   const { menuSettings } = useNavigationConfig();
+
+  // 检查菜单访问权限
+  checkAndRedirectMenuAccess();
+
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

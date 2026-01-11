@@ -1,10 +1,11 @@
 'use client';
 
 import { Sparkles, X, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AIRecommendModal from './AIRecommendModal';
 import BackToTopButton from './BackToTopButton';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 interface FloatingToolsProps {
   showAI?: boolean;
@@ -29,9 +30,22 @@ export default function FloatingTools({
 }: FloatingToolsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const { hasPermission } = useFeaturePermission();
+  const [canUseAI, setCanUseAI] = useState(false);
+
+  // 检查用户是否有 AI 权限
+  useEffect(() => {
+    const checkAIPermission = async () => {
+      const hasAI = hasPermission('ai-recommend');
+      setCanUseAI(hasAI);
+    };
+
+    checkAIPermission();
+  }, [hasPermission]);
 
   // 检查是否有任何功能需要显示
-  const hasAnyFeatures = showAI || showAggregate || !!onToggleVirtualization;
+  const hasAnyFeatures =
+    (showAI && canUseAI) || showAggregate || !!onToggleVirtualization;
 
   // 如果没有任何功能且不需要返回顶部按钮，则不渲染任何内容
   if (!hasAnyFeatures && !showBackToTop) {
@@ -42,7 +56,7 @@ export default function FloatingTools({
     <>
       <div className='fixed bottom-16 right-6 z-[500] flex flex-col gap-2'>
         {/* AI推荐按钮 - 展开时显示 */}
-        {showAI && isExpanded && (
+        {showAI && canUseAI && isExpanded && (
           <button
             onClick={() => setShowAIModal(true)}
             className='relative group/ai bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl w-7 h-7 text-gray-600 dark:text-gray-300 transition-all duration-300 shadow-md hover:shadow-lg hover:from-gradient-to-br hover:from-purple-500 hover:to-purple-600 hover:text-white flex items-center justify-center'

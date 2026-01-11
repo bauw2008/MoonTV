@@ -7,7 +7,10 @@ import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import {
+  notifyConfigUpdated,
+  useNavigationConfig,
+} from '@/contexts/NavigationConfigContext';
 
 import { menuLabels, MenuSettings } from '@/types/menu';
 
@@ -66,7 +69,7 @@ const doubanImageProxyTypeOptions = [
 ];
 
 function SiteConfigContent() {
-  const { updateMenuSettings, forceUpdate } = useNavigationConfig();
+  const { updateMenuSettings } = useNavigationConfig();
   const [config, setConfig] = useState<any>(null);
 
   // 使用统一接口
@@ -228,7 +231,9 @@ function SiteConfigContent() {
 
       // 更新菜单设置，让导航立即生效
       updateMenuSettings(updatedMenuSettings);
-      forceUpdate();
+
+      // 通知其他窗口重新获取配置
+      notifyConfigUpdated();
 
       // 不重新加载配置，避免读到旧数据覆盖用户编辑的内容
     } catch (error) {

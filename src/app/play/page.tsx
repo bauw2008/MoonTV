@@ -43,6 +43,7 @@ import { ToastManager } from '@/components/Toast';
 import AcgSearch from '@/components/AcgSearch';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 /**
  * 收藏图标组件
@@ -154,6 +155,7 @@ function PlayPageClient() {
 
   // 使用NavigationConfigContext获取功能启用状态
   const { menuSettings } = useNavigationConfig();
+  const { hasPermission } = useFeaturePermission();
 
   // SkipController 相关状态
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
@@ -4160,25 +4162,26 @@ function PlayPageClient() {
                 </button>
 
                 {/* 网盘资源提示按钮 */}
-                {menuSettings.showNetDiskSearch && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // 触发网盘搜索（如果还没搜索过）
-                      if (!netdiskResults && !netdiskLoading && videoTitle) {
-                        handleNetDiskSearch(videoTitle);
-                      }
-                      // 打开网盘模态框
-                      setShowNetdiskModal(true);
-                    }}
-                    className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
-                    title='网盘资源'
-                  >
-                    <div className='w-7 h-7 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-md'>
-                      <Cloud className='w-4 h-4' />
-                    </div>
-                  </button>
-                )}
+                {menuSettings.showNetDiskSearch &&
+                  hasPermission('netdisk-search') && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 触发网盘搜索（如果还没搜索过）
+                        if (!netdiskResults && !netdiskLoading && videoTitle) {
+                          handleNetDiskSearch(videoTitle);
+                        }
+                        // 打开网盘模态框
+                        setShowNetdiskModal(true);
+                      }}
+                      className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
+                      title='网盘资源'
+                    >
+                      <div className='w-7 h-7 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-md'>
+                        <Cloud className='w-4 h-4' />
+                      </div>
+                    </button>
+                  )}
               </h1>
 
               {/* 关键信息行 */}

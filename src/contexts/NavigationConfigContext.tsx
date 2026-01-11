@@ -25,7 +25,8 @@ interface NavigationConfigContextType {
   customCategories: CustomCategory[];
   updateCustomCategories: (categories: CustomCategory[]) => void;
   refreshConfig: () => void;
-  forceUpdate: () => void;
+  syncToServer: () => Promise<boolean>;
+  storageType: string;
 }
 
 const NavigationConfigContext =
@@ -34,11 +35,6 @@ const NavigationConfigContext =
 export const useNavigationConfig = () => {
   const context = useContext(NavigationConfigContext);
   if (!context) {
-    // 在开发环境下提供更详细的错误信息
-    if (process.env.NODE_ENV === 'development') {
-      // 静默处理错误
-    }
-
     // 提供默认值以防止应用崩溃
     const defaultContext: NavigationConfigContextType = {
       menuSettings: {
@@ -58,7 +54,8 @@ export const useNavigationConfig = () => {
       customCategories: [],
       updateCustomCategories: () => {},
       refreshConfig: () => {},
-      forceUpdate: () => {},
+      syncToServer: async () => false,
+      storageType: 'localstorage',
     };
 
     return defaultContext;
@@ -69,6 +66,9 @@ export const useNavigationConfig = () => {
 interface NavigationConfigProviderProps {
   children: ReactNode;
 }
+
+// BroadcastChannel 名称
+const CONFIG_CHANNEL = 'vidora-config-channel';
 
 export const NavigationConfigProvider: React.FC<
   NavigationConfigProviderProps
@@ -88,199 +88,148 @@ export const NavigationConfigProvider: React.FC<
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>(
     [],
   );
+  const [storageType, setStorageType] = useState<string>('localstorage');
 
-  // 初始化配置
-  const refreshConfig = () => {
+  // 获取存储类型
+  const getStorageType = (): string => {
     if (typeof window !== 'undefined') {
-      // 优先从localStorage读取最新配置
-      try {
-        const savedSettings = localStorage.getItem('vidora-menu-settings');
-        if (savedSettings) {
-          const parsedSettings = JSON.parse(savedSettings);
-          // 静默处理配置加载
-          setMenuSettings(parsedSettings);
-        }
-
-        const savedCategories = localStorage.getItem(
-          'vidora-custom-categories',
-        );
-        if (savedCategories) {
-          const parsedCategories = JSON.parse(savedCategories);
-          // 静默处理分类配置加载
-          setCustomCategories(parsedCategories);
-
-          // 同时更新RUNTIME_CONFIG
-          const runtimeConfig =
-            (window as unknown as Record<string, unknown>).RUNTIME_CONFIG || {};
-          (runtimeConfig as Record<string, unknown>).CUSTOM_CATEGORIES = (
-            parsedCategories as Array<{
-              name: string;
-              type: string;
-              query: string;
-              disabled?: boolean;
-            }>
-          ).map((cat) => ({
-            name: cat.name,
-            type: cat.type,
-            query: cat.query,
-            disabled: cat.disabled,
-          }));
-          (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
-            runtimeConfig;
-          // 静默处理RUNTIME_CONFIG更新
-        }
-
-        // 如果localStorage有数据，直接返回
-        if (savedSettings || savedCategories) {
-          return;
-        }
-      } catch {
-        // 静默处理localStorage读取错误
-      }
-
-      // 备用方案：从RUNTIME_CONFIG读取或API获取
       const runtimeConfig = (window as unknown as Record<string, unknown>)
         .RUNTIME_CONFIG as any;
-      if (runtimeConfig?.MenuSettings) {
-        // 静默处理RUNTIME_CONFIG初始化
-        const defaultSettings = {
-          showMovies: runtimeConfig.MenuSettings.showMovies ?? true,
-          showTVShows: runtimeConfig.MenuSettings.showTVShows ?? true,
-          showAnime: runtimeConfig.MenuSettings.showAnime ?? true,
-          showVariety: runtimeConfig.MenuSettings.showVariety ?? true,
-          showLive: runtimeConfig.MenuSettings.showLive ?? false,
-          showTvbox: runtimeConfig.MenuSettings.showTvbox ?? false,
-          showShortDrama: runtimeConfig.MenuSettings.showShortDrama ?? false,
-          showAI:
-            runtimeConfig.MenuSettings.showAI ??
-            runtimeConfig.AIRecommendConfig?.enabled ??
-            false,
-          showNetDiskSearch:
-            runtimeConfig.MenuSettings.showNetDiskSearch ??
-            runtimeConfig.NetDiskConfig?.enabled ??
-            false,
-          showTMDBActorSearch:
-            runtimeConfig.MenuSettings.showTMDBActorSearch ?? false,
-        };
-        setMenuSettings(defaultSettings);
-        // 同时保存到localStorage
-        localStorage.setItem(
-          'vidora-menu-settings',
-          JSON.stringify(defaultSettings),
-        );
+      return runtimeConfig?.STORAGE_TYPE || 'localstorage';
+    }
+    return 'localstorage';
+  };
+
+  // 判断是否为服务端模式（非 localstorage）
+  const isServerMode = (): boolean => {
+    const type = getStorageType();
+    return type !== 'localstorage';
+  };
+
+  // 从 API 获取配置
+  const fetchConfigFromAPI = async () => {
+    try {
+      const response = await fetch('/api/public-config', {
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+        cache: 'no-store',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data?.MenuSettings) {
+          setMenuSettings(data.MenuSettings);
+        }
+
+        if (data?.CustomCategories) {
+          const categories: CustomCategory[] = data.CustomCategories.map(
+            (cat: any) => ({
+              name: cat.name,
+              type: cat.type as 'movie' | 'tv',
+              query: cat.query,
+              disabled: cat.disabled ?? false,
+              from: cat.from || 'config',
+            }),
+          );
+          setCustomCategories(categories);
+        }
+      }
+    } catch {
+      // API 请求失败，静默处理
+    }
+  };
+
+  // 初始化配置
+  const refreshConfig = async () => {
+    const currentStorageType = getStorageType();
+    setStorageType(currentStorageType);
+
+    if (typeof window !== 'undefined') {
+      // 服务端模式：从 API 获取最新配置
+      if (isServerMode()) {
+        await fetchConfigFromAPI();
+      } else {
+        // localstorage 模式：从 localStorage 读取配置
+        try {
+          const savedSettings = localStorage.getItem('vidora-menu-settings');
+          if (savedSettings) {
+            const parsedSettings = JSON.parse(savedSettings);
+            setMenuSettings(parsedSettings);
+          }
+
+          const savedCategories = localStorage.getItem(
+            'vidora-custom-categories',
+          );
+          if (savedCategories) {
+            const parsedCategories = JSON.parse(savedCategories);
+            setCustomCategories(parsedCategories);
+          }
+        } catch {
+          // 静默处理 localStorage 读取错误
+        }
+      }
+    }
+  };
+
+  // 同步到服务端
+  const syncToServer = async (): Promise<boolean> => {
+    if (!isServerMode()) {
+      return false;
+    }
+
+    try {
+      const response = await fetch('/api/admin/menu-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          MenuSettings: menuSettings,
+        }),
+      });
+
+      if (response.ok) {
+        return true;
       }
 
-      if (runtimeConfig && 'CUSTOM_CATEGORIES' in runtimeConfig) {
-        // 静默处理RUNTIME_CONFIG分类初始化
-        // 将RUNTIME_CONFIG中的格式转换为CustomCategory格式
-        const categories: CustomCategory[] = (
-          (runtimeConfig as any).CUSTOM_CATEGORIES as Array<{
-            name: string;
-            type: string;
-            query: string;
-            disabled?: boolean;
-            from?: string;
-          }>
-        ).map((cat) => ({
-          name: cat.name,
-          type: cat.type as 'movie' | 'tv',
-          query: cat.query,
-          disabled: false,
-          from: cat.from || 'runtime',
-        }));
-        setCustomCategories(categories);
-        // 保存到localStorage
-        localStorage.setItem(
-          'vidora-custom-categories',
-          JSON.stringify(categories),
-        );
-      }
+      return false;
+    } catch {
+      return false;
     }
   };
 
   // 更新菜单设置（立即生效）
   const updateMenuSettings = (newSettings: Partial<MenuSettings>) => {
-    // 静默处理菜单设置更新
     const updatedSettings = { ...menuSettings, ...newSettings };
     setMenuSettings(updatedSettings);
 
-    // 同时更新全局配置
-    if (typeof window !== 'undefined') {
-      const runtimeConfig =
-        (window as unknown as Record<string, unknown>).RUNTIME_CONFIG || {};
-      (runtimeConfig as any).MenuSettings = updatedSettings;
-      (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
-        runtimeConfig;
-
-      // 保存到localStorage，实现跨窗口同步
+    // localstorage 模式：保存到 localStorage
+    if (!isServerMode()) {
       try {
         localStorage.setItem(
           'vidora-menu-settings',
           JSON.stringify(updatedSettings),
         );
-        // 静默处理localStorage保存
       } catch {
-        // 静默处理localStorage保存错误
+        // 静默处理 localStorage 保存错误
       }
     }
   };
 
   // 更新自定义分类配置（立即生效）
   const updateCustomCategories = (categories: CustomCategory[]) => {
-    // 静默处理自定义分类配置更新
     setCustomCategories(categories);
 
-    // 同时更新全局配置
-    if (typeof window !== 'undefined') {
-      const runtimeConfig =
-        (window as unknown as Record<string, unknown>).RUNTIME_CONFIG || {};
-      // 保存所有分类（包括禁用的），但标记disabled状态
-      (runtimeConfig as any).CUSTOM_CATEGORIES = categories.map((cat) => ({
-        name: cat.name,
-        type: cat.type as 'movie' | 'tv',
-        query: cat.query,
-        disabled: cat.disabled,
-      }));
-      (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
-        runtimeConfig;
-
-      // 保存到localStorage，实现跨窗口同步
+    // localstorage 模式：保存到 localStorage
+    if (!isServerMode()) {
       try {
         localStorage.setItem(
           'vidora-custom-categories',
           JSON.stringify(categories),
         );
-        // 静默处理分类配置保存
       } catch {
-        // 静默处理分类配置保存错误
+        // 静默处理 localStorage 保存错误
       }
-    }
-  };
-
-  // 强制更新（用于立即生效）
-  const forceUpdate = () => {
-    // 确保RUNTIME_CONFIG是最新的
-    if (typeof window !== 'undefined') {
-      const runtimeConfig =
-        (window as unknown as Record<string, unknown>).RUNTIME_CONFIG || {};
-      (runtimeConfig as any).CUSTOM_CATEGORIES = customCategories.map(
-        (cat) => ({
-          name: cat.name,
-          type: cat.type,
-          query: cat.query,
-          disabled: cat.disabled,
-        }),
-      );
-      (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
-        runtimeConfig;
-
-      // 触发storage事件，通知其他页面更新
-      window.dispatchEvent(
-        new Event('storage', {
-          key: 'vidora-custom-categories',
-          newValue: JSON.stringify(customCategories),
-        } as Record<string, unknown>),
-      );
     }
   };
 
@@ -289,59 +238,60 @@ export const NavigationConfigProvider: React.FC<
     return menuSettings[menuKey];
   };
 
-  // 初始化配置并监听localStorage变化（跨窗口同步）
+  // 初始化配置并监听配置变化
   useEffect(() => {
     refreshConfig();
 
-    // 监听localStorage变化，实现跨窗口同步
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'vidora-menu-settings' && e.newValue) {
-        // 静默处理跨窗口菜单配置变更
-        try {
-          const newSettings = JSON.parse(e.newValue);
-          setMenuSettings(newSettings);
-        } catch {
-          // 静默处理菜单配置解析错误
-        }
-      } else if (e.key === 'vidora-custom-categories' && e.newValue) {
-        // 静默处理跨窗口分类配置变更
-        try {
-          const newCategories = JSON.parse(e.newValue);
-          setCustomCategories(newCategories);
+    // 创建 BroadcastChannel 用于跨窗口通信
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel(CONFIG_CHANNEL);
+    } catch {
+      // BroadcastChannel 不支持（某些环境），降级到 storage 事件
+    }
 
-          // 同时更新RUNTIME_CONFIG
-          if (typeof window !== 'undefined') {
-            const runtimeConfig =
-              (window as unknown as Record<string, unknown>).RUNTIME_CONFIG ||
-              {};
-            (runtimeConfig as any).CUSTOM_CATEGORIES = (
-              newCategories as Array<{
-                name: string;
-                type: string;
-                query: string;
-                disabled?: boolean;
-              }>
-            ).map((cat) => ({
-              name: cat.name,
-              type: cat.type,
-              query: cat.query,
-              disabled: cat.disabled,
-            }));
-            (window as unknown as Record<string, unknown>).RUNTIME_CONFIG =
-              runtimeConfig;
+    // 监听 BroadcastChannel 消息（配置变更通知）
+    const handleBroadcastMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'config-updated') {
+        // 重新获取配置
+        refreshConfig();
+      }
+    };
+
+    // 监听 localStorage 变化（跨窗口同步，仅 localstorage 模式）
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!isServerMode()) {
+        if (e.key === 'vidora-menu-settings' && e.newValue) {
+          try {
+            const newSettings = JSON.parse(e.newValue);
+            setMenuSettings(newSettings);
+          } catch {
+            // 静默处理解析错误
           }
-        } catch {
-          // 静默处理分类配置解析错误
+        } else if (e.key === 'vidora-custom-categories' && e.newValue) {
+          try {
+            const newCategories = JSON.parse(e.newValue);
+            setCustomCategories(newCategories);
+          } catch {
+            // 静默处理解析错误
+          }
         }
       }
     };
 
+    if (channel) {
+      channel.addEventListener('message', handleBroadcastMessage);
+    }
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      if (channel) {
+        channel.removeEventListener('message', handleBroadcastMessage);
+        channel.close();
+      }
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, []); // 空依赖数组，只在组件挂载时执行一次
 
   const value: NavigationConfigContextType = {
     menuSettings,
@@ -350,7 +300,8 @@ export const NavigationConfigProvider: React.FC<
     customCategories,
     updateCustomCategories,
     refreshConfig,
-    forceUpdate,
+    syncToServer,
+    storageType,
   };
 
   return (
@@ -358,4 +309,17 @@ export const NavigationConfigProvider: React.FC<
       {children}
     </NavigationConfigContext.Provider>
   );
+};
+
+// 导出通知配置更新的函数（供 API 调用后使用）
+export const notifyConfigUpdated = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const channel = new BroadcastChannel(CONFIG_CHANNEL);
+      channel.postMessage({ type: 'config-updated' });
+      channel.close();
+    } catch {
+      // BroadcastChannel 不支持，忽略
+    }
+  }
 };

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getCacheTime } from '@/lib/config';
+import { getAuthInfoFromCookie } from '@/lib/auth';
+import {
+  getCacheTime,
+  getConfig,
+  hasSpecialFeaturePermission,
+} from '@/lib/config';
 import { db } from '@/lib/db';
 import {
   isTMDBEnabled,
@@ -13,6 +18,12 @@ const TMDB_CACHE_TIME = 6 * 60 * 60; // 6小时
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
+  // 检查用户权限
+  const authInfo = getAuthInfoFromCookie(request);
+  if (!authInfo || !authInfo.username) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
 
   // 获取参数
@@ -117,6 +128,21 @@ export async function GET(request: NextRequest) {
           message: '请在管理后台配置TMDB API Key并启用此功能',
         },
         { status: 503 },
+      );
+    }
+
+    // 检查用户是否有 TMDB 演员搜索权限
+    const config = await getConfig();
+    const hasPermission = await hasSpecialFeaturePermission(
+      authInfo.username,
+      'tmdb-actor-search',
+      config,
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: '您没有权限使用 TMDB 演员搜索功能' },
+        { status: 403 },
       );
     }
 

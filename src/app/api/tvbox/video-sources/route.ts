@@ -15,13 +15,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '未授权' }, { status: 401 });
     }
 
+    const currentUsername = authInfo.username;
+    const ownerUsername = process.env.USERNAME;
+
     // 检查用户权限
     const config = await getConfig();
-    const username = process.env.USERNAME;
 
-    if (authInfo.username !== username) {
+    if (currentUsername !== ownerUsername) {
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username,
+        (u) => u.username === currentUsername,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取用户的可用API站点
-    const availableSites = await getAvailableApiSites(authInfo.username);
+    const availableSites = await getAvailableApiSites(currentUsername);
 
     // 正确的18禁过滤逻辑
     let shouldFilter = false;
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (config.YellowWords && config.YellowWords.length > 0) {
       // 检查用户是否需要过滤
       const userConfig = config.UserConfig.Users?.find(
-        (u) => u.username === username,
+        (u) => u.username === currentUsername,
       );
 
       // 1. 检查全局开关（主开关）

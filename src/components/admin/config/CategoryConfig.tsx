@@ -6,7 +6,10 @@ import { useEffect, useState } from 'react';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import {
+  notifyConfigUpdated,
+  useNavigationConfig,
+} from '@/contexts/NavigationConfigContext';
 
 interface CustomCategory {
   name: string;
@@ -20,7 +23,7 @@ function CategoryConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { updateCustomCategories, forceUpdate } = useNavigationConfig();
+  const { updateCustomCategories } = useNavigationConfig();
 
   const [config, setConfig] = useState<any>(null);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
@@ -148,8 +151,9 @@ function CategoryConfigContent() {
 
     // 更新导航配置，使分类立即在导航栏显示
     updateCustomCategories(latestCategories);
-    // 强制更新导航组件
-    forceUpdate();
+
+    // 通知其他窗口重新获取配置
+    notifyConfigUpdated();
 
     // 根据操作类型显示不同的提示
     let message = '分类配置已更新';

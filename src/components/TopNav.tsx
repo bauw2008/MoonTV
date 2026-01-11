@@ -680,23 +680,24 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               href='/'
               className='logo-container flex items-center space-x-3 group'
             >
-              {/* Logo图标容器 */}
-              <div className='relative'>
-                {/* 外层光晕效果 */}
-                <div className='absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300'></div>
-
-                {/* Logo主体 */}
-                <div className='relative w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300'>
-                  <span className='text-white font-bold text-base sm:text-xl logo-icon transition-transform duration-500 group-hover:rotate-180'>
-                    V
-                  </span>
-                </div>
-              </div>
-
               {/* 站点名称 */}
               <div className='relative'>
-                <span className='text-xl font-bold text-gray-900 dark:text-white hidden sm:block transition-all duration-300 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text'>
-                  {siteName || 'Vidora'}
+                <span className='text-lg sm:text-xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
+                  {(siteName || 'Vidora').split('').map((char, index) => {
+                    if (index === 0) {
+                      // 第一个字母：应用颜色和旋转效果
+                      return (
+                        <span
+                          key={index}
+                          className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'
+                        >
+                          {char}
+                        </span>
+                      );
+                    }
+                    // 其他字母：正常显示
+                    return <span key={index}>{char}</span>;
+                  })}
                 </span>
 
                 {/* 名称下方装饰线 */}

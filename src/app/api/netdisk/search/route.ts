@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +27,20 @@ export async function GET(request: NextRequest) {
       console.log('[NetDisk Search] 网盘搜索功能未启用');
       return NextResponse.json(
         { error: '网盘搜索功能未启用' },
+        { status: 403 },
+      );
+    }
+
+    // 检查用户是否有网盘搜索权限
+    const hasPermission = await hasSpecialFeaturePermission(
+      authInfo.username,
+      'netdisk-search',
+      config,
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: '您没有权限使用网盘搜索功能' },
         { status: 403 },
       );
     }

@@ -32,6 +32,11 @@ export async function middleware(request: NextRequest) {
     if (!authInfo.password || authInfo.password !== process.env.PASSWORD) {
       return handleAuthFailure(request, pathname);
     }
+    // 检查菜单访问权限
+    const menuCheckResult = await checkMenuAccess(request, pathname);
+    if (menuCheckResult) {
+      return menuCheckResult;
+    }
     return NextResponse.next();
   }
 
@@ -51,6 +56,11 @@ export async function middleware(request: NextRequest) {
 
     // 签名验证通过即可
     if (isValidSignature) {
+      // 检查菜单访问权限
+      const menuCheckResult = await checkMenuAccess(request, pathname);
+      if (menuCheckResult) {
+        return menuCheckResult;
+      }
       return NextResponse.next();
     }
   }
@@ -136,3 +146,52 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|login|register|warning|api/login|api/register|api/logout|api/cron|api/server-config|api/tvbox|api/live/merged|api/parse).*)',
   ],
 };
+
+// 路径到菜单设置的映射
+const pathToMenuMap: Record<string, string> = {
+  '/douban': 'showMovies', // 默认电影
+  '/live': 'showLive',
+  '/tvbox': 'showTvbox',
+  '/shortdrama': 'showShortDrama',
+};
+
+// 检查菜单访问权限
+async function checkMenuAccess(
+  request: NextRequest,
+  pathname: string,
+): Promise<NextResponse | null> {
+  try {
+    const authInfo = getAuthInfoFromCookie(request);
+
+    // 管理员和站长可以访问所有菜单
+    // 注意：这里无法获取用户角色，因为不能访问数据库
+    // 所以我们假设所有登录用户都可以访问所有菜单
+    // 如果需要更严格的控制，需要在前端页面中实现
+
+    // 首页和管理页面总是允许访问
+    if (
+      pathname === '/' ||
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/register') ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/play') ||
+      pathname.startsWith('/message') ||
+      pathname.startsWith('/favorites') ||
+      pathname.startsWith('/release-calendar') ||
+      pathname.startsWith('/warning')
+    ) {
+      return null;
+    }
+
+    // 在 middleware 中，我们无法获取菜单设置，因为需要访问数据库
+    // 所以我们允许所有已登录用户访问所有菜单
+    // 菜单访问权限控制在前端页面中实现（通过 NavigationConfigContext）
+
+    return null;
+  } catch (error) {
+    console.error('检查菜单访问权限失败:', error);
+    // 出错时允许访问，避免阻塞用户
+    return null;
+  }
+}

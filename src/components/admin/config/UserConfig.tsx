@@ -43,6 +43,8 @@ interface UserSettings {
     enabledApis: string[];
     aiEnabled?: boolean;
     disableYellowFilter?: boolean;
+    netDiskSearchEnabled?: boolean;
+    tmdbActorSearchEnabled?: boolean;
     videoSources?: string[];
   }>;
   AllowRegister: boolean;
@@ -353,7 +355,12 @@ function UserConfigContent() {
 
             // 1. 如果用户有独立的enabledApis，分离视频源和特殊功能
             if (finalUser.enabledApis && finalUser.enabledApis.length > 0) {
-              const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
+              const specialFeatures = [
+                'ai-recommend',
+                'disable-yellow-filter',
+                'netdisk-search',
+                'tmdb-actor-search',
+              ];
               userVideoSources = finalUser.enabledApis.filter(
                 (api) => !specialFeatures.includes(api),
               );
@@ -371,7 +378,12 @@ function UserConfigContent() {
             userTags.forEach((tagName) => {
               const tag = tagsToUse.find((t) => t.name === tagName);
               if (tag && tag.enabledApis) {
-                const specialFeatures = ['ai-recommend'];
+                const specialFeatures = [
+                  'ai-recommend',
+                  'disable-yellow-filter',
+                  'netdisk-search',
+                  'tmdb-actor-search',
+                ];
                 const tagSpecialFeatures = tag.enabledApis.filter((api) =>
                   specialFeatures.includes(api),
                 );
@@ -462,7 +474,12 @@ function UserConfigContent() {
   // 辅助函数：计算用户组的视频源数量
   const getVideoSourceCount = useCallback((tag: any) => {
     // 优先使用videoSources字段，如果没有则从enabledApis中过滤
-    const specialFeatures = ['ai-recommend', 'disable-yellow-filter'];
+    const specialFeatures = [
+      'ai-recommend',
+      'disable-yellow-filter',
+      'netdisk-search',
+      'tmdb-actor-search',
+    ];
     const videoSources =
       tag.videoSources ||
       (tag.enabledApis || []).filter(
@@ -890,6 +907,9 @@ function UserConfigContent() {
         disableYellowFilter:
           DefaultPermissions[PermissionType.DISABLE_YELLOW_FILTER],
         aiEnabled: DefaultPermissions[PermissionType.AI_RECOMMEND].length > 0,
+        netDiskSearchEnabled: DefaultPermissions[PermissionType.NETDISK_SEARCH],
+        tmdbActorSearchEnabled:
+          DefaultPermissions[PermissionType.TMDB_ACTOR_SEARCH],
       };
 
       const newSettings = {
@@ -953,6 +973,8 @@ function UserConfigContent() {
       videoSources: string[];
       disableYellowFilter: boolean;
       aiEnabled: boolean;
+      netDiskSearchEnabled: boolean;
+      tmdbActorSearchEnabled: boolean;
     }>,
     options: {
       updateIndex?: boolean;
@@ -1026,6 +1048,34 @@ function UserConfigContent() {
         if (index > -1) enabledApis.splice(index, 1);
       }
       updates.enabledApis = enabledApis;
+    } else if (
+      permissionType === 'netdisk-search' ||
+      permissionType === PermissionType.NETDISK_SEARCH
+    ) {
+      updates.netDiskSearchEnabled = checked;
+      // 更新enabledApis
+      const enabledApis = [...tag.enabledApis];
+      if (checked && !enabledApis.includes('netdisk-search')) {
+        enabledApis.push('netdisk-search');
+      } else if (!checked) {
+        const index = enabledApis.indexOf('netdisk-search');
+        if (index > -1) enabledApis.splice(index, 1);
+      }
+      updates.enabledApis = enabledApis;
+    } else if (
+      permissionType === 'tmdb-actor-search' ||
+      permissionType === PermissionType.TMDB_ACTOR_SEARCH
+    ) {
+      updates.tmdbActorSearchEnabled = checked;
+      // 更新enabledApis
+      const enabledApis = [...tag.enabledApis];
+      if (checked && !enabledApis.includes('tmdb-actor-search')) {
+        enabledApis.push('tmdb-actor-search');
+      } else if (!checked) {
+        const index = enabledApis.indexOf('tmdb-actor-search');
+        if (index > -1) enabledApis.splice(index, 1);
+      }
+      updates.enabledApis = enabledApis;
     } else {
       console.warn('未知的权限类型:', permissionType);
       return;
@@ -1052,6 +1102,15 @@ function UserConfigContent() {
       !enabledApis.includes('disable-yellow-filter')
     ) {
       enabledApis.push('disable-yellow-filter');
+    }
+    if (tag.netDiskSearchEnabled && !enabledApis.includes('netdisk-search')) {
+      enabledApis.push('netdisk-search');
+    }
+    if (
+      tag.tmdbActorSearchEnabled &&
+      !enabledApis.includes('tmdb-actor-search')
+    ) {
+      enabledApis.push('tmdb-actor-search');
     }
 
     await updateUserGroup(editingUserGroupIndex, {
@@ -1644,6 +1703,98 @@ function UserConfigContent() {
                             )}
                           </button>
                         </div>
+
+                        {/* 网盘搜索开关 */}
+                        <div className='inline-flex items-center space-x-1'>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              tag.netDiskSearchEnabled
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                            }`}
+                          >
+                            💿 网盘
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleToggleSpecialFeature(
+                                index,
+                                'netdisk-search',
+                                !tag.netDiskSearchEnabled,
+                              )
+                            }
+                            className={`w-4 h-4 rounded-full transition-colors ${
+                              tag.netDiskSearchEnabled
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
+                            }`}
+                            title={
+                              tag.netDiskSearchEnabled
+                                ? '关闭网盘搜索'
+                                : '开启网盘搜索'
+                            }
+                          >
+                            {tag.netDiskSearchEnabled && (
+                              <svg
+                                className='w-3 h-3 text-white mx-auto'
+                                fill='currentColor'
+                                viewBox='0 0 20 20'
+                              >
+                                <path
+                                  fillRule='evenodd'
+                                  d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                                  clipRule='evenodd'
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* TMDB演员搜索开关 */}
+                        <div className='inline-flex items-center space-x-1'>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              tag.tmdbActorSearchEnabled
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                            }`}
+                          >
+                            🎬 演员
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleToggleSpecialFeature(
+                                index,
+                                'tmdb-actor-search',
+                                !tag.tmdbActorSearchEnabled,
+                              )
+                            }
+                            className={`w-4 h-4 rounded-full transition-colors ${
+                              tag.tmdbActorSearchEnabled
+                                ? 'bg-purple-500 hover:bg-purple-600'
+                                : 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500'
+                            }`}
+                            title={
+                              tag.tmdbActorSearchEnabled
+                                ? '关闭TMDB演员搜索'
+                                : '开启TMDB演员搜索'
+                            }
+                          >
+                            {tag.tmdbActorSearchEnabled && (
+                              <svg
+                                className='w-3 h-3 text-white mx-auto'
+                                fill='currentColor'
+                                viewBox='0 0 20 20'
+                              >
+                                <path
+                                  fillRule='evenodd'
+                                  d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                                  clipRule='evenodd'
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-right'>
@@ -1656,6 +1807,8 @@ function UserConfigContent() {
                             const specialFeatures = [
                               'ai-recommend',
                               'disable-yellow-filter',
+                              'netdisk-search',
+                              'tmdb-actor-search',
                             ];
                             const videoSourcesOnly = (
                               tag.videoSources ||
@@ -1682,7 +1835,7 @@ function UserConfigContent() {
                 {userSettings.Tags.length === 0 && (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={6}
                       className='px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400'
                     >
                       暂无用户组，请添加用户组来管理用户权限
@@ -2221,6 +2374,8 @@ function UserConfigContent() {
                                 const specialFeatures = [
                                   'ai-recommend',
                                   'disable-yellow-filter',
+                                  'netdisk-search',
+                                  'tmdb-actor-search',
                                 ];
                                 const videoSourceCount = (
                                   user.enabledApis || []
@@ -2281,6 +2436,44 @@ function UserConfigContent() {
                                 return has18Enabled ? (
                                   <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'>
                                     🚫 18+
+                                  </span>
+                                ) : null;
+                              })()}
+
+                              {/* 网盘搜索功能显示 */}
+                              {(() => {
+                                const hasNetDiskSearchEnabled =
+                                  (user.enabledApis || []).includes(
+                                    'netdisk-search',
+                                  ) ||
+                                  (user.tags &&
+                                    user.tags.length > 0 &&
+                                    userSettings.Tags.find(
+                                      (tag) => tag.name === user.tags[0],
+                                    )?.netDiskSearchEnabled);
+
+                                return hasNetDiskSearchEnabled ? (
+                                  <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'>
+                                    💿 网盘
+                                  </span>
+                                ) : null;
+                              })()}
+
+                              {/* TMDB演员搜索功能显示 */}
+                              {(() => {
+                                const hasTmdbActorSearchEnabled =
+                                  (user.enabledApis || []).includes(
+                                    'tmdb-actor-search',
+                                  ) ||
+                                  (user.tags &&
+                                    user.tags.length > 0 &&
+                                    userSettings.Tags.find(
+                                      (tag) => tag.name === user.tags[0],
+                                    )?.tmdbActorSearchEnabled);
+
+                                return hasTmdbActorSearchEnabled ? (
+                                  <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'>
+                                    🎬 演员
                                   </span>
                                 ) : null;
                               })()}
@@ -2537,6 +2730,8 @@ function UserConfigContent() {
                         const specialFeatures = [
                           'ai-recommend',
                           'disable-yellow-filter',
+                          'netdisk-search',
+                          'tmdb-actor-search',
                         ];
                         const videoSourceCount = selectedApis.filter(
                           (api) => !specialFeatures.includes(api),

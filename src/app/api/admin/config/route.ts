@@ -139,6 +139,11 @@ export async function POST(request: NextRequest) {
     // 清除18+词汇缓存，确保新添加的关键词立即生效
     const { clearYellowWordsCache } = await import('@/lib/yellow');
     clearYellowWordsCache();
+
+    // 清除TVBox缓存，确保新的过滤词立即生效
+    const { clearTVBoxCache } = await import('@/lib/tvbox-cache');
+    await clearTVBoxCache();
+
     // 🔥 刷新所有页面的缓存，使新配置立即生效（无需重启Docker）
     revalidatePath('/', 'layout');
 

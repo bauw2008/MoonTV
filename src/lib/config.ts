@@ -274,26 +274,16 @@ async function getInitConfig(
     LiveConfig: [],
     // 添加默认过滤词
     YellowWords: [
-      '伦理片',
-      '福利',
-      '制服诱惑',
-      '国产传媒',
-      '黑丝诱惑',
-      '无码',
-      '日本无码',
-      '有码',
-      '日本有码',
-      'SWAG',
-      '色情片',
-      '同性片',
-      '福利视频',
-      '福利片',
-      '倫理片',
-      '理论片',
-      '韩国伦理',
-      '港台三级',
       '伦理',
-      '日本伦理',
+      '福利',
+      '诱惑',
+      '传媒',
+      '无码',
+      '有码',
+      'SWAG',
+      '倫理',
+      '三级',
+      '乱伦',
     ],
   };
 
@@ -495,32 +485,16 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   if (!adminConfig.YellowWords || !Array.isArray(adminConfig.YellowWords)) {
     // 初始化 YellowWords 配置
     adminConfig.YellowWords = [
-      '伦理片',
-      '福利',
-      '里番动漫',
-      '门事件',
-      '萝莉少女',
-      '制服诱惑',
-      '国产传媒',
-      'cosplay',
-      '黑丝诱惑',
-      '无码',
-      '日本无码',
-      '有码',
-      '日本有码',
-      'SWAG',
-      '网红主播',
-      '色情片',
-      '同性片',
-      '福利视频',
-      '福利片',
-      '写真热舞',
-      '倫理片',
-      '理论片',
-      '韩国伦理',
-      '港台三级',
       '伦理',
-      '日本伦理',
+      '福利',
+      '诱惑',
+      '传媒',
+      '无码',
+      '有码',
+      'SWAG',
+      '倫理',
+      '三级',
+      '乱伦',
     ];
   }
 
@@ -1006,7 +980,11 @@ export async function setCachedConfig(config: AdminConfig) {
 // 特殊功能权限检查
 export async function hasSpecialFeaturePermission(
   username: string,
-  feature: 'ai-recommend' | 'disable-yellow-filter',
+  feature:
+    | 'ai-recommend'
+    | 'disable-yellow-filter'
+    | 'netdisk-search'
+    | 'tmdb-actor-search',
   providedConfig?: AdminConfig,
 ): Promise<boolean> {
   try {

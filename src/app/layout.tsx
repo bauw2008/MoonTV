@@ -88,6 +88,25 @@ export default async function RootLayout({
     netDiskConfig = config.NetDiskConfig || { enabled: false };
   }
 
+  // 获取菜单配置
+  let menuSettings = {
+    showMovies: true,
+    showTVShows: true,
+    showAnime: true,
+    showVariety: true,
+    showLive: false,
+    showTvbox: false,
+    showShortDrama: false,
+    showAI: false,
+    showNetDiskSearch: false,
+    showTMDBActorSearch: false,
+  };
+
+  if (storageType !== 'localstorage') {
+    const config = await getConfig();
+    menuSettings = config.SiteConfig.MenuSettings || menuSettings;
+  }
+
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
   const runtimeConfig = {
     STORAGE_TYPE: process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage',
@@ -99,6 +118,8 @@ export default async function RootLayout({
     CUSTOM_CATEGORIES: customCategories,
     FLUID_SEARCH: fluidSearch,
     NetDiskConfig: netDiskConfig,
+    MenuSettings: menuSettings,
+    SiteName: siteName,
   };
 
   return (

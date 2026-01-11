@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -75,6 +75,22 @@ export async function POST(request: NextRequest) {
           error: 'AI推荐功能配置不完整。请配置AI API或启用Tavily搜索功能。',
         },
         { status: 500 },
+      );
+    }
+
+    // 检查用户是否有 AI 权限
+    const hasPermission = await hasSpecialFeaturePermission(
+      username,
+      'ai-recommend',
+      adminConfig,
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        {
+          error: '您没有权限使用 AI 推荐功能',
+        },
+        { status: 403 },
       );
     }
 
@@ -520,6 +536,24 @@ export async function GET(request: NextRequest) {
     }
 
     const username = authInfo.username;
+
+    // 检查用户是否有 AI 权限
+    const adminConfig = await getConfig();
+    const hasPermission = await hasSpecialFeaturePermission(
+      username,
+      'ai-recommend',
+      adminConfig,
+    );
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        {
+          error: '您没有权限使用 AI 推荐功能',
+        },
+        { status: 403 },
+      );
+    }
+
     const historyKey = `ai-recommend-history-${username}`;
     const history = (await db.getCache(historyKey)) || [];
 

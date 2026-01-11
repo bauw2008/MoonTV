@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 
+import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -172,10 +173,14 @@ export async function POST(request: NextRequest) {
     // 清除配置缓存，强制下次重新从数据库读取
     clearConfigCache();
 
+    // 刷新所有页面的缓存，使新配置立即生效
+    revalidatePath('/', 'layout');
+
     return NextResponse.json(
       {
         success: true,
         message: '站点配置更新成功',
+        notify: true, // 标记需要通知其他窗口
       },
       {
         headers: {

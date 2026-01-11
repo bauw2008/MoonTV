@@ -19,6 +19,7 @@ import { parseCustomTimeFormat } from '@/lib/time';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
 import PageLayout from '@/components/PageLayout';
+import { checkAndRedirectMenuAccess } from '@/lib/menu-access';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -50,6 +51,9 @@ interface LiveSource {
 }
 
 function LivePageClient() {
+  // 检查菜单访问权限
+  checkAndRedirectMenuAccess();
+
   // -----------------------------------------------------------------------------
   // 状态变量（State）
   // -----------------------------------------------------------------------------

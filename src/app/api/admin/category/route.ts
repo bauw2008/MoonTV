@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
+import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig } from '@/lib/config';
+import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -176,8 +177,14 @@ export async function POST(request: NextRequest) {
     // 持久化到存储
     await db.saveAdminConfig(adminConfig);
 
+    // 清除配置缓存，强制下次重新从数据库读取
+    clearConfigCache();
+
+    // 刷新所有页面的缓存，使新配置立即生效
+    revalidatePath('/', 'layout');
+
     return NextResponse.json(
-      { ok: true },
+      { ok: true, notify: true },
       {
         headers: {
           'Cache-Control': 'no-store',

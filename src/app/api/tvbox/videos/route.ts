@@ -34,11 +34,12 @@ export async function GET(request: NextRequest) {
 
     // 检查用户权限
     const config = await getConfig();
-    const username = process.env.USERNAME;
+    const ownerUsername = process.env.USERNAME;
+    const currentUsername = authInfo.username;
 
-    if (authInfo.username !== username) {
+    if (currentUsername !== ownerUsername) {
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username,
+        (u) => u.username === currentUsername,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     let availableSites;
     try {
-      availableSites = await getAvailableApiSites(username);
+      availableSites = await getAvailableApiSites(currentUsername);
     } catch (error) {
       console.error('获取可用站点失败:', error);
       return NextResponse.json({ error: '获取可用站点失败' }, { status: 500 });
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
 
             // 检查用户是否需要应用18+过滤
             const userConfig = tvboxConfig.UserConfig.Users?.find(
-              (u) => u.username === username,
+              (u) => u.username === currentUsername,
             );
             let shouldFilter = false;
 
@@ -210,7 +211,7 @@ export async function GET(request: NextRequest) {
             if (yellowWords && yellowWords.length > 0) {
               const tvboxConfig = await getConfig();
               const userConfig = tvboxConfig.UserConfig.Users?.find(
-                (u) => u.username === username,
+                (u) => u.username === currentUsername,
               );
               let shouldFilter = false;
 
@@ -293,7 +294,7 @@ export async function GET(request: NextRequest) {
       if (yellowWords && yellowWords.length > 0) {
         const tvboxConfig = await getConfig();
         const userConfig = tvboxConfig.UserConfig.Users?.find(
-          (u) => u.username === username,
+          (u) => u.username === currentUsername,
         );
         let shouldFilter = false;
 

@@ -37,10 +37,14 @@ import VirtualSearchGrid, {
 } from '@/components/VirtualSearchGrid';
 
 import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 function SearchPageClient() {
   // 使用NavigationConfigContext获取功能启用状态
   const { menuSettings } = useNavigationConfig();
+
+  // 检查用户权限
+  const { hasPermission } = useFeaturePermission();
 
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -1159,76 +1163,78 @@ function SearchPageClient() {
               </button>
 
               {/* 网盘资源按钮 - 只在启用时显示 */}
-              {menuSettings.showNetDiskSearch && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSearchType('netdisk');
-                    // 清除之前的网盘搜索状态
-                    setNetdiskError(null);
-                    setNetdiskResults(null);
-                    setAcgError(null);
-                    setTmdbActorResults(null);
-                    setTmdbActorError(null);
-                  }}
-                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
-                    searchType === 'netdisk'
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 scale-105'
-                      : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50'
-                  }`}
-                  title='网盘搜索'
-                >
-                  <svg
-                    className='w-5 h-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
+              {menuSettings.showNetDiskSearch &&
+                hasPermission('netdisk-search') && (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setSearchType('netdisk');
+                      // 清除之前的网盘搜索状态
+                      setNetdiskError(null);
+                      setNetdiskResults(null);
+                      setAcgError(null);
+                      setTmdbActorResults(null);
+                      setTmdbActorError(null);
+                    }}
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                      searchType === 'netdisk'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 scale-105'
+                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50'
+                    }`}
+                    title='网盘搜索'
                   >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
-                    />
-                  </svg>
-                </button>
-              )}
+                    <svg
+                      className='w-5 h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
+                      />
+                    </svg>
+                  </button>
+                )}
 
               {/* TMDB演员按钮 - 只在启用时显示 */}
-              {menuSettings.showTMDBActorSearch && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSearchType('tmdb-actor');
-                    // 清除之前的搜索状态
-                    setTmdbActorError(null);
-                    setTmdbActorResults(null);
-                    setNetdiskResults(null);
-                    setNetdiskError(null);
-                    setNetdiskTotal(0);
-                  }}
-                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
-                    searchType === 'tmdb-actor'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
-                      : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
-                  }`}
-                  title='演员搜索'
-                >
-                  <svg
-                    className='w-5 h-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
+              {menuSettings.showTMDBActorSearch &&
+                hasPermission('tmdb-actor-search') && (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setSearchType('tmdb-actor');
+                      // 清除之前的搜索状态
+                      setTmdbActorError(null);
+                      setTmdbActorResults(null);
+                      setNetdiskResults(null);
+                      setNetdiskError(null);
+                      setNetdiskTotal(0);
+                    }}
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                      searchType === 'tmdb-actor'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
+                        : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
+                    }`}
+                    title='演员搜索'
                   >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                    />
-                  </svg>
-                </button>
-              )}
+                    <svg
+                      className='w-5 h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                      />
+                    </svg>
+                  </button>
+                )}
             </div>
 
             {/* 搜索输入框 */}
