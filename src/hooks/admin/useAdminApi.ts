@@ -190,7 +190,7 @@ export const useAdminApi = () => {
         { showSuccess: true, successMessage: '用户删除成功' },
       ),
 
-    updateUserApis: (username: string, enabledApis: string[]) =>
+    updateUserVideoSources: (username: string, videoSources: string[]) =>
       callApi(
         '/api/admin/user',
         {
@@ -198,14 +198,14 @@ export const useAdminApi = () => {
           body: JSON.stringify({
             action: 'updateUserApis',
             targetUsername: username,
-            enabledApis,
+            videoSources,
           }),
         },
         { showSuccess: true, successMessage: '用户权限已更新' },
       ),
 
     // 用户组管理
-    addUserGroup: (groupName: string, enabledApis: string[]) =>
+    addUserGroup: (groupName: string, videoSources: string[]) =>
       callApi(
         '/api/admin/user',
         {
@@ -214,13 +214,13 @@ export const useAdminApi = () => {
             action: 'userGroup',
             groupAction: 'add',
             groupName,
-            enabledApis,
+            videoSources,
           }),
         },
         { showSuccess: true, successMessage: '用户组添加成功' },
       ),
 
-    editUserGroup: (groupName: string, enabledApis: string[]) =>
+    editUserGroup: (groupName: string, videoSources: string[]) =>
       callApi(
         '/api/admin/user',
         {
@@ -229,7 +229,7 @@ export const useAdminApi = () => {
             action: 'userGroup',
             groupAction: 'edit',
             groupName,
-            enabledApis,
+            videoSources,
           }),
         },
         { showSuccess: true, successMessage: '用户组更新成功' },

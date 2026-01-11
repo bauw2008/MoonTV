@@ -392,7 +392,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const { enabledApis } = body as { enabledApis?: string[] };
+        const { videoSources } = body as { videoSources?: string[] };
 
         // 权限检查：站长可配置所有人的采集源，管理员可配置普通用户和自己的采集源
         if (
@@ -407,21 +407,21 @@ export async function POST(request: NextRequest) {
         }
 
         // 更新用户的采集源权限
-        if (enabledApis && enabledApis.length > 0) {
-          targetEntry.enabledApis = enabledApis;
+        if (videoSources && videoSources.length > 0) {
+          targetEntry.videoSources = videoSources;
         } else {
           // 如果为空数组或未提供，则删除该字段，表示无限制
-          delete targetEntry.enabledApis;
+          delete targetEntry.videoSources;
         }
 
         break;
       }
       case 'userGroup': {
         // 用户组管理操作
-        const { groupAction, groupName, enabledApis } = body as {
+        const { groupAction, groupName, videoSources } = body as {
           groupAction: 'add' | 'edit' | 'delete';
           groupName: string;
-          enabledApis?: string[];
+          videoSources?: string[];
         };
 
         if (!adminConfig.UserConfig.Tags) {
@@ -439,7 +439,7 @@ export async function POST(request: NextRequest) {
             }
             adminConfig.UserConfig.Tags.push({
               name: groupName,
-              enabledApis: enabledApis || [],
+              videoSources: videoSources || [],
             });
             break;
           }
@@ -453,8 +453,8 @@ export async function POST(request: NextRequest) {
                 { status: 404 },
               );
             }
-            adminConfig.UserConfig.Tags[groupIndex].enabledApis =
-              enabledApis || [];
+            adminConfig.UserConfig.Tags[groupIndex].videoSources =
+              videoSources || [];
             break;
           }
           case 'delete': {

@@ -243,12 +243,7 @@ export const NavigationConfigProvider: React.FC<
     refreshConfig();
 
     // 创建 BroadcastChannel 用于跨窗口通信
-    let channel: BroadcastChannel | null = null;
-    try {
-      channel = new BroadcastChannel(CONFIG_CHANNEL);
-    } catch {
-      // BroadcastChannel 不支持（某些环境），降级到 storage 事件
-    }
+    const channel = new BroadcastChannel(CONFIG_CHANNEL);
 
     // 监听 BroadcastChannel 消息（配置变更通知）
     const handleBroadcastMessage = (event: MessageEvent) => {
@@ -258,38 +253,11 @@ export const NavigationConfigProvider: React.FC<
       }
     };
 
-    // 监听 localStorage 变化（跨窗口同步，仅 localstorage 模式）
-    const handleStorageChange = (e: StorageEvent) => {
-      if (!isServerMode()) {
-        if (e.key === 'vidora-menu-settings' && e.newValue) {
-          try {
-            const newSettings = JSON.parse(e.newValue);
-            setMenuSettings(newSettings);
-          } catch {
-            // 静默处理解析错误
-          }
-        } else if (e.key === 'vidora-custom-categories' && e.newValue) {
-          try {
-            const newCategories = JSON.parse(e.newValue);
-            setCustomCategories(newCategories);
-          } catch {
-            // 静默处理解析错误
-          }
-        }
-      }
-    };
-
-    if (channel) {
-      channel.addEventListener('message', handleBroadcastMessage);
-    }
-    window.addEventListener('storage', handleStorageChange);
+    channel.addEventListener('message', handleBroadcastMessage);
 
     return () => {
-      if (channel) {
-        channel.removeEventListener('message', handleBroadcastMessage);
-        channel.close();
-      }
-      window.removeEventListener('storage', handleStorageChange);
+      channel.removeEventListener('message', handleBroadcastMessage);
+      channel.close();
     };
   }, []); // 空依赖数组，只在组件挂载时执行一次
 

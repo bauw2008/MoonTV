@@ -7,14 +7,14 @@ import { getCandidates, getSpiderJar } from '@/lib/spiderJar';
 // 根据用户权限过滤源站
 function filterSourcesByUserPermissions(
   sources: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
-  user: { username: string; enabledApis?: string[]; tags?: string[] },
+  user: { username: string; videoSources?: string[]; tags?: string[] },
   tagsConfig: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
 ): any[] {
-  // 如果用户有直接指定的enabledApis，优先使用
-  if (user.enabledApis && user.enabledApis.length > 0) {
+  // 如果用户有直接指定的videoSources，优先使用
+  if (user.videoSources && user.videoSources.length > 0) {
     return sources.filter(
       (source) =>
-        !source.disabled && (user.enabledApis || []).includes(source.key),
+        !source.disabled && (user.videoSources || []).includes(source.key),
     );
   }
 
@@ -26,19 +26,19 @@ function filterSourcesByUserPermissions(
     tagsConfig.length > 0
   ) {
     // 获取用户所有标签的权限并集
-    const allowedApis = new Set<string>();
+    const allowedSources = new Set<string>();
 
     user.tags.forEach((tagName) => {
       const tag = tagsConfig.find((t) => t.name === tagName);
-      if (tag?.enabledApis) {
-        tag.enabledApis.forEach((api: string) => allowedApis.add(api));
+      if (tag?.videoSources) {
+        tag.videoSources.forEach((source: string) => allowedSources.add(source));
       }
     });
 
     // 如果用户组有权限限制，则过滤源站
-    if (allowedApis.size > 0) {
+    if (allowedSources.size > 0) {
       return sources.filter(
-        (source) => !source.disabled && allowedApis.has(source.key),
+        (source) => !source.disabled && allowedSources.has(source.key),
       );
     }
   }
@@ -741,7 +741,7 @@ export async function GET(request: NextRequest) {
 
     // 第一步：检查用户身份和用户组权限（无论有无Token都执行）
     let currentUser:
-      | { username: string; tags?: string[]; enabledApis?: string[] }
+      | { username: string; tags?: string[]; videoSources?: string[] }
       | undefined;
     let targetUser: any = undefined;
 
@@ -763,7 +763,7 @@ export async function GET(request: NextRequest) {
       currentUser = {
         username: targetUser.username,
         tags: targetUser.tags,
-        enabledApis: targetUser.enabledApis,
+        videoSources: targetUser.videoSources,
       };
 
       // 根据用户权限过滤源站

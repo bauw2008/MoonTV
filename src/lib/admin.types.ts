@@ -42,13 +42,13 @@ export interface AdminConfig {
       username: string;
       role: 'user' | 'admin' | 'owner';
       banned?: boolean;
-      enabledApis?: string[]; // 优先级高于tags限制（保留兼容性）
-      videoSources?: string[]; // 新增：用户直接配置的源
+      videoSources?: string[]; // 用户直接配置的视频源
       features?: {
-        // 新增：用户直接配置的功能开关
-        aiRecommend: boolean;
-        disableYellowFilter: boolean;
-        // 可扩展其他功能
+        // 用户直接配置的功能开关
+        aiEnabled?: boolean;
+        disableYellowFilter?: boolean;
+        netDiskSearchEnabled?: boolean;
+        tmdbActorSearchEnabled?: boolean;
       };
       tags?: string[]; // 多 tags 取并集限制
       createdAt?: number; // 创建时间（可选）
@@ -56,15 +56,11 @@ export interface AdminConfig {
     }[];
     Tags?: Array<{
       name: string;
-      enabledApis: string[]; // 向后兼容：保留enabledApis字段
+      videoSources: string[]; // 用户组的视频源配置
       disableYellowFilter?: boolean;
       aiEnabled?: boolean;
-      videoSources?: string[]; // 新增：纯采集源配置
-      features?: {
-        // 新增：功能开关配置
-        aiRecommend: boolean;
-        // 可扩展其他功能
-      };
+      netDiskSearchEnabled?: boolean;
+      tmdbActorSearchEnabled?: boolean;
     }>;
   };
   SourceConfig: {

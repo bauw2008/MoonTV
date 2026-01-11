@@ -32,7 +32,13 @@ interface User {
   lastLoginAt?: number;
   lastLoginTime?: number; // 添加这个字段以匹配数据库
   tags?: string[];
-  enabledApis?: string[];
+  videoSources?: string[];
+  features?: {
+    aiEnabled?: boolean;
+    disableYellowFilter?: boolean;
+    netDiskSearchEnabled?: boolean;
+    tmdbActorSearchEnabled?: boolean;
+  };
   userGroup?: string; // 新增用户组字段
 }
 
@@ -40,12 +46,11 @@ interface UserSettings {
   Users: User[];
   Tags: Array<{
     name: string;
-    enabledApis: string[];
+    videoSources: string[];
     aiEnabled?: boolean;
     disableYellowFilter?: boolean;
     netDiskSearchEnabled?: boolean;
     tmdbActorSearchEnabled?: boolean;
-    videoSources?: string[];
   }>;
   AllowRegister: boolean;
   RequireApproval: boolean;
@@ -349,68 +354,55 @@ function UserConfigContent() {
             // 确保用户有tags字段
             let userTags = finalUser.tags || [];
 
-            // 权限继承逻辑：分离视频源权限和特殊功能权限
+            // 权限继承逻辑：视频源权限和特殊功能权限分开处理
             let userVideoSources: string[] = [];
-            let userSpecialFeatures: string[] = [];
+            let userFeatures: {
+              aiEnabled?: boolean;
+              disableYellowFilter?: boolean;
+              netDiskSearchEnabled?: boolean;
+              tmdbActorSearchEnabled?: boolean;
+            } = {};
 
-            // 1. 如果用户有独立的enabledApis，分离视频源和特殊功能
-            if (finalUser.enabledApis && finalUser.enabledApis.length > 0) {
-              const specialFeatures = [
-                'ai-recommend',
-                'disable-yellow-filter',
-                'netdisk-search',
-                'tmdb-actor-search',
-              ];
-              userVideoSources = finalUser.enabledApis.filter(
-                (api) => !specialFeatures.includes(api),
-              );
-              userSpecialFeatures = finalUser.enabledApis.filter((api) =>
-                specialFeatures.includes(api),
-              );
-              console.log(`用户 ${finalUser.username} 有独立权限:`, {
+            // 1. 如果用户有独立的videoSources，使用它
+            if (finalUser.videoSources && finalUser.videoSources.length > 0) {
+              userVideoSources = finalUser.videoSources;
+              console.log(`用户 ${finalUser.username} 有独立视频源:`, {
                 videoSources: userVideoSources,
-                specialFeatures: userSpecialFeatures,
               });
             }
 
-            // 2. 从用户组继承特殊功能权限（仅AI功能）
-            let inheritedSpecialFeatures: string[] = [];
-            userTags.forEach((tagName) => {
-              const tag = tagsToUse.find((t) => t.name === tagName);
-              if (tag && tag.enabledApis) {
-                const specialFeatures = [
-                  'ai-recommend',
-                  'disable-yellow-filter',
-                  'netdisk-search',
-                  'tmdb-actor-search',
-                ];
-                const tagSpecialFeatures = tag.enabledApis.filter((api) =>
-                  specialFeatures.includes(api),
-                );
-                inheritedSpecialFeatures = [
-                  ...inheritedSpecialFeatures,
-                  ...tagSpecialFeatures,
-                ];
+            // 2. 如果用户有独立的features，使用它
+            if (finalUser.features) {
+              userFeatures = { ...finalUser.features };
+              console.log(`用户 ${finalUser.username} 有独立功能配置:`, {
+                features: userFeatures,
+              });
+            }
+
+            // 3. 如果用户有用户组，从用户组继承视频源和功能权限
+            if (userTags.length > 0) {
+              // 只继承第一个用户组的权限
+              const tag = tagsToUse.find((t) => t.name === userTags[0]);
+              if (tag) {
+                // 如果用户没有独立的视频源权限，则使用用户组的视频源
+                if (userVideoSources.length === 0 && tag.videoSources) {
+                  userVideoSources = tag.videoSources;
+                }
+                // 如果用户没有独立的功能配置，则使用用户组的功能配置
+                if (!userFeatures.aiEnabled) userFeatures.aiEnabled = tag.aiEnabled;
+                if (!userFeatures.disableYellowFilter) userFeatures.disableYellowFilter = tag.disableYellowFilter;
+                if (!userFeatures.netDiskSearchEnabled) userFeatures.netDiskSearchEnabled = tag.netDiskSearchEnabled;
+                if (!userFeatures.tmdbActorSearchEnabled) userFeatures.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
               }
-            });
+            }
 
-            // 3. 合并用户的特殊功能权限（用户独立权限 + 用户组继承权限）
-            const finalSpecialFeatures = [
-              ...new Set([...userSpecialFeatures, ...inheritedSpecialFeatures]),
-            ];
-
-            // 4. 构建最终的enabledApis（用户视频源 + 特殊功能）
-            finalUser.enabledApis = [
-              ...userVideoSources,
-              ...finalSpecialFeatures,
-            ];
+            // 4. 构建最终的videoSources和features
+            finalUser.videoSources = userVideoSources;
+            finalUser.features = userFeatures;
 
             console.log(`用户 ${finalUser.username} 权限继承结果:`, {
-              userVideoSources,
-              userSpecialFeatures,
-              inheritedSpecialFeatures,
-              finalSpecialFeatures,
-              finalEnabledApis: finalUser.enabledApis,
+              videoSources: finalUser.videoSources,
+              features: finalUser.features,
             });
 
             // 保留其他权限相关字段
@@ -473,19 +465,8 @@ function UserConfigContent() {
 
   // 辅助函数：计算用户组的视频源数量
   const getVideoSourceCount = useCallback((tag: any) => {
-    // 优先使用videoSources字段，如果没有则从enabledApis中过滤
-    const specialFeatures = [
-      'ai-recommend',
-      'disable-yellow-filter',
-      'netdisk-search',
-      'tmdb-actor-search',
-    ];
-    const videoSources =
-      tag.videoSources ||
-      (tag.enabledApis || []).filter(
-        (api: string) => !specialFeatures.includes(api),
-      );
-    return videoSources.length;
+    // 直接使用videoSources字段
+    return tag.videoSources?.length || 0;
   }, []);
 
   // 加载状态
@@ -676,15 +657,15 @@ function UserConfigContent() {
   // 配置用户采集源权限
   const handleConfigureUserApis = (user: any) => {
     setSelectedUser(user);
-    // 确保使用用户独立的enabledApis字段，而不是继承自用户组的权限
-    setSelectedApis(user.enabledApis || []);
+    // 确保使用用户独立的videoSources字段，而不是继承自用户组的权限
+    setSelectedApis(user.videoSources || []);
     setShowConfigureApisModal(true);
 
     // 调试信息
     console.log(`配置用户 ${user.username} 的采集权限:`, {
-      userEnabledApis: user.enabledApis,
+      userVideoSources: user.videoSources,
       userTags: user.tags,
-      // 如果用户没有独立的enabledApis，显示用户组的权限作为参考
+      // 如果用户没有独立的videoSources，显示用户组的权限作为参考
       tagPermissions:
         user.tags && user.tags.length > 0
           ? user.tags
@@ -692,7 +673,7 @@ function UserConfigContent() {
                 const tagDetails = userSettings.Tags.find(
                   (t) => t.name === tag,
                 );
-                return tagDetails ? { [tag]: tagDetails.enabledApis } : null;
+                return tagDetails ? { [tag]: tagDetails.videoSources } : null;
               })
               .filter(Boolean)
           : '无用户组',
@@ -713,14 +694,14 @@ function UserConfigContent() {
         );
 
         // 使用新的API系统
-        await userApi.updateUserApis(selectedUser.username, selectedApis);
+        await userApi.updateUserVideoSources(selectedUser.username, selectedApis);
 
         // 更新本地状态
         const updatedUsers = userSettings.Users.map((u) => {
           if (u.username === selectedUser.username) {
             return {
               ...u,
-              enabledApis: selectedApis,
+              videoSources: selectedApis,
             };
           }
           return u;
@@ -902,7 +883,6 @@ function UserConfigContent() {
       // 更新本地状态
       const newTag = {
         name: newUserGroupName.trim(),
-        enabledApis: videoSources.map((source) => source.key),
         videoSources: videoSources.map((source) => source.key),
         disableYellowFilter:
           DefaultPermissions[PermissionType.DISABLE_YELLOW_FILTER],
@@ -943,14 +923,7 @@ function UserConfigContent() {
     const tag = userSettings.Tags[index];
     if (!tag) return;
 
-    const enabledApis = new Set(tag.enabledApis || []);
-    if (checked) {
-      enabledApis.add(sourceKey);
-    } else {
-      enabledApis.delete(sourceKey);
-    }
-
-    // 同步更新videoSources字段
+    // 只更新videoSources字段
     const videoSources = [...(tag.videoSources || [])];
     if (checked && !videoSources.includes(sourceKey)) {
       videoSources.push(sourceKey);
@@ -960,7 +933,6 @@ function UserConfigContent() {
     }
 
     await updateUserGroup(index, {
-      enabledApis: Array.from(enabledApis),
       videoSources,
     });
   };
@@ -969,7 +941,6 @@ function UserConfigContent() {
   const updateUserGroup = async (
     index: number,
     updates: Partial<{
-      enabledApis: string[];
       videoSources: string[];
       disableYellowFilter: boolean;
       aiEnabled: boolean;
@@ -1025,57 +996,21 @@ function UserConfigContent() {
       permissionType === PermissionType.AI_RECOMMEND
     ) {
       updates.aiEnabled = checked;
-      // 更新enabledApis
-      const enabledApis = [...tag.enabledApis];
-      if (checked && !enabledApis.includes('ai-recommend')) {
-        enabledApis.push('ai-recommend');
-      } else if (!checked) {
-        const index = enabledApis.indexOf('ai-recommend');
-        if (index > -1) enabledApis.splice(index, 1);
-      }
-      updates.enabledApis = enabledApis;
     } else if (
       permissionType === 'disable-yellow-filter' ||
       permissionType === PermissionType.DISABLE_YELLOW_FILTER
     ) {
       updates.disableYellowFilter = checked;
-      // 更新enabledApis
-      const enabledApis = [...tag.enabledApis];
-      if (checked && !enabledApis.includes('disable-yellow-filter')) {
-        enabledApis.push('disable-yellow-filter');
-      } else if (!checked) {
-        const index = enabledApis.indexOf('disable-yellow-filter');
-        if (index > -1) enabledApis.splice(index, 1);
-      }
-      updates.enabledApis = enabledApis;
     } else if (
       permissionType === 'netdisk-search' ||
       permissionType === PermissionType.NETDISK_SEARCH
     ) {
       updates.netDiskSearchEnabled = checked;
-      // 更新enabledApis
-      const enabledApis = [...tag.enabledApis];
-      if (checked && !enabledApis.includes('netdisk-search')) {
-        enabledApis.push('netdisk-search');
-      } else if (!checked) {
-        const index = enabledApis.indexOf('netdisk-search');
-        if (index > -1) enabledApis.splice(index, 1);
-      }
-      updates.enabledApis = enabledApis;
     } else if (
       permissionType === 'tmdb-actor-search' ||
       permissionType === PermissionType.TMDB_ACTOR_SEARCH
     ) {
       updates.tmdbActorSearchEnabled = checked;
-      // 更新enabledApis
-      const enabledApis = [...tag.enabledApis];
-      if (checked && !enabledApis.includes('tmdb-actor-search')) {
-        enabledApis.push('tmdb-actor-search');
-      } else if (!checked) {
-        const index = enabledApis.indexOf('tmdb-actor-search');
-        if (index > -1) enabledApis.splice(index, 1);
-      }
-      updates.enabledApis = enabledApis;
     } else {
       console.warn('未知的权限类型:', permissionType);
       return;
@@ -1092,31 +1027,16 @@ function UserConfigContent() {
     const tag = userSettings.Tags[editingUserGroupIndex];
     if (!tag) return;
 
-    // 更新enabledApis以保持兼容性（视频源 + 现有功能权限）
-    const enabledApis = [...selectedApis];
-    if (tag.aiEnabled && !enabledApis.includes('ai-recommend')) {
-      enabledApis.push('ai-recommend');
-    }
-    if (
-      tag.disableYellowFilter &&
-      !enabledApis.includes('disable-yellow-filter')
-    ) {
-      enabledApis.push('disable-yellow-filter');
-    }
-    if (tag.netDiskSearchEnabled && !enabledApis.includes('netdisk-search')) {
-      enabledApis.push('netdisk-search');
-    }
-    if (
-      tag.tmdbActorSearchEnabled &&
-      !enabledApis.includes('tmdb-actor-search')
-    ) {
-      enabledApis.push('tmdb-actor-search');
-    }
-
-    await updateUserGroup(editingUserGroupIndex, {
-      enabledApis,
+    // 只更新videoSources和features字段
+    const updates: any = {
       videoSources: selectedApis,
-    });
+    };
+    if (tag.aiEnabled) updates.aiEnabled = tag.aiEnabled;
+    if (tag.disableYellowFilter) updates.disableYellowFilter = tag.disableYellowFilter;
+    if (tag.netDiskSearchEnabled) updates.netDiskSearchEnabled = tag.netDiskSearchEnabled;
+    if (tag.tmdbActorSearchEnabled) updates.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
+
+    await updateUserGroup(editingUserGroupIndex, updates);
 
     setShowEditUserGroupModal(false);
     setEditingUserGroupIndex(null);
@@ -1588,10 +1508,10 @@ function UserConfigContent() {
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                     可用视频源
                   </th>
-                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                  <th className='px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                     特殊功能
                   </th>
-                  <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                  <th className='px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                     操作
                   </th>
                 </tr>
@@ -1614,8 +1534,8 @@ function UserConfigContent() {
                           : '无配置'}
                       </span>
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap'>
-                      <div className='flex flex-wrap gap-2'>
+                    <td className='px-6 py-4 whitespace-nowrap text-center'>
+                      <div className='inline-flex flex-wrap gap-2 justify-center'>
                         {/* AI推荐功能开关 */}
                         <div className='inline-flex items-center space-x-1'>
                           <span
@@ -1797,8 +1717,8 @@ function UserConfigContent() {
                         </div>
                       </div>
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-right'>
-                      <div className='flex space-x-2'>
+                    <td className='px-6 py-4 whitespace-nowrap text-center'>
+                      <div className='inline-flex space-x-2 justify-center'>
                         <button
                           onClick={() => {
                             setEditingUserGroupIndex(index);
@@ -1810,11 +1730,7 @@ function UserConfigContent() {
                               'netdisk-search',
                               'tmdb-actor-search',
                             ];
-                            const videoSourcesOnly = (
-                              tag.videoSources ||
-                              tag.enabledApis ||
-                              []
-                            ).filter((api) => !specialFeatures.includes(api));
+                            const videoSourcesOnly = tag.videoSources || [];
                             setSelectedApis(videoSourcesOnly);
                             setShowEditUserGroupModal(true);
                           }}
@@ -2101,9 +2017,9 @@ function UserConfigContent() {
                       {userSettings.Tags.map((group) => (
                         <option key={`group-${group.name}`} value={group.name}>
                           {group.name}{' '}
-                          {group.enabledApis && group.enabledApis.length > 0
-                            ? `(${group.enabledApis.length} 个源)`
-                            : ''}
+                          {(group.videoSources && group.videoSources.length > 0
+                            ? `(${group.videoSources.length} 个源)`
+                            : '')}
                         </option>
                       ))}
                     </select>
@@ -2162,13 +2078,13 @@ function UserConfigContent() {
                   <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[200px]'>
                     用户信息
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px]'>
+                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px]'>
                     状态
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
+                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
                     用户组
                   </th>
-                  <th className='text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
+                  <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]'>
                     采集源权限
                   </th>
                   <th className='text-center py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[200px]'>
@@ -2277,8 +2193,8 @@ function UserConfigContent() {
                         </td>
 
                         {/* 状态列 */}
-                        <td className='py-4 px-4'>
-                          <div className='space-y-3'>
+                        <td className='py-4 px-4 text-center'>
+                          <div className='space-y-3 inline-block text-left'>
                             {/* 账户状态 */}
                             <button
                               onClick={async () => {
@@ -2377,11 +2293,7 @@ function UserConfigContent() {
                                   'netdisk-search',
                                   'tmdb-actor-search',
                                 ];
-                                const videoSourceCount = (
-                                  user.enabledApis || []
-                                ).filter(
-                                  (api) => !specialFeatures.includes(api),
-                                ).length;
+                                const videoSourceCount = user.videoSources?.length || 0;
 
                                 return (
                                   <span
@@ -2404,9 +2316,7 @@ function UserConfigContent() {
                               {(() => {
                                 // 检查用户或用户组是否启用了AI功能
                                 const hasAiEnabled =
-                                  (user.enabledApis || []).includes(
-                                    'ai-recommend',
-                                  ) ||
+                                  (user.features?.aiEnabled) ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2424,9 +2334,7 @@ function UserConfigContent() {
                               {(() => {
                                 // 检查用户或用户组是否启用了18+功能
                                 const has18Enabled =
-                                  (user.enabledApis || []).includes(
-                                    'disable-yellow-filter',
-                                  ) ||
+                                  (user.features?.disableYellowFilter) ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2443,9 +2351,7 @@ function UserConfigContent() {
                               {/* 网盘搜索功能显示 */}
                               {(() => {
                                 const hasNetDiskSearchEnabled =
-                                  (user.enabledApis || []).includes(
-                                    'netdisk-search',
-                                  ) ||
+                                  (user.features?.netDiskSearchEnabled) ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(
@@ -2462,9 +2368,7 @@ function UserConfigContent() {
                               {/* TMDB演员搜索功能显示 */}
                               {(() => {
                                 const hasTmdbActorSearchEnabled =
-                                  (user.enabledApis || []).includes(
-                                    'tmdb-actor-search',
-                                  ) ||
+                                  (user.features?.tmdbActorSearchEnabled) ||
                                   (user.tags &&
                                     user.tags.length > 0 &&
                                     userSettings.Tags.find(

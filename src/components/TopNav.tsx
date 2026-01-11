@@ -675,7 +675,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       <div className='relative px-4 sm:px-6 lg:px-8'>
         <div className='flex justify-between items-center h-12'>
           {/* Logo */}
-          <div className='flex items-center flex-1'>
+          <div className='flex items-center flex-none'>
             <Link
               href='/'
               className='logo-container flex items-center space-x-3 group'
@@ -788,7 +788,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           </div>
 
           {/* Right side items */}
-          <div className='flex items-center justify-end flex-1 space-x-3 sm:space-x-4'>
+          <div className='flex items-center justify-end flex-none space-x-3 sm:space-x-4'>
             {/* Search icon */}
             <button
               onClick={() => router.push('/search')}

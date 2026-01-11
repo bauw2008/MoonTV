@@ -133,16 +133,16 @@ export async function POST(request: NextRequest) {
         // 清理用户组权限
         if (adminConfig.UserConfig.Tags) {
           adminConfig.UserConfig.Tags.forEach((tag) => {
-            if (tag.enabledApis) {
-              tag.enabledApis = tag.enabledApis.filter((api) => api !== key);
+            if (tag.videoSources) {
+              tag.videoSources = tag.videoSources.filter((source) => source !== key);
             }
           });
         }
 
         // 清理用户权限
         adminConfig.UserConfig.Users.forEach((user) => {
-          if (user.enabledApis) {
-            user.enabledApis = user.enabledApis.filter((api) => api !== key);
+          if (user.videoSources) {
+            user.videoSources = user.videoSources.filter((source) => source !== key);
           }
         });
         break;
@@ -206,9 +206,9 @@ export async function POST(request: NextRequest) {
           // 清理用户组权限
           if (adminConfig.UserConfig.Tags) {
             adminConfig.UserConfig.Tags.forEach((tag) => {
-              if (tag.enabledApis) {
-                tag.enabledApis = tag.enabledApis.filter(
-                  (api) => !keysToDelete.includes(api),
+              if (tag.videoSources) {
+                tag.videoSources = tag.videoSources.filter(
+                  (source) => !keysToDelete.includes(source),
                 );
               }
             });
@@ -216,9 +216,9 @@ export async function POST(request: NextRequest) {
 
           // 清理用户权限
           adminConfig.UserConfig.Users.forEach((user) => {
-            if (user.enabledApis) {
-              user.enabledApis = user.enabledApis.filter(
-                (api) => !keysToDelete.includes(api),
+            if (user.videoSources) {
+              user.videoSources = user.videoSources.filter(
+                (source) => !keysToDelete.includes(source),
               );
             }
           });

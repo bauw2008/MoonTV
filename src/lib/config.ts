@@ -461,9 +461,9 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
 
     adminConfig.UserConfig.Tags.unshift({
       name: defaultGroupName,
-      enabledApis: availableSources, // 默认用户组有前4个视频源权限
+      videoSources: availableSources, // 默认用户组有前4个视频源权限
       aiEnabled: false, // 默认不启用AI功能
-      disableYellowFilter: true, // 默认启用18+过滤
+      disableYellowFilter: false, // 默认过滤18+内容
     });
 
     // 用户 ${username} 的 ${availableSources.length} 个采集源权限: ${availableSources.join(', ') || '无'}
@@ -604,7 +604,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     username: ownerUser!,
     role: 'owner',
     banned: false,
-    enabledApis: originOwnerCfg?.enabledApis || undefined,
+    videoSources: originOwnerCfg?.videoSources || undefined,
     tags: originOwnerCfg?.tags || undefined,
   });
 
@@ -804,21 +804,16 @@ export async function resetConfig() {
 
   // 重置 YellowWords 为默认值
   adminConfig.YellowWords = [
-    '无码',
-    '日本无码',
-    '有码',
-    '日本有码',
-    'SWAG',
-    '色情片',
-    '同性片',
-    '福利视频',
-    '福利片',
-    '倫理片',
-    '理论片',
-    '韩国伦理',
-    '港台三级',
-    '伦理',
-    '日本伦理',
+      '伦理',
+      '福利',
+      '诱惑',
+      '传媒',
+      '无码',
+      '有码',
+      'SWAG',
+      '倫理',
+      '三级',
+      '乱伦',
   ];
 
   // 清空其他配置数组
@@ -932,16 +927,16 @@ export async function getUserFeatures(user?: string): Promise<{
 
   let aiEnabled = false;
   let disableYellowFilter = false;
+  let netDiskSearchEnabled = false;
+  let tmdbActorSearchEnabled = false;
   const specialFeatures: string[] = [];
 
   // 检查用户自己的功能配置
-  if (userConfig.enabledApis && userConfig.enabledApis.length > 0) {
-    userConfig.enabledApis.forEach((feature) => {
-      if (feature === 'ai-recommend') aiEnabled = true;
-      if (feature.startsWith('feature-')) {
-        specialFeatures.push(feature.replace('feature-', ''));
-      }
-    });
+  if (userConfig.features) {
+    if (userConfig.features.aiEnabled) aiEnabled = true;
+    if (userConfig.features.disableYellowFilter) disableYellowFilter = true;
+    if (userConfig.features.netDiskSearchEnabled) netDiskSearchEnabled = true;
+    if (userConfig.features.tmdbActorSearchEnabled) tmdbActorSearchEnabled = true;
   }
 
   // 检查用户组的功能配置
@@ -951,16 +946,8 @@ export async function getUserFeatures(user?: string): Promise<{
       if (tagConfig) {
         if (tagConfig.aiEnabled) aiEnabled = true;
         if (tagConfig.disableYellowFilter) disableYellowFilter = true;
-        if (tagConfig.enabledApis) {
-          tagConfig.enabledApis.forEach((feature) => {
-            if (feature === 'ai-recommend') aiEnabled = true;
-            if (feature.startsWith('feature-')) {
-              if (!specialFeatures.includes(feature.replace('feature-', ''))) {
-                specialFeatures.push(feature.replace('feature-', ''));
-              }
-            }
-          });
-        }
+        if (tagConfig.netDiskSearchEnabled) netDiskSearchEnabled = true;
+        if (tagConfig.tmdbActorSearchEnabled) tmdbActorSearchEnabled = true;
       }
     });
   }
@@ -968,6 +955,8 @@ export async function getUserFeatures(user?: string): Promise<{
   return {
     aiEnabled,
     disableYellowFilter,
+    netDiskSearchEnabled,
+    tmdbActorSearchEnabled,
     specialFeatures,
   };
 }
@@ -1012,9 +1001,18 @@ export async function hasSpecialFeaturePermission(
     }
 
     // 普通用户需要检查特殊功能权限
-    // 优先检查用户直接配置的 enabledApis
-    if (userConfig.enabledApis && userConfig.enabledApis.length > 0) {
-      return userConfig.enabledApis.includes(feature);
+    // 优先检查用户直接配置的 features
+    if (userConfig.features) {
+      switch (feature) {
+        case 'ai-recommend':
+          return userConfig.features.aiEnabled || false;
+        case 'disable-yellow-filter':
+          return userConfig.features.disableYellowFilter || false;
+        case 'netdisk-search':
+          return userConfig.features.netDiskSearchEnabled || false;
+        case 'tmdb-actor-search':
+          return userConfig.features.tmdbActorSearchEnabled || false;
+      }
     }
 
     // 如果没有直接配置，检查用户组 tags 的权限
@@ -1027,12 +1025,21 @@ export async function hasSpecialFeaturePermission(
         const tagConfig = config.UserConfig.Tags.find(
           (t) => t.name === tagName,
         );
-        if (
-          tagConfig &&
-          tagConfig.enabledApis &&
-          tagConfig.enabledApis.includes(feature)
-        ) {
-          return true;
+        if (tagConfig) {
+          switch (feature) {
+            case 'ai-recommend':
+              if (tagConfig.aiEnabled) return true;
+              break;
+            case 'disable-yellow-filter':
+              if (tagConfig.disableYellowFilter) return true;
+              break;
+            case 'netdisk-search':
+              if (tagConfig.netDiskSearchEnabled) return true;
+              break;
+            case 'tmdb-actor-search':
+              if (tagConfig.tmdbActorSearchEnabled) return true;
+              break;
+          }
         }
       }
     }
