@@ -158,6 +158,7 @@ export const UserMenu: React.FC = () => {
       label: '豆瓣 CDN By CMLiussss（腾讯云）',
     },
     { value: 'cmliussss-cdn-ali', label: '豆瓣 CDN By CMLiussss（阿里云）' },
+    { value: 'baidu-image', label: '百度图片代理' },
     { value: 'custom', label: '自定义代理' },
   ];
 
@@ -1275,11 +1276,12 @@ export const UserMenu: React.FC = () => {
 
   return (
     <>
-      <div className='relative'>
+      <div className='group relative'>
         <OptimizedAvatar
           onClick={() => setIsOpen(!isOpen)}
           size='nav'
           username={authInfo?.username}
+          className='transition-transform duration-1000 group-hover:rotate-360'
         />
       </div>
 

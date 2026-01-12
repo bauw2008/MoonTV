@@ -682,7 +682,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             >
               {/* 站点名称 */}
               <div className='relative'>
-                <span className='text-lg sm:text-xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
+                <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
                   {(siteName || 'Vidora').split('').map((char, index) => {
                     if (index === 0) {
                       // 第一个字母：应用颜色和旋转效果
@@ -695,8 +695,15 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                         </span>
                       );
                     }
-                    // 其他字母：正常显示
-                    return <span key={index}>{char}</span>;
+                    // 其他字母：应用柔和的渐变色，不抢第一个字母的风头
+                    return (
+                      <span
+                        key={index}
+                        className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'
+                      >
+                        {char}
+                      </span>
+                    );
                   })}
                 </span>
 
@@ -792,31 +799,31 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             {/* Search icon */}
             <button
               onClick={() => router.push('/search')}
-              className='relative transition-all duration-200 flex items-center justify-center'
+              className='group relative transition-all duration-200 flex items-center justify-center'
               title='搜索'
             >
-              <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
+              <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
             </button>
 
             {/* 主题切换按钮 */}
             <button
-              className='relative transition-all duration-200 flex items-center justify-center'
+              className='group relative transition-all duration-200 flex items-center justify-center'
               title='切换主题'
             >
-              <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-12' />
+              <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
             </button>
 
             {/* 提醒图标按钮 - 只在有通知时显示 */}
             {hasAnyNotifications && (
               <button
                 onClick={() => setShowNotificationModal(true)}
-                className={`relative transition-all duration-200 ${
+                className={`group relative transition-all duration-200 ${
                   !isNotificationMuted ? 'animate-pulse' : ''
                 }`}
                 title='提醒'
               >
                 <Bell
-                  className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-12 ${
+                  className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-90 ${
                     isNotificationMuted
                       ? 'text-gray-400 dark:text-gray-500'
                       : 'text-orange-500 dark:text-orange-400'
