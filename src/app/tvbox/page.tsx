@@ -20,6 +20,8 @@ import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 import VirtualVideoGrid from '@/components/VirtualVideoGrid';
+import { CapsuleSelector } from '@/components/CapsuleSelector';
+import { Pagination } from '@/components/Pagination';
 
 // ==================== 类型定义 ====================
 interface VideoSource {
@@ -325,254 +327,6 @@ function SourceSelector({
     </div>
   );
 }
-
-// ==================== 分类筛选器 ====================
-function CategoryFilter({
-  categories,
-  selectedPrimary,
-  selectedSecondary,
-  onPrimaryChange,
-  onSecondaryChange,
-}: {
-  categories: CategoryStructure;
-  selectedPrimary: number | null;
-  selectedSecondary: number | null;
-  onPrimaryChange: (categoryId: number) => void;
-  onSecondaryChange: (categoryId: number) => void;
-}) {
-  // ------------------- 主分类指示器相关 -------------------
-  const primaryContainerRef = useRef<HTMLDivElement>(null);
-  const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [primaryIndicatorStyle, setPrimaryIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
-  // ------------------- 二级分类指示器相关 -------------------
-  const secondaryContainerRef = useRef<HTMLDivElement>(null);
-  const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [secondaryIndicatorStyle, setSecondaryIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
-  // ------------------- 更新指示器位置（优化版）-------------------
-  const updateIndicatorPosition = (
-    activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
-    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ transform: string; width: string }>
-    >,
-  ) => {
-    if (
-      activeIndex < 0 ||
-      !buttonRefs.current[activeIndex] ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    // 使用 requestAnimationFrame 确保在正确的时机更新
-    requestAnimationFrame(() => {
-      const button = buttonRefs.current[activeIndex];
-      const container = containerRef.current;
-      if (!button || !container) return;
-
-      const buttonRect = button.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-
-      // 计算相对位置
-      const left = buttonRect.left - containerRect.left;
-      const width = buttonRect.width;
-
-      // 使用 transform 代替 left，GPU加速
-      setIndicatorStyle({
-        transform: `translateX(${left}px)`,
-        width: `${width}px`,
-      });
-    });
-  };
-
-  // ------------------- 渲染胶囊选择器 -------------------
-  const renderCapsuleSelector = (
-    options: Category[],
-    activeValue: number | null,
-    onChange: (value: number) => void,
-    isPrimary = false,
-  ) => {
-    const containerRef = isPrimary
-      ? primaryContainerRef
-      : secondaryContainerRef;
-    const buttonRefs = isPrimary ? primaryButtonRefs : secondaryButtonRefs;
-    const indicatorStyle = isPrimary
-      ? primaryIndicatorStyle
-      : secondaryIndicatorStyle;
-
-    return (
-      <div
-        ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm overflow-x-auto'
-      >
-        {/* 背景指示器 - 使用 transform 优化性能 */}
-        {indicatorStyle.width !== '0px' && (
-          <div
-            className='absolute top-1 bottom-1 left-0 bg-white dark:bg-gray-600 rounded-full shadow-sm will-change-transform'
-            style={{
-              transform: indicatorStyle.transform,
-              width: indicatorStyle.width,
-              transition: 'transform 300ms ease-out, width 300ms ease-out',
-            }}
-          />
-        )}
-
-        {/* 分类按钮 */}
-        {options.map((category, index) => {
-          const isActive = activeValue === category.type_id;
-          return (
-            <button
-              key={category.type_id}
-              ref={(el) => {
-                buttonRefs.current[index] = el ?? null;
-              }}
-              onClick={() => onChange(category.type_id)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 flex-shrink-0 ${
-                isActive
-                  ? 'text-gray-900 dark:text-gray-100'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-              }`}
-            >
-              {category.type_name}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ------------------- 获取二级分类 -------------------
-  const getSecondaryCategories = (primaryId: number | null) => {
-    if (primaryId === 0) {
-      return [];
-    } // “全部”不显示二级分类
-    return categories.secondary_categories.filter(
-      (cat) => cat.type_pid === primaryId,
-    ); // 获取对应二级分类
-  };
-
-  // 如果一级分类不是"全部"，二级分类显示真实分类
-  const secondaryOptions = useMemo(
-    () =>
-      selectedPrimary === 0 ? [] : getSecondaryCategories(selectedPrimary),
-    [selectedPrimary, categories.secondary_categories, getSecondaryCategories],
-  );
-
-  // ------------------- 初始化/更新指示器 -------------------
-  useEffect(() => {
-    const options = categories.primary_categories;
-    const activeIndex = options.findIndex(
-      (cat) => cat.type_id === selectedPrimary,
-    );
-    updateIndicatorPosition(
-      activeIndex >= 0 ? activeIndex : 0,
-      primaryContainerRef,
-      primaryButtonRefs,
-      setPrimaryIndicatorStyle,
-    );
-  }, [categories.primary_categories, selectedPrimary]);
-
-  useEffect(() => {
-    const activeIndex = secondaryOptions.findIndex(
-      (cat) => cat.type_id === selectedSecondary,
-    );
-    if (secondaryOptions.length > 0) {
-      updateIndicatorPosition(
-        activeIndex >= 0 ? activeIndex : 0,
-        secondaryContainerRef,
-        secondaryButtonRefs,
-        setSecondaryIndicatorStyle,
-      );
-    }
-  }, [secondaryOptions, selectedSecondary]);
-
-  return (
-    <div className='space-y-3 sm:space-y-4'>
-      {/* 一级分类 */}
-      <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-        <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-          分类
-        </span>
-        <div className='overflow-x-auto'>
-          {renderCapsuleSelector(
-            categories.primary_categories || [],
-            selectedPrimary,
-            onPrimaryChange,
-            true,
-          )}
-        </div>
-      </div>
-
-      {/* 二级分类（仅一级非“全部”时显示） */}
-      {secondaryOptions.length > 0 && (
-        <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-          <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-            类型
-          </span>
-          <div className='overflow-x-auto'>
-            {renderCapsuleSelector(
-              secondaryOptions,
-              selectedSecondary,
-              onSecondaryChange,
-              false,
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ==================== 分页 ====================
-function Pagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) {
-    return null;
-  }
-
-  return (
-    <div className='flex justify-center items-center space-x-2 mt-8'>
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className='p-2 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-gray-300 dark:border-gray-600'
-      >
-        <ChevronLeft size={20} />
-      </button>
-
-      <span className='text-sm text-gray-600 dark:text-gray-400'>
-        第 {currentPage} 页 / 共 {totalPages} 页
-      </span>
-
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className='p-2 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-gray-300 dark:border-gray-600'
-      >
-        <ChevronRight size={20} />
-      </button>
-    </div>
-  );
-}
-
-// ==================== 类型推断已在服务端完成 ====================
-// 不再需要前端推断类型，服务端已通过 inferVideoTypeFromCategory 完成
 
 // ==================== 视频列表 ====================
 function VideoList({
@@ -949,21 +703,23 @@ export default function TVBoxPage() {
     localStorage.setItem('tvbox-selected-source', key);
   };
 
-  const handlePrimaryChange = (id: number) => {
-    setSelectedPrimary(id);
+  const handlePrimaryChange = (id: string | number) => {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    setSelectedPrimary(numId);
     setCurrentPage(1);
     setIsSearchMode(false);
     setSearchKeyword('');
     setFromCache(false);
 
     const secondaries = categories.secondary_categories.filter(
-      (cat) => cat.type_pid === id,
+      (cat) => cat.type_pid === numId,
     );
     setSelectedSecondary(secondaries.length > 0 ? secondaries[0].type_id : 0);
   };
 
-  const handleSecondaryChange = (id: number) => {
-    setSelectedSecondary(id);
+  const handleSecondaryChange = (id: string | number) => {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    setSelectedSecondary(numId);
     setCurrentPage(1);
     setIsSearchMode(false);
     setSearchKeyword('');
@@ -1069,14 +825,35 @@ export default function TVBoxPage() {
             <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
             <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-green-300/20 to-teal-300/20 rounded-full blur-3xl pointer-events-none'></div>
 
-            <div className='relative'>
-              <CategoryFilter
-                categories={categories}
-                selectedPrimary={selectedPrimary}
-                selectedSecondary={selectedSecondary}
-                onPrimaryChange={handlePrimaryChange}
-                onSecondaryChange={handleSecondaryChange}
+            <div className='relative space-y-3 sm:space-y-4'>
+              {/* 一级分类 */}
+              <CapsuleSelector
+                options={categories.primary_categories.map((cat) => ({
+                  label: cat.type_name,
+                  value: cat.type_id,
+                }))}
+                value={selectedPrimary}
+                onChange={handlePrimaryChange}
+                label='分类'
+                enableVirtualScroll={true}
               />
+
+              {/* 二级分类（仅一级非"全部"时显示） */}
+              {selectedPrimary !== 0 &&
+                categories.secondary_categories.length > 0 && (
+                  <CapsuleSelector
+                    options={categories.secondary_categories
+                      .filter((cat) => cat.type_pid === selectedPrimary)
+                      .map((cat) => ({
+                        label: cat.type_name,
+                        value: cat.type_id,
+                      }))}
+                    value={selectedSecondary}
+                    onChange={handleSecondaryChange}
+                    label='类型'
+                    enableVirtualScroll={true}
+                  />
+                )}
             </div>
           </div>
         )}

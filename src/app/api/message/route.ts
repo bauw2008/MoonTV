@@ -89,9 +89,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 
+    // 获取分页参数
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+
     // 获取所有评论
-    const comments = await db.getComments();
-    return NextResponse.json({ comments });
+    const allComments = await db.getComments();
+
+    // 计算分页
+    const totalItems = allComments.length;
+    const totalPages = Math.ceil(totalItems / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedComments = allComments.slice(startIndex, endIndex);
+
+    return NextResponse.json({
+      comments: paginatedComments,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalItems,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error('获取评论失败:', error);
     return NextResponse.json({ error: '获取评论失败' }, { status: 500 });

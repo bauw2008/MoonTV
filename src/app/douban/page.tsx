@@ -818,9 +818,10 @@ function DoubanPageClient() {
 
   // 处理选择器变化
   const handlePrimaryChange = useCallback(
-    (value: string) => {
+    (value: string | number) => {
+      const strValue = String(value);
       // 只有当值真正改变时才设置loading状态
-      if (value !== primarySelection) {
+      if (strValue !== primarySelection) {
         setLoading(true);
         // 立即重置页面状态，防止基于旧状态的请求
         setCurrentPage(0);
@@ -841,26 +842,26 @@ function DoubanPageClient() {
         // 如果是自定义分类模式，同时更新一级和二级选择器
         if (type === 'custom' && customCategories.length > 0) {
           const firstCategory = customCategories.find(
-            (cat) => cat.type === value,
+            (cat) => cat.type === strValue,
           );
           if (firstCategory) {
             // 批量更新状态，避免多次触发数据加载
-            setPrimarySelection(value);
+            setPrimarySelection(strValue);
             setSecondarySelection(firstCategory.query);
           } else {
-            setPrimarySelection(value);
+            setPrimarySelection(strValue);
           }
         } else {
           // 电视剧和综艺切换到"最近热门"时，重置二级分类为第一个选项
-          if ((type === 'tv' || type === 'show') && value === '最近热门') {
-            setPrimarySelection(value);
+          if ((type === 'tv' || type === 'show') && strValue === '最近热门') {
+            setPrimarySelection(strValue);
             if (type === 'tv') {
               setSecondarySelection('tv');
             } else if (type === 'show') {
               setSecondarySelection('show');
             }
           } else {
-            setPrimarySelection(value);
+            setPrimarySelection(strValue);
           }
         }
       }
@@ -869,16 +870,17 @@ function DoubanPageClient() {
   );
 
   const handleSecondaryChange = useCallback(
-    (value: string) => {
+    (value: string | number) => {
+      const strValue = String(value);
       // 只有当值真正改变时才设置loading状态
-      if (value !== secondarySelection) {
+      if (strValue !== secondarySelection) {
         setLoading(true);
         // 立即重置页面状态，防止基于旧状态的请求
         setCurrentPage(0);
         setDoubanData([]);
         setHasMore(true);
         setIsLoadingMore(false);
-        setSecondarySelection(value);
+        setSecondarySelection(strValue);
       }
     },
     [secondarySelection],

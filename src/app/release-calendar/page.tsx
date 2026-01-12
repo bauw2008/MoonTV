@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
+import { Pagination } from '@/components/Pagination';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 
@@ -1218,28 +1219,12 @@ export default function ReleaseCalendarPage() {
 
               {/* 分页导航 */}
               {totalPages > 1 && (
-                <div className='flex justify-center mt-8 space-x-2'>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className='px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors'
-                  >
-                    上一页
-                  </button>
-                  <span className='px-4 py-2 text-gray-600 dark:text-gray-400'>
-                    第 {currentPage} 页，共 {totalPages} 页
-                  </span>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className='px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 transition-colors'
-                  >
-                    下一页
-                  </button>
+                <div className='flex justify-center mt-8'>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => setCurrentPage(page)}
+                  />
                 </div>
               )}
 

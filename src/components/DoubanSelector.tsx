@@ -2,8 +2,9 @@
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
+import { CapsuleSelector } from './CapsuleSelector';
 import MultiLevelSelector from './MultiLevelSelector';
 import WeekdaySelector from './WeekdaySelector';
 
@@ -16,8 +17,8 @@ interface DoubanSelectorProps {
   type: 'movie' | 'tv' | 'show' | 'anime';
   primarySelection?: string;
   secondarySelection?: string;
-  onPrimaryChange: (value: string) => void;
-  onSecondaryChange: (value: string) => void;
+  onPrimaryChange: (value: string | number) => void;
+  onSecondaryChange: (value: string | number) => void;
   onMultiLevelChange?: (values: Record<string, string>) => void;
   onWeekdayChange: (weekday: string) => void;
 }
@@ -31,21 +32,6 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   onMultiLevelChange,
   onWeekdayChange,
 }) => {
-  // 为不同的选择器创建独立的refs和状态
-  const primaryContainerRef = useRef<HTMLDivElement>(null);
-  const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [primaryIndicatorStyle, setPrimaryIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
-  const secondaryContainerRef = useRef<HTMLDivElement>(null);
-  const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [secondaryIndicatorStyle, setSecondaryIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
   // 电影的一级选择器选项
   const moviePrimaryOptions: SelectorOption[] = [
     { label: '全部', value: '全部' },
@@ -106,293 +92,29 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     onMultiLevelChange?.(values);
   };
 
-  // 更新指示器位置的通用函数（优化版）
-  const updateIndicatorPosition = (
-    activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
-    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ transform: string; width: string }>
-    >,
-  ) => {
-    if (
-      activeIndex < 0 ||
-      !buttonRefs.current[activeIndex] ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    // 使用 requestAnimationFrame 确保在正确的时机更新
-    requestAnimationFrame(() => {
-      const button = buttonRefs.current[activeIndex];
-      const container = containerRef.current;
-      if (!button || !container) return;
-
-      const buttonRect = button.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-
-      // 计算相对位置
-      const left = buttonRect.left - containerRect.left;
-      const width = buttonRect.width;
-
-      // 使用 transform 代替 left，GPU加速
-      setIndicatorStyle({
-        transform: `translateX(${left}px)`,
-        width: `${width}px`,
-      });
-    });
-  };
-
-  // 组件挂载时立即计算初始位置
-  useEffect(() => {
-    // 主选择器初始位置
-    if (type === 'movie') {
-      const activeIndex = moviePrimaryOptions.findIndex(
-        (opt) =>
-          opt.value === (primarySelection || moviePrimaryOptions[0].value),
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-    } else if (type === 'tv') {
-      const activeIndex = tvPrimaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || tvPrimaryOptions[1].value),
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-    } else if (type === 'anime') {
-      const activeIndex = animePrimaryOptions.findIndex(
-        (opt) =>
-          opt.value === (primarySelection || animePrimaryOptions[0].value),
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-    } else if (type === 'show') {
-      const activeIndex = showPrimaryOptions.findIndex(
-        (opt) =>
-          opt.value === (primarySelection || showPrimaryOptions[1].value),
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-    }
-
-    // 副选择器初始位置
-    let secondaryActiveIndex = -1;
-    if (type === 'movie') {
-      secondaryActiveIndex = movieSecondaryOptions.findIndex(
-        (opt) =>
-          opt.value === (secondarySelection || movieSecondaryOptions[0].value),
-      );
-    } else if (type === 'tv') {
-      secondaryActiveIndex = tvSecondaryOptions.findIndex(
-        (opt) =>
-          opt.value === (secondarySelection || tvSecondaryOptions[0].value),
-      );
-    } else if (type === 'show') {
-      secondaryActiveIndex = showSecondaryOptions.findIndex(
-        (opt) =>
-          opt.value === (secondarySelection || showSecondaryOptions[0].value),
-      );
-    }
-
-    if (secondaryActiveIndex >= 0) {
-      updateIndicatorPosition(
-        secondaryActiveIndex,
-        secondaryContainerRef,
-        secondaryButtonRefs,
-        setSecondaryIndicatorStyle,
-      );
-    }
-  }, [type]); // 只在type变化时重新计算
-
-  // 监听主选择器变化
-  useEffect(() => {
-    if (type === 'movie') {
-      const activeIndex = moviePrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection,
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-      return cleanup;
-    } else if (type === 'tv') {
-      const activeIndex = tvPrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection,
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-      return cleanup;
-    } else if (type === 'anime') {
-      const activeIndex = animePrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection,
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-      return cleanup;
-    } else if (type === 'show') {
-      const activeIndex = showPrimaryOptions.findIndex(
-        (opt) => opt.value === primarySelection,
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle,
-      );
-      return cleanup;
-    }
-  }, [primarySelection]);
-
-  // 监听副选择器变化
-  useEffect(() => {
-    let activeIndex = -1;
-    let options: SelectorOption[] = [];
-
-    if (type === 'movie') {
-      activeIndex = movieSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection,
-      );
-      options = movieSecondaryOptions;
-    } else if (type === 'tv') {
-      activeIndex = tvSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection,
-      );
-      options = tvSecondaryOptions;
-    } else if (type === 'show') {
-      activeIndex = showSecondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection,
-      );
-      options = showSecondaryOptions;
-    }
-
-    if (options.length > 0) {
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        secondaryContainerRef,
-        secondaryButtonRefs,
-        setSecondaryIndicatorStyle,
-      );
-      return cleanup;
-    }
-  }, [secondarySelection]);
-
-  // 渲染胶囊式选择器
-  const renderCapsuleSelector = (
-    options: SelectorOption[],
-    activeValue: string | undefined,
-    onChange: (value: string) => void,
-    isPrimary = false,
-  ) => {
-    const containerRef = isPrimary
-      ? primaryContainerRef
-      : secondaryContainerRef;
-    const buttonRefs = isPrimary ? primaryButtonRefs : secondaryButtonRefs;
-    const indicatorStyle = isPrimary
-      ? primaryIndicatorStyle
-      : secondaryIndicatorStyle;
-
-    return (
-      <div
-        ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
-      >
-        {/* 滑动的白色背景指示器 - 使用 transform 优化性能 */}
-        {indicatorStyle.width !== '0px' && (
-          <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 left-0 bg-white dark:bg-gray-500 rounded-full shadow-sm will-change-transform'
-            style={{
-              transform: indicatorStyle.transform,
-              width: indicatorStyle.width,
-              transition: 'transform 300ms ease-out, width 300ms ease-out',
-            }}
-          />
-        )}
-
-        {options.map((option, index) => {
-          const isActive = activeValue === option.value;
-          return (
-            <button
-              key={option.value}
-              ref={(el) => {
-                buttonRefs.current[index] = el;
-              }}
-              onClick={() => onChange(option.value)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
-                isActive
-                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
-              }`}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <div className='space-y-4 sm:space-y-6'>
       {/* 电影类型 - 显示两级选择器 */}
       {type === 'movie' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                moviePrimaryOptions,
-                primarySelection || moviePrimaryOptions[0].value,
-                onPrimaryChange,
-                true,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='分类'
+            options={moviePrimaryOptions}
+            value={primarySelection || moviePrimaryOptions[0].value}
+            onChange={onPrimaryChange}
+            enableVirtualScroll={true}
+          />
 
           {/* 二级选择器 - 只在非"全部"时显示 */}
           {primarySelection !== '全部' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-                地区
-              </span>
-              <div className='overflow-x-auto'>
-                {renderCapsuleSelector(
-                  movieSecondaryOptions,
-                  secondarySelection || movieSecondaryOptions[0].value,
-                  onSecondaryChange,
-                  false,
-                )}
-              </div>
-            </div>
+            <CapsuleSelector
+              label='地区'
+              options={movieSecondaryOptions}
+              value={secondarySelection || movieSecondaryOptions[0].value}
+              onChange={onSecondaryChange}
+              enableVirtualScroll={true}
+            />
           ) : (
             /* 多级选择器 - 只在选中"全部"时显示 */
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
@@ -415,35 +137,23 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {type === 'tv' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                tvPrimaryOptions,
-                primarySelection || tvPrimaryOptions[1].value,
-                onPrimaryChange,
-                true,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='分类'
+            options={tvPrimaryOptions}
+            value={primarySelection || tvPrimaryOptions[1].value}
+            onChange={onPrimaryChange}
+            enableVirtualScroll={true}
+          />
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || tvPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-                类型
-              </span>
-              <div className='overflow-x-auto'>
-                {renderCapsuleSelector(
-                  tvSecondaryOptions,
-                  secondarySelection || tvSecondaryOptions[0].value,
-                  onSecondaryChange,
-                  false,
-                )}
-              </div>
-            </div>
+            <CapsuleSelector
+              label='类型'
+              options={tvSecondaryOptions}
+              value={secondarySelection || tvSecondaryOptions[0].value}
+              onChange={onSecondaryChange}
+              enableVirtualScroll={true}
+            />
           ) : (primarySelection || tvPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
@@ -465,19 +175,13 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {/* 动漫类型 - 显示一级选择器和多级选择器 */}
       {type === 'anime' && (
         <div className='space-y-3 sm:space-y-4'>
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                animePrimaryOptions,
-                primarySelection || animePrimaryOptions[0].value,
-                onPrimaryChange,
-                true,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='分类'
+            options={animePrimaryOptions}
+            value={primarySelection || animePrimaryOptions[0].value}
+            onChange={onPrimaryChange}
+            enableVirtualScroll={true}
+          />
 
           {/* 筛选部分 - 根据一级选择器显示不同内容 */}
           {(primarySelection || animePrimaryOptions[0].value) === '每日放送' ? (
@@ -521,35 +225,23 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
       {type === 'show' && (
         <div className='space-y-3 sm:space-y-4'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                showPrimaryOptions,
-                primarySelection || showPrimaryOptions[1].value,
-                onPrimaryChange,
-                true,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='分类'
+            options={showPrimaryOptions}
+            value={primarySelection || showPrimaryOptions[1].value}
+            onChange={onPrimaryChange}
+            enableVirtualScroll={true}
+          />
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || showPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-                类型
-              </span>
-              <div className='overflow-x-auto'>
-                {renderCapsuleSelector(
-                  showSecondaryOptions,
-                  secondarySelection || showSecondaryOptions[0].value,
-                  onSecondaryChange,
-                  false,
-                )}
-              </div>
-            </div>
+            <CapsuleSelector
+              label='类型'
+              options={showSecondaryOptions}
+              value={secondarySelection || showSecondaryOptions[0].value}
+              onChange={onSecondaryChange}
+              enableVirtualScroll={true}
+            />
           ) : (primarySelection || showPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
             <div className='flex flex-col sm:flex-row sm:items-center gap-2'>

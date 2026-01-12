@@ -10,6 +10,7 @@ import {
   getAllPlayRecords,
 } from '@/lib/db.client';
 
+import { CapsuleSelector } from '@/components/CapsuleSelector';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
@@ -193,80 +194,22 @@ export default function FavoritesPage() {
                   {/* 复制豆瓣 DoubanSelector 的内部结构，但使用收藏的功能 */}
                   <div className='space-y-3 sm:space-y-4'>
                     {/* 类型筛选 */}
-                    <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-                      <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-                        分类
-                      </span>
-                      <div className='overflow-x-auto flex-1 min-w-0'>
-                        <div className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm min-w-max'>
-                          {/* 滑动的白色背景指示器 */}
-                          <div
-                            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
-                            style={{
-                              left: `${(filterOptions.findIndex((opt) => opt.value === favoriteFilter) * 100) / filterOptions.length}%`,
-                              width: `${100 / filterOptions.length}%`,
-                            }}
-                          />
-                          {filterOptions.map((option) => {
-                            const isActive = option.value === favoriteFilter;
-                            return (
-                              <button
-                                key={option.value}
-                                onClick={() => setFavoriteFilter(option.value)}
-                                className={`
-                                                                relative px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 z-10 whitespace-nowrap
-                                                                ${
-                                                                  isActive
-                                                                    ? 'text-gray-900 dark:text-white'
-                                                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                                                                }
-                                                              `}
-                              >
-                                {option.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                    <CapsuleSelector
+                      label='分类'
+                      options={filterOptions}
+                      value={favoriteFilter}
+                      onChange={(value) => setFavoriteFilter(String(value))}
+                      enableVirtualScroll={true}
+                    />
 
                     {/* 排序选项 */}
-                    <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-                      <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-                        排序
-                      </span>
-                      <div className='overflow-x-auto flex-1 min-w-0'>
-                        <div className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm min-w-max'>
-                          {/* 滑动的白色背景指示器 */}
-                          <div
-                            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
-                            style={{
-                              left: `${(sortOptions.findIndex((opt) => opt.value === favoriteSortBy) * 100) / sortOptions.length}%`,
-                              width: `${100 / sortOptions.length}%`,
-                            }}
-                          />
-                          {sortOptions.map((option) => {
-                            const isActive = option.value === favoriteSortBy;
-                            return (
-                              <button
-                                key={option.value}
-                                onClick={() => setFavoriteSortBy(option.value)}
-                                className={`
-                                                                relative px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 z-10 whitespace-nowrap
-                                                                ${
-                                                                  isActive
-                                                                    ? 'text-gray-900 dark:text-white'
-                                                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                                                                }
-                                                              `}
-                              >
-                                {option.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                    <CapsuleSelector
+                      label='排序'
+                      options={sortOptions}
+                      value={favoriteSortBy}
+                      onChange={(value) => setFavoriteSortBy(String(value))}
+                      enableVirtualScroll={true}
+                    />
                   </div>{' '}
                 </div>
               </div>

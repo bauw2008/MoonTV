@@ -425,28 +425,30 @@ function ShortDramaPageClient() {
 
   // 处理选择器变化
   const handleCategoryChange = useCallback(
-    (value: string) => {
-      if (value !== shortDramaCategory) {
+    (value: string | number) => {
+      const strValue = String(value);
+      if (strValue !== shortDramaCategory) {
         setLoading(true);
         setCurrentPage(0);
         setDoubanData([]);
         setHasMore(true);
         setIsLoadingMore(false);
-        setShortDramaCategory(value);
+        setShortDramaCategory(strValue);
       }
     },
     [shortDramaCategory],
   );
 
   const handleTypeChange = useCallback(
-    (value: string) => {
-      if (value !== shortDramaType) {
+    (value: string | number) => {
+      const strValue = String(value);
+      if (strValue !== shortDramaType) {
         setLoading(true);
         setCurrentPage(0);
         setDoubanData([]);
         setHasMore(true);
         setIsLoadingMore(false);
-        setShortDramaType(value);
+        setShortDramaType(strValue);
       }
     },
     [shortDramaType],

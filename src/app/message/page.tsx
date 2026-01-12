@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import { useToast } from '@/components/Toast';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
+import { Pagination } from '@/components/Pagination';
 
 interface Comment {
   id: string;
@@ -77,7 +78,7 @@ export default function MessageBoard() {
           setLoading(true);
         }
 
-        const response = await fetch(`/api/message?page=${page}&limit=20`);
+        const response = await fetch(`/api/message?page=${page}&limit=6`);
         const data = await response.json();
 
         if (append) {
@@ -1087,33 +1088,12 @@ export default function MessageBoard() {
                 </div>
 
                 {/* 分页控件 */}
-                <div className='mt-6 flex justify-center items-center gap-2'>
-                  <button
-                    onClick={() => fetchComments(currentPage - 1, false)}
-                    disabled={!hasPrevPage || loadingMore}
-                    className='px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
-                  >
-                    上一页
-                  </button>
-
-                  <span className='text-gray-700 dark:text-gray-300'>
-                    第 {currentPage} 页，共 {totalPages} 页
-                  </span>
-
-                  <button
-                    onClick={() => fetchComments(currentPage + 1, false)}
-                    disabled={!hasNextPage || loadingMore}
-                    className='px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
-                  >
-                    下一页
-                  </button>
-
-                  {loadingMore && (
-                    <div className='flex items-center gap-2 text-gray-600 dark:text-gray-400'>
-                      <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
-                      <span>加载中...</span>
-                    </div>
-                  )}
+                <div className='mt-6'>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => fetchComments(page, false)}
+                  />
                 </div>
               </div>
 

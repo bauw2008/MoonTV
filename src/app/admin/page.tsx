@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
+import { CapsuleSelector } from '@/components/CapsuleSelector';
 import AIConfig from '@/components/admin/config/AIConfig';
 import CategoryConfig from '@/components/admin/config/CategoryConfig';
 import LiveConfig from '@/components/admin/config/LiveConfig';
@@ -223,7 +224,7 @@ const configCategories = {
   basic: {
     name: '基础服务',
     items: [
-      { id: 'configFile', name: '配置管理', component: ConfigFileDynamic },
+      { id: 'configFile', name: '订阅配置', component: ConfigFileDynamic },
       { id: 'siteConfig', name: '站点配置', component: SiteConfigDynamic },
       { id: 'userConfig', name: '用户配置', component: UserConfigDynamic },
     ],
@@ -235,7 +236,7 @@ const configCategories = {
       { id: 'liveConfig', name: '直播配置', component: LiveConfigDynamic },
       {
         id: 'categoryConfig',
-        name: '分类配置',
+        name: '其他分类',
         component: CategoryConfigDynamic,
       },
       {
@@ -254,12 +255,12 @@ const configCategories = {
       { id: 'tvboxConfig', name: 'TVBox配置', component: TVBoxConfigDynamic },
       {
         id: 'netdiskConfig',
-        name: '网盘配置',
+        name: '网盘搜索',
         component: NetdiskConfigDynamic,
       },
       {
         id: 'adFilterConfig',
-        name: '广告过滤',
+        name: 'AD过滤',
         component: AdFilterConfigDynamic,
       },
     ],
@@ -291,60 +292,6 @@ function AdminContent() {
   const [activeCategory, setActiveCategory] =
     useState<keyof typeof configCategories>('basic');
   const [activeItem, setActiveItem] = useState<string>('configFile');
-
-  // 为分类选择器创建refs和状态
-  const categoryContainerRef = useRef<HTMLDivElement>(null);
-  const categoryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [categoryIndicatorStyle, setCategoryIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
-  // 为项目选择器创建refs和状态
-  const itemContainerRef = useRef<HTMLDivElement>(null);
-  const itemButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [itemIndicatorStyle, setItemIndicatorStyle] = useState<{
-    transform: string;
-    width: string;
-  }>({ transform: 'translateX(0)', width: '0px' });
-
-  // 更新指示器位置的函数（优化版）
-  const updateIndicatorPosition = (
-    activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
-    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ transform: string; width: string }>
-    >,
-  ) => {
-    if (
-      activeIndex < 0 ||
-      !buttonRefs.current[activeIndex] ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    // 使用 requestAnimationFrame 确保在正确的时机更新
-    requestAnimationFrame(() => {
-      const button = buttonRefs.current[activeIndex];
-      const container = containerRef.current;
-      if (!button || !container) return;
-
-      const buttonRect = button.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-
-      // 计算相对位置
-      const left = buttonRect.left - containerRect.left;
-      const width = buttonRect.width;
-
-      // 使用 transform 代替 left，GPU加速
-      setIndicatorStyle({
-        transform: `translateX(${left}px)`,
-        width: `${width}px`,
-      });
-    });
-  };
 
   useEffect(() => {
     setIsClient(true);
@@ -392,32 +339,6 @@ function AdminContent() {
     }
   }, [isClient, hasAccess, router]);
 
-  // 监听分类变化
-  useEffect(() => {
-    const categories = Object.keys(
-      configCategories,
-    ) as (keyof typeof configCategories)[];
-    const activeIndex = categories.findIndex((cat) => cat === activeCategory);
-    updateIndicatorPosition(
-      activeIndex,
-      categoryContainerRef,
-      categoryButtonRefs,
-      setCategoryIndicatorStyle,
-    );
-  }, [activeCategory]);
-
-  // 监听项目变化
-  useEffect(() => {
-    const items = configCategories[activeCategory].items;
-    const activeIndex = items.findIndex((item) => item.id === activeItem);
-    updateIndicatorPosition(
-      activeIndex,
-      itemContainerRef,
-      categoryButtonRefs,
-      setItemIndicatorStyle,
-    );
-  }, [activeItem, activeCategory]);
-
   // 在客户端渲染之前，显示加载状态
   if (!isClient || hasAccess === null) {
     return (
@@ -448,55 +369,6 @@ function AdminContent() {
     );
   }
 
-  // 渲染胶囊式选择器
-  const renderCapsuleSelector = (
-    options: Array<{ id: string; name: string }>,
-    activeValue: string,
-    onChange: (value: string) => void,
-    containerRef: React.RefObject<HTMLDivElement>,
-    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    indicatorStyle: { transform: string; width: string },
-  ) => {
-    return (
-      <div
-        ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
-      >
-        {/* 滑动的白色背景指示器 - 使用 transform 优化性能 */}
-        {indicatorStyle.width !== '0px' && (
-          <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 left-0 bg-white dark:bg-gray-500 rounded-full shadow-sm will-change-transform'
-            style={{
-              transform: indicatorStyle.transform,
-              width: indicatorStyle.width,
-              transition: 'transform 300ms ease-out, width 300ms ease-out',
-            }}
-          />
-        )}
-
-        {options.map((option, index) => {
-          const isActive = activeValue === option.id;
-          return (
-            <button
-              key={option.id}
-              ref={(el) => {
-                buttonRefs.current[index] = el;
-              }}
-              onClick={() => onChange(option.id)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
-                isActive
-                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
-              }`}
-            >
-              {option.name}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   // 获取当前选中的组件
   const currentCategory = configCategories[activeCategory];
   const currentItem = currentCategory.items.find(
@@ -526,50 +398,37 @@ function AdminContent() {
 
         <div className='relative space-y-4'>
           {/* 分类选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                Object.entries(configCategories).map(([key, value]) => ({
-                  id: key,
-                  name: value.name,
-                })),
-                activeCategory,
-                (value) => {
-                  setActiveCategory(value as keyof typeof configCategories);
-                  // 自动选择第一个项目
-                  const firstItem =
-                    configCategories[value as keyof typeof configCategories]
-                      .items[0];
-                  if (firstItem) {
-                    setActiveItem(firstItem.id);
-                  }
-                },
-                categoryContainerRef,
-                categoryButtonRefs,
-                categoryIndicatorStyle,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='分类'
+            options={Object.entries(configCategories).map(([key, value]) => ({
+              label: value.name,
+              value: key,
+            }))}
+            value={activeCategory}
+            onChange={(value) => {
+              setActiveCategory(value as keyof typeof configCategories);
+              // 自动选择第一个项目
+              const firstItem =
+                configCategories[value as keyof typeof configCategories]
+                  .items[0];
+              if (firstItem) {
+                setActiveItem(firstItem.id);
+              }
+            }}
+            enableVirtualScroll={true}
+          />
 
           {/* 项目选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
-              配置
-            </span>
-            <div className='overflow-x-auto'>
-              {renderCapsuleSelector(
-                currentCategory.items,
-                activeItem,
-                setActiveItem,
-                itemContainerRef,
-                itemButtonRefs,
-                itemIndicatorStyle,
-              )}
-            </div>
-          </div>
+          <CapsuleSelector
+            label='类型'
+            options={currentCategory.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            }))}
+            value={activeItem}
+            onChange={(value) => setActiveItem(String(value))}
+            enableVirtualScroll={true}
+          />
         </div>
       </div>
 
