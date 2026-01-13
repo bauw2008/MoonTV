@@ -586,7 +586,7 @@ function ShortDramaPageClient() {
                   value={searchQuery}
                   onChange={handleSearchInputChange}
                   placeholder='搜索短剧...'
-                  className='w-full px-4 py-3 pr-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-pink-500 dark:focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none'
+                  className='w-full px-4 py-3 pr-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
                   autoFocus
                 />
                 <button
@@ -603,10 +603,10 @@ function ShortDramaPageClient() {
 
           {/* 选择器组件 */}
           {!showSearch && (
-            <div className='relative bg-gradient-to-br from-white/80 via-pink-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-pink-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-pink-200/40 dark:border-pink-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
+            <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
               {/* 装饰性光晕 */}
-              <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-pink-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
-              <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-300/20 to-pink-300/20 rounded-full blur-3xl pointer-events-none'></div>
+              <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
+              <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-300/20 to-blue-300/20 rounded-full blur-3xl pointer-events-none'></div>
 
               <div className='relative'>
                 <ShortDramaSelector

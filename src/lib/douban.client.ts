@@ -392,7 +392,6 @@ export async function getDoubanCategories(
   });
   const cached = await getCache(cacheKey);
   if (cached) {
-    console.log(`豆瓣分类缓存命中: ${kind}/${category}/${type}`);
     return cached;
   }
 
