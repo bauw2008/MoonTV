@@ -75,16 +75,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const getMenuSettings = (): MenuSettings => {
     if (typeof window !== 'undefined') {
       // 客户端
-      console.log(
-        '[TopNav] 客户端读取 MenuSettings:',
-        (window as any).RUNTIME_CONFIG?.MenuSettings,
-      );
       if ((window as any).RUNTIME_CONFIG?.MenuSettings) {
         return (window as any).RUNTIME_CONFIG.MenuSettings;
       }
     } else {
       // 服务端
-      console.log('[TopNav] 服务端使用默认 MenuSettings');
     }
     // 服务端渲染时使用默认值，结构与实际配置一致
     return {
@@ -101,16 +96,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const getCustomCategories = (): any[] => {
     if (typeof window !== 'undefined') {
       // 客户端
-      console.log(
-        '[TopNav] 客户端读取 CUSTOM_CATEGORIES:',
-        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES,
-      );
       if ((window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES) {
         return (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES;
       }
     } else {
       // 服务端
-      console.log('[TopNav] 服务端使用空 CUSTOM_CATEGORIES');
     }
     return [];
   };
@@ -130,19 +120,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
   const menuItems = useMemo(() => {
-    // 调试日志
-    if (typeof window !== 'undefined') {
-      console.log(
-        '[TopNav] 客户端计算菜单项，customCategories 长度:',
-        customCategories?.length,
-      );
-    } else {
-      console.log(
-        '[TopNav] 服务端计算菜单项，customCategories 长度:',
-        customCategories?.length,
-      );
-    }
-
     const items: MenuItem[] = [];
 
     // 添加首页
@@ -177,24 +154,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     // 检查自定义分类
     if (customCategories && customCategories.length > 0) {
-      // 调试日志
-      if (typeof window !== 'undefined') {
-        console.log('[TopNav] 客户端添加"其他"菜单，customCategories 存在');
-      } else {
-        console.log('[TopNav] 服务端添加"其他"菜单，customCategories 存在');
-      }
       items.push({ icon: Star, label: '其他', href: '/douban?type=custom' });
     }
 
     // 添加收藏菜单
     items.push({ icon: Star, label: '收藏', href: '/favorites' });
-
-    // 最终日志
-    if (typeof window !== 'undefined') {
-      console.log('[TopNav] 客户端菜单项计算完成，数量:', items.length);
-    } else {
-      console.log('[TopNav] 服务端菜单项计算完成，数量:', items.length);
-    }
 
     return items;
   }, [menuSettings, customCategories, isMenuEnabled]);

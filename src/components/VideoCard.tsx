@@ -312,8 +312,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         )}&id=${actualId.replace('live_', '')}`;
         router.push(url);
       } else if (from === 'shortdrama' && actualSource && actualId) {
-        // 短剧播放：使用 shortdrama_id 参数
-        const url = `/play?title=${encodeURIComponent(actualTitle.trim())}&shortdrama_id=${actualId}`;
+        // 短剧播放：传递完整的源和ID参数，使播放页面能正确调用短剧详情API
+        const url = `/play?source=shortdrama&id=${actualId}&title=${encodeURIComponent(actualTitle.trim())}&shortdrama_id=${actualId}`;
         router.push(url);
       } else if (
         from === 'douban' ||
@@ -385,6 +385,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           'live_',
           '',
         )}&id=${actualId.replace('live_', '')}`;
+        window.open(url, '_blank');
+      } else if (from === 'shortdrama' && actualSource && actualId) {
+        // 短剧播放：传递完整的源和ID参数
+        const url = `/play?source=shortdrama&id=${actualId}&title=${encodeURIComponent(actualTitle.trim())}&shortdrama_id=${actualId}`;
         window.open(url, '_blank');
       } else if (
         from === 'douban' ||

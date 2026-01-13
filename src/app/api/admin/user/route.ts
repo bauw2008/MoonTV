@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
             { status: 404 },
           );
         }
-        // 如果用户已经是普通用户，直接返回成功（幂等操作）
+        // 如果用户已经是普通用户，直接返回成功
         if (targetEntry.role !== 'admin') {
           // 已经是user，直接返回成功
           return NextResponse.json({

@@ -1976,16 +1976,22 @@ function PlayPageClient() {
 
       let sourcesInfo: SearchResult[] = [];
 
-      // 优先使用指定源播放，失败时才搜索
+      // 处理指定源播放逻辑
       if (currentSource && currentId) {
-        // 直接获取指定源的详情（不搜索）
-        sourcesInfo = await fetchSourceDetail(currentSource, currentId);
-
-        // 如果指定源失败，才搜索
-        if (sourcesInfo.length === 0) {
+        // 短剧源：直接搜索，不尝试指定源（因为API接口限制了播放内容URL地址）
+        if (currentSource === 'shortdrama') {
           setLoadingStage('searching');
-          setLoadingMessage('🔍 指定源不可用，正在搜索其他播放源...');
+          setLoadingMessage('🔍 正在搜索短剧播放源...');
           sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
+          console.log(`🔍 短剧源: ${currentSource} - ${currentId}，直接搜索`);
+        } else {
+          // TVBox采集源：直接搜索，不先尝试指定源（避免API返回网站logo等问题）
+          setLoadingStage('searching');
+          setLoadingMessage('🔍 正在搜索播放源...');
+          sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
+          console.log(
+            `🔍 TVBox采集源: ${currentSource} - ${currentId}，直接搜索`,
+          );
         }
       } else {
         // 没有指定源，直接搜索
