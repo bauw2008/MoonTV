@@ -2,17 +2,19 @@
 
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  getShortDramaCategories,
   getRecommendedShortDramas,
+  getShortDramaCategories,
   getShortDramaList,
   searchShortDramas,
 } from '@/lib/shortdrama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import FloatingTools from '@/components/FloatingTools';
@@ -23,11 +25,16 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-
 function ShortDramaPageClient() {
   const searchParams = useSearchParams();
-  const { menuSettings } = useNavigationConfig();
+  const { menuSettings } = useMenuSettings();
+  const { hasPermission } = useFeaturePermission();
+
+  // 功能启用状态（从全局配置读取）
+  const isAIEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
+      : false;
 
   // 检查菜单访问权限
   if (typeof window !== 'undefined') {
@@ -692,7 +699,7 @@ function ShortDramaPageClient() {
 
       {/* 浮动工具组 */}
       <FloatingTools
-        showAI={menuSettings.showAI} // 从NavigationConfigContext读取AI状态
+        showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
         useVirtualization={useVirtualization}
         onToggleVirtualization={toggleVirtualization}
         showBackToTop={true}

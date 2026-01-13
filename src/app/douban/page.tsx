@@ -15,6 +15,8 @@ import {
   getDoubanRecommends,
 } from '@/lib/douban.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
@@ -26,11 +28,16 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-
 function DoubanPageClient() {
   const searchParams = useSearchParams();
-  const { menuSettings } = useNavigationConfig();
+  const { menuSettings } = useMenuSettings();
+  const { hasPermission } = useFeaturePermission();
+
+  // 功能启用状态（从全局配置读取）
+  const isAIEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
+      : false;
 
   // 检查菜单访问权限
   if (typeof window !== 'undefined') {
@@ -49,6 +56,17 @@ function DoubanPageClient() {
     } else if (disabledMenus.showMovies) {
       window.location.href = '/';
       return null;
+    } else if (type === 'custom') {
+      // 检查是否有启用的自定义分类
+      const customCategories =
+        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES || [];
+      const hasEnabledCategory = customCategories.some(
+        (cat: any) => !cat.disabled,
+      );
+      if (!hasEnabledCategory) {
+        window.location.href = '/';
+        return null;
+      }
     }
   }
 
@@ -1238,7 +1256,7 @@ function DoubanPageClient() {
 
       {/* 浮动工具组 */}
       <FloatingTools
-        showAI={menuSettings.showAI} // 从NavigationConfigContext读取AI状态
+        showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
         useVirtualization={useVirtualization}
         onToggleVirtualization={toggleVirtualization}
         showBackToTop={true}

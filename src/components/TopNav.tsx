@@ -26,7 +26,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
+import { MenuSettings } from '@/types/menu';
 
 // 类型定义
 interface MenuItem {
@@ -58,8 +58,69 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { siteName } = useSite();
-  const { menuSettings, isMenuEnabled, customCategories } =
-    useNavigationConfig();
+  const [configVersion, setConfigVersion] = useState(0);
+
+  // 监听配置更新事件
+  useEffect(() => {
+    const handleConfigUpdate = () => {
+      setConfigVersion((v) => v + 1);
+    };
+    window.addEventListener('vidora-config-update', handleConfigUpdate);
+    return () => {
+      window.removeEventListener('vidora-config-update', handleConfigUpdate);
+    };
+  }, []);
+
+  // 直接从全局运行时配置读取，避免复杂的 Context 状态管理
+  const getMenuSettings = (): MenuSettings => {
+    if (typeof window !== 'undefined') {
+      // 客户端
+      console.log(
+        '[TopNav] 客户端读取 MenuSettings:',
+        (window as any).RUNTIME_CONFIG?.MenuSettings,
+      );
+      if ((window as any).RUNTIME_CONFIG?.MenuSettings) {
+        return (window as any).RUNTIME_CONFIG.MenuSettings;
+      }
+    } else {
+      // 服务端
+      console.log('[TopNav] 服务端使用默认 MenuSettings');
+    }
+    // 服务端渲染时使用默认值，结构与实际配置一致
+    return {
+      showMovies: true,
+      showTVShows: true,
+      showAnime: true,
+      showVariety: true,
+      showLive: false,
+      showTvbox: false,
+      showShortDrama: false,
+    };
+  };
+
+  const getCustomCategories = (): any[] => {
+    if (typeof window !== 'undefined') {
+      // 客户端
+      console.log(
+        '[TopNav] 客户端读取 CUSTOM_CATEGORIES:',
+        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES,
+      );
+      if ((window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES) {
+        return (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES;
+      }
+    } else {
+      // 服务端
+      console.log('[TopNav] 服务端使用空 CUSTOM_CATEGORIES');
+    }
+    return [];
+  };
+
+  const menuSettings = getMenuSettings();
+  const customCategories = getCustomCategories();
+
+  const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
+    return menuSettings[menuKey];
+  };
 
   // 使用 useMemo 缓存 auth，避免每次渲染都调用 getAuthInfoFromBrowserCookie
   const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
@@ -69,6 +130,19 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
   const menuItems = useMemo(() => {
+    // 调试日志
+    if (typeof window !== 'undefined') {
+      console.log(
+        '[TopNav] 客户端计算菜单项，customCategories 长度:',
+        customCategories?.length,
+      );
+    } else {
+      console.log(
+        '[TopNav] 服务端计算菜单项，customCategories 长度:',
+        customCategories?.length,
+      );
+    }
+
     const items: MenuItem[] = [];
 
     // 添加首页
@@ -103,11 +177,24 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     // 检查自定义分类
     if (customCategories && customCategories.length > 0) {
+      // 调试日志
+      if (typeof window !== 'undefined') {
+        console.log('[TopNav] 客户端添加"其他"菜单，customCategories 存在');
+      } else {
+        console.log('[TopNav] 服务端添加"其他"菜单，customCategories 存在');
+      }
       items.push({ icon: Star, label: '其他', href: '/douban?type=custom' });
     }
 
     // 添加收藏菜单
     items.push({ icon: Star, label: '收藏', href: '/favorites' });
+
+    // 最终日志
+    if (typeof window !== 'undefined') {
+      console.log('[TopNav] 客户端菜单项计算完成，数量:', items.length);
+    } else {
+      console.log('[TopNav] 服务端菜单项计算完成，数量:', items.length);
+    }
 
     return items;
   }, [menuSettings, customCategories, isMenuEnabled]);
@@ -653,8 +740,126 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     );
   };
 
+  // 服务端渲染时返回空导航栏骨架，完全避免 hydration 不匹配
+  if (typeof window === 'undefined') {
+    return (
+      <nav
+        suppressHydrationWarning={true}
+        className='fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out translate-y-0 scale-100 opacity-100'
+        style={{ willChange: 'transform, opacity' }}
+        aria-hidden='true'
+      >
+        {/* 透明背景层 */}
+        <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+          {/* 页面切换进度条 - 服务端渲染时宽度为0 */}
+          <div className='absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out w-0'></div>
+        </div>
+        {/* 导航内容骨架 - 保持与客户端相同的DOM结构 */}
+        <div className='relative px-4 sm:px-6 lg:px-8'>
+          <div className='flex justify-between items-center h-12'>
+            {/* Logo骨架 */}
+            <div className='flex items-center flex-none'>
+              <a
+                href='/'
+                className='logo-container flex items-center space-x-3 group'
+              >
+                <div className='relative'>
+                  <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
+                    {/* 站点名称骨架 - 使用与客户端完全相同的CSS类名 */}
+                    <span className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'>
+                      V
+                    </span>
+                    <span className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'>
+                      i
+                    </span>
+                    <span className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'>
+                      d
+                    </span>
+                    <span className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'>
+                      o
+                    </span>
+                    <span className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'>
+                      r
+                    </span>
+                    <span className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'>
+                      a
+                    </span>
+                  </span>
+                  {/* 名称下方装饰线 */}
+                  <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
+                </div>
+              </a>
+            </div>
+            {/* 桌面导航菜单骨架 */}
+            <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
+              {/* 菜单项骨架 - 完全匹配客户端结构 */}
+              <a
+                href='/'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+              >
+                {/* 悬停背景效果 */}
+                <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
+                {/* 图标容器 */}
+                <div className='relative mr-2'>
+                  <div className='w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
+                </div>
+                <span className='relative bg-gray-300 dark:bg-gray-600 text-transparent text-xs'>
+                  首页
+                </span>
+              </a>
+              <a
+                href='/douban?type=movie'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+              >
+                {/* 悬停背景效果 */}
+                <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
+                {/* 图标容器 */}
+                <div className='relative mr-2'>
+                  <div className='w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
+                </div>
+                <span className='relative bg-gray-300 dark:bg-gray-600 text-transparent text-xs'>
+                  电影
+                </span>
+              </a>
+              <a
+                href='/douban?type=tv'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+              >
+                {/* 悬停背景效果 */}
+                <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
+                {/* 图标容器 */}
+                <div className='relative mr-2'>
+                  <div className='w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full'></div>
+                </div>
+                <span className='relative bg-gray-300 dark:bg-gray-600 text-transparent text-xs'>
+                  剧集
+                </span>
+              </a>
+            </div>
+            {/* 右侧功能按钮骨架 */}
+            <div className='flex items-center space-x-2 flex-none'>
+              <button
+                type='button'
+                className='h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full'
+              ></button>
+              <button
+                type='button'
+                className='h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full'
+              ></button>
+              <button
+                type='button'
+                className='h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full'
+              ></button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <nav
+      suppressHydrationWarning={true}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
@@ -662,6 +867,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           ? 'scale-[0.98] opacity-80'
           : 'scale-100 opacity-100'
       }`}
+      style={{ willChange: 'transform, opacity' }}
     >
       {/* 透明背景层 */}
       <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>

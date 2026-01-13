@@ -20,11 +20,13 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
+import AcgSearch from '@/components/AcgSearch';
 import FloatingTools from '@/components/FloatingTools';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
-import AcgSearch from '@/components/AcgSearch';
 import PageLayout from '@/components/PageLayout';
 import SearchResultFilter, {
   SearchFilterCategory,
@@ -36,15 +38,29 @@ import VirtualSearchGrid, {
   VirtualSearchGridRef,
 } from '@/components/VirtualSearchGrid';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-
 function SearchPageClient() {
+  console.log('[搜索页面] 组件渲染开始');
+
   // 使用NavigationConfigContext获取功能启用状态
-  const { menuSettings } = useNavigationConfig();
+  const { menuSettings } = useMenuSettings();
 
   // 检查用户权限
-  const { hasPermission } = useFeaturePermission();
+  const { hasPermission, permissions } = useFeaturePermission();
+  console.log('[搜索页面] 当前权限状态:', permissions);
+
+  // 功能启用状态（从全局配置读取）
+  const isNetDiskEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.NetDiskConfig?.enabled ?? false)
+      : false;
+  const isTMDBActorSearchEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.TMDBConfig?.enableActorSearch ?? false)
+      : false;
+  const isAIEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
+      : false;
 
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -1163,78 +1179,105 @@ function SearchPageClient() {
               </button>
 
               {/* 网盘资源按钮 - 只在启用时显示 */}
-              {menuSettings.showNetDiskSearch &&
-                hasPermission('netdisk-search') && (
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setSearchType('netdisk');
-                      // 清除之前的网盘搜索状态
-                      setNetdiskError(null);
-                      setNetdiskResults(null);
-                      setAcgError(null);
-                      setTmdbActorResults(null);
-                      setTmdbActorError(null);
-                    }}
-                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
-                      searchType === 'netdisk'
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 scale-105'
-                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50'
-                    }`}
-                    title='网盘搜索'
+              {(() => {
+                const showNetDisk =
+                  isNetDiskEnabled && hasPermission('netdisk-search');
+                console.log('[搜索页面] 网盘图标显示条件:', {
+                  isNetDiskEnabled,
+                  hasPermission: hasPermission('netdisk-search'),
+                  showNetDisk,
+                  netdiskConfig:
+                    typeof window !== 'undefined'
+                      ? (window as any).RUNTIME_CONFIG?.NetDiskConfig
+                      : null,
+                  permissions: permissions,
+                });
+                return showNetDisk;
+              })() && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    setSearchType('netdisk');
+                    // 清除之前的网盘搜索状态
+                    setNetdiskError(null);
+                    setNetdiskResults(null);
+                    setAcgError(null);
+                    setTmdbActorResults(null);
+                    setTmdbActorError(null);
+                  }}
+                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                    searchType === 'netdisk'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 scale-105'
+                      : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50'
+                  }`}
+                  title='网盘搜索'
+                >
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <svg
-                      className='w-5 h-5'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
-                      />
-                    </svg>
-                  </button>
-                )}
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z'
+                    />
+                  </svg>
+                </button>
+              )}
 
               {/* TMDB演员按钮 - 只在启用时显示 */}
-              {menuSettings.showTMDBActorSearch &&
-                hasPermission('tmdb-actor-search') && (
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setSearchType('tmdb-actor');
-                      // 清除之前的搜索状态
-                      setTmdbActorError(null);
-                      setTmdbActorResults(null);
-                      setNetdiskResults(null);
-                      setNetdiskError(null);
-                      setNetdiskTotal(0);
-                    }}
-                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
-                      searchType === 'tmdb-actor'
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
-                        : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
-                    }`}
-                    title='演员搜索'
+              {(() => {
+                const showTMDBActor =
+                  isTMDBActorSearchEnabled &&
+                  hasPermission('tmdb-actor-search');
+                console.log('[搜索页面] TMDB演员搜索图标显示条件:', {
+                  isTMDBActorSearchEnabled,
+                  hasPermission: hasPermission('tmdb-actor-search'),
+                  showTMDBActor,
+                  tmdbConfig:
+                    typeof window !== 'undefined'
+                      ? (window as any).RUNTIME_CONFIG?.TMDBConfig
+                      : null,
+                  permissions: permissions,
+                });
+                return showTMDBActor;
+              })() && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    setSearchType('tmdb-actor');
+                    // 清除之前的搜索状态
+                    setTmdbActorError(null);
+                    setTmdbActorResults(null);
+                    setNetdiskResults(null);
+                    setNetdiskError(null);
+                    setNetdiskTotal(0);
+                  }}
+                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                    searchType === 'tmdb-actor'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
+                  }`}
+                  title='演员搜索'
+                >
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <svg
-                      className='w-5 h-5'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                      />
-                    </svg>
-                  </button>
-                )}
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* 搜索输入框 */}
@@ -1763,16 +1806,31 @@ function SearchPageClient() {
       </div>
 
       {/* 浮动工具组 */}
-      <FloatingTools
-        showAI={menuSettings.showAI} // 根据导航配置显示AI
-        useVirtualization={useVirtualization}
-        onToggleVirtualization={toggleVirtualization}
-        showBackToTop={true}
-        virtualGridRef={virtualGridRef}
-        showAggregate={true} // 搜索页面显示聚合搜索
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      {(() => {
+        const showAI = isAIEnabled && hasPermission('ai-recommend');
+        console.log('[搜索页面] AI图标显示条件:', {
+          isAIEnabled,
+          hasPermission: hasPermission('ai-recommend'),
+          showAI,
+          aiConfig:
+            typeof window !== 'undefined'
+              ? (window as any).RUNTIME_CONFIG?.AIConfig
+              : null,
+          permissions: permissions,
+        });
+        return (
+          <FloatingTools
+            showAI={showAI} // 根据功能配置和用户权限显示AI
+            useVirtualization={useVirtualization}
+            onToggleVirtualization={toggleVirtualization}
+            showBackToTop={true}
+            virtualGridRef={virtualGridRef}
+            showAggregate={true} // 搜索页面显示聚合搜索
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        );
+      })()}
     </PageLayout>
   );
 }

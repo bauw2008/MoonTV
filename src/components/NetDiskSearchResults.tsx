@@ -4,7 +4,6 @@ import {
   ClipboardIcon,
   EyeIcon,
   EyeSlashIcon,
-  LinkIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 

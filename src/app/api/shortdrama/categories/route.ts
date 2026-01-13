@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { getCacheTime } from '@/lib/config';
-
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

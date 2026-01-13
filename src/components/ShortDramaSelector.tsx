@@ -1,11 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { CapsuleSelector } from './CapsuleSelector';
 import { getShortDramaCategories } from '@/lib/shortdrama.client';
+
+import { CapsuleSelector } from './CapsuleSelector';
 
 interface SelectorOption {
   label: string;

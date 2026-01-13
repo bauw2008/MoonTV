@@ -127,9 +127,9 @@ if (typeof window !== 'undefined') {
 }
 
 export {
-  SHORTDRAMA_CACHE_EXPIRE,
-  getCacheKey,
-  getCache,
-  setCache,
   cleanExpiredCache,
+  getCache,
+  getCacheKey,
+  setCache,
+  SHORTDRAMA_CACHE_EXPIRE,
 };

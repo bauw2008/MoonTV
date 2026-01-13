@@ -1,7 +1,7 @@
 'use client';
 
 import { User } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface OptimizedAvatarProps {
   onClick?: () => void;

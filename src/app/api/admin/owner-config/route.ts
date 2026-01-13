@@ -2,8 +2,8 @@ import fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 
-import { clearConfigCache } from '@/lib/config';
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { clearConfigCache } from '@/lib/config';
 
 // 获取站长配置
 export const GET = async (request: NextRequest) => {

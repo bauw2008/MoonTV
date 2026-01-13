@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
+import {
+  clearConfigCache,
+  getConfig,
+  hasSpecialFeaturePermission,
+} from '@/lib/config';
 
 export const runtime = 'nodejs';
 
@@ -30,12 +34,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 清除配置缓存，确保使用最新配置检查权限
+    clearConfigCache();
+
+    // 获取最新配置并传递给权限检查函数
+    const config = await getConfig();
+
     const hasPermission = await hasSpecialFeaturePermission(
       authInfo.username,
       feature as any,
+      config, // 传递最新配置，避免使用缓存
     );
 
-    return NextResponse.json({ hasPermission }, { status: 200 });
+    return NextResponse.json(
+      {
+        hasPermission,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error('Failed to check permission:', error);
     return NextResponse.json({ hasPermission: false }, { status: 200 });

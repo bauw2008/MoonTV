@@ -1,16 +1,12 @@
 'use client';
 
-import { Check, ChevronDown, Globe } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
-
-import {
-  notifyConfigUpdated,
-  useNavigationConfig,
-} from '@/contexts/NavigationConfigContext';
 
 import { menuLabels, MenuSettings } from '@/types/menu';
 
@@ -29,18 +25,7 @@ interface SiteConfigSettings {
   TMDBLanguage?: string;
   EnableTMDBActorSearch?: boolean;
   EnableTMDBPosters?: boolean;
-  MenuSettings: {
-    showMovies: boolean;
-    showTVShows: boolean;
-    showAnime: boolean;
-    showVariety: boolean;
-    showLive: boolean;
-    showTvbox: boolean;
-    showShortDrama: boolean;
-    showAI: boolean;
-    showNetDiskSearch: boolean;
-    showTMDBActorSearch: boolean;
-  };
+  MenuSettings: MenuSettings;
 }
 
 // menuLabels 现在从 @/types/menu 导入
@@ -70,7 +55,6 @@ const doubanImageProxyTypeOptions = [
 ];
 
 function SiteConfigContent() {
-  const { updateMenuSettings } = useNavigationConfig();
   const [config, setConfig] = useState<any>(null);
 
   // 使用统一接口
@@ -101,9 +85,6 @@ function SiteConfigContent() {
       showLive: false,
       showTvbox: false,
       showShortDrama: false,
-      showAI: false,
-      showNetDiskSearch: false,
-      showTMDBActorSearch: false,
     },
   });
 
@@ -163,11 +144,6 @@ function SiteConfigContent() {
             showTvbox: siteConfigData.MenuSettings?.showTvbox ?? false,
             showShortDrama:
               siteConfigData.MenuSettings?.showShortDrama ?? false,
-            showAI: siteConfigData.MenuSettings?.showAI ?? false,
-            showNetDiskSearch:
-              siteConfigData.MenuSettings?.showNetDiskSearch ?? false,
-            showTMDBActorSearch:
-              siteConfigData.MenuSettings?.showTMDBActorSearch ?? false,
           },
         });
       }
@@ -179,17 +155,13 @@ function SiteConfigContent() {
 
   const saveConfig = async () => {
     try {
-      // 获取当前完整的 MenuSettings，包括功能组件的字段
+      // 获取当前完整的 MenuSettings，包括导航菜单字段
       const currentMenuSettings =
         config?.Config?.SiteConfig?.MenuSettings || {};
 
-      // 合并本地修改和现有设置
+      // 更新菜单设置，只包含导航菜单相关的字段
       const updatedMenuSettings = {
-        // 使用本地状态中的值，确保包含最新的设置
-        showAI: siteSettings.MenuSettings.showAI,
-        showNetDiskSearch: siteSettings.MenuSettings.showNetDiskSearch,
-        showTMDBActorSearch: siteSettings.MenuSettings.showTMDBActorSearch,
-        // 更新基础菜单字段
+        // 导航菜单字段
         showMovies: siteSettings.MenuSettings.showMovies,
         showTVShows: siteSettings.MenuSettings.showTVShows,
         showAnime: siteSettings.MenuSettings.showAnime,

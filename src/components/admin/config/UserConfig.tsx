@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { notifyConfigUpdated } from '@/lib/global-config';
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
 import {
   useAdminApi,
@@ -739,11 +740,20 @@ function UserConfigContent() {
       showMessage?: boolean;
     } = {},
   ) => {
+    console.log('[UserConfig] saveUnifiedConfig 开始执行');
+    console.log('[UserConfig] 传入设置:', settings);
+    console.log('[UserConfig] 选项:', options);
+
     try {
       // 使用传入的设置或当前设置
       const currentSettings = settings
         ? { ...userSettings, ...settings }
         : userSettings;
+
+      console.log('[UserConfig] 准备保存的配置:', {
+        Users: currentSettings.Users?.length || 0,
+        Tags: currentSettings.Tags?.length || 0,
+      });
 
       // 保存配置
       const response = await fetch('/api/admin/config', {
@@ -756,26 +766,51 @@ function UserConfigContent() {
         }),
       });
 
+      console.log('[UserConfig] API 响应状态:', response.status);
+
       if (!response.ok) {
-        throw new Error('保存配置失败');
+        const errorText = await response.text();
+        console.error('[UserConfig] 保存配置失败，响应内容:', errorText);
+        throw new Error('保存配置失败: ' + response.status);
       }
+
+      console.log('[UserConfig] 配置保存成功');
 
       // 更新索引
       if (!options.skipIndexUpdate) {
+        console.log('[UserConfig] 开始更新索引');
         await updateIndexes('all');
+        console.log('[UserConfig] 索引更新完成');
       }
 
       // 显示成功消息
       if (options.showMessage !== false) {
+        console.log('[UserConfig] 显示成功消息');
         showSuccess('配置保存成功');
+      }
+
+      // 通知其他窗口重新获取配置
+      console.log('[UserConfig] 准备调用 notifyConfigUpdated');
+      try {
+        notifyConfigUpdated();
+        console.log('[UserConfig] notifyConfigUpdated 调用成功');
+      } catch (notifyError) {
+        console.error(
+          '[UserConfig] notifyConfigUpdated 调用失败:',
+          notifyError,
+        );
+        // 继续执行，不阻断保存流程
       }
 
       // 更新本地状态
       if (settings) {
+        console.log('[UserConfig] 更新本地状态');
         setUserSettings(currentSettings as UserSettings);
       }
+
+      console.log('[UserConfig] saveUnifiedConfig 执行完成');
     } catch (error) {
-      console.error('保存配置失败:', error);
+      console.error('[UserConfig] 保存配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };
@@ -2479,7 +2514,7 @@ function UserConfigContent() {
                             {/* 第二行 */}
                             {/* 管理员控制按钮 */}
 
-                            {canManageUser(user) && (
+                            {canManageUser(user) && user.role !== 'owner' && (
                               <button
                                 onClick={async () => {
                                   if (user.role === 'user') {
@@ -2495,12 +2530,12 @@ function UserConfigContent() {
                                 }`}
                               >
                                 <span className='mr-1'>
-                                  {user.role === 'admin' ? '👤' : '👑'}
+                                  {user.role === 'admin' ? '👑' : '👤'}
                                 </span>
 
                                 {user.role === 'admin'
-                                  ? '取消管理员'
-                                  : '设为管理员'}
+                                  ? '管理权限'
+                                  : '普通权限'}
                               </button>
                             )}
 

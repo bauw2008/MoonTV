@@ -5,10 +5,11 @@ import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import PageLayout from '@/components/PageLayout';
-import { useToast } from '@/components/Toast';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
+
+import PageLayout from '@/components/PageLayout';
 import { Pagination } from '@/components/Pagination';
+import { useToast } from '@/components/Toast';
 
 interface Comment {
   id: string;
@@ -140,7 +141,6 @@ export default function MessageBoard() {
     };
 
     loadComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, isAuthenticated, router]);
 
   // 处理分类筛选

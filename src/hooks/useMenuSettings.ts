@@ -1,20 +1,39 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
+  getMenuSettings,
+  getStorageType,
+  initConfigListener,
+  isMenuEnabled as isMenuEnabledGlobal,
   notifyConfigUpdated,
-  useNavigationConfig,
-} from '@/contexts/NavigationConfigContext';
+  syncToServer,
+  updateMenuSettings as updateMenuSettingsGlobal,
+} from '@/lib/global-config';
 import { useToast } from '@/hooks/useToast';
 
 export function useMenuSettings() {
-  const {
-    menuSettings,
-    updateMenuSettings,
-    isMenuEnabled,
-    syncToServer,
-    storageType,
-  } = useNavigationConfig();
+  const [menuSettings, setMenuSettings] = useState(getMenuSettings());
+  const storageType = getStorageType();
   const { success: showToast } = useToast();
+
+  // 监听配置变化
+  useEffect(() => {
+    // 监听全局配置更新事件
+    const handleConfigUpdate = () => {
+      const newSettings = getMenuSettings();
+      setMenuSettings(newSettings);
+    };
+
+    window.addEventListener('vidora-config-update', handleConfigUpdate);
+
+    // 初始化广播监听
+    const cleanup = initConfigListener();
+
+    return () => {
+      window.removeEventListener('vidora-config-update', handleConfigUpdate);
+      cleanup();
+    };
+  }, []);
 
   // 自动同步到服务端（防抖）
   useEffect(() => {
@@ -45,13 +64,24 @@ export function useMenuSettings() {
       clearTimeout(syncTimeout);
       window.removeEventListener('vidora-config-update', handleConfigChange);
     };
-  }, [storageType, syncToServer, showToast]);
+  }, [storageType, showToast]);
+
+  const updateMenuSettings = useCallback(
+    (newSettings: Partial<typeof menuSettings>) => {
+      updateMenuSettingsGlobal(newSettings);
+      setMenuSettings(getMenuSettings()); // 立即更新本地状态
+    },
+    [],
+  );
 
   const toggleMenu = useCallback(
     (menuKey: keyof typeof menuSettings) => {
-      updateMenuSettings({
+      const newSettings = {
+        ...menuSettings,
         [menuKey]: !menuSettings[menuKey],
-      });
+      };
+      updateMenuSettingsGlobal(newSettings);
+      setMenuSettings(newSettings);
 
       // localstorage 模式：立即通知配置更新
       if (storageType === 'localstorage') {
@@ -61,23 +91,20 @@ export function useMenuSettings() {
       // 触发自定义事件，通知其他组件更新
       window.dispatchEvent(
         new CustomEvent('vidora-config-update', {
-          detail: {
-            menuSettings: {
-              ...menuSettings,
-              [menuKey]: !menuSettings[menuKey],
-            },
-          },
+          bubbles: true,
+          composed: true,
+          detail: { menuSettings: newSettings },
         }),
       );
     },
-    [menuSettings, updateMenuSettings, storageType],
+    [menuSettings, storageType],
   );
 
   const setMenuEnabled = useCallback(
     (menuKey: keyof typeof menuSettings, enabled: boolean) => {
-      updateMenuSettings({
-        [menuKey]: enabled,
-      });
+      const newSettings = { ...menuSettings, [menuKey]: enabled };
+      updateMenuSettingsGlobal(newSettings);
+      setMenuSettings(newSettings);
 
       // localstorage 模式：立即通知配置更新
       if (storageType === 'localstorage') {
@@ -87,22 +114,19 @@ export function useMenuSettings() {
       // 触发自定义事件，通知其他组件更新
       window.dispatchEvent(
         new CustomEvent('vidora-config-update', {
-          detail: {
-            menuSettings: {
-              ...menuSettings,
-              [menuKey]: enabled,
-            },
-          },
+          bubbles: true,
+          composed: true,
+          detail: { menuSettings: newSettings },
         }),
       );
     },
-    [menuSettings, updateMenuSettings, storageType],
+    [menuSettings, storageType],
   );
 
   return {
     menuSettings,
     updateMenuSettings,
-    isMenuEnabled,
+    isMenuEnabled: isMenuEnabledGlobal,
     toggleMenu,
     setMenuEnabled,
     syncToServer,

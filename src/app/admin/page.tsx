@@ -1,29 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import { CapsuleSelector } from '@/components/CapsuleSelector';
-import AIConfig from '@/components/admin/config/AIConfig';
-import CategoryConfig from '@/components/admin/config/CategoryConfig';
-import LiveConfig from '@/components/admin/config/LiveConfig';
-import NetdiskConfig from '@/components/admin/config/NetdiskConfig';
-import OwnerConfig from '@/components/admin/config/OwnerConfig';
-import ShortDramaConfig from '@/components/admin/config/ShortDramaConfig';
-import SiteConfig from '@/components/admin/config/SiteConfig';
-import TMDBConfig from '@/components/admin/config/TMDBConfig';
-import TVBoxConfig from '@/components/admin/config/TVBoxConfig';
-import UserConfig from '@/components/admin/config/UserConfig';
-import VideoConfig from '@/components/admin/config/VideoConfig';
-import YellowConfig from '@/components/admin/config/YellowConfig';
-import CacheManager from '@/components/admin/tools/CacheManager';
-import ConfigFile from '@/components/admin/tools/ConfigFile';
-import DataMigration from '@/components/admin/tools/DataMigration';
-import AdFilterConfig from '@/components/admin/config/AdFilterConfig';
 import PageLayout from '@/components/PageLayout';
-
-import dynamic from 'next/dynamic';
 
 // 动态导入所有组件
 const ConfigFileDynamic = dynamic(

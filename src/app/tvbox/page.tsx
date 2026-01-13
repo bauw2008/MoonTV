@@ -2,26 +2,18 @@
 
 'use client';
 
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Settings,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { UnifiedVideoItem } from '@/lib/types';
 
+import { CapsuleSelector } from '@/components/CapsuleSelector';
 import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 import VirtualVideoGrid from '@/components/VirtualVideoGrid';
-import { CapsuleSelector } from '@/components/CapsuleSelector';
-import { Pagination } from '@/components/Pagination';
 
 // ==================== 类型定义 ====================
 interface VideoSource {

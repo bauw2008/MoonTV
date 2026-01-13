@@ -258,9 +258,6 @@ async function getInitConfig(
         showLive: false, // 默认关闭，可在管理界面配置
         showTvbox: process.env.NEXT_PUBLIC_MENU_SHOW_TVBOX === 'true',
         showShortDrama: process.env.NEXT_PUBLIC_MENU_SHOW_SHORTDRAMA === 'true',
-        showAI: false, // 默认隐藏，可在管理界面配置
-        showNetDiskSearch: false, // 默认隐藏，可在管理界面配置
-        showTMDBActorSearch: false, // 默认隐藏，可在管理界面配置
       },
     },
     UserConfig: {
@@ -532,9 +529,6 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         showLive: false, // 默认关闭，可在管理界面配置
         showTvbox: false,
         showShortDrama: false,
-        showAI: false,
-        showNetDiskSearch: false,
-        showTMDBActorSearch: false,
       },
     };
   }
@@ -775,9 +769,6 @@ export async function resetConfig() {
       showLive: false,
       showTvbox: false,
       showShortDrama: false,
-      showAI: false,
-      showNetDiskSearch: false,
-      showTMDBActorSearch: false,
     },
   };
 
@@ -992,15 +983,15 @@ export async function hasSpecialFeaturePermission(
     }
 
     // 使用提供的配置或获取新配置
-    const config = providedConfig || (await getConfig());
-    const userConfig = config.UserConfig.Users.find(
+    const currentConfig = providedConfig || (await getConfig());
+
+    const userConfig = currentConfig.UserConfig.Users.find(
       (u) => u.username === username,
     );
 
     // 如果用户不在配置中，检查是否是新注册用户
     if (!userConfig) {
-      // 新注册用户默认无特殊功能权限，但不阻止基本访问
-      // 这里返回false是正确的，因为新用户默认不应该有AI权限
+      // 新注册用户默认无特殊功能权限
       return false;
     }
 
@@ -1010,7 +1001,56 @@ export async function hasSpecialFeaturePermission(
     }
 
     // 普通用户需要检查特殊功能权限
-    // 优先检查用户直接配置的 features
+    // 1. 先检查用户组 tags 的权限（标签配置优先）
+    let tagHasResult = false;
+
+    if (
+      userConfig.tags &&
+      userConfig.tags.length > 0 &&
+      currentConfig.UserConfig.Tags
+    ) {
+      // 遍历所有标签
+      for (const tagName of userConfig.tags) {
+        const tagConfig = currentConfig.UserConfig.Tags.find(
+          (t) => t.name === tagName,
+        );
+
+        if (tagConfig) {
+          // 检查当前标签对该功能的配置
+          let tagValue: boolean | undefined;
+          switch (feature) {
+            case 'ai-recommend':
+              tagValue = tagConfig.aiEnabled;
+              break;
+            case 'disable-yellow-filter':
+              tagValue = tagConfig.disableYellowFilter;
+              break;
+            case 'netdisk-search':
+              tagValue = tagConfig.netDiskSearchEnabled;
+              break;
+            case 'tmdb-actor-search':
+              tagValue = tagConfig.tmdbActorSearchEnabled;
+              break;
+          }
+
+          if (tagValue === true) {
+            // 标签明确授权，立即返回 true
+            return true;
+          } else if (tagValue === false) {
+            // 标签明确拒绝，记录但继续检查（后面可能有授权标签）
+            tagHasResult = true;
+          }
+          // tagValue === undefined 时跳过
+        }
+      }
+
+      if (tagHasResult) {
+        // 有标签明确设置为 false（且没有标签设置为 true）
+        return false;
+      }
+    }
+
+    // 2. 如果没有标签配置或标签未明确设置，检查用户直接配置的 features
     if (userConfig.features) {
       switch (feature) {
         case 'ai-recommend':
@@ -1024,39 +1064,9 @@ export async function hasSpecialFeaturePermission(
       }
     }
 
-    // 如果没有直接配置，检查用户组 tags 的权限
-    if (
-      userConfig.tags &&
-      userConfig.tags.length > 0 &&
-      config.UserConfig.Tags
-    ) {
-      for (const tagName of userConfig.tags) {
-        const tagConfig = config.UserConfig.Tags.find(
-          (t) => t.name === tagName,
-        );
-        if (tagConfig) {
-          switch (feature) {
-            case 'ai-recommend':
-              if (tagConfig.aiEnabled) return true;
-              break;
-            case 'disable-yellow-filter':
-              if (tagConfig.disableYellowFilter) return true;
-              break;
-            case 'netdisk-search':
-              if (tagConfig.netDiskSearchEnabled) return true;
-              break;
-            case 'tmdb-actor-search':
-              if (tagConfig.tmdbActorSearchEnabled) return true;
-              break;
-          }
-        }
-      }
-    }
-
     // 默认情况下，普通用户无权使用特殊功能
     return false;
   } catch (error) {
-    // 权限检查失败
     // 出错时，如果是站长则返回true，否则返回false
     return username === process.env.USERNAME;
   }

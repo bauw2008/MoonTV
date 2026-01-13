@@ -14,6 +14,8 @@ import {
 import { getDoubanCategories } from '@/lib/douban.client';
 import { getPosterCarouselData } from '@/lib/poster-carousel.client';
 import { DoubanItem } from '@/lib/types';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import ContinueWatching from '@/components/ContinueWatching';
 import FloatingTools from '@/components/FloatingTools';
@@ -25,10 +27,9 @@ import { useSite } from '@/components/SiteProvider';
 import SkeletonCard from '@/components/SkeletonCard';
 import VideoCard from '@/components/VideoCard';
 
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-
 function HomeClient() {
-  const { menuSettings } = useNavigationConfig();
+  const { menuSettings } = useMenuSettings();
+  const { hasPermission } = useFeaturePermission();
   const authInfo = useMemo(
     () => getAuthInfoFromBrowserCookie(),
     [
@@ -36,6 +37,12 @@ function HomeClient() {
       typeof document !== 'undefined' ? document.visibilityState : null,
     ],
   );
+
+  // 功能启用状态（从全局配置读取）
+  const isAIEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
+      : false;
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
   const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
   const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
@@ -453,7 +460,7 @@ function HomeClient() {
 
       {/* 浮动工具组 */}
       <FloatingTools
-        showAI={menuSettings.showAI} // 从配置中读取AI状态
+        showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
         showBackToTop={true}
       />
     </PageLayout>

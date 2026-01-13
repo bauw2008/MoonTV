@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { AlertCircle, Copy, ExternalLink, Loader2, Check } from 'lucide-react';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { AlertCircle, Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AcgSearchItem {
   title: string;

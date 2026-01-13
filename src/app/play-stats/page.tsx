@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PlayRecord, PlayStatsResult } from '@/lib/types';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
+import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 
 import PageLayout from '@/components/PageLayout';
-import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
-import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 // 用户等级系统
 const USER_LEVELS = [
   {

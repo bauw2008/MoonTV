@@ -19,7 +19,6 @@ import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
 import artplayerPluginSkipSettings from '@/lib/artplayer-plugin-skip-settings';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { ClientCache } from '@/lib/client-cache';
-import { useUserSettings } from '@/hooks/useUserSettings';
 import {
   deleteFavorite,
   deletePlayRecord,
@@ -34,16 +33,16 @@ import { getDoubanDetails } from '@/lib/douban.client';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
+import AcgSearch from '@/components/AcgSearch';
 import BackToTopButton from '@/components/BackToTopButton';
 import EpisodeSelector from '@/components/EpisodeSelector';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 import PageLayout from '@/components/PageLayout';
 import { ToastManager } from '@/components/Toast';
-import AcgSearch from '@/components/AcgSearch';
-
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
-import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 /**
  * 收藏图标组件
@@ -154,8 +153,14 @@ function PlayPageClient() {
   const [acgTriggerSearch, setAcgTriggerSearch] = useState(false);
 
   // 使用NavigationConfigContext获取功能启用状态
-  const { menuSettings } = useNavigationConfig();
+  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
+
+  // 功能启用状态（从全局配置读取）
+  const isNetDiskEnabled =
+    typeof window !== 'undefined'
+      ? ((window as any).RUNTIME_CONFIG.NetDiskConfig?.enabled ?? false)
+      : false;
 
   // SkipController 相关状态
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
@@ -4162,26 +4167,25 @@ function PlayPageClient() {
                 </button>
 
                 {/* 网盘资源提示按钮 */}
-                {menuSettings.showNetDiskSearch &&
-                  hasPermission('netdisk-search') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 触发网盘搜索（如果还没搜索过）
-                        if (!netdiskResults && !netdiskLoading && videoTitle) {
-                          handleNetDiskSearch(videoTitle);
-                        }
-                        // 打开网盘模态框
-                        setShowNetdiskModal(true);
-                      }}
-                      className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
-                      title='网盘资源'
-                    >
-                      <div className='w-7 h-7 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-md'>
-                        <Cloud className='w-4 h-4' />
-                      </div>
-                    </button>
-                  )}
+                {isNetDiskEnabled && hasPermission('netdisk-search') && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // 触发网盘搜索（如果还没搜索过）
+                      if (!netdiskResults && !netdiskLoading && videoTitle) {
+                        handleNetDiskSearch(videoTitle);
+                      }
+                      // 打开网盘模态框
+                      setShowNetdiskModal(true);
+                    }}
+                    className='ml-3 flex-shrink-0 hover:opacity-90 transition-all duration-200 hover:scale-105'
+                    title='网盘资源'
+                  >
+                    <div className='w-7 h-7 flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-md'>
+                      <Cloud className='w-4 h-4' />
+                    </div>
+                  </button>
+                )}
               </h1>
 
               {/* 关键信息行 */}

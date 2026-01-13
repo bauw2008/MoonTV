@@ -288,11 +288,13 @@ export async function POST(request: NextRequest) {
             { status: 404 },
           );
         }
+        // 如果用户已经是普通用户，直接返回成功（幂等操作）
         if (targetEntry.role !== 'admin') {
-          return NextResponse.json(
-            { error: '目标用户不是管理员' },
-            { status: 400 },
-          );
+          // 已经是user，直接返回成功
+          return NextResponse.json({
+            success: true,
+            message: '用户当前不是管理员',
+          });
         }
         if (operatorRole !== 'owner') {
           return NextResponse.json(

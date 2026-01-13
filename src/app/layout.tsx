@@ -3,10 +3,9 @@ import { Inter } from 'next/font/google';
 
 import './globals.css';
 
-import { getConfig } from '@/lib/config';
+import { clearConfigCache, getConfig } from '@/lib/config';
 
 import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
-import { NavigationWrapper } from '../components/NavigationWrapper';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import ToastContainer from '../components/ToastContainer';
@@ -61,6 +60,7 @@ export default async function RootLayout({
     query: string;
   }[];
   if (storageType !== 'localstorage') {
+    clearConfigCache(); // 清除配置缓存，确保获取最新菜单配置
     const config = await getConfig();
     siteName = config.SiteConfig.SiteName;
     announcement = config.SiteConfig.Announcement;
@@ -82,10 +82,24 @@ export default async function RootLayout({
 
   // 获取完整配置用于 runtimeConfig
   let netDiskConfig = { enabled: false };
+  let aiConfig = { enabled: false };
+  let tmdbConfig = {
+    apiKey: '',
+    language: 'zh-CN',
+    enableActorSearch: false,
+    enablePosters: true,
+  };
 
   if (storageType !== 'localstorage') {
     const config = await getConfig();
     netDiskConfig = config.NetDiskConfig || { enabled: false };
+    aiConfig = config.AIRecommendConfig || { enabled: false };
+    tmdbConfig = {
+      apiKey: config.SiteConfig.TMDBApiKey || '',
+      language: config.SiteConfig.TMDBLanguage || 'zh-CN',
+      enableActorSearch: config.SiteConfig.EnableTMDBActorSearch || false,
+      enablePosters: config.SiteConfig.EnableTMDBPosters ?? true,
+    };
   }
 
   // 获取菜单配置
@@ -97,9 +111,6 @@ export default async function RootLayout({
     showLive: false,
     showTvbox: false,
     showShortDrama: false,
-    showAI: false,
-    showNetDiskSearch: false,
-    showTMDBActorSearch: false,
   };
 
   if (storageType !== 'localstorage') {
@@ -118,8 +129,19 @@ export default async function RootLayout({
     CUSTOM_CATEGORIES: customCategories,
     FLUID_SEARCH: fluidSearch,
     NetDiskConfig: netDiskConfig,
+    AIConfig: aiConfig,
+    TMDBConfig: tmdbConfig,
     MenuSettings: menuSettings,
     SiteName: siteName,
+    __DISABLED_MENUS: {
+      showLive: menuSettings.showLive === false,
+      showTvbox: menuSettings.showTvbox === false,
+      showShortDrama: menuSettings.showShortDrama === false,
+      showMovies: menuSettings.showMovies === false,
+      showTVShows: menuSettings.showTVShows === false,
+      showAnime: menuSettings.showAnime === false,
+      showVariety: menuSettings.showVariety === false,
+    },
   };
 
   return (
@@ -134,7 +156,7 @@ export default async function RootLayout({
         {}
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)};`,
+            __html: `window.RUNTIME_CONFIG = ${JSON.stringify(runtimeConfig)}; window.__DISABLED_MENUS = ${JSON.stringify(runtimeConfig.__DISABLED_MENUS)};`,
           }}
         />
       </head>
@@ -147,13 +169,11 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NavigationWrapper>
-            <SiteProvider siteName={siteName} announcement={announcement}>
-              {children}
-              <GlobalErrorIndicator />
-              <ToastContainer />
-            </SiteProvider>
-          </NavigationWrapper>
+          <SiteProvider siteName={siteName} announcement={announcement}>
+            {children}
+            <GlobalErrorIndicator />
+            <ToastContainer />
+          </SiteProvider>
         </ThemeProvider>
       </body>
     </html>

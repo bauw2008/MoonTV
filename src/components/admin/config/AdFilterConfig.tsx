@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, Code, Info, RotateCcw, Save } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   useAdminAuth,

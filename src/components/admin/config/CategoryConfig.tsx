@@ -3,13 +3,12 @@
 import { ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
-import { useToastNotification } from '@/hooks/admin/useToastNotification';
-
 import {
   notifyConfigUpdated,
-  useNavigationConfig,
-} from '@/contexts/NavigationConfigContext';
+  updateCustomCategories,
+} from '@/lib/global-config';
+import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
+import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
 interface CustomCategory {
   name: string;
@@ -23,7 +22,6 @@ function CategoryConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { updateCustomCategories } = useNavigationConfig();
 
   const [config, setConfig] = useState<any>(null);
   const [categories, setCategories] = useState<CustomCategory[]>([]);

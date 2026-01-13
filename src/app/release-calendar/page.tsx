@@ -14,11 +14,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
+import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 
 import PageLayout from '@/components/PageLayout';
 import { Pagination } from '@/components/Pagination';
-import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
-import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 
 // 去重辅助函数：按 title 和 director 去重
 function removeDuplicateItems(

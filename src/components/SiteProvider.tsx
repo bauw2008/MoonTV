@@ -1,6 +1,8 @@
 'use client';
 
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
+
+import { initConfigListener } from '@/lib/global-config';
 
 const SiteContext = createContext<{ siteName: string; announcement?: string }>({
   // 默认值
@@ -20,6 +22,12 @@ export function SiteProvider({
   siteName: string;
   announcement?: string;
 }) {
+  // 初始化全局配置监听器（替代NavigationConfigProvider的功能）
+  useEffect(() => {
+    const cleanup = initConfigListener();
+    return cleanup;
+  }, []);
+
   return (
     <SiteContext.Provider value={{ siteName, announcement }}>
       {children}

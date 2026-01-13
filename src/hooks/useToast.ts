@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export interface ToastProps {
   type: 'success' | 'error' | 'warning' | 'info';

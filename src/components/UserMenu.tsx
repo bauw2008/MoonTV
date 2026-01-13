@@ -1,4 +1,4 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
 
@@ -8,7 +8,6 @@ import {
   Camera,
   Check,
   ChevronDown,
-  ExternalLink,
   KeyRound,
   LogOut,
   MessageSquare,
@@ -16,7 +15,6 @@ import {
   Settings,
   Shield,
   Upload,
-  User,
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -28,13 +26,13 @@ import 'react-image-crop/dist/ReactCrop.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useUserSettings } from '@/hooks/useUserSettings';
-import { useNavigationConfig } from '@/contexts/NavigationConfigContext';
 
+import { OptimizedAvatar } from './OptimizedAvatar';
 import { ThemeSettingsPanel } from './ThemeSettingsPanel';
 import { useToast } from './Toast';
 import { VersionPanel } from './VersionPanel';
-import { OptimizedAvatar } from './OptimizedAvatar';
 
 interface AuthInfo {
   username?: string;
@@ -129,7 +127,7 @@ export const UserMenu: React.FC = () => {
   const { settings, updateSetting, resetSettings } = useUserSettings();
 
   // 使用 NavigationConfigContext 检查菜单是否启用
-  const { isMenuEnabled } = useNavigationConfig();
+  const { isMenuEnabled } = useMenuSettings();
 
   // 下拉框状态
   const [isDoubanDropdownOpen, setIsDoubanDropdownOpen] = useState(false);

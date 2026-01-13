@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-
 import PageLayout from '@/components/PageLayout';
 
 // 设备信息接口
