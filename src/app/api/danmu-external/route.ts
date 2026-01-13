@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getRandomUserAgent } from '@/lib/user-agent';
 
 interface PlatformUrl {
   platform: string;
@@ -50,8 +51,7 @@ async function searchFromCaijiAPI(
       const searchUrl = `https://www.caiji.cyou/api.php/provide/vod/?wd=${encodeURIComponent(searchTitle)}`;
       const response = await fetch(searchUrl, {
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent': getRandomUserAgent(),
         },
       });
 
@@ -136,8 +136,7 @@ async function processSelectedResult(
 
     const detailResponse = await fetch(detailUrl, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
       },
     });
 
@@ -230,20 +229,9 @@ async function processSelectedResult(
   }
 }
 
-// 用户代理池 - 防止被封IP
-const USER_AGENTS = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-];
-
 // 请求限制器 - 防止被封IP
 let lastDoubanRequestTime = 0;
 const MIN_DOUBAN_REQUEST_INTERVAL = 1000; // 1秒最小间隔
-
-function getRandomUserAgent(): string {
-  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-}
 
 function randomDelay(min = 500, max = 1500): Promise<void> {
   const delay = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -512,8 +500,7 @@ async function fetchDanmuFromXMLAPI(videoUrl: string): Promise<DanmuItem[]> {
       const response = await fetch(apiUrl, {
         signal: controller.signal,
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'User-Agent': getRandomUserAgent(),
           Accept: 'application/xml, text/xml, */*',
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         },
@@ -763,8 +750,7 @@ async function fetchDanmuFromAPI(videoUrl: string): Promise<DanmuItem[]> {
     const response = await fetch(apiUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': getRandomUserAgent(),
         Accept: 'application/json, text/plain, */*',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         Referer: 'https://danmu.icu/',

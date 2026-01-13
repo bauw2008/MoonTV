@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getAvailableApiSites } from '@/lib/config';
+import { TVBOX_USER_AGENTS } from '@/lib/user-agent';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 
       const response = await fetch(searchUrl, {
         headers: {
-          'User-Agent': 'TVBox/1.0.0',
+          'User-Agent': TVBOX_USER_AGENTS.TVBOX_OFFICIAL,
           Accept: 'application/json, text/plain, */*',
         },
         signal: AbortSignal.timeout(10000), // 10秒超时

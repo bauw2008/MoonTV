@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getUserRegion } from '@/lib/networkDetection';
+import { getRandomUserAgent, OTHER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,8 +64,8 @@ async function testJarSource(source: any): Promise<{
 
     const userAgent =
       source.region === 'domestic'
-        ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        : 'LunaTV-JarTest/1.0';
+        ? getRandomUserAgent()
+        : OTHER_USER_AGENTS.LUNA_TV_JAR_TEST;
 
     const response = await fetch(source.url, {
       method: 'HEAD',

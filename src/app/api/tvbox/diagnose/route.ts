@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { GET as getTVBoxConfig } from '../route';
+import { getRandomUserAgent } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,8 +88,7 @@ async function checkSpiderHealth(spider: string): Promise<{
       method: 'HEAD',
       signal: controller.signal,
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
       },
     });
 

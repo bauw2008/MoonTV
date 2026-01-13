@@ -1928,6 +1928,15 @@ function PlayPageClient() {
           throw new Error('获取视频详情失败');
         }
         const detailData = (await detailResponse.json()) as SearchResult;
+        // 开发环境调试输出
+        if (process.env.NODE_ENV === 'development') {
+          console.groupCollapsed(`🔍 源详情调试: ${source} - ${id}`);
+          console.log(`📺 标题: ${detailData.title || '无标题'}`);
+          console.log(`🏷️ 源: ${detailData.source}, ID: ${detailData.id}`);
+          console.log(`📊 集数: ${detailData.episodes?.length || 0}`);
+          console.log(`🎬 年份: ${detailData.year || '未知'}`);
+          console.groupEnd();
+        }
         setAvailableSources([detailData]);
         return [detailData];
       } catch (err) {
@@ -1947,6 +1956,19 @@ function PlayPageClient() {
         }
         const data = await response.json();
         const results = data.results || [];
+
+        // 开发环境调试输出
+        if (process.env.NODE_ENV === 'development') {
+          console.groupCollapsed(`🔍 搜索调试: "${query}"`);
+          console.log(`📊 搜索结果数量: ${results.length}`);
+          console.log('📋 搜索结果详情:');
+          results.forEach((result: any, index: number) => {
+            console.log(
+              `  ${index + 1}. ${result.title || '无标题'} (${result.source}) - ID: ${result.id}, 集数: ${result.episodes?.length || 0}`,
+            );
+          });
+          console.groupEnd();
+        }
 
         setAvailableSources(results);
         return results;
@@ -1983,20 +2005,75 @@ function PlayPageClient() {
           setLoadingStage('searching');
           setLoadingMessage('🔍 正在搜索短剧播放源...');
           sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
-          console.log(`🔍 短剧源: ${currentSource} - ${currentId}，直接搜索`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🔍 短剧源: ${currentSource} - ${currentId}，直接搜索`);
+            console.log(`📊 搜索结果: ${sourcesInfo.length} 个源`);
+            sourcesInfo.forEach((source, index) => {
+              console.log(
+                `  ${index + 1}. ${source.title || '无标题'} (${source.source}) - 集数: ${source.episodes?.length || 0}`,
+              );
+            });
+          } else {
+            console.log(`🔍 短剧源: ${currentSource} - ${currentId}，直接搜索`);
+          }
         } else {
           // TVBox采集源：直接搜索，不先尝试指定源（避免API返回网站logo等问题）
           setLoadingStage('searching');
           setLoadingMessage('🔍 正在搜索播放源...');
           sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
-          console.log(
-            `🔍 TVBox采集源: ${currentSource} - ${currentId}，直接搜索`,
-          );
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              `🔍 TVBox采集源: ${currentSource} - ${currentId}，直接搜索`,
+            );
+            console.log(`📊 搜索结果: ${sourcesInfo.length} 个源`);
+            sourcesInfo.forEach((source, index) => {
+              console.log(
+                `  ${index + 1}. ${source.title || '无标题'} (${source.source}) - 集数: ${source.episodes?.length || 0}`,
+              );
+            });
+          } else {
+            console.log(
+              `🔍 TVBox采集源: ${currentSource} - ${currentId}，直接搜索`,
+            );
+          }
         }
       } else {
         // 没有指定源，直接搜索
         sourcesInfo = await fetchSourcesData(searchTitle || videoTitle);
+        // 开发环境调试输出
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🔍 无指定源搜索: "${searchTitle || videoTitle}"`);
+          console.log(`📊 搜索结果: ${sourcesInfo.length} 个源`);
+          sourcesInfo.forEach((source, index) => {
+            console.log(
+              `  ${index + 1}. ${source.title || '无标题'} (${source.source}) - 集数: ${source.episodes?.length || 0}`,
+            );
+          });
+        }
       }
+
+      // 如果有 shortdrama_id，额外添加短剧源到可用源列表
+      // 即使已经有其他源，也尝试添加短剧源到换源列表中
+      if (shortdramaId) {
+        try {
+          const shortdramaSource = await fetchSourceDetail(
+            'shortdrama',
+            shortdramaId,
+          );
+          if (shortdramaSource.length > 0) {
+            // 检查是否已存在相同的短剧源，避免重复
+            const existingShortdrama = sourcesInfo.find(
+              (s) => s.source === 'shortdrama' && s.id === shortdramaId,
+            );
+            if (!existingShortdrama) {
+              sourcesInfo.push(...shortdramaSource);
+            }
+          }
+        } catch (error) {
+          console.error('添加短剧源失败:', error);
+        }
+      }
+
       if (sourcesInfo.length === 0) {
         setError('未找到匹配结果');
         setLoading(false);

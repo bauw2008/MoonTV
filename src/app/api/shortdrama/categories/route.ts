@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getRandomUserAgent } from '@/lib/user-agent';
 
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
@@ -11,8 +12,7 @@ async function getShortDramaCategoriesInternal() {
     'https://api.r2afosne.dpdns.org/vod/categories',
     {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
         Accept: 'application/json',
       },
     },

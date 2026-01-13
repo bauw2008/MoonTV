@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
   const config = await getConfig();
   const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-  const ua = liveSource?.ua || 'AptvPlayer/1.4.10';
+  const ua = liveSource?.ua || LIVE_PLAYER_USER_AGENTS.APTV_PLAYER;
 
   try {
     const decodedUrl = decodeURIComponent(imageUrl);
