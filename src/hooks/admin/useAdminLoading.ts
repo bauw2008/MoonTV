@@ -21,9 +21,6 @@ export const useAdminLoading = () => {
     try {
       const result = await operation();
       return result;
-    } catch (error) {
-      // 确保错误被重新抛出，以便调用者可以处理
-      throw error;
     } finally {
       setLoading(key, false);
     }

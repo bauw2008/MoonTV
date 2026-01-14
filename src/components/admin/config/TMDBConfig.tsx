@@ -62,7 +62,7 @@ function TMDBConfigContent() {
     } catch (error) {
       showError('加载TMDB配置失败');
     }
-  }, []);
+  }, [showError, withLoading, setConfig, setTmdbSettings]);
 
   // 初始化加载
   useEffect(() => {

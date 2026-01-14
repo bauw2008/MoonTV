@@ -21,7 +21,7 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // 使用统一方案中的 hooks
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
@@ -40,17 +40,9 @@ function ConfigFile() {
   const [isValidJson, setIsValidJson] = useState(true);
   const [config, setConfig] = useState<any>(null);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  useEffect(() => {
-    validateJson();
-  }, [configContent]);
-
   const { configApi } = useAdminApi(); // API 调用
 
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     // 防止重复加载
     if (isLoading('api_/api/admin/config')) {
       return;
@@ -79,7 +71,23 @@ function ConfigFile() {
     } catch (error) {
       console.error('加载配置失败:', error);
     }
-  };
+  }, [
+    isLoading,
+    configApi,
+    setConfigContent,
+    setSubscriptionUrl,
+    setAutoUpdate,
+    setLastCheckTime,
+    setConfig,
+  ]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
+
+  useEffect(() => {
+    validateJson();
+  }, [configContent]);
 
   const validateJson = () => {
     if (!configContent.trim()) {

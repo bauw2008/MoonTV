@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface ToastProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -52,27 +52,24 @@ export default function Toast({
   position = 'top-right',
   onClose,
 }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
 
-  useEffect(() => {
-    // 入场动画
-    setIsVisible(true);
+  const handleLeave = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose?.();
+    }, 300); // 300ms 退场动画
+  }, [onClose]);
 
+  useEffect(() => {
     // 自动关闭
     const timer = setTimeout(() => {
       handleLeave();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
-
-  const handleLeave = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose?.();
-    }, 300); // 300ms 退场动画
-  };
+  }, [duration, handleLeave]);
 
   const style = ToastStyles[type];
   const positionStyle = ToastPositions[position];

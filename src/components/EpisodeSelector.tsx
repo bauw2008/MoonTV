@@ -67,12 +67,14 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
 
   // 使用 useMemo 初始化 videoInfoMap 和 attemptedSources，避免在 useEffect 中同步 setState
-  const [videoInfoMap, setVideoInfoMap] = useState<Map<string, VideoInfo>>(() => {
-    if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
-      return new Map(precomputedVideoInfo);
-    }
-    return new Map();
-  });
+  const [videoInfoMap, setVideoInfoMap] = useState<Map<string, VideoInfo>>(
+    () => {
+      if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
+        return new Map(precomputedVideoInfo);
+      }
+      return new Map();
+    },
+  );
 
   const [attemptedSources, setAttemptedSources] = useState<Set<string>>(() => {
     if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
@@ -157,17 +159,23 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, []);
 
   // 使用 useRef 来跟踪 precomputedVideoInfo 的前一个值
-  const prevPrecomputedVideoInfoRef = useRef<Map<string, VideoInfo> | undefined>(undefined);
+  const prevPrecomputedVideoInfoRef = useRef<
+    Map<string, VideoInfo> | undefined
+  >(undefined);
 
   // 当有预计算结果时，更新状态和 ref
   useEffect(() => {
     if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
       // 只在 precomputedVideoInfo 真正变化时更新
       const prevInfo = prevPrecomputedVideoInfoRef.current;
-      const hasChanged = !prevInfo || prevInfo.size !== precomputedVideoInfo.size ||
+      const hasChanged =
+        !prevInfo ||
+        prevInfo.size !== precomputedVideoInfo.size ||
         Array.from(precomputedVideoInfo.entries()).some(([key, value]) => {
           const prevValue = prevInfo.get(key);
-          return !prevValue || JSON.stringify(prevValue) !== JSON.stringify(value);
+          return (
+            !prevValue || JSON.stringify(prevValue) !== JSON.stringify(value)
+          );
         });
 
       if (hasChanged) {

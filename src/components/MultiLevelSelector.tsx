@@ -46,7 +46,9 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     MultiLevelOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(() => contentType === 'short-drama');
+  const [loadingCategories, setLoadingCategories] = useState(
+    () => contentType === 'short-drama',
+  );
 
   // 使用 useRef 来跟踪 contentType 的前一个值
   const prevContentTypeRef = useRef<string | undefined>(undefined);

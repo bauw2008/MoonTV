@@ -1,4 +1,4 @@
-/* eslint-disable no-console,react-hooks/exhaustive-deps */
+/* eslint-disable no-console */
 
 'use client';
 
@@ -12,7 +12,7 @@ import {
   RefreshCw,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { changelog, ChangelogEntry } from '@/lib/changelog';
@@ -88,14 +88,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   }, [isOpen]);
 
   // 获取远程变更日志
-  useEffect(() => {
-    if (isOpen) {
-      fetchRemoteChangelog();
-    }
-  }, [isOpen]);
-
-  // 获取远程变更日志
-  const fetchRemoteChangelog = async () => {
+  const fetchRemoteChangelog = useCallback(async () => {
     try {
       const response = await fetch(
         'https://raw.githubusercontent.com/bauw2008/Vidora/refs/heads/main/CHANGELOG',
@@ -123,7 +116,13 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     } catch (error) {
       console.error('获取远程变更日志失败:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchRemoteChangelog();
+    }
+  }, [isOpen, fetchRemoteChangelog]);
 
   // 解析变更日志格式
   const parseChangelog = (content: string): RemoteChangelogEntry[] => {

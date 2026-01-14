@@ -1,4 +1,33 @@
+'use client';
+
 import { useEffect } from 'react';
+
+// Type definitions
+type EventListenerOrEventListenerObject = EventListener | EventListenerObject;
+
+interface EventListenerObject {
+  handleEvent(event: Event): void;
+}
+
+interface AddEventListenerOptions {
+  capture?: boolean;
+  once?: boolean;
+  passive?: boolean;
+  signal?: AbortSignal;
+}
+
+interface EventListenerOptions {
+  capture?: boolean;
+  passive?: boolean;
+  once?: boolean;
+  signal?: AbortSignal;
+}
+
+interface NodeListOf<TNode extends Node> {
+  length: number;
+  item(index: number): TNode | null;
+  [index: number]: TNode;
+}
 
 // Type declarations for DOM APIs
 declare global {
@@ -8,13 +37,14 @@ declare global {
     href: string;
     addEventListener(
       type: string,
-      listener: EventListenerOrEventListenerObject,
+      listener: EventListenerOrEventListenerObject | null,
+      options?: boolean | AddEventListenerOptions,
     ): void;
     removeEventListener(
       type: string,
-      listener: EventListenerOrEventListenerObject,
+      listener: EventListenerOrEventListenerObject | null,
+      options?: boolean | EventListenerOptions,
     ): void;
-    parentNode: ParentNode | null;
   }
 }
 

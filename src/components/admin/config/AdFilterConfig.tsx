@@ -44,7 +44,8 @@ function CustomAdFilterConfigContent({
         setFilterSettings({
           CustomAdFilterCode: config.SiteConfig.CustomAdFilterCode || '',
           CustomAdFilterVersion: config.SiteConfig.CustomAdFilterVersion || 1,
-          CustomAdFilterEnabled: config.SiteConfig.CustomAdFilterEnabled || false,
+          CustomAdFilterEnabled:
+            config.SiteConfig.CustomAdFilterEnabled || false,
         });
       });
     }

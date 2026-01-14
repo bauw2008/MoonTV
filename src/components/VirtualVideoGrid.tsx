@@ -181,7 +181,7 @@ export const VirtualVideoGrid = React.forwardRef<
           }
         },
       }),
-      [],
+      [from, VideoCard],
     );
 
     const rowCount = Math.ceil(displayItemCount / columnCount);
@@ -231,7 +231,7 @@ export const VirtualVideoGrid = React.forwardRef<
           </div>
         );
       },
-      [],
+      [from, VideoCard],
     );
 
     const skeletonData = Array.from({ length: 25 }, (_, index) => index);

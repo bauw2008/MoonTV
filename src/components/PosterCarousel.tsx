@@ -31,10 +31,16 @@ export default function PosterCarousel({
   // 更新海报数据当props变化时
   useEffect(() => {
     const prevPosters = prevInitialPostersRef.current;
-    const hasChanged = !prevPosters || prevPosters.length !== (initialPosters?.length || 0) ||
+    const hasChanged =
+      !prevPosters ||
+      prevPosters.length !== (initialPosters?.length || 0) ||
       (initialPosters || []).some((poster, index) => {
         const prevPoster = prevPosters[index];
-        return !prevPoster || prevPoster.id !== poster.id || prevPoster.poster !== poster.poster;
+        return (
+          !prevPoster ||
+          prevPoster.id !== poster.id ||
+          prevPoster.poster !== poster.poster
+        );
       });
 
     if (hasChanged) {
@@ -42,7 +48,9 @@ export default function PosterCarousel({
       requestAnimationFrame(() => {
         setPosters(initialPosters || []);
       });
-      prevInitialPostersRef.current = initialPosters ? [...initialPosters] : undefined;
+      prevInitialPostersRef.current = initialPosters
+        ? [...initialPosters]
+        : undefined;
     }
   }, [initialPosters]);
 
