@@ -1,8 +1,9 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { GET as getTVBoxConfig } from '../route';
 import { getRandomUserAgent } from '@/lib/user-agent';
+
+import { GET as getTVBoxConfig } from '../route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

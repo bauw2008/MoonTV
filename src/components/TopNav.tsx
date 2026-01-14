@@ -25,9 +25,9 @@ import { createPortal } from 'react-dom';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 import { MenuSettings } from '@/types/menu';
-import { useUserSettings } from '@/hooks/useUserSettings';
 
 // 类型定义
 interface MenuItem {

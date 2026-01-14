@@ -6,7 +6,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
@@ -15,8 +15,8 @@ import {
   getDoubanRecommends,
 } from '@/lib/douban.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
-import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 import { useMenuSettings } from '@/hooks/useMenuSettings';
+import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
@@ -28,6 +28,57 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
+// 权限检查组件
+function DoubanPagePermissionCheck({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const searchParams = useSearchParams();
+  const { menuSettings } = useMenuSettings();
+
+  // 检查菜单访问权限
+  const shouldRedirect = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    const type = searchParams.get('type') || 'movie';
+
+    if (type === 'tv' && disabledMenus.showTVShows) {
+      return true;
+    } else if (type === 'anime' && disabledMenus.showAnime) {
+      return true;
+    } else if (type === 'show' && disabledMenus.showVariety) {
+      return true;
+    } else if (disabledMenus.showMovies) {
+      return true;
+    } else if (type === 'custom') {
+      const customCategories =
+        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES || [];
+      const hasEnabledCategory = customCategories.some(
+        (cat: any) => !cat.disabled,
+      );
+      return !hasEnabledCategory;
+    }
+
+    return false;
+  }, [searchParams, menuSettings]);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      window.location.href = '/';
+    }
+  }, [shouldRedirect]);
+
+  if (shouldRedirect) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 function DoubanPageClient() {
   const searchParams = useSearchParams();
   const { menuSettings } = useMenuSettings();
@@ -38,37 +89,6 @@ function DoubanPageClient() {
     typeof window !== 'undefined'
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
-
-  // 检查菜单访问权限
-  if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
-    const type = searchParams.get('type') || 'movie';
-
-    if (type === 'tv' && disabledMenus.showTVShows) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'anime' && disabledMenus.showAnime) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'show' && disabledMenus.showVariety) {
-      window.location.href = '/';
-      return null;
-    } else if (disabledMenus.showMovies) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'custom') {
-      // 检查是否有启用的自定义分类
-      const customCategories =
-        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES || [];
-      const hasEnabledCategory = customCategories.some(
-        (cat: any) => !cat.disabled,
-      );
-      if (!hasEnabledCategory) {
-        window.location.href = '/';
-        return null;
-      }
-    }
-  }
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1269,7 +1289,9 @@ function DoubanPageClient() {
 export default function DoubanPage() {
   return (
     <Suspense>
-      <DoubanPageClient />
+      <DoubanPagePermissionCheck>
+        <DoubanPageClient />
+      </DoubanPagePermissionCheck>
     </Suspense>
   );
 }

@@ -270,7 +270,7 @@ const configCategories = {
 
 function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(() => typeof window !== 'undefined');
   const router = useRouter();
 
   const [activeCategory, setActiveCategory] =
@@ -278,8 +278,6 @@ function AdminContent() {
   const [activeItem, setActiveItem] = useState<string>('configFile');
 
   useEffect(() => {
-    setIsClient(true);
-
     // 单次权限验证
     const checkAccess = async () => {
       if (typeof window === 'undefined') return;

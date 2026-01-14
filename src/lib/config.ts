@@ -4,9 +4,9 @@ import fs from 'fs';
 import path from 'path';
 
 import { db } from '@/lib/db';
-import { getRandomUserAgent } from './user-agent';
 
 import { AdminConfig } from './admin.types';
+import { getRandomUserAgent } from './user-agent';
 
 export interface ApiSite {
   key: string;

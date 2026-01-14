@@ -3,11 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { getCandidates, getSpiderJar } from '@/lib/spiderJar';
-import {
-  getMobileUserAgent,
-  TVBOX_USER_AGENTS,
-  LIVE_PLAYER_USER_AGENTS,
-} from '@/lib/user-agent';
+import { getMobileUserAgent, TVBOX_USER_AGENTS } from '@/lib/user-agent';
 
 // 根据用户权限过滤源站
 function filterSourcesByUserPermissions(

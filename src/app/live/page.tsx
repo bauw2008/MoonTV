@@ -49,16 +49,28 @@ interface LiveSource {
   disabled?: boolean;
 }
 
-function LivePageClient() {
-  // 检查菜单访问权限
+// 权限检查组件
+function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      if (disabledMenus.showLive) {
+        window.location.href = '/';
+      }
+    }
+  }, []);
+
   if (typeof window !== 'undefined') {
     const disabledMenus = (window as any).__DISABLED_MENUS || {};
     if (disabledMenus.showLive) {
-      window.location.href = '/';
       return null;
     }
   }
 
+  return <>{children}</>;
+}
+
+function LivePageClient() {
   // -----------------------------------------------------------------------------
   // 状态变量（State）
   // -----------------------------------------------------------------------------
@@ -1735,7 +1747,9 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
 export default function LivePage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LivePageClient />
+      <LivePagePermissionCheck>
+        <LivePageClient />
+      </LivePagePermissionCheck>
     </Suspense>
   );
 }

@@ -3,7 +3,6 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -14,7 +13,6 @@ import {
 } from '@/lib/shortdrama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import FloatingTools from '@/components/FloatingTools';
@@ -25,9 +23,32 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
+// 权限检查组件
+function ShortDramaPagePermissionCheck({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      if (disabledMenus.showShortDrama) {
+        window.location.href = '/';
+      }
+    }
+  }, []);
+
+  if (typeof window !== 'undefined') {
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    if (disabledMenus.showShortDrama) {
+      return null;
+    }
+  }
+
+  return <>{children}</>;
+}
+
 function ShortDramaPageClient() {
-  const searchParams = useSearchParams();
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
@@ -35,15 +56,6 @@ function ShortDramaPageClient() {
     typeof window !== 'undefined'
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
-
-  // 检查菜单访问权限
-  if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
-    if (disabledMenus.showShortDrama) {
-      window.location.href = '/';
-      return null;
-    }
-  }
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -712,7 +724,9 @@ function ShortDramaPageClient() {
 export default function ShortDramaPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ShortDramaPageClient />
+      <ShortDramaPagePermissionCheck>
+        <ShortDramaPageClient />
+      </ShortDramaPagePermissionCheck>
     </Suspense>
   );
 }

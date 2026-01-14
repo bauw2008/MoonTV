@@ -2,8 +2,8 @@
 
 import {
   generateStorageKey,
-  getAllPlayRecords,
   getAllFavorites,
+  getAllPlayRecords,
   PlayRecord,
 } from './db.client';
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 interface PlatformUrl {
