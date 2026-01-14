@@ -32,7 +32,7 @@ export async function GET() {
         available: edgeOneAvailable,
         stats,
       },
-      environment: {
+      envVariables: {
         EDGEONE_KV_ENABLED: process.env.EDGEONE_KV_ENABLED,
         NEXT_PUBLIC_EDGEONE_KV_ENABLED:
           process.env.NEXT_PUBLIC_EDGEONE_KV_ENABLED,
