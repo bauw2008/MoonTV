@@ -27,6 +27,7 @@ import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
 import { MenuSettings } from '@/types/menu';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 // 类型定义
 interface MenuItem {
@@ -58,6 +59,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { siteName } = useSite();
+  const { settings: userSettings } = useUserSettings();
   const [configVersion, setConfigVersion] = useState(0);
 
   // 监听配置更新事件
@@ -167,11 +169,14 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [isNotificationMuted, setIsNotificationMuted] = useState(false);
   const [notifications, setNotifications] = useState({
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
     pendingUsers: { count: 0 },
     messages: { count: 0, hasUnread: false },
+    episodeUpdates: {
+      count: 0,
+      items: [] as Array<{ title: string; newEpisodes: number }>,
+    },
   });
 
   // 鼠标滚轮隐藏逻辑
@@ -471,6 +476,54 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     return () => clearInterval(interval);
   }, []);
 
+  // 监听集数更新事件
+  useEffect(() => {
+    const handleWatchingUpdates = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { hasUpdates, updatedCount } = customEvent.detail;
+
+      if (hasUpdates && updatedCount > 0) {
+        // 获取更新的剧集信息
+        try {
+          const cached = localStorage.getItem('vidora_watching_updates');
+          if (cached) {
+            const data = JSON.parse(cached);
+            const updatedSeries = data.updatedSeries || [];
+
+            // 提取有新集数的剧集
+            const items = updatedSeries
+              .filter((item: any) => item.hasNewEpisode && item.newEpisodes > 0)
+              .map((item: any) => ({
+                title: item.title,
+                newEpisodes: item.newEpisodes,
+              }));
+
+            if (items.length > 0) {
+              setNotifications((prev) => ({
+                ...prev,
+                episodeUpdates: {
+                  count: items.length,
+                  items,
+                },
+              }));
+            }
+          }
+        } catch (_error) {
+          // 忽略解析错误
+        }
+      }
+    };
+
+    window.addEventListener('watchingUpdatesChanged', handleWatchingUpdates);
+
+    return () => {
+      window.removeEventListener(
+        'watchingUpdatesChanged',
+        handleWatchingUpdates,
+      );
+    };
+  }, []);
+
   // 页面切换动画效果
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
   const previousPathname = useRef(pathname);
@@ -517,26 +570,17 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     return false;
   };
 
-  // 静音状态管理
-  useEffect(() => {
-    const savedMuteState = localStorage.getItem('notification-muted');
-    if (savedMuteState !== null) {
-      setIsNotificationMuted(JSON.parse(savedMuteState));
-    }
-  }, []);
-
-  const toggleNotificationMute = () => {
-    const newMuteState = !isNotificationMuted;
-    setIsNotificationMuted(newMuteState);
-    localStorage.setItem('notification-muted', JSON.stringify(newMuteState));
-  };
-
   // 计算提醒状态
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
   const hasPendingUsers = notifications.pendingUsers.count > 0;
   const hasUnreadMessages = notifications.messages.hasUnread;
+  const hasEpisodeUpdates = notifications.episodeUpdates.count > 0;
   const hasAnyNotifications =
-    hasVersionUpdate || hasPendingUsers || hasUnreadMessages;
+    userSettings.enableNotifications &&
+    (hasVersionUpdate ||
+      hasPendingUsers ||
+      hasUnreadMessages ||
+      hasEpisodeUpdates);
 
   // 提醒弹窗组件
   const NotificationModal = () => {
@@ -551,7 +595,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     return createPortal(
       <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4'>
-        <div className='bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6 relative max-h-[80vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50'>
+        <div className='bg-white dark:bg-gray-900 rounded-xl shadow-lg max-w-lg w-full p-5 relative max-h-[80vh] overflow-y-auto border border-gray-200 dark:border-gray-700'>
           {/* 关闭按钮 */}
           <button
             onClick={() => setShowNotificationModal(false)}
@@ -559,88 +603,63 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           >
             <X className='w-5 h-5' />
           </button>
-
           {/* 标题 */}
           <div className='flex items-center gap-3 mb-4'>
-            <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg'>
+            <div className='w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center'>
               <Bell className='w-5 h-5 text-white' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
               提醒事项
             </h3>
-            <div className='flex items-center gap-2 ml-4'>
-              <span className='text-xs text-gray-500 dark:text-gray-400'>
-                {isNotificationMuted ? '已静音' : '已开启'}
-              </span>
-              <button
-                onClick={toggleNotificationMute}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  isNotificationMuted
-                    ? 'bg-gray-300 dark:bg-gray-600'
-                    : 'bg-blue-600 dark:bg-blue-500'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
-                    isNotificationMuted ? 'translate-x-1' : 'translate-x-6'
-                  }`}
-                />
-              </button>
-            </div>
           </div>
-
           {/* 内容区域 */}
-          <div className='space-y-3'>
+          <div className='space-y-2'>
             {/* 版本更新提醒 */}
             {hasVersionUpdate && (
-              <div className='group relative p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
-                <div className='flex items-start space-x-4'>
-                  <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
-                    <AlertCircle className='w-5 h-5 text-white' />
-                  </div>
-                  <div className='flex-1'>
-                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
-                      发现新版本
-                    </p>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-                      当前版本: v{CURRENT_VERSION}
-                    </p>
-                  </div>
-                  {/* 版本更新徽章 */}
-                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-blue-500 rounded-full'>
-                    新版本
+              <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'>
+                <div className='flex items-center gap-2 flex-1'>
+                  <AlertCircle className='w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0' />
+                  <span className='text-sm text-gray-900 dark:text-gray-100'>
+                    版本更新
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
-                    // 这里可以触发版本详情弹窗
                   }}
-                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
+                  className='text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-shrink-0'
                 >
-                  查看版本详情
+                  查看
+                </button>
+                <button
+                  onClick={() => {
+                    setNotifications((prev) => ({
+                      ...prev,
+                      versionUpdate: {
+                        hasUpdate: false,
+                        version: '',
+                        count: 0,
+                      },
+                    }));
+                  }}
+                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                  title='关闭'
+                >
+                  <X className='w-4 h-4' />
                 </button>
               </div>
             )}
 
             {/* 注册审核提醒 */}
             {pendingUsersCount > 0 && (
-              <div className='group relative p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-200/50 dark:border-red-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
-                <div className='flex items-start space-x-4'>
-                  <div className='w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
-                    <Users className='w-5 h-5 text-white' />
-                  </div>
-                  <div className='flex-1'>
-                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
-                      待审核用户
-                    </p>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-                      有 {pendingUsersCount} 个用户等待审核
-                    </p>
-                  </div>
-                  {/* 待审核用户徽章 */}
-                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-orange-500 rounded-full'>
-                    {pendingUsersCount > 99 ? '99+' : pendingUsersCount}
+              <div className='flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors'>
+                <div className='flex items-center gap-2 flex-1'>
+                  <Users className='w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0' />
+                  <span className='text-sm text-gray-900 dark:text-gray-100'>
+                    待审核用户
+                  </span>
+                  <span className='text-xs text-orange-500 dark:text-orange-400 font-medium'>
+                    {pendingUsersCount}
                   </span>
                 </div>
                 <button
@@ -648,39 +667,40 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     setShowNotificationModal(false);
                     router.push('/admin');
                   }}
-                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
+                  className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'
                 >
-                  前往审核
+                  前往
+                </button>
+                <button
+                  onClick={() => {
+                    setNotifications((prev) => ({
+                      ...prev,
+                      pendingUsers: { count: 0 },
+                    }));
+                  }}
+                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                  title='关闭'
+                >
+                  <X className='w-4 h-4' />
                 </button>
               </div>
             )}
 
             {/* 消息提醒 */}
             {notifications.messages.hasUnread && (
-              <div className='group relative p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border border-purple-200/50 dark:border-pink-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
-                <div className='flex items-start space-x-4'>
-                  <div className='w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
-                    <MessageSquare className='w-5 h-5 text-white' />
-                  </div>
-                  <div className='flex-1'>
-                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
-                      新消息
-                    </p>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-                      有 {notifications.messages.count} 条未读消息
-                    </p>
-                  </div>
-                  {/* 消息徽章 */}
-                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-purple-500 rounded-full'>
-                    {notifications.messages.count > 99
-                      ? '99+'
-                      : notifications.messages.count}
+              <div className='flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors'>
+                <div className='flex items-center gap-2 flex-1'>
+                  <MessageSquare className='w-4 h-4 text-purple-500 dark:text-purple-400 flex-shrink-0' />
+                  <span className='text-sm text-gray-900 dark:text-gray-100'>
+                    新消息
+                  </span>
+                  <span className='text-xs text-purple-500 dark:text-purple-400 font-medium'>
+                    {notifications.messages.count}
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
-                    // 标记消息为已查看
                     localStorage.setItem(
                       'lastViewedMessages',
                       Date.now().toString(),
@@ -691,13 +711,74 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     }));
                     router.push('/message');
                   }}
-                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
+                  className='text-sm text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 flex-shrink-0'
                 >
-                  查看消息
+                  查看
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(
+                      'lastViewedMessages',
+                      Date.now().toString(),
+                    );
+                    setNotifications((prev) => ({
+                      ...prev,
+                      messages: { count: 0, hasUnread: false },
+                    }));
+                  }}
+                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                  title='关闭'
+                >
+                  <X className='w-4 h-4' />
                 </button>
               </div>
             )}
-          </div>
+
+            {/* 集数更新提醒 */}
+            {hasEpisodeUpdates && (
+              <div className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors'>
+                <div className='flex items-center gap-2 flex-1'>
+                  <PlayCircle className='w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0' />
+                  <div className='flex-1 min-w-0'>
+                    <span className='text-sm text-gray-900 dark:text-gray-100'>
+                      {notifications.episodeUpdates.items.length === 1
+                        ? notifications.episodeUpdates.items[0].title
+                        : `${notifications.episodeUpdates.items.length} 部剧集`}
+                    </span>
+                    <span className='text-xs text-green-500 dark:text-green-400 font-medium ml-2'>
+                      +
+                      {notifications.episodeUpdates.items.reduce(
+                        (sum, item) => sum + item.newEpisodes,
+                        0,
+                      )}{' '}
+                      集
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowNotificationModal(false);
+                    router.push('/favorites');
+                  }}
+                  className='text-sm text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300 flex-shrink-0'
+                >
+                  前往
+                </button>
+                <button
+                  onClick={() => {
+                    setNotifications((prev) => ({
+                      ...prev,
+                      episodeUpdates: { count: 0, items: [] },
+                    }));
+                  }}
+                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                  title='关闭'
+                >
+                  <X className='w-4 h-4' />
+                </button>
+              </div>
+            )}
+          </div>{' '}
         </div>
       </div>,
       document.body,
@@ -1010,27 +1091,19 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               {hasAnyNotifications && (
                 <button
                   onClick={() => setShowNotificationModal(true)}
-                  className={`group relative transition-all duration-200 ${
-                    !isNotificationMuted ? 'animate-pulse' : ''
-                  }`}
+                  className='group relative transition-all duration-200 animate-pulse'
                   title='提醒'
                 >
-                  <Bell
-                    className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-90 ${
-                      isNotificationMuted
-                        ? 'text-gray-400 dark:text-gray-500'
-                        : 'text-orange-500 dark:text-orange-400'
-                    }`}
-                  />
+                  <Bell className='w-5 h-5 text-orange-500 dark:text-orange-400 transition-transform duration-300 group-hover:rotate-90' />
                   {/* 统一提醒徽章 */}
                   {(() => {
                     const totalCount =
                       notifications.versionUpdate.count +
                       notifications.pendingUsers.count +
-                      notifications.messages.count;
+                      notifications.messages.count +
+                      notifications.episodeUpdates.count;
 
-                    // 只有有提醒且未静音时才显示徽章
-                    if (totalCount > 0 && !isNotificationMuted) {
+                    if (totalCount > 0) {
                       return (
                         <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
                           {totalCount > 99 ? '99+' : totalCount}

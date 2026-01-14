@@ -24,6 +24,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
   try {
     // 尝试从主要URL获取版本信息
     const primaryVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[0]);
+
     if (primaryVersion) {
       const result = compareVersions(primaryVersion);
       // 如果比较结果是获取失败，说明版本格式有问题
@@ -37,6 +38,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
     // 如果主要URL失败或返回无效版本，尝试备用URL（如果存在）
     if (VERSION_CHECK_URLS.length > 1) {
       const backupVersion = await fetchVersionFromUrl(VERSION_CHECK_URLS[1]);
+
       if (backupVersion) {
         const result = compareVersions(backupVersion);
         if (result === UpdateStatus.FETCH_FAILED) {

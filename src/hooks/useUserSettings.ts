@@ -12,6 +12,7 @@ interface UserSettings {
   doubanDataSource: string;
   doubanImageProxyType: string;
   doubanImageProxyUrl: string;
+  enableNotifications: boolean;
 }
 
 /**
@@ -83,6 +84,11 @@ const loadSettingsFromStorage = (): Partial<UserSettings> => {
     settings.doubanImageProxyUrl = doubanImageProxyUrl;
   }
 
+  const enableNotifications = localStorage.getItem('enableNotifications');
+  if (enableNotifications !== null) {
+    settings.enableNotifications = JSON.parse(enableNotifications);
+  }
+
   return settings;
 };
 
@@ -114,6 +120,7 @@ const getRuntimeDefaults = (): UserSettings => {
       doubanDataSource: 'direct',
       doubanImageProxyType: 'direct',
       doubanImageProxyUrl: '',
+      enableNotifications: true,
     };
   }
 
@@ -127,6 +134,7 @@ const getRuntimeDefaults = (): UserSettings => {
     doubanDataSource: runtimeConfig.DOUBAN_PROXY_TYPE || 'direct',
     doubanImageProxyType: runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE || 'direct',
     doubanImageProxyUrl: runtimeConfig.DOUBAN_IMAGE_PROXY || '',
+    enableNotifications: true,
   };
 };
 
@@ -166,6 +174,9 @@ export const useUserSettings = () => {
       doubanImageProxyUrl:
         storedSettings.doubanImageProxyUrl ??
         runtimeDefaults.doubanImageProxyUrl,
+      enableNotifications:
+        storedSettings.enableNotifications ??
+        runtimeDefaults.enableNotifications,
     };
 
     setSettings(mergedSettings);
@@ -200,6 +211,7 @@ export const useUserSettings = () => {
         'doubanDataSource',
         'doubanImageProxyType',
         'doubanImageProxyUrl',
+        'enableNotifications',
       ];
 
       keys.forEach((key) => {
