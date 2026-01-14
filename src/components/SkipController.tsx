@@ -202,7 +202,10 @@ export default function SkipController({
           return;
         }
 
-        setCurrentSkipSegment(currentSegment);
+        // 使用 requestAnimationFrame 来延迟 setState 调用
+        requestAnimationFrame(() => {
+          setCurrentSkipSegment(currentSegment);
+        });
 
         // 实时检查是否开启自动跳过（从 localStorage 读取最新设置）
         let shouldAutoSkip = true; // 默认开启
@@ -230,7 +233,10 @@ export default function SkipController({
           handleAutoSkip(currentSegment);
         }
       } else if (!currentSegment && currentSkipSegment?.type) {
-        setCurrentSkipSegment(null);
+        // 使用 requestAnimationFrame 来延迟 setState 调用
+        requestAnimationFrame(() => {
+          setCurrentSkipSegment(null);
+        });
       }
     },
     [

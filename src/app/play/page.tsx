@@ -1887,6 +1887,7 @@ function PlayPageClient() {
             }
           }
         } catch {
+          // 静默处理错误，集数切换失败不影响功能
         } finally {
           episodeSwitchTimeoutRef.current = null;
         }

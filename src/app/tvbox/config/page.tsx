@@ -53,6 +53,7 @@ export default function TVBoxConfigPage() {
         );
       }
     } catch {
+      // 静默处理错误，配置加载失败不影响功能
     } finally {
       setLoading(false);
     }

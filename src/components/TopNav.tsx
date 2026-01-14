@@ -173,10 +173,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
     pendingUsers: { count: 0 },
     messages: { count: 0, hasUnread: false },
-    episodeUpdates: {
-      count: 0,
-      items: [] as Array<{ title: string; newEpisodes: number }>,
-    },
   });
 
   // 鼠标滚轮隐藏逻辑
@@ -476,54 +472,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 监听集数更新事件
-  useEffect(() => {
-    const handleWatchingUpdates = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { hasUpdates, updatedCount } = customEvent.detail;
-
-      if (hasUpdates && updatedCount > 0) {
-        // 获取更新的剧集信息
-        try {
-          const cached = localStorage.getItem('vidora_watching_updates');
-          if (cached) {
-            const data = JSON.parse(cached);
-            const updatedSeries = data.updatedSeries || [];
-
-            // 提取有新集数的剧集
-            const items = updatedSeries
-              .filter((item: any) => item.hasNewEpisode && item.newEpisodes > 0)
-              .map((item: any) => ({
-                title: item.title,
-                newEpisodes: item.newEpisodes,
-              }));
-
-            if (items.length > 0) {
-              setNotifications((prev) => ({
-                ...prev,
-                episodeUpdates: {
-                  count: items.length,
-                  items,
-                },
-              }));
-            }
-          }
-        } catch (_error) {
-          // 忽略解析错误
-        }
-      }
-    };
-
-    window.addEventListener('watchingUpdatesChanged', handleWatchingUpdates);
-
-    return () => {
-      window.removeEventListener(
-        'watchingUpdatesChanged',
-        handleWatchingUpdates,
-      );
-    };
-  }, []);
-
   // 页面切换动画效果
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
   const previousPathname = useRef(pathname);
@@ -574,13 +522,9 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
   const hasPendingUsers = notifications.pendingUsers.count > 0;
   const hasUnreadMessages = notifications.messages.hasUnread;
-  const hasEpisodeUpdates = notifications.episodeUpdates.count > 0;
   const hasAnyNotifications =
     userSettings.enableNotifications &&
-    (hasVersionUpdate ||
-      hasPendingUsers ||
-      hasUnreadMessages ||
-      hasEpisodeUpdates);
+    (hasVersionUpdate || hasPendingUsers || hasUnreadMessages);
 
   // 提醒弹窗组件
   const NotificationModal = () => {
@@ -724,51 +668,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     setNotifications((prev) => ({
                       ...prev,
                       messages: { count: 0, hasUnread: false },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
-                </button>
-              </div>
-            )}
-
-            {/* 集数更新提醒 */}
-            {hasEpisodeUpdates && (
-              <div className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <PlayCircle className='w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0' />
-                  <div className='flex-1 min-w-0'>
-                    <span className='text-sm text-gray-900 dark:text-gray-100'>
-                      {notifications.episodeUpdates.items.length === 1
-                        ? notifications.episodeUpdates.items[0].title
-                        : `${notifications.episodeUpdates.items.length} 部剧集`}
-                    </span>
-                    <span className='text-xs text-green-500 dark:text-green-400 font-medium ml-2'>
-                      +
-                      {notifications.episodeUpdates.items.reduce(
-                        (sum, item) => sum + item.newEpisodes,
-                        0,
-                      )}{' '}
-                      集
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNotificationModal(false);
-                    router.push('/favorites');
-                  }}
-                  className='text-sm text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300 flex-shrink-0'
-                >
-                  前往
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      episodeUpdates: { count: 0, items: [] },
                     }));
                   }}
                   className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
@@ -1100,8 +999,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     const totalCount =
                       notifications.versionUpdate.count +
                       notifications.pendingUsers.count +
-                      notifications.messages.count +
-                      notifications.episodeUpdates.count;
+                      notifications.messages.count;
 
                     if (totalCount > 0) {
                       return (

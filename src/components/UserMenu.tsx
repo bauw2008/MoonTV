@@ -1164,7 +1164,7 @@ export const UserMenu: React.FC = () => {
                   提醒消息免打扰
                 </h4>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                  关闭后不再显示版本更新、集数更新，新消息等提醒
+                  关闭后不再显示版本更新、新消息等提醒
                 </p>
               </div>
               <label className='flex items-center cursor-pointer'>

@@ -96,8 +96,11 @@ export const VirtualVideoGrid = React.forwardRef<
     useImagePreload(imagesToPreload, totalItemCount > 0);
 
     useEffect(() => {
-      setVisibleItemCount(INITIAL_BATCH_SIZE);
-      setIsVirtualLoadingMore(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setVisibleItemCount(INITIAL_BATCH_SIZE);
+        setIsVirtualLoadingMore(false);
+      });
     }, [videos]);
 
     useEffect(() => {

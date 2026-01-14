@@ -39,10 +39,13 @@ function CustomAdFilterConfigContent({
   // 初始化配置
   useEffect(() => {
     if (config?.SiteConfig) {
-      setFilterSettings({
-        CustomAdFilterCode: config.SiteConfig.CustomAdFilterCode || '',
-        CustomAdFilterVersion: config.SiteConfig.CustomAdFilterVersion || 1,
-        CustomAdFilterEnabled: config.SiteConfig.CustomAdFilterEnabled || false,
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setFilterSettings({
+          CustomAdFilterCode: config.SiteConfig.CustomAdFilterCode || '',
+          CustomAdFilterVersion: config.SiteConfig.CustomAdFilterVersion || 1,
+          CustomAdFilterEnabled: config.SiteConfig.CustomAdFilterEnabled || false,
+        });
       });
     }
   }, [config]);
@@ -52,11 +55,14 @@ function CustomAdFilterConfigContent({
     const originalCode = config?.SiteConfig?.CustomAdFilterCode || '';
     const originalVersion = config?.SiteConfig?.CustomAdFilterVersion || 1;
     const originalEnabled = config?.SiteConfig?.CustomAdFilterEnabled || false;
-    setHasChanges(
-      filterSettings.CustomAdFilterCode !== originalCode ||
-        filterSettings.CustomAdFilterVersion !== originalVersion ||
-        filterSettings.CustomAdFilterEnabled !== originalEnabled,
-    );
+    // 使用 requestAnimationFrame 来延迟 setState 调用
+    requestAnimationFrame(() => {
+      setHasChanges(
+        filterSettings.CustomAdFilterCode !== originalCode ||
+          filterSettings.CustomAdFilterVersion !== originalVersion ||
+          filterSettings.CustomAdFilterEnabled !== originalEnabled,
+      );
+    });
   }, [filterSettings, config]);
 
   // 非管理员或站长禁止访问
