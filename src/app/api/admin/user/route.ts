@@ -340,12 +340,6 @@ export async function POST(request: NextRequest) {
       }
       case 'deleteUser': {
         // targetEntry 应该已经在前面被查找过了
-        console.log('删除用户 - targetUsername:', targetUsername);
-        console.log('删除用户 - targetEntry:', targetEntry);
-        console.log(
-          '删除用户 - 配置中的用户列表:',
-          adminConfig.UserConfig.Users.map((u) => u.username),
-        );
 
         if (!targetEntry) {
           return NextResponse.json(

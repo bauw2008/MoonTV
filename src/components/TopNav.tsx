@@ -822,304 +822,330 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   }
 
   return (
-    <nav
-      suppressHydrationWarning={true}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isPageTransitioning
-          ? 'scale-[0.98] opacity-80'
-          : 'scale-100 opacity-100'
-      }`}
-      style={{ willChange: 'transform, opacity' }}
-    >
-      {/* 透明背景层 */}
-      <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
-        {/* 页面切换进度条 */}
-        <div
-          className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
-            isPageTransitioning ? 'w-full' : 'w-0'
-          }`}
-        ></div>
-      </div>
-      <div className='relative px-4 sm:px-6 lg:px-8'>
-        <div className='flex justify-between items-center h-12'>
-          {/* Logo */}
-          <div className='flex items-center flex-none'>
-            <Link
-              href='/'
-              className='logo-container flex items-center space-x-3 group'
-            >
-              {/* 站点名称 */}
-              <div className='relative'>
-                <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
-                  {(siteName || 'Vidora').split('').map((char, index) => {
-                    if (index === 0) {
-                      // 第一个字母：应用颜色和旋转效果
-                      return (
-                        <span
-                          key={index}
-                          className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'
-                        >
-                          {char}
-                        </span>
-                      );
-                    }
-                    // 其他字母：应用柔和的渐变色，不抢第一个字母的风头
-                    return (
-                      <span
-                        key={index}
-                        className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'
-                      >
-                        {char}
-                      </span>
-                    );
-                  })}
-                </span>
-
-                {/* 名称下方装饰线 */}
-                <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
-              </div>
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
-            {menuItems.map((item, _index) => {
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
-                    isActive(item.href)
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
-                  }`}
-                >
-                  {/* 悬停背景效果 */}
-                  <div
-                    className={`absolute inset-0 rounded-lg transition-all duration-300 ${
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30'
-                        : 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
-                    }`}
-                  ></div>
-
-                  {/* 图标容器 */}
-                  <div className='relative mr-2'>
-                    {/* 图标 */}
-                    <Icon
-                      className={`relative w-4 h-4 transition-all duration-500 z-10 ${
-                        isActive(item.href)
-                          ? 'text-white drop-shadow-sm'
-                          : (() => {
-                              // 根据不同的菜单项设置不同的颜色
-                              const colorMap: Record<string, string> = {
-                                '/': 'text-purple-500 dark:text-purple-400',
-                                '/douban?type=movie':
-                                  'text-red-500 dark:text-red-400',
-                                '/douban?type=tv':
-                                  'text-blue-500 dark:text-blue-400',
-                                '/douban?type=short-drama':
-                                  'text-pink-500 dark:text-pink-400',
-                                '/douban?type=anime':
-                                  'text-indigo-500 dark:text-indigo-400',
-                                '/douban?type=show':
-                                  'text-orange-500 dark:text-orange-400',
-                                '/live': 'text-green-500 dark:text-green-400',
-                                '/tvbox': 'text-cyan-500 dark:text-cyan-400',
-                                '/favorites':
-                                  'text-yellow-500 dark:text-yellow-400',
-                                '/douban?type=custom':
-                                  'text-teal-500 dark:text-teal-400',
-                              };
-                              return (
-                                colorMap[item.href] ||
-                                'text-gray-500 dark:text-gray-400'
-                              );
-                            })()
-                      } group-hover:rotate-12`}
-                    />
-                  </div>
-
-                  {/* 文字 */}
-                  <span
-                    className={`relative transition-all duration-300 z-10 whitespace-nowrap text-sm ${
-                      isActive(item.href)
-                        ? 'text-blue-600 dark:text-blue-400 font-medium'
-                        : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                    }`}
-                  >
-                    {item.label}
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+      @keyframes card-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .text-shimmer {
+        background: linear-gradient(90deg, #374151 0%, #ffffff 50%, #374151 100%);
+        background-size: 200% 100%;
+        animation: card-shimmer 4s infinite linear;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      .dark .text-shimmer {
+        background: linear-gradient(90deg, #6b7280 0%, #e5e7eb 50%, #6b7280 100%);
+        background-size: 200% 100%;
+        animation: card-shimmer 4s infinite linear;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      `,
+        }}
+      />{' '}
+      <nav
+        suppressHydrationWarning={true}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
+        } ${
+          isPageTransitioning
+            ? 'scale-[0.98] opacity-80'
+            : 'scale-100 opacity-100'
+        }`}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        {/* 透明背景层 */}
+        <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+          {/* 页面切换进度条 */}
+          <div
+            className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
+              isPageTransitioning ? 'w-full' : 'w-0'
+            }`}
+          ></div>
+        </div>
+        <div className='relative px-4 sm:px-6 lg:px-8'>
+          <div className='flex justify-between items-center h-12'>
+            {/* Logo */}
+            <div className='flex items-center flex-none'>
+              <Link
+                href='/'
+                className='logo-container flex items-center space-x-3 group'
+              >
+                {/* 站点名称 */}
+                <div className='relative'>
+                  <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
+                    {(siteName || 'Vidora').split('').map((char, index) => {
+                      if (index === 0) {
+                        // 第一个字母：应用颜色和旋转效果
+                        return (
+                          <span
+                            key={index}
+                            className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'
+                          >
+                            {char}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                    {/* 后续字母整体应用扫光效果 */}
+                    <span className='inline-block text-shimmer'>
+                      {(siteName || 'Vidora').slice(1)}
+                    </span>
                   </span>
 
-                  {/* 激活状态指示器 */}
-                  {isActive(item.href) && (
-                    <div className='absolute -bottom-px left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full'></div>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Right side items */}
-          <div className='flex items-center justify-end flex-none space-x-3 sm:space-x-4'>
-            {/* Search icon */}
-            <button
-              onClick={() => router.push('/search')}
-              className='group relative transition-all duration-200 flex items-center justify-center'
-              title='搜索'
-            >
-              <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
-            </button>
-
-            {/* 主题切换按钮 */}
-            <button
-              className='group relative transition-all duration-200 flex items-center justify-center'
-              title='切换主题'
-            >
-              <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
-            </button>
-
-            {/* 提醒图标按钮 - 只在有通知时显示 */}
-            {hasAnyNotifications && (
-              <button
-                onClick={() => setShowNotificationModal(true)}
-                className={`group relative transition-all duration-200 ${
-                  !isNotificationMuted ? 'animate-pulse' : ''
-                }`}
-                title='提醒'
-              >
-                <Bell
-                  className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-90 ${
-                    isNotificationMuted
-                      ? 'text-gray-400 dark:text-gray-500'
-                      : 'text-orange-500 dark:text-orange-400'
-                  }`}
-                />
-                {/* 统一提醒徽章 */}
-                {(() => {
-                  const totalCount =
-                    notifications.versionUpdate.count +
-                    notifications.pendingUsers.count +
-                    notifications.messages.count;
-
-                  // 只有有提醒且未静音时才显示徽章
-                  if (totalCount > 0 && !isNotificationMuted) {
-                    return (
-                      <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
-                        {totalCount > 99 ? '99+' : totalCount}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
-              </button>
-            )}
-
-            {/* 用户菜单 */}
-            <UserMenu />
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className='md:hidden transition-colors duration-200'
-            >
-              {isMobileMenuOpen ? (
-                <X className='w-6 h-6' />
-              ) : (
-                <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
-                  <div className='w-6 h-0.5 bg-current rounded-full'></div>
-                  <div className='w-5 h-0.5 bg-current rounded-full'></div>
-                  <div className='w-4 h-0.5 bg-current rounded-full'></div>
+                  {/* 名称下方装饰线 */}
+                  <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
                 </div>
-              )}
-            </button>
-          </div>
-        </div>
+              </Link>
+            </div>
 
-        {/* Mobile Navigation */}
-        <div
-          className={`md:hidden transition-all duration-500 ease-out overflow-hidden ${
-            isMobileMenuOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
-          <div className='relative border-t border-white/20 dark:border-gray-700/20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl backdrop-saturate-180'>
-            <div className='relative px-3 pt-3 pb-4 space-y-1'>
+            {/* Desktop Navigation */}
+            <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
               {menuItems.map((item, _index) => {
                 const Icon = item.icon;
 
                 return (
-                  <button
+                  <Link
                     key={item.href}
-                    onClick={() => {
-                      router.push(item.href);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`nav-item flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group ${
+                    href={item.href}
+                    className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
                       isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:from-blue-500/25 dark:to-purple-500/25 dark:text-blue-300 shadow-md shadow-blue-500/20 dark:shadow-blue-500/25 border border-blue-200/25 dark:border-blue-700/25'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
                     }`}
-                    style={{
-                      animationDelay: isMobileMenuOpen
-                        ? `${_index * 30}ms`
-                        : '0ms',
-                    }}
                   >
-                    {/* 图标容器 */}
+                    {/* 悬停背景效果 */}
                     <div
-                      className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-300 mr-3 flex-shrink-0 ${
+                      className={`absolute inset-0 rounded-lg transition-all duration-300 ${
                         isActive(item.href)
-                          ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30 text-blue-600 dark:text-blue-400'
-                          : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gradient-to-br group-hover:from-indigo-400 group-hover:to-purple-500 group-hover:rotate-6'
+                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30'
+                          : 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
                       }`}
-                    >
-                      {' '}
+                    ></div>
+
+                    {/* 图标容器 */}
+                    <div className='relative mr-2'>
+                      {/* 图标 */}
                       <Icon
-                        className={`w-3.5 h-3.5 transition-all duration-300 group-hover:rotate-12 ${(() => {
-                          // 根据不同的菜单项设置不同的颜色
-                          const colorMap: Record<string, string> = {
-                            '/': 'text-purple-500 dark:text-purple-400',
-                            '/douban?type=movie':
-                              'text-red-500 dark:text-red-400',
-                            '/douban?type=tv':
-                              'text-blue-500 dark:text-blue-400',
-                            '/douban?type=short-drama':
-                              'text-pink-500 dark:text-pink-400',
-                            '/douban?type=anime':
-                              'text-indigo-500 dark:text-indigo-400',
-                            '/douban?type=show':
-                              'text-orange-500 dark:text-orange-400',
-                            '/live': 'text-green-500 dark:text-green-400',
-                            '/tvbox': 'text-cyan-500 dark:text-cyan-400',
-                            '/favorites':
-                              'text-yellow-500 dark:text-yellow-400',
-                            '/douban?type=custom':
-                              'text-teal-500 dark:text-teal-400',
-                          };
-                          return (
-                            colorMap[item.href] ||
-                            'text-gray-500 dark:text-gray-400'
-                          );
-                        })()}`}
+                        className={`relative w-4 h-4 transition-all duration-500 z-10 ${
+                          isActive(item.href)
+                            ? 'text-white drop-shadow-sm'
+                            : (() => {
+                                // 根据不同的菜单项设置不同的颜色
+                                const colorMap: Record<string, string> = {
+                                  '/': 'text-purple-500 dark:text-purple-400',
+                                  '/douban?type=movie':
+                                    'text-red-500 dark:text-red-400',
+                                  '/douban?type=tv':
+                                    'text-blue-500 dark:text-blue-400',
+                                  '/douban?type=short-drama':
+                                    'text-pink-500 dark:text-pink-400',
+                                  '/douban?type=anime':
+                                    'text-indigo-500 dark:text-indigo-400',
+                                  '/douban?type=show':
+                                    'text-orange-500 dark:text-orange-400',
+                                  '/live': 'text-green-500 dark:text-green-400',
+                                  '/tvbox': 'text-cyan-500 dark:text-cyan-400',
+                                  '/favorites':
+                                    'text-yellow-500 dark:text-yellow-400',
+                                  '/douban?type=custom':
+                                    'text-teal-500 dark:text-teal-400',
+                                };
+                                return (
+                                  colorMap[item.href] ||
+                                  'text-gray-500 dark:text-gray-400'
+                                );
+                              })()
+                        } group-hover:rotate-12`}
                       />
                     </div>
 
                     {/* 文字 */}
-                    <span className='flex-1 text-left'>{item.label}</span>
-                  </button>
+                    <span
+                      className={`relative transition-all duration-300 z-10 whitespace-nowrap text-sm ${
+                        isActive(item.href)
+                          ? 'text-blue-600 dark:text-blue-400 font-medium'
+                          : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+
+                    {/* 激活状态指示器 */}
+                    {isActive(item.href) && (
+                      <div className='absolute -bottom-px left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full'></div>
+                    )}
+                  </Link>
                 );
               })}
             </div>
+
+            {/* Right side items */}
+            <div className='flex items-center justify-end flex-none space-x-3 sm:space-x-4'>
+              {/* Search icon */}
+              <button
+                onClick={() => router.push('/search')}
+                className='group relative transition-all duration-200 flex items-center justify-center'
+                title='搜索'
+              >
+                <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
+              </button>
+
+              {/* 主题切换按钮 */}
+              <button
+                className='group relative transition-all duration-200 flex items-center justify-center'
+                title='切换主题'
+              >
+                <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
+              </button>
+
+              {/* 提醒图标按钮 - 只在有通知时显示 */}
+              {hasAnyNotifications && (
+                <button
+                  onClick={() => setShowNotificationModal(true)}
+                  className={`group relative transition-all duration-200 ${
+                    !isNotificationMuted ? 'animate-pulse' : ''
+                  }`}
+                  title='提醒'
+                >
+                  <Bell
+                    className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-90 ${
+                      isNotificationMuted
+                        ? 'text-gray-400 dark:text-gray-500'
+                        : 'text-orange-500 dark:text-orange-400'
+                    }`}
+                  />
+                  {/* 统一提醒徽章 */}
+                  {(() => {
+                    const totalCount =
+                      notifications.versionUpdate.count +
+                      notifications.pendingUsers.count +
+                      notifications.messages.count;
+
+                    // 只有有提醒且未静音时才显示徽章
+                    if (totalCount > 0 && !isNotificationMuted) {
+                      return (
+                        <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
+                          {totalCount > 99 ? '99+' : totalCount}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                </button>
+              )}
+
+              {/* 用户菜单 */}
+              <UserMenu />
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className='md:hidden transition-colors duration-200'
+              >
+                {isMobileMenuOpen ? (
+                  <X className='w-6 h-6' />
+                ) : (
+                  <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
+                    <div className='w-6 h-0.5 bg-current rounded-full'></div>
+                    <div className='w-5 h-0.5 bg-current rounded-full'></div>
+                    <div className='w-4 h-0.5 bg-current rounded-full'></div>
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div
+            className={`md:hidden transition-all duration-500 ease-out overflow-hidden ${
+              isMobileMenuOpen
+                ? 'max-h-[80vh] opacity-100'
+                : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className='relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/20 dark:border-gray-700/20 overflow-hidden select-none'>
+              <div className='relative px-3 pt-3 pb-4 space-y-1'>
+                {menuItems.map((item, _index) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => {
+                        router.push(item.href);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`nav-item flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group ${
+                        isActive(item.href)
+                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:from-blue-500/25 dark:to-purple-500/25 dark:text-blue-300 shadow-md shadow-blue-500/20 dark:shadow-blue-500/25 border border-blue-200/25 dark:border-blue-700/25'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
+                      }`}
+                      style={{
+                        animationDelay: isMobileMenuOpen
+                          ? `${_index * 30}ms`
+                          : '0ms',
+                      }}
+                    >
+                      {/* 图标容器 */}
+                      <div
+                        className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-300 mr-3 flex-shrink-0 ${
+                          isActive(item.href)
+                            ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30 text-blue-600 dark:text-blue-400'
+                            : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gradient-to-br group-hover:from-indigo-400 group-hover:to-purple-500 group-hover:rotate-6'
+                        }`}
+                      >
+                        {' '}
+                        <Icon
+                          className={`w-3.5 h-3.5 transition-all duration-300 group-hover:rotate-12 ${(() => {
+                            // 根据不同的菜单项设置不同的颜色
+                            const colorMap: Record<string, string> = {
+                              '/': 'text-purple-500 dark:text-purple-400',
+                              '/douban?type=movie':
+                                'text-red-500 dark:text-red-400',
+                              '/douban?type=tv':
+                                'text-blue-500 dark:text-blue-400',
+                              '/douban?type=short-drama':
+                                'text-pink-500 dark:text-pink-400',
+                              '/douban?type=anime':
+                                'text-indigo-500 dark:text-indigo-400',
+                              '/douban?type=show':
+                                'text-orange-500 dark:text-orange-400',
+                              '/live': 'text-green-500 dark:text-green-400',
+                              '/tvbox': 'text-cyan-500 dark:text-cyan-400',
+                              '/favorites':
+                                'text-yellow-500 dark:text-yellow-400',
+                              '/douban?type=custom':
+                                'text-teal-500 dark:text-teal-400',
+                            };
+                            return (
+                              colorMap[item.href] ||
+                              'text-gray-500 dark:text-gray-400'
+                            );
+                          })()}`}
+                        />
+                      </div>
+
+                      {/* 文字 */}
+                      <span className='flex-1 text-left'>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <NotificationModal />
-    </nav>
+        <NotificationModal />
+      </nav>
+    </>
   );
 };
 

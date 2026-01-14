@@ -1131,8 +1131,6 @@ export abstract class BaseRedisStorage implements IStorage {
 
       // 保存更新后的统计数据
       await this.client.set(loginStatsKey, JSON.stringify(loginStats));
-
-      console.log(`用户 ${userName} 登入统计已更新:`, loginStats);
     } catch (error) {
       console.error(`更新用户 ${userName} 登入统计失败:`, error);
       throw error;

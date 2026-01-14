@@ -289,35 +289,46 @@ export const UserMenu: React.FC = () => {
       return;
     }
 
-    // 验证文件是图片且小于 2MB
+    // 验证文件是图片
     if (!file.type.startsWith('image/')) {
-      showError('请选择图片文件，仅支持 JPG、PNG、GIF 等图片格式');
+      showError('请选择图片文件，仅支持 JPG、PNG、GIF、WEBP 等图片格式');
       return;
     }
 
-    if (file.size > 1 * 1024 * 1024) {
-      showError('图片大小不能超过 1MB，请选择较小的图片文件');
+    // 根据用户角色设置不同的文件大小限制
+    const userRole = authInfo?.role || 'user';
+    const isOwner = userRole === 'owner';
+
+    // 站长无限制，普通用户和管理员限制150KB
+    const maxSizeBytes = isOwner ? Number.MAX_SAFE_INTEGER : 150 * 1024; // 150KB
+
+    if (file.size > maxSizeBytes) {
+      const sizeKB = Math.round(file.size / 1024);
+      const maxSizeKB = Math.round(maxSizeBytes / 1024);
+      showError(`头像大小不能超过${maxSizeKB}KB（当前：${sizeKB}KB）`);
       return;
     }
 
-    // GIF 直接上传，不走裁剪流程
-    // 检查 MIME type 和文件扩展名，确保 GIF 不会被误判
+    // GIF和WEBP直接上传，不走裁剪流程（避免破坏动画）
+    // 检查 MIME type 和文件扩展名
     const isGif =
       file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    const isWebp =
+      file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp');
 
-    if (isGif) {
+    if (isGif || isWebp) {
       const reader = new FileReader();
       reader.onload = async (event) => {
         if (event.target?.result) {
           try {
             setIsUploadingAvatar(true);
-            const gifBase64 = event.target.result.toString();
+            const imageBase64 = event.target.result.toString();
 
             // 调用 API 上传头像
             const response = await fetch('/api/avatar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ avatar: gifBase64 }),
+              body: JSON.stringify({ avatar: imageBase64 }),
             });
 
             if (!response.ok) {
@@ -1419,7 +1430,7 @@ export const UserMenu: React.FC = () => {
 
                 {/* 底部提示 */}
                 <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                  支持 JPG、PNG、GIF 等格式，文件大小不超过 2MB
+                  支持 JPG、PNG、GIF、WEBP 等格式
                 </p>
               </div>
             </div>
