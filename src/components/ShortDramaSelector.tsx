@@ -32,7 +32,10 @@ const ShortDramaSelector: React.FC<ShortDramaSelectorProps> = ({
 
   // 加载短剧分类
   useEffect(() => {
-    setLoadingCategories(true);
+    // 使用 requestAnimationFrame 来延迟 setState 调用
+    requestAnimationFrame(() => {
+      setLoadingCategories(true);
+    });
     getShortDramaCategories()
       .then((categories) => {
         const options = categories.map((cat) => ({

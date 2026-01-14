@@ -52,7 +52,7 @@ export default function TVBoxConfigPage() {
           data.securityConfig.configGenerator.configMode || 'standard',
         );
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }

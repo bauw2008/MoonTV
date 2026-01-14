@@ -1886,7 +1886,7 @@ function PlayPageClient() {
               }
             }
           }
-        } catch (error) {
+        } catch {
         } finally {
           episodeSwitchTimeoutRef.current = null;
         }

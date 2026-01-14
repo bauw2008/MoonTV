@@ -46,12 +46,21 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     MultiLevelOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(() => contentType === 'short-drama');
+
+  // 使用 useRef 来跟踪 contentType 的前一个值
+  const prevContentTypeRef = useRef<string | undefined>(undefined);
 
   // 加载短剧分类
   useEffect(() => {
-    if (contentType === 'short-drama') {
-      setLoadingCategories(true);
+    const prevContentType = prevContentTypeRef.current;
+    const hasChanged = prevContentType !== contentType;
+
+    if (hasChanged && contentType === 'short-drama') {
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setLoadingCategories(true);
+      });
       getShortDramaCategories()
         .then((categories) => {
           const options = categories.map((cat) => ({
@@ -69,6 +78,8 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
         .finally(() => {
           setLoadingCategories(false);
         });
+
+      prevContentTypeRef.current = contentType;
     }
   }, [contentType]);
 

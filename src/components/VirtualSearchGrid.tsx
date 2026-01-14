@@ -126,8 +126,11 @@ export const VirtualSearchGrid = React.forwardRef<
 
     // 重置可见项目数量（当搜索或过滤变化时）
     useEffect(() => {
-      setVisibleItemCount(INITIAL_BATCH_SIZE);
-      setIsLoadingMore(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setVisibleItemCount(INITIAL_BATCH_SIZE);
+        setIsLoadingMore(false);
+      });
     }, [currentData, viewMode]);
 
     // 当搜索关键词或视图模式改变时，滚动到顶部

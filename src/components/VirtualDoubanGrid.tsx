@@ -111,8 +111,11 @@ export const VirtualDoubanGrid = React.forwardRef<
 
     // 重置可见项目数量（当数据变化时）
     useEffect(() => {
-      setVisibleItemCount(INITIAL_BATCH_SIZE);
-      setIsVirtualLoadingMore(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setVisibleItemCount(INITIAL_BATCH_SIZE);
+        setIsVirtualLoadingMore(false);
+      });
     }, [doubanData, type, primarySelection]);
 
     // 当类型或筛选条件改变时，滚动到顶部

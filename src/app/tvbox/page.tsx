@@ -79,6 +79,15 @@ function SourceSelector({
   const [debounceId, setDebounceId] = useState<NodeJS.Timeout | null>(null);
   const selectedSourceData = sources.find((s) => s.key === selectedSource);
 
+  // 组件卸载时清除防抖定时器
+  useEffect(() => {
+    return () => {
+      if (debounceId) {
+        clearTimeout(debounceId);
+      }
+    };
+  }, [debounceId]);
+
   // 无可用视频源提示
   if (!sources || sources.length === 0) {
     return (
@@ -121,15 +130,6 @@ function SourceSelector({
 
     setDebounceId(newDebounceId);
   };
-
-  // 组件卸载时清除防抖定时器
-  useEffect(() => {
-    return () => {
-      if (debounceId) {
-        clearTimeout(debounceId);
-      }
-    };
-  }, [debounceId]);
 
   return (
     <div className='relative max-w-3xl'>

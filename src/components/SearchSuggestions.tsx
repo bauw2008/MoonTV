@@ -90,7 +90,10 @@ export default function SearchSuggestions({
 
   useEffect(() => {
     if (!query.trim() || !isVisible) {
-      setSuggestions([]);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setSuggestions([]);
+      });
       return;
     }
     debouncedFetchSuggestions(query);

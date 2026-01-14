@@ -15,8 +15,8 @@ import {
   getDoubanRecommends,
 } from '@/lib/douban.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';

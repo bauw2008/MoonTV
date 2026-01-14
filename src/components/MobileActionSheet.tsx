@@ -38,7 +38,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   totalEpisodes,
   origin = 'vod',
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
 
   // 控制动画状态
@@ -47,15 +47,18 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     let timer: NodeJS.Timeout;
 
     if (isOpen) {
-      setIsVisible(true);
-      // 使用双重 requestAnimationFrame 确保DOM完全渲染
+      // 使用 requestAnimationFrame 确保 DOM 渲染后再更新状态
       animationId = requestAnimationFrame(() => {
         animationId = requestAnimationFrame(() => {
+          setIsVisible(true);
           setIsAnimating(true);
         });
       });
     } else {
-      setIsAnimating(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setIsAnimating(false);
+      });
       // 等待动画完成后隐藏组件
       timer = setTimeout(() => {
         setIsVisible(false);

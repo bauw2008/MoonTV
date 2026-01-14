@@ -246,7 +246,10 @@ export default function SkipController({
 
   // 初始化加载配置
   useEffect(() => {
-    loadSkipSettings();
+    // 使用 requestAnimationFrame 来延迟 loadSkipSettings 调用
+    requestAnimationFrame(() => {
+      loadSkipSettings();
+    });
   }, [loadSkipSettings]);
 
   // 监听 localStorage 变化，同步跳过设置
@@ -292,7 +295,10 @@ export default function SkipController({
 
   // 当 source 或 id 或 episodeIndex 变化时，清理所有状态（换集时）
   useEffect(() => {
-    setCurrentSkipSegment(null);
+    // 使用 requestAnimationFrame 来延迟 setState 调用
+    requestAnimationFrame(() => {
+      setCurrentSkipSegment(null);
+    });
     // 清除已处理标记，允许新集数重新处理
     lastProcessedSegmentRef.current = null;
     // 设置冷却时间，防止新集数立即触发自动跳过

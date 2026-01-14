@@ -151,7 +151,10 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
   // 从 API 读取头像（仅在没有外部传入时）
   useEffect(() => {
     if (!externalAvatarUrl) {
-      setIsLoadingCustomAvatar(true);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setIsLoadingCustomAvatar(true);
+      });
       fetch('/api/avatar')
         .then((res) => res.json())
         .then((data) => {
@@ -169,8 +172,11 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
           setIsLoadingCustomAvatar(false);
         });
     } else {
-      setHasCustomAvatar(true);
-      setIsLoadingCustomAvatar(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setHasCustomAvatar(true);
+        setIsLoadingCustomAvatar(false);
+      });
     }
   }, [externalAvatarUrl]);
 

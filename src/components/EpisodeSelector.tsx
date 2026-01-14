@@ -66,13 +66,26 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const router = useRouter();
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
 
-  // 存储每个源的视频信息
-  const [videoInfoMap, setVideoInfoMap] = useState<Map<string, VideoInfo>>(
-    new Map(),
-  );
-  const [attemptedSources, setAttemptedSources] = useState<Set<string>>(
-    new Set(),
-  );
+  // 使用 useMemo 初始化 videoInfoMap 和 attemptedSources，避免在 useEffect 中同步 setState
+  const [videoInfoMap, setVideoInfoMap] = useState<Map<string, VideoInfo>>(() => {
+    if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
+      return new Map(precomputedVideoInfo);
+    }
+    return new Map();
+  });
+
+  const [attemptedSources, setAttemptedSources] = useState<Set<string>>(() => {
+    if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
+      const newSet = new Set<string>();
+      precomputedVideoInfo.forEach((info, key) => {
+        if (!info.hasError) {
+          newSet.add(key);
+        }
+      });
+      return newSet;
+    }
+    return new Set();
+  });
 
   // 使用 ref 来避免闭包问题
   const attemptedSourcesRef = useRef<Set<string>>(new Set());
@@ -143,34 +156,53 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     }
   }, []);
 
-  // 当有预计算结果时，先合并到videoInfoMap中
+  // 使用 useRef 来跟踪 precomputedVideoInfo 的前一个值
+  const prevPrecomputedVideoInfoRef = useRef<Map<string, VideoInfo> | undefined>(undefined);
+
+  // 当有预计算结果时，更新状态和 ref
   useEffect(() => {
     if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
-      // 原子性地更新两个状态，避免时序问题
-      setVideoInfoMap((prev) => {
-        const newMap = new Map(prev);
-        precomputedVideoInfo.forEach((value, key) => {
-          newMap.set(key, value);
+      // 只在 precomputedVideoInfo 真正变化时更新
+      const prevInfo = prevPrecomputedVideoInfoRef.current;
+      const hasChanged = !prevInfo || prevInfo.size !== precomputedVideoInfo.size ||
+        Array.from(precomputedVideoInfo.entries()).some(([key, value]) => {
+          const prevValue = prevInfo.get(key);
+          return !prevValue || JSON.stringify(prevValue) !== JSON.stringify(value);
         });
-        return newMap;
-      });
 
-      setAttemptedSources((prev) => {
-        const newSet = new Set(prev);
-        precomputedVideoInfo.forEach((info, key) => {
-          if (!info.hasError) {
-            newSet.add(key);
-          }
+      if (hasChanged) {
+        // 使用 requestAnimationFrame 来延迟 setState 调用，避免级联渲染
+        requestAnimationFrame(() => {
+          setVideoInfoMap((prev) => {
+            const newMap = new Map(prev);
+            precomputedVideoInfo.forEach((value, key) => {
+              if (!newMap.has(key)) {
+                newMap.set(key, value);
+              }
+            });
+            return newMap;
+          });
+
+          setAttemptedSources((prev) => {
+            const newSet = new Set(prev);
+            precomputedVideoInfo.forEach((info, key) => {
+              if (!info.hasError && !newSet.has(key)) {
+                newSet.add(key);
+              }
+            });
+            return newSet;
+          });
+
+          // 同步更新 ref，确保 getVideoInfo 能立即看到更新
+          precomputedVideoInfo.forEach((info, key) => {
+            if (!info.hasError) {
+              attemptedSourcesRef.current.add(key);
+            }
+          });
         });
-        return newSet;
-      });
 
-      // 同步更新 ref，确保 getVideoInfo 能立即看到更新
-      precomputedVideoInfo.forEach((info, key) => {
-        if (!info.hasError) {
-          attemptedSourcesRef.current.add(key);
-        }
-      });
+        prevPrecomputedVideoInfoRef.current = new Map(precomputedVideoInfo);
+      }
     }
   }, [precomputedVideoInfo]);
 
