@@ -303,12 +303,24 @@ export class DatabaseCacheManager {
 
     // 从 Redis兼容数据库 获取统计（支持KVRocks、Upstash、Redis）
     const redisStats = await DatabaseCacheManager.getKVRocksCacheStats();
+
+    // 获取 EdgeOne KV 统计信息
+    let edgeOneStats = null;
+    try {
+      const { EdgeOneKVCache } = await import('./edgeone-kv-cache');
+      edgeOneStats = await EdgeOneKVCache.getStats();
+      console.log('📊 EdgeOne KV 统计:', edgeOneStats);
+    } catch (error) {
+      console.warn('⚠️ 获取 EdgeOne KV 统计失败:', error);
+    }
+
     if (redisStats) {
       return {
         ...redisStats,
         timestamp: new Date().toISOString(),
         source: 'redis-database',
         note: '数据来源：Redis兼容数据库（KVRocks/Upstash/Redis）',
+        edgeOne: edgeOneStats,
         formattedSizes: {
           douban: formatBytes(redisStats.douban.size),
           shortdrama: formatBytes(redisStats.shortdrama.size),
