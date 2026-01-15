@@ -1412,6 +1412,7 @@ export const UserMenu: React.FC = () => {
                           aspect={1}
                           circularCrop
                         >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             ref={imageRef}
                             src={selectedImage}

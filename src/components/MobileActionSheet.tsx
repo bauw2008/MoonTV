@@ -1,4 +1,5 @@
 import { Radio, X } from 'lucide-react';
+import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -199,13 +200,13 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
           <div className='flex items-center gap-3 flex-1 min-w-0'>
             {poster && (
               <div className='relative w-12 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0'>
-                <img
+                <Image
                   src={poster}
                   alt={title}
                   width={48}
                   height={64}
                   className='w-full h-full object-cover'
-                  loading='lazy'
+                  unoptimized
                 />
               </div>
             )}

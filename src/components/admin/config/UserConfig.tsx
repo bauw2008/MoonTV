@@ -11,6 +11,7 @@ import {
   Video,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
 import { notifyConfigUpdated } from '@/lib/global-config';
@@ -114,7 +115,7 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
       {loading ? (
         <div className='w-full h-full bg-gray-100 dark:bg-gray-800 animate-pulse' />
       ) : avatarUrl ? (
-        <img
+        <Image
           src={
             avatarUrl.startsWith('data:')
               ? avatarUrl
@@ -124,6 +125,7 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
           width={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
           height={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
           className='w-full h-full object-cover'
+          unoptimized
         />
       ) : (
         <div className='w-full h-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center'>

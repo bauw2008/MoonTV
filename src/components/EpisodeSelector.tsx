@@ -1,5 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
-
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, {
   useCallback,
@@ -592,10 +591,13 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         {/* 封面 */}
                         <div className='flex-shrink-0 w-12 h-20 bg-gray-300 dark:bg-gray-600 rounded overflow-hidden'>
                           {source.episodes && source.episodes.length > 0 && (
-                            <img
+                            <Image
                               src={processImageUrl(source.poster)}
                               alt={source.title}
+                              width={48}
+                              height={80}
                               className='w-full h-full object-cover'
+                              unoptimized
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';

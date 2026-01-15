@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 interface RandomBackgroundProps {
@@ -34,7 +35,7 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
       randomImageApis[Math.floor(Math.random() * randomImageApis.length)];
 
     // 预加载图片
-    const img = new Image();
+    const imgElement = new globalThis.Image();
 
     const handleImageLoad = () => {
       setImageUrl(randomApi);
@@ -45,38 +46,40 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
     const handleImageError = () => {
       // 如果随机API失败，使用备用图片
       if (!imageError) {
-        const fallbackImg = new Image();
-        fallbackImg.onload = () => {
+        const fallbackImgElement = new globalThis.Image();
+        fallbackImgElement.onload = () => {
           setImageUrl(fallbackImageUrl);
           setImageLoaded(true);
         };
-        fallbackImg.onerror = () => {
+        fallbackImgElement.onerror = () => {
           // 如果备用图片也失败，使用纯色背景
           setImageLoaded(true);
         };
-        fallbackImg.src = fallbackImageUrl;
+        fallbackImgElement.src = fallbackImageUrl;
         setImageError(true);
       }
     };
 
-    img.onload = handleImageLoad;
-    img.onerror = handleImageError;
-    img.src = randomApi;
+    imgElement.onload = handleImageLoad;
+    imgElement.onerror = handleImageError;
+    imgElement.src = randomApi;
 
     return () => {
-      img.onload = null;
-      img.onerror = null;
+      imgElement.onload = null;
+      imgElement.onerror = null;
     };
   }, [imageError]);
 
   return (
     <div className={`absolute inset-0 ${className}`}>
       {imageLoaded && imageUrl && (
-        <img
+        <Image
           src={imageUrl}
           alt='Random background'
+          fill
           className='absolute inset-0 w-full h-full object-cover'
           style={{ filter: 'brightness(0.7)' }}
+          unoptimized
         />
       )}
       {children}

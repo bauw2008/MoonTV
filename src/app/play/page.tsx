@@ -3,6 +3,7 @@
 
 import Hls from 'hls.js';
 import { Cloud, Heart } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
@@ -4630,12 +4631,15 @@ function PlayPageClient() {
                       }}
                     />
 
-                    <img
+                    <Image
                       src={processImageUrl(
                         bangumiDetails?.images?.large || videoCover,
                       )}
                       alt={videoTitle}
+                      width={400}
+                      height={600}
                       className='w-full h-full object-cover transition-transform duration-500 group-hover:scale-105'
+                      unoptimized
                     />
 
                     {/* 链接按钮（bangumi或豆瓣） */}

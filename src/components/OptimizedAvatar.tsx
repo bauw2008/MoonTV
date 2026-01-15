@@ -1,6 +1,7 @@
 'use client';
 
 import { User } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 interface OptimizedAvatarProps {
@@ -195,12 +196,13 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
         >
           {/* 使用网络随机头像或本地生成的头像 */}
           {defaultAvatar.avatarUrl ? (
-            <img
+            <Image
               src={defaultAvatar.avatarUrl}
               alt='默认头像'
               width={sizeClasses.imageWidth}
               height={sizeClasses.imageHeight}
               className='w-full h-full object-cover rounded-full'
+              unoptimized
               onError={(e) => {
                 // 如果网络头像加载失败，显示本地生成的头像
                 e.currentTarget.style.display = 'none';
@@ -248,7 +250,7 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
               : ''
           }`}
         >
-          <img
+          <Image
             ref={imageRef}
             src={
               displayImage.startsWith('data:')
@@ -259,6 +261,7 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
             width={sizeClasses.imageWidth}
             height={sizeClasses.imageHeight}
             className='w-full h-full object-cover rounded-full'
+            unoptimized
             style={{
               // 提前加载图片以减少闪动
               transform: 'translateZ(0)',
