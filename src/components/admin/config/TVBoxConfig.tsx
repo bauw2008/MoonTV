@@ -108,7 +108,6 @@ function TVBoxConfigContent() {
   // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
   const [showToken, setShowToken] = useState(false);
-  const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<any>(null);
   const [showDiagnoseResult, setShowDiagnoseResult] = useState(false);
   const [configMode, setConfigMode] = useState<
@@ -180,6 +179,7 @@ function TVBoxConfigContent() {
         }
         showSuccess('配置加载成功');
       } catch (error) {
+        logger.error('加载配置失败:', error);
         showError('加载配置失败');
       }
     });
@@ -367,6 +367,7 @@ function TVBoxConfigContent() {
         setJarRefreshMsg(`✗ 刷新失败: ${data.error}`);
       }
     } catch (error) {
+      logger.error('刷新JAR缓存失败:', error);
       setJarRefreshMsg('✗ 刷新失败，请稍后重试');
     } finally {
       setRefreshingJar(false);
@@ -382,6 +383,7 @@ function TVBoxConfigContent() {
       const data = await response.json();
       setSmartHealthResult(data);
     } catch (error) {
+      logger.error('智能健康检查失败:', error);
       setSmartHealthResult({
         success: false,
         error: '智能健康检查失败，请稍后重试',

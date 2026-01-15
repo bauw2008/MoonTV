@@ -22,11 +22,9 @@ interface CustomCategory {
 function CategoryConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
-  const { showError, showSuccess } = useToastNotification();
+  const { showSuccess } = useToastNotification();
 
-  const [config, setConfig] = useState<any>(null);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
-  const [expanded, setExpanded] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategory, setNewCategory] = useState<CustomCategory>({
     name: '',
@@ -71,23 +69,11 @@ function CategoryConfigContent() {
     ],
   };
 
-  useEffect(() => {
-    const initializeConfig = async () => {
-      const categories = await loadConfig();
-      // 初始化时也更新导航配置
-      if (categories && categories.length > 0) {
-        updateCustomCategories(categories);
-      }
-    };
-    initializeConfig();
-  }, []);
-
   const loadConfig = async () => {
     try {
       const result = await withLoading('loadCategoryConfig', async () => {
         const response = await fetch('/api/admin/config');
         const data = await response.json();
-        setConfig(data.Config);
         const categories = data.Config.CustomCategories || [];
         setCategories(categories);
         return categories;
@@ -98,6 +84,17 @@ function CategoryConfigContent() {
       return [];
     }
   };
+
+  useEffect(() => {
+    const initializeConfig = async () => {
+      const categories = await loadConfig();
+      // 初始化时也更新导航配置
+      if (categories && categories.length > 0) {
+        updateCustomCategories(categories);
+      }
+    };
+    initializeConfig();
+  }, []);
 
   const handleTypeChange = (type: 'movie' | 'tv') => {
     setNewCategory((prev) => ({

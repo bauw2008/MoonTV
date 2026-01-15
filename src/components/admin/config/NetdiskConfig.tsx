@@ -22,9 +22,6 @@ function NetdiskConfigContent() {
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 所有状态定义必须在任何条件渲染之前
-  const [config, setConfig] = useState<any>(null);
-
   const [netDiskSettings, setNetDiskSettings] = useState<NetDiskSettings>({
     enabled: true,
     pansouUrl: 'https://pansou.com',
@@ -37,7 +34,6 @@ function NetdiskConfigContent() {
     try {
       const response = await fetch('/api/admin/config');
       const data = await response.json();
-      setConfig(data.Config);
 
       if (data.Config.NetDiskConfig) {
         setNetDiskSettings({
@@ -55,6 +51,7 @@ function NetdiskConfigContent() {
         });
       }
     } catch (error) {
+      logger.error('加载网盘配置失败:', error);
       showError('加载网盘配置失败');
     }
   }, []);

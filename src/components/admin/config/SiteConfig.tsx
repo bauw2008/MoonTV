@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
-import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -61,7 +60,6 @@ function SiteConfigContent() {
   // 使用统一接口
   const { isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { configApi } = useAdminApi();
 
   // 站点配置状态
   const [siteSettings, setSiteSettings] = useState<SiteConfigSettings>({
@@ -156,10 +154,6 @@ function SiteConfigContent() {
 
   const saveConfig = async () => {
     try {
-      // 获取当前完整的 MenuSettings，包括导航菜单字段
-      const currentMenuSettings =
-        config?.Config?.SiteConfig?.MenuSettings || {};
-
       // 更新菜单设置，只包含导航菜单相关的字段
       const updatedMenuSettings = {
         // 导航菜单字段

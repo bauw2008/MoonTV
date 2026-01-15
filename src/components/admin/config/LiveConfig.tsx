@@ -14,7 +14,6 @@ import {
 import { useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
-import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -250,9 +249,7 @@ function LiveConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { configApi } = useAdminApi();
 
-  const [config, setConfig] = useState<any>(null);
   const [liveSources, setLiveSources] = useState<LiveDataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLiveSource, setEditingLiveSource] =
@@ -281,7 +278,6 @@ function LiveConfigContent() {
         throw new Error('获取配置失败');
       }
       const data = await response.json();
-      setConfig(data.Config);
       if (data.Config?.LiveConfig) {
         setLiveSources(data.Config.LiveConfig);
       }
@@ -327,7 +323,7 @@ function LiveConfigContent() {
       const message = target.disabled ? '直播源已启用' : '直播源已禁用';
       showSuccess(message);
     } catch (error) {
-      logger.error('操作失败', action, key);
+      logger.error('操作失败', action, key, error);
       showError('操作失败');
     }
   };

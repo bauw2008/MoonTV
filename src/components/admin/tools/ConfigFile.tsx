@@ -80,27 +80,30 @@ function ConfigFile() {
     setConfig,
   ]);
 
+   
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
+    const validateJson = () => {
+      if (!configContent.trim()) {
+        setIsValidJson(true);
+        return;
+      }
+
+      try {
+        JSON.parse(configContent);
+        setIsValidJson(true);
+      } catch (error) {
+        setIsValidJson(false);
+      }
+    };
+
     validateJson();
   }, [configContent]);
-
-  const validateJson = () => {
-    if (!configContent.trim()) {
-      setIsValidJson(true);
-      return;
-    }
-
-    try {
-      JSON.parse(configContent);
-      setIsValidJson(true);
-    } catch (error) {
-      setIsValidJson(false);
-    }
-  };
 
   const handleFetchConfig = async () => {
     if (!subscriptionUrl.trim()) {

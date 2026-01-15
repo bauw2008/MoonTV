@@ -23,7 +23,6 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
-import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -184,8 +183,6 @@ function VideoConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { configApi } = useAdminApi();
-
   const [config, setConfig] = useState<any>(null);
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);

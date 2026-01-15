@@ -29,9 +29,6 @@ function TMDBConfigContent() {
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 所有状态定义必须在任何条件渲染之前
-  const [config, setConfig] = useState<any>(null);
-
   // TMDB配置状态 - 使用合理的默认值
   const [tmdbSettings, setTmdbSettings] = useState<TMDBSettings>({
     TMDBApiKey: '',
@@ -57,7 +54,6 @@ function TMDBConfigContent() {
         await withLoadingRef.current('loadTMDBConfig', async () => {
           const response = await fetch('/api/admin/config');
           const data = await response.json();
-          setConfig(data.Config);
 
           if (data.Config?.SiteConfig) {
             setTmdbSettings({

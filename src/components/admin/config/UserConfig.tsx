@@ -146,9 +146,6 @@ function UserConfigContent() {
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
-  // 构造 currentUser 对象
-  const currentUser = username && role ? { username, role } : null;
-
   // 所有状态定义必须在任何条件渲染之前
   const [userSettings, setUserSettings] = useState<UserSettings>({
     Users: [],
@@ -204,11 +201,6 @@ function UserConfigContent() {
   const [showAddUserGroupForm, setShowAddUserGroupForm] = useState(false);
 
   // 获取用户组的详细信息
-  const getTagDetails = (tagName: string) => {
-    const tag = userSettings.Tags.find((t) => t.name === tagName);
-    return tag || null;
-  };
-
   // 加载视频源配置
   const loadVideoSources = async () => {
     try {
@@ -586,11 +578,6 @@ function UserConfigContent() {
     );
   };
 
-  // 工具函数：获取用户状态
-  const getUserStatus = (user: User) => {
-    return user.enabled !== undefined ? user.enabled : !user.banned;
-  };
-
   // 通用用户操作函数
   const handleUserAction = async (
     action: 'ban' | 'unban' | 'setAdmin' | 'cancelAdmin' | 'changePassword',
@@ -816,9 +803,6 @@ function UserConfigContent() {
   const saveConfig = () => saveUnifiedConfig(undefined, { showMessage: true });
 
   // 保持向后兼容的saveConfigWithSettings函数
-  const saveConfigWithSettings = (settings: any) =>
-    saveUnifiedConfig(settings, { showMessage: true });
-
   const handleToggleSwitch = async (key: keyof UserSettings, value: any) => {
     try {
       logger.log(`切换开关: ${key} = ${value}`);
@@ -852,7 +836,7 @@ function UserConfigContent() {
     }
   };
 
-  const handleApproveUser = async (username: string, index: number) => {
+  const handleApproveUser = async (username: string) => {
     try {
       const response = await fetch('/api/admin/user', {
         method: 'POST',
@@ -875,11 +859,12 @@ function UserConfigContent() {
         showError(data.error || '批准失败');
       }
     } catch (error) {
+      logger.error('批准用户失败:', error);
       showError('批准失败');
     }
   };
 
-  const handleRejectUser = async (username: string, index: number) => {
+  const handleRejectUser = async (username: string) => {
     try {
       const response = await fetch('/api/admin/user', {
         method: 'POST',
@@ -902,6 +887,7 @@ function UserConfigContent() {
         showError(data.error || '拒绝失败');
       }
     } catch (error) {
+      logger.error('拒绝用户失败:', error);
       showError('拒绝失败');
     }
   };
@@ -953,28 +939,6 @@ function UserConfigContent() {
       // 错误处理已在useAdminApi中完成
       logger.error('添加用户组失败:', error);
     }
-  };
-
-  const handleToggleVideoSource = async (
-    index: number,
-    sourceKey: string,
-    checked: boolean,
-  ) => {
-    const tag = userSettings.Tags[index];
-    if (!tag) return;
-
-    // 只更新videoSources字段
-    const videoSources = [...(tag.videoSources || [])];
-    if (checked && !videoSources.includes(sourceKey)) {
-      videoSources.push(sourceKey);
-    } else if (!checked) {
-      const idx = videoSources.indexOf(sourceKey);
-      if (idx > -1) videoSources.splice(idx, 1);
-    }
-
-    await updateUserGroup(index, {
-      videoSources,
-    });
   };
 
   // 通用的用户组更新函数
@@ -1083,71 +1047,6 @@ function UserConfigContent() {
 
     setShowEditUserGroupModal(false);
     setEditingUserGroupIndex(null);
-  };
-
-  // 提取域名
-  const extractDomain = (url: string): string => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname;
-    } catch {
-      return url;
-    }
-  };
-
-  const handleUpdateUserGroup = async (
-    index: number,
-    field: string,
-    value: any,
-  ) => {
-    setUserSettings((prev) => {
-      const newTags = [...prev.Tags];
-      newTags[index] = {
-        ...newTags[index],
-        [field]: value,
-      };
-      const newSettings = {
-        ...prev,
-        Tags: newTags,
-      };
-      return newSettings;
-    });
-
-    // 直接保存，避免延迟保存导致的竞态条件
-    await saveConfig();
-  };
-
-  const handleToggleUserGroupPermission = async (
-    index: number,
-    permissionType: PermissionType,
-    value: any,
-  ) => {
-    setUserSettings((prev) => {
-      const newTags = [...prev.Tags];
-      const tag = { ...newTags[index] };
-
-      switch (permissionType) {
-        case PermissionType.DISABLE_YELLOW_FILTER:
-          tag.disableYellowFilter = value;
-          break;
-        case PermissionType.AI_RECOMMEND:
-          tag.aiEnabled = value;
-          break;
-        case PermissionType.VIDEO_SOURCE:
-          tag.videoSources = value;
-          break;
-      }
-
-      newTags[index] = tag;
-      const newSettings = {
-        ...prev,
-        Tags: newTags,
-      };
-      return newSettings;
-    });
-
-    // 直接保存，避免延迟保存导致的竞态条件
-    await saveConfig();
   };
 
   const handleDeleteUserGroup = async (index: number) => {
@@ -1292,7 +1191,7 @@ function UserConfigContent() {
                   <div className='flex gap-2'>
                     <button
                       onClick={() =>
-                        handleApproveUser(pendingUser.username, index)
+                        handleApproveUser(pendingUser.username)
                       }
                       className='px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700'
                     >
@@ -1300,7 +1199,7 @@ function UserConfigContent() {
                     </button>
                     <button
                       onClick={() =>
-                        handleRejectUser(pendingUser.username, index)
+                        handleRejectUser(pendingUser.username)
                       }
                       className='px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700'
                     >
@@ -1767,12 +1666,6 @@ function UserConfigContent() {
                             setEditingUserGroupIndex(index);
                             // 初始化采集源选择：只包含视频源，排除特殊功能
                             const tag = userSettings.Tags[index];
-                            const specialFeatures = [
-                              'ai-recommend',
-                              'disable-yellow-filter',
-                              'netdisk-search',
-                              'tmdb-actor-search',
-                            ];
                             const videoSourcesOnly = tag.videoSources || [];
                             setSelectedApis(videoSourcesOnly);
                             setShowEditUserGroupModal(true);
@@ -2330,12 +2223,6 @@ function UserConfigContent() {
                           <div className='text-center'>
                             <div className='mb-2'>
                               {(() => {
-                                const specialFeatures = [
-                                  'ai-recommend',
-                                  'disable-yellow-filter',
-                                  'netdisk-search',
-                                  'tmdb-actor-search',
-                                ];
                                 const videoSourceCount =
                                   user.videoSources?.length || 0;
 

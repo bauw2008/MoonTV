@@ -35,17 +35,11 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [remoteChangelog, setRemoteChangelog] = useState<ChangelogEntry[]>([]);
   const [hasUpdate, setIsHasUpdate] = useState(false);
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [showRemoteContent, setShowRemoteContent] = useState(false);
-
-  // 确保组件已挂载
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
 
   // Body 滚动锁定 - 仅在弹出面板打开时锁定背景滚动
   useEffect(() => {
@@ -85,43 +79,6 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
       };
     }
   }, [isOpen]);
-
-  // 获取远程变更日志
-  const fetchRemoteChangelog = useCallback(async () => {
-    try {
-      const response = await fetch(
-        'https://raw.githubusercontent.com/bauw2008/Vidora/refs/heads/main/CHANGELOG',
-      );
-      if (response.ok) {
-        const content = await response.text();
-        const parsed = parseChangelog(content);
-        setRemoteChangelog(parsed);
-
-        // 检查是否有更新
-        if (parsed.length > 0) {
-          const latest = parsed[0];
-          setLatestVersion(latest.version);
-          setIsHasUpdate(
-            compareVersions(latest.version) === UpdateStatus.HAS_UPDATE,
-          );
-        }
-      } else {
-        logger.error(
-          '获取远程变更日志失败:',
-          response.status,
-          response.statusText,
-        );
-      }
-    } catch (error) {
-      logger.error('获取远程变更日志失败:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchRemoteChangelog();
-    }
-  }, [isOpen, fetchRemoteChangelog]);
 
   // 解析变更日志格式
   const parseChangelog = (content: string): RemoteChangelogEntry[] => {
@@ -190,6 +147,47 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
     return versions;
   };
+
+  // 获取远程变更日志
+  const fetchRemoteChangelog = useCallback(async () => {
+    try {
+      const response = await fetch(
+        'https://raw.githubusercontent.com/bauw2008/Vidora/refs/heads/main/CHANGELOG',
+      );
+      if (response.ok) {
+        const content = await response.text();
+        const parsed = parseChangelog(content);
+        setRemoteChangelog(parsed);
+
+        // 检查是否有更新
+        if (parsed.length > 0) {
+          const latest = parsed[0];
+          setLatestVersion(latest.version);
+          setIsHasUpdate(
+            compareVersions(latest.version) === UpdateStatus.HAS_UPDATE,
+          );
+        }
+      } else {
+        logger.error(
+          '获取远程变更日志失败:',
+          response.status,
+          response.statusText,
+        );
+      }
+    } catch (error) {
+      logger.error('获取远程变更日志失败:', error);
+    }
+  }, []);
+
+   
+   
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (isOpen) {
+      fetchRemoteChangelog();
+    }
+  }, [isOpen, fetchRemoteChangelog]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // 渲染变更日志条目
   const renderChangelogEntry = (
