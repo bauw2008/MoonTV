@@ -29,7 +29,8 @@ const ShortDramaSelector: React.FC<ShortDramaSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     SelectorOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  const [, setLoadingCategories] = useState(false);
 
   // 加载短剧分类
   useEffect(() => {

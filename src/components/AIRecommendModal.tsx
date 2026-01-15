@@ -41,7 +41,6 @@ export default function AIRecommendModal({
     details?: string;
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   // 拖动相关状态
   const [position, setPosition] = useState({ x: 0, y: 0 });

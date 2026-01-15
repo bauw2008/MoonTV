@@ -440,7 +440,7 @@ function TVBoxPageContent() {
   const { siteName: _siteName } = useSite();
   const [sourceList, setSourceList] = useState<VideoSource[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
-  const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
+  const [, setRawVideos] = useState<VideoItem[]>([]);
   const [videos, setVideos] = useState<UnifiedVideoItem[]>([]);
   const [categories, setCategories] = useState<CategoryStructure>({
     primary_categories: [],

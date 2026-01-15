@@ -223,8 +223,8 @@ export const VirtualDoubanGrid = React.forwardRef<
         rowIndex,
         style,
         displayData: cellDisplayData,
-        type: cellType,
-        primarySelection: cellPrimarySelection,
+        type: _cellType,
+        primarySelection: _cellPrimarySelection,
         isBangumi: cellIsBangumi,
         columnCount: cellColumnCount,
         displayItemCount: cellDisplayItemCount,
@@ -370,7 +370,7 @@ export const VirtualDoubanGrid = React.forwardRef<
                 maxHeight: itemHeight + 32,
               }),
             }}
-            onCellsRendered={(visibleCells, allCells) => {
+            onCellsRendered={(visibleCells) => {
               // 使用react-window v2.1.2的API：
               // 1. visibleCells: 真实可见的单元格范围
               // 2. allCells: 包含overscan的所有渲染单元格范围

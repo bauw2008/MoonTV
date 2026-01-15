@@ -844,7 +844,6 @@ function PlayPageClient() {
     } | null> = [];
 
     let shouldStop = false; // 早停标志
-    let testedCount = 0; // 已测试数量
 
     for (let i = 0; i < sourcesToTest.length && !shouldStop; i += concurrency) {
       const batch = sourcesToTest.slice(i, i + concurrency);
@@ -898,7 +897,6 @@ function PlayPageClient() {
       );
 
       allResults.push(...batchResults);
-      testedCount += batch.length;
 
       // 🎯 保守策略早停判断：找到高质量源
       const successfulInBatch = batchResults.filter(Boolean) as Array<{
@@ -1924,6 +1922,7 @@ function PlayPageClient() {
         setAvailableSources([detailData]);
         return [detailData];
       } catch (err) {
+        logger.error('搜索源失败:', err);
         return [];
       } finally {
         setSourceSearchLoading(false);

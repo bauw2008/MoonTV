@@ -137,7 +137,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       setEpisodes: (eps?: number) => setDynamicEpisodes(eps),
       setSourceNames: (names?: string[]) => setDynamicSourceNames(names),
       setDoubanId: (id?: number) => setDynamicDoubanId(id),
-    }));
+    }), []);
 
     // 使用 useMemo 缓存计算值，避免每次渲染重新计算
     const actualTitle = title;
@@ -290,6 +290,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           }
           onDelete?.();
         } catch (err) {
+          logger.error('删除记录失败:', err);
           const errorMsg =
             from === 'playrecord' ? '删除播放记录失败' : '删除收藏失败';
           throw new Error(errorMsg);
@@ -439,6 +440,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           const fav = await isFavorited(actualSource, actualId);
           setSearchFavorited(fav);
         } catch (err) {
+          logger.error('检查收藏状态失败:', err);
           setSearchFavorited(false);
         }
       }

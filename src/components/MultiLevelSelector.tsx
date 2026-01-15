@@ -47,7 +47,8 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     MultiLevelOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(
+
+  const [, setLoadingCategories] = useState(
     () => contentType === 'short-drama',
   );
 

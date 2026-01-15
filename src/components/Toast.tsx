@@ -52,7 +52,7 @@ export default function Toast({
   position = 'top-right',
   onClose,
 }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
 
   const handleLeave = useCallback(() => {

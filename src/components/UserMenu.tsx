@@ -25,6 +25,7 @@ import ReactCrop, { Crop, PercentCrop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -33,12 +34,6 @@ import { OptimizedAvatar } from './OptimizedAvatar';
 import { ThemeSettingsPanel } from './ThemeSettingsPanel';
 import { useToast } from './Toast';
 import { VersionPanel } from './VersionPanel';
-
-interface AuthInfo {
-  username?: string;
-  role?: 'owner' | 'admin' | 'user';
-  avatar?: string;
-}
 
 export const UserMenu: React.FC = () => {
   const router = useRouter();
@@ -166,9 +161,6 @@ export const UserMenu: React.FC = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  // 版本检查相关状态
-  const [isChecking, setIsChecking] = useState(true);
-
   // 确保组件已挂载
   useEffect(() => {
     setMounted(true);
@@ -209,10 +201,6 @@ export const UserMenu: React.FC = () => {
     }
   }, [isDoubanImageProxyDropdownOpen]);
 
-  const handleMenuClick = () => {
-    setIsOpen(!isOpen);
-  };
-
   const handleCloseMenu = () => {
     setIsOpen(false);
   };
@@ -225,6 +213,7 @@ export const UserMenu: React.FC = () => {
       // 直接跳转到登录页面，避免中间状态
       window.location.href = '/login';
     } catch (error) {
+      logger.error('登出失败:', error);
       // 即使出错也要跳转到登录页面
       window.location.href = '/login';
     }
@@ -339,6 +328,7 @@ export const UserMenu: React.FC = () => {
             showSuccess('头像上传成功，您的头像已更新');
             handleCloseChangeAvatar();
           } catch (error) {
+            logger.error('头像上传失败:', error);
             showError('头像上传失败，请稍后重试');
           } finally {
             setIsUploadingAvatar(false);
@@ -468,6 +458,7 @@ export const UserMenu: React.FC = () => {
       showSuccess('头像上传成功，您的头像已更新');
       handleCloseChangeAvatar();
     } catch (error) {
+      logger.error('头像上传失败:', error);
       showError('头像上传失败，请稍后重试');
     } finally {
       setIsUploadingAvatar(false);
@@ -512,6 +503,7 @@ export const UserMenu: React.FC = () => {
       setIsChangePasswordOpen(false);
       await handleLogout();
     } catch (error) {
+      logger.error('修改密码失败:', error);
       setPasswordError('网络错误，请稍后重试');
     } finally {
       setPasswordLoading(false);

@@ -351,7 +351,7 @@ export const ThemeSettingsPanel: React.FC<{
             }
           }
         } catch (error) {
-          // 如果加载失败，使用默认设置
+          logger.error('加载主题设置失败:', error);
         }
       }
     };
@@ -437,8 +437,8 @@ export const ThemeSettingsPanel: React.FC<{
         const settingsString = JSON.stringify(newSettings);
         localStorage.setItem('themeSettings', settingsString);
       } catch (error) {
+        logger.error('保存背景图片失败:', error);
         // 如果 localStorage 空间不足，只保存其他设置（不包括背景图片）
-        logger.warn('保存背景图片失败，localStorage 空间不足');
         const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
         localStorage.setItem(
           'themeSettings',

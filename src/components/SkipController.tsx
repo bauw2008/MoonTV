@@ -47,29 +47,6 @@ export default function SkipController({
   } | null>(null);
   const episodeSwitchCooldownRef = useRef<number>(0);
 
-  // 时间格式转换函数
-  const timeToSeconds = useCallback((timeStr: string): number => {
-    if (!timeStr || timeStr.trim() === '') {
-      return 0;
-    }
-
-    // 支持多种格式: "2:10", "2:10.5", "130", "130.5"
-    if (timeStr.includes(':')) {
-      const parts = timeStr.split(':');
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseFloat(parts[1]) || 0;
-      return minutes * 60 + seconds;
-    } else {
-      return parseFloat(timeStr) || 0;
-    }
-  }, []);
-
-  const formatTime = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
   // 从 localStorage 加载跳过设置
   const loadSkipSettings = useCallback(() => {
     try {
@@ -149,7 +126,7 @@ export default function SkipController({
           }
         }
       } catch (e) {
-        // 静默处理错误
+        logger.error('处理跳过配置失败:', e);
       }
 
       // 根据 skipSettings 生成跳过配置

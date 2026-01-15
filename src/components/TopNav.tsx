@@ -23,6 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -60,18 +61,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const router = useRouter();
   const { siteName } = useSite();
   const { settings: userSettings } = useUserSettings();
-  const [configVersion, setConfigVersion] = useState(0);
 
   // 监听配置更新事件
-  useEffect(() => {
-    const handleConfigUpdate = () => {
-      setConfigVersion((v) => v + 1);
-    };
-    window.addEventListener('vidora-config-update', handleConfigUpdate);
-    return () => {
-      window.removeEventListener('vidora-config-update', handleConfigUpdate);
-    };
-  }, []);
 
   // 直接从全局运行时配置读取，避免复杂的 Context 状态管理
   const getMenuSettings = (): MenuSettings => {
@@ -110,18 +101,15 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const menuSettings = getMenuSettings();
   const customCategories = getCustomCategories();
 
-  const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
-    return menuSettings[menuKey];
-  };
-
   // 使用 useMemo 缓存 auth，避免每次渲染都调用 getAuthInfoFromBrowserCookie
   const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
 
-  // 缓存 auth.username，避免引用变化
-  const username = useMemo(() => auth?.username, [auth?.username]);
-
   // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
   const menuItems = useMemo(() => {
+    const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
+      return menuSettings[menuKey];
+    };
+
     const items: MenuItem[] = [];
 
     // 添加首页
@@ -163,7 +151,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     items.push({ icon: Star, label: '收藏', href: '/favorites' });
 
     return items;
-  }, [menuSettings, customCategories, isMenuEnabled]);
+  }, [menuSettings, customCategories]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -300,8 +288,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             }));
           }
         }
-      } catch (_error) {
-        // 忽略获取待审核用户数量失败
+      } catch (error) {
+        logger.error('获取待审核用户数量失败:', error);
       }
     };
 
@@ -408,8 +396,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             messages: { count: unreadCount, hasUnread: unreadCount > 0 },
           }));
         }
-      } catch (_error) {
-        // 忽略获取留言信息的错误
+      } catch (error) {
+        logger.error('获取留言信息失败:', error);
       }
     };
 
@@ -419,7 +407,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       const interval = setInterval(checkUnreadMessages, 21600000);
       return () => clearInterval(interval);
     }
-  }, [auth?.username]); // 只依赖 username，避免 auth 对象引用变化
+  }, [auth?.username, auth?.role]); // 依赖 username 和 role，避免 auth 对象引用变化
 
   // 版本检查
   useEffect(() => {
@@ -439,8 +427,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
         // 保存检查时间
         localStorage.setItem('lastVersionCheck', Date.now().toString());
-      } catch (_error) {
-        // 忽略版本检查错误
+      } catch (error) {
+        logger.error('版本检查失败:', error);
       }
     };
 

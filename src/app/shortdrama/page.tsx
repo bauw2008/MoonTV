@@ -95,7 +95,7 @@ function ShortDramaPageClient() {
   // 搜索状态
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [, setIsSearching] = useState(false);
 
   // 保存虚拟化设置
   const toggleVirtualization = () => {

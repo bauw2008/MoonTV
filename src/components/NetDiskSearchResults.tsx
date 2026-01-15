@@ -490,11 +490,8 @@ export default function NetDiskSearchResults({
                 {links.map((link, index) => {
                   const linkKey = `${type}-${index}`;
                   const isPasswordVisible = visiblePasswords[linkKey];
-                  const isCopied = copiedItems[linkKey];
                   const isTitleExpanded = expandedTitles[linkKey];
                   const title = link.note || '未命名资源';
-                  const shouldShowExpandMobile = title.length > 30;
-                  const shouldShowExpandDesktop = title.length > 80;
 
                   return (
                     <div

@@ -23,7 +23,7 @@ function CustomAdFilterConfigContent({
   refreshConfig?: () => void;
 }) {
   // 使用统一的 hooks
-  const { loading, error, isAdminOrOwner } = useAdminAuth();
+  const { isAdminOrOwner } = useAdminAuth();
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 

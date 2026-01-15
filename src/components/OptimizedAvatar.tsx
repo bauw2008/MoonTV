@@ -4,6 +4,8 @@ import { User } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 interface OptimizedAvatarProps {
   onClick?: () => void;
   className?: string;
@@ -20,7 +22,7 @@ export const clearAvatarFromLocalStorage = async (): Promise<void> => {
   try {
     await fetch('/api/avatar', { method: 'DELETE' });
   } catch (error) {
-    // 忽略错误
+    logger.error('清除头像失败:', error);
   }
 };
 
@@ -141,9 +143,8 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
 
   const sizeClasses = getSizeClasses();
   const [internalAvatarUrl, setInternalAvatarUrl] = useState('');
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isLoadingCustomAvatar, setIsLoadingCustomAvatar] = useState(true);
-  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [, setHasCustomAvatar] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
   // 使用外部传入的头像URL或内部获取的

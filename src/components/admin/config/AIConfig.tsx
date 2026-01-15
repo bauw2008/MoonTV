@@ -64,7 +64,7 @@ function AIConfigContent() {
   const { showError, showSuccess } = useToastNotification();
 
   // 所有状态定义必须在任何条件渲染之前
-  const [config, setConfig] = useState<unknown>(null);
+  const [, setConfig] = useState<unknown>(null);
 
   // AI配置状态
   const [aiSettings, setAiSettings] = useState<AISettings>({

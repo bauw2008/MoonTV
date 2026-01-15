@@ -62,7 +62,6 @@ export const VirtualVideoGrid = React.forwardRef<
       loading,
       isBangumi = false,
       from = 'douban',
-      rate,
     },
     ref,
   ) => {
@@ -318,7 +317,7 @@ export const VirtualVideoGrid = React.forwardRef<
                 maxHeight: itemHeight + 32,
               }),
             }}
-            onCellsRendered={(visibleCells, allCells) => {
+            onCellsRendered={(visibleCells) => {
               const { rowStopIndex: visibleRowStopIndex } = visibleCells;
 
               if (visibleRowStopIndex >= rowCount - LOAD_MORE_THRESHOLD) {
