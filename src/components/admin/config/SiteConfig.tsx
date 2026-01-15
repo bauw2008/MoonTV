@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
@@ -231,12 +231,14 @@ function SiteConfigContent() {
   };
 
   // 初始化时同步菜单配置到 NavigationConfig（仅在首次加载时执行）
+  const hasInitializedMenu = useRef(false);
+
   useEffect(() => {
-    if (siteSettings.MenuSettings && config) {
+    if (!hasInitializedMenu.current && siteSettings.MenuSettings && config) {
       updateMenuSettings(siteSettings.MenuSettings);
+      hasInitializedMenu.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [siteSettings.MenuSettings, config]);
 
   // 处理豆瓣数据源变化
   const handleDoubanDataSourceChange = (value: string) => {

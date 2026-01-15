@@ -1,5 +1,6 @@
 import { getConfig } from './config';
 import { db } from './db';
+import { logger } from './logger';
 import { isCacheExpired } from './tvbox-utils';
 
 interface VideoItem {
@@ -138,8 +139,7 @@ export async function getTVBoxVideoCache(
 
     return null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(
+    logger.error(
       `[CACHE-GET] 获取缓存失败: ${source} - 分类: ${
         category || '全部'
       } - 页码: ${page}`,

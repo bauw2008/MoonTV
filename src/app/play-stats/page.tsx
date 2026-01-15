@@ -384,8 +384,7 @@ const PlayStatsPage: React.FC = () => {
     if (user) {
       fetchStats();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]); // ✅ 只在 user 变化时调用
+  }, [user, fetchStats]);
 
   // 格式化更新时间
   const formatLastUpdate = (timestamp: number): string => {

@@ -17,12 +17,6 @@ import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  deleteBackgroundImage,
-  getBackgroundImage,
-  storeBackgroundImage,
-} from '@/lib/indexedDB';
-
 interface ThemeSettings {
   themeOpacity: number; // 主题背景透明度
   globalUIOpacity: number; // 全局UI组件透明度
@@ -435,12 +429,20 @@ export const ThemeSettingsPanel: React.FC<{
 
   const saveSettings = (newSettings: ThemeSettings) => {
     if (typeof window !== 'undefined') {
-      // 不保存图片数据到 localStorage，只保存其他设置
-      const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
-      localStorage.setItem(
-        'themeSettings',
-        JSON.stringify(settingsWithoutImage),
-      );
+      try {
+        // 保存所有设置，包括背景图片
+        const settingsString = JSON.stringify(newSettings);
+        localStorage.setItem('themeSettings', settingsString);
+      } catch (error) {
+        // 如果 localStorage 空间不足，只保存其他设置（不包括背景图片）
+        console.warn('保存背景图片失败，localStorage 空间不足');
+        const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
+        localStorage.setItem(
+          'themeSettings',
+          JSON.stringify(settingsWithoutImage),
+        );
+        alert('背景图片太大，无法保存。请选择更小的图片（建议小于 1MB）。');
+      }
     }
   };
 
@@ -915,30 +917,6 @@ export const ThemeSettingsPanel: React.FC<{
     }
   }, [mounted, applyThemeSettings]);
 
-  // 添加页面加载时的初始化
-  useEffect(() => {
-    const initializeTheme = async () => {
-      if (mounted && settings.backgroundMode === 'image') {
-        // 如果是图片背景模式，尝试从IndexedDB恢复图片
-        try {
-          const storedImage = await getBackgroundImage();
-          if (storedImage && !settings.backgroundImage) {
-            // 如果localStorage中没有图片但IndexedDB中有，恢复它
-            const newSettings = {
-              ...settings,
-              backgroundImage: storedImage,
-            };
-            setSettings(newSettings);
-          }
-        } catch (error) {
-          // 静默失败，背景图片加载失败不影响主要功能
-        }
-      }
-    };
-
-    initializeTheme();
-  }, [mounted, settings.backgroundMode, settings.backgroundImage]);
-
   // 为渐变添加透明度的辅助函数
   const addOpacityToGradient = (gradient: string, opacity: number): string => {
     // 解析渐变字符串，为每个颜色添加透明度
@@ -1078,18 +1056,22 @@ export const ThemeSettingsPanel: React.FC<{
     setIsBackgroundModeMenuOpen(false);
   };
 
-  const handleBackgroundImageUpload = async (
+  const handleBackgroundImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      // 检查文件大小（限制为 1MB）
+      const maxSize = 1 * 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        alert('图片太大，请选择小于 1MB 的图片');
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         try {
           const imageDataUrl = e.target?.result as string;
-
-          // 存储图片到 IndexedDB
-          await storeBackgroundImage(imageDataUrl);
 
           const newSettings = {
             ...settings,
@@ -1108,22 +1090,14 @@ export const ThemeSettingsPanel: React.FC<{
     }
   };
 
-  const handleRemoveBackgroundImage = async () => {
-    try {
-      // 从 IndexedDB 删除图片
-      await deleteBackgroundImage();
-
-      const newSettings = {
-        ...settings,
-        backgroundImage: undefined,
-        backgroundMode: 'gradient' as 'image' | 'gradient',
-      };
-      setSettings(newSettings);
-      saveSettings(newSettings);
-    } catch (error) {
-      console.error('Failed to delete background image:', error);
-      alert('删除背景图片失败，请重试');
-    }
+  const handleRemoveBackgroundImage = () => {
+    const newSettings = {
+      ...settings,
+      backgroundImage: undefined,
+      backgroundMode: 'gradient' as 'image' | 'gradient',
+    };
+    setSettings(newSettings);
+    saveSettings(newSettings);
   };
 
   const handleGradientChange = (option: GradientOption) => {

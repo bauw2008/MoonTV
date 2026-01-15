@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,13 +16,11 @@ export async function GET(request: NextRequest) {
     const data = await db.getCache(key);
     return NextResponse.json({ data });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(
+    logger.error(
       `❌ API缓存错误 (key: ${request.nextUrl.searchParams.get('key')}):`,
       error,
     );
-    // eslint-disable-next-line no-console
-    console.error('错误详情:', {
+    logger.error('错误详情:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
@@ -42,8 +41,7 @@ export async function POST(request: NextRequest) {
     await db.setCache(key, data, expireSeconds);
     return NextResponse.json({ success: true });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Set cache error:', error);
+    logger.error('Set cache error:', error);
     return NextResponse.json({ error: 'Failed to set cache' }, { status: 500 });
   }
 }
@@ -67,8 +65,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Delete cache error:', error);
+    logger.error('Delete cache error:', error);
     return NextResponse.json(
       { error: 'Failed to delete cache' },
       { status: 500 },

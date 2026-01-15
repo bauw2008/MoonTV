@@ -5,6 +5,7 @@ import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 
 import PageLayout from '@/components/PageLayout';
@@ -184,8 +185,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('发布失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('发布评论失败:', error);
+      logger.error('发布评论失败:', error);
     }
   };
 
@@ -212,8 +212,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('回复失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('发布回复失败:', error);
+      logger.error('发布回复失败:', error);
     }
   };
 
@@ -237,8 +236,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('删除评论失败:', error);
+      logger.error('删除评论失败:', error);
     } finally {
       setDeletingId(null);
     }
@@ -267,8 +265,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('删除回复失败:', error);
+      logger.error('删除回复失败:', error);
     } finally {
       setDeletingId(null);
     }
@@ -293,8 +290,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('清空失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('清空留言失败:', error);
+      logger.error('清空留言失败:', error);
     }
   };
 
@@ -319,8 +315,7 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('操作失败，请稍后重试');
-      // eslint-disable-next-line no-console
-      console.error('置顶操作失败:', error);
+      logger.error('置顶操作失败:', error);
     }
   };
 
