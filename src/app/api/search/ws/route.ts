@@ -143,19 +143,16 @@ export async function GET(request: NextRequest) {
                 (u) => u.username === authInfo.username,
               );
               let shouldFilter = false;
-              let filterReason = '';
 
               // 1. 检查全局开关（主开关）
               if (config.SiteConfig.DisableYellowFilter) {
                 shouldFilter = false;
-                filterReason = '全局关闭18禁过滤';
               }
               // 2. 全局开关开启，检查具体设置
               else {
                 // 站长永远不过滤
                 if (userConfig?.role === 'owner') {
                   shouldFilter = false;
-                  filterReason = '站长豁免';
                 }
                 // 检查用户组设置
                 else if (
@@ -170,20 +167,17 @@ export async function GET(request: NextRequest) {
                     // disableYellowFilter = true 表示用户组开启过滤
                     if ((tagConfig as any)?.disableYellowFilter === true) {
                       shouldFilter = true;
-                      filterReason = `用户组开启过滤: ${tagName}`;
                       break;
                     }
                   }
                   // 如果用户组没有开启过滤，则不过滤
                   if (!shouldFilter) {
                     shouldFilter = false;
-                    filterReason = '用户组关闭过滤';
                   }
                 }
                 // 默认情况：没有用户组设置，不过滤
                 else {
                   shouldFilter = false;
-                  filterReason = '无用户组设置';
                 }
               }
 
@@ -299,13 +293,4 @@ export async function GET(request: NextRequest) {
       },
     });
   }
-}
-
-// 检查是否包含敏感词
-function containsYellowWords(title: string, yellowWords: string[]): boolean {
-  if (!yellowWords || yellowWords.length === 0) return false;
-
-  return yellowWords.some((word) =>
-    title.toLowerCase().includes(word.toLowerCase()),
-  );
 }

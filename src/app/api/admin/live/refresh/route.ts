@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(liveInfo);
           liveInfo.channelNumber = nums;
         } catch (error) {
+          logger.error('刷新直播频道失败:', error);
           liveInfo.channelNumber = 0;
         }
       });

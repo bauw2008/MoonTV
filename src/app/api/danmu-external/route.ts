@@ -523,7 +523,6 @@ async function fetchDanmuFromXMLAPI(videoUrl: string): Promise<DanmuItem[]> {
       const danmakuRegex = /<d p="([^"]*)"[^>]*>([^<]*)<\/d>/g;
       const danmuList: DanmuItem[] = [];
       let match;
-      const count = 0;
 
       // 🚀 激进性能优化策略 - 基于ArtPlayer源码深度分析
       // 核心问题: 大量弹幕导致内存占用和计算密集

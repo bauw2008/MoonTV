@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
     try {
       JSON.parse(configFile);
     } catch (e) {
+      logger.error('配置文件格式错误:', e);
       return NextResponse.json(
         { error: '配置文件格式错误，请检查 JSON 语法' },
         { status: 400 },

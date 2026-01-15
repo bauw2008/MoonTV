@@ -4,17 +4,6 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
-// 评论数据结构
-interface Comment {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-  replies: Reply[];
-}
-
 interface Reply {
   id: string;
   username: string;
@@ -22,11 +11,6 @@ interface Reply {
   role?: 'owner' | 'admin' | 'user';
   content: string;
   timestamp: number;
-}
-
-// 生成唯一ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
 // 删除评论（仅管理员和站长）

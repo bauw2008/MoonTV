@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         const errorText = await response.text();
         logger.error('错误响应内容:', errorText);
       } catch (e) {
-        logger.error('无法读取错误响应内容');
+        logger.error('无法读取错误响应内容:', e);
       }
       return NextResponse.json(
         { error: `网盘搜索服务暂时不可用 (${response.status})` },

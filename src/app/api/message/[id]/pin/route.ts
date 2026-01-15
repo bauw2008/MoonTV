@@ -3,20 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
-// 评论数据结构
-interface Comment {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-  replies: any[];
-  commentCount?: number;
-  category?: 'suggestion' | 'feedback' | 'discussion' | 'other';
-  isPinned?: boolean;
-}
-
 // 置顶/取消置顶评论
 
 // 导出处理函数

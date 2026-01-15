@@ -102,9 +102,8 @@ export async function POST(request: NextRequest) {
       temperature,
       max_tokens,
       max_completion_tokens,
-      context,
       stream,
-    } = body as ChatRequest & { context?: any };
+    } = body as ChatRequest;
 
     logger.log('🔍 请求参数:', { stream, hasAIModel });
 
@@ -151,9 +150,6 @@ export async function POST(request: NextRequest) {
     ];
     const randomHint =
       randomElements[Math.floor(Math.random() * randomElements.length)];
-
-    // 获取最后一条用户消息用于分析
-    const userMessage = messages[messages.length - 1]?.content || '';
 
     // 构建功能列表和详细说明
     const capabilities = ['影视剧推荐'];
@@ -320,9 +316,6 @@ export async function POST(request: NextRequest) {
     if (stream) {
       logger.log('📡 返回SSE流式响应');
 
-      // 累积完整内容用于后处理
-      let fullContent = '';
-
       // 创建转换流处理OpenAI的SSE格式
       const transformStream = new TransformStream({
         async transform(chunk, controller) {
@@ -348,9 +341,6 @@ export async function POST(request: NextRequest) {
                 const content = json.choices?.[0]?.delta?.content || '';
 
                 if (content) {
-                  // 累积内容
-                  fullContent += content;
-
                   // 转换为统一的SSE格式
                   controller.enqueue(
                     new TextEncoder().encode(
@@ -359,6 +349,7 @@ export async function POST(request: NextRequest) {
                   );
                 }
               } catch (e) {
+                logger.error('解析 SSE 数据失败:', e);
                 // 忽略解析错误，继续处理下一行
               }
             }

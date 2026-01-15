@@ -271,7 +271,7 @@ const configCategories = {
 
 function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [isClient, setIsClient] = useState(() => typeof window !== 'undefined');
+  const isClient = typeof window !== 'undefined';
   const router = useRouter();
 
   const [activeCategory, setActiveCategory] =

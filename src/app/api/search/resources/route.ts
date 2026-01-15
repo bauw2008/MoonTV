@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(apiSites);
   } catch (error) {
+    logger.error('获取资源失败:', error);
     return NextResponse.json({ error: '获取资源失败' }, { status: 500 });
   }
 }

@@ -108,6 +108,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
+    logger.error('获取 m3u8 失败:', error);
     return NextResponse.json(
       { error: 'Failed to fetch m3u8' },
       { status: 500 },
@@ -139,6 +140,7 @@ function rewriteM3U8Content(
       const refererUrl = new URL(referer);
       protocol = refererUrl.protocol.replace(':', '');
     } catch (error) {
+      logger.error('解析 referer URL 失败:', error);
       // ignore
     }
   }

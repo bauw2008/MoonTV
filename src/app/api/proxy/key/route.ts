@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    logger.error('获取 key 失败:', error);
     return NextResponse.json({ error: 'Failed to fetch key' }, { status: 500 });
   }
 }

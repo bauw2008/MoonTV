@@ -366,6 +366,7 @@ export async function POST(request: NextRequest) {
           await db.deleteUser(targetUsername!);
         } catch (error) {
           // 用户可能不存在于数据库中（例如重置后），只从配置中删除
+          logger.error(`删除用户 ${targetUsername} 失败:`, error);
           logger.log(`用户 ${targetUsername} 不存在于数据库中，仅从配置中删除`);
         }
 

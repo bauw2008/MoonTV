@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
     try {
       importData = JSON.parse(decompressedData);
     } catch (error) {
+      logger.error('解析备份文件失败:', error);
       return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
     }
 

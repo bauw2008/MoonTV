@@ -4,20 +4,6 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
-// 评论数据结构
-interface Comment {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-  replies: Reply[];
-  commentCount?: number;
-  category?: 'suggestion' | 'feedback' | 'discussion' | 'other';
-  isPinned?: boolean;
-}
-
 interface Reply {
   id: string;
   username: string;
@@ -50,28 +36,6 @@ async function getUserRole(
 
   // 默认返回user角色
   return 'user';
-}
-
-// 计算用户留言数量的辅助函数
-function calculateUserCommentCounts(
-  comments: Comment[],
-): Record<string, number> {
-  const userCommentCounts: Record<string, number> = {};
-
-  // 计算每个用户的评论数量
-  comments.forEach((comment) => {
-    // 计算主评论
-    userCommentCounts[comment.username] =
-      (userCommentCounts[comment.username] || 0) + 1;
-
-    // 计算回复
-    comment.replies.forEach((reply) => {
-      userCommentCounts[reply.username] =
-        (userCommentCounts[reply.username] || 0) + 1;
-    });
-  });
-
-  return userCommentCounts;
 }
 
 // 评论数据结构已在文件开头定义
