@@ -1,4 +1,5 @@
 import { getAvailableApiSites } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 import { getDetailFromApi, searchFromApi } from './downstream';
@@ -37,6 +38,7 @@ export async function fetchVideoDetail({
         return exactMatch;
       }
     } catch (error) {
+      logger.warn('搜索精确匹配失败:', error);
       // do nothing
     }
   }

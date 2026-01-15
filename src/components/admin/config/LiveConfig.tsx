@@ -399,7 +399,7 @@ function LiveConfigContent() {
       // 显示成功提示
       showSuccess('直播源已更新');
     } catch (error) {
-      logger.error('操作失败', 'edit', editingLiveSource);
+      logger.error('操作失败', 'edit', editingLiveSource, error);
       showError('更新直播源失败');
     }
   };

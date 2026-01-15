@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { API_CONFIG, ApiSite, getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getCachedSearchPage, setCachedSearchPage } from '@/lib/search-cache';
 import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
@@ -208,6 +209,7 @@ export async function searchFromApi(
 
     return results;
   } catch (error) {
+    logger.error('获取搜索结果失败:', error);
     return [];
   }
 }

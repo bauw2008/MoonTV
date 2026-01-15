@@ -3,6 +3,7 @@
 import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -67,6 +68,7 @@ function TMDBConfigContent() {
           }
         });
       } catch (error) {
+        logger.error('加载TMDB配置失败:', error);
         showErrorRef.current('加载TMDB配置失败');
       }
     };
