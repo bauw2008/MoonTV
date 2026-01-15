@@ -6,7 +6,6 @@ import { logger } from '@/lib/logger';
 
 // TMDB API 配置
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
 
 // 缓存时长配置
 const TRENDING_CACHE_DURATION = 30 * 60; // 30分钟缓存（热门内容）

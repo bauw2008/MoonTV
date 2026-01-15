@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
-import { EpisodeSkipConfig } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -83,15 +82,6 @@ export async function POST(request: NextRequest) {
     if (!source || !id) {
       return NextResponse.json({ error: '无效的key格式' }, { status: 400 });
     }
-
-    // 验证配置格式
-    const skipConfig: EpisodeSkipConfig = {
-      source: source,
-      id: id,
-      title: config.title || '',
-      segments: config.segments || [],
-      updated_time: Date.now(),
-    };
 
     // 保存配置 - 功能未实现
     // await db.setSkipConfig(authInfo.username, source, id, skipConfig);

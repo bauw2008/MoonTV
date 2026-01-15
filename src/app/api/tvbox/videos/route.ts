@@ -134,7 +134,6 @@ export async function GET(request: NextRequest) {
 
             // 当应该应用过滤时，进行过滤
             if (shouldFilter) {
-              const beforeFilter = videosWithSourceName.length;
               videosWithSourceName = videosWithSourceName.filter(
                 (item: any) =>
                   !yellowWords.some((word: string) => {
@@ -158,6 +157,7 @@ export async function GET(request: NextRequest) {
         }
       } catch (cacheError) {
         // 缓存读取失败，继续从API获取
+        logger.error('从缓存读取视频失败:', cacheError);
       }
     }
 
@@ -344,6 +344,7 @@ export async function GET(request: NextRequest) {
         );
       } catch (cacheError) {
         // 缓存写入失败，不影响响应
+        logger.error('写入缓存失败:', cacheError);
       }
 
       return NextResponse.json({

@@ -17,7 +17,6 @@ import {
 import { logger } from '@/lib/logger';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
@@ -36,7 +35,6 @@ function DoubanPagePermissionCheck({
   children: React.ReactNode;
 }) {
   const searchParams = useSearchParams();
-  const { menuSettings } = useMenuSettings();
 
   // 检查菜单访问权限
   const shouldRedirect = useMemo(() => {
@@ -65,7 +63,7 @@ function DoubanPagePermissionCheck({
     }
 
     return false;
-  }, [searchParams, menuSettings]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (shouldRedirect) {
@@ -82,7 +80,6 @@ function DoubanPagePermissionCheck({
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
@@ -93,7 +90,6 @@ function DoubanPageClient() {
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -343,39 +339,6 @@ function DoubanPageClient() {
   // 生成骨架屏数据
   const skeletonData = Array.from({ length: 25 }, (_, index) => index);
 
-  // 参数快照比较函数
-  const isSnapshotEqual = useCallback(
-    (
-      snapshot1: {
-        type: string;
-        primarySelection: string;
-        secondarySelection: string;
-        multiLevelSelection: Record<string, string>;
-        selectedWeekday: string;
-        currentPage: number;
-      },
-      snapshot2: {
-        type: string;
-        primarySelection: string;
-        secondarySelection: string;
-        multiLevelSelection: Record<string, string>;
-        selectedWeekday: string;
-        currentPage: number;
-      },
-    ) => {
-      return (
-        snapshot1.type === snapshot2.type &&
-        snapshot1.primarySelection === snapshot2.primarySelection &&
-        snapshot1.secondarySelection === snapshot2.secondarySelection &&
-        snapshot1.selectedWeekday === snapshot2.selectedWeekday &&
-        snapshot1.currentPage === snapshot2.currentPage &&
-        JSON.stringify(snapshot1.multiLevelSelection) ===
-          JSON.stringify(snapshot2.multiLevelSelection)
-      );
-    },
-    [],
-  );
-
   // 生成API请求参数的辅助函数
   const getRequestParams = useCallback(
     (pageStart: number) => {
@@ -600,7 +563,6 @@ function DoubanPageClient() {
       }
     } catch (err) {
       logger.error('加载数据失败:', err);
-      setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false); // 发生错误时总是停止loading状态
     }
   }, [

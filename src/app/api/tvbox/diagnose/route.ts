@@ -51,28 +51,6 @@ function isPrivateHost(urlStr: string): boolean {
   }
 }
 
-async function tryFetchHead(
-  url: string,
-  timeoutMs = 3500,
-): Promise<{ ok: boolean; status?: number; error?: string }> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { Range: 'bytes=0-0' },
-      redirect: 'follow',
-      signal: ctrl.signal as any,
-      cache: 'no-store',
-    } as any);
-    clearTimeout(timer);
-    return { ok: res.ok, status: res.status };
-  } catch (e: any) {
-    clearTimeout(timer);
-    return { ok: false, error: e?.message || 'fetch error' };
-  }
-}
-
 // 调用 health 端点检查 spider jar 健康状态
 async function checkSpiderHealth(spider: string): Promise<{
   accessible: boolean;

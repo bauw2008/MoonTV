@@ -861,6 +861,7 @@ function LivePageClient() {
           context.url = url.toString();
         } catch (error) {
           // ignore
+          logger.error('设置 source 参数失败:', error);
         }
         // 拦截manifest和level请求
         if (
@@ -880,6 +881,7 @@ function LivePageClient() {
             } catch (error) {
               // 如果 URL 解析失败，回退到字符串拼接
               context.url = context.url + '&allowCORS=true';
+              logger.error('解析 URL 失败:', error);
             }
           }
         }
