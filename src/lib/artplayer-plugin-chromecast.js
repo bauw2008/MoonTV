@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { logger } from './logger.js';
+import { logger } from './logger';
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {

@@ -1,8 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
-
-import { logger } from '@/lib/logger';
-
-('use client');
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+'use client';
 
 import Hls from 'hls.js';
 import { Cloud, Heart } from 'lucide-react';
@@ -32,6 +29,7 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { getDoubanDetails } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
