@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // 评论数据结构
 interface Comment {
@@ -44,7 +45,7 @@ async function getUserRole(
     }
   } catch (error) {
     // 如果获取管理员配置失败，保持为user
-    console.warn('获取管理员配置失败:', error);
+    logger.warn('获取管理员配置失败:', error);
   }
 
   // 默认返回user角色
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('发布回复失败:', error);
+    logger.error('发布回复失败:', error);
     return NextResponse.json({ error: '发布回复失败' }, { status: 500 });
   }
 }

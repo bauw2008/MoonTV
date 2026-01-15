@@ -1,10 +1,9 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // 计算注册天数
 function calculateRegistrationDays(startDate: number): number {
@@ -99,7 +98,7 @@ export async function GET(request: NextRequest) {
     const loginDays =
       firstLoginTime > 0 ? calculateRegistrationDays(firstLoginTime) : 0;
 
-    console.log('注册天数计算:', {
+    logger.log('注册天数计算:', {
       userCreatedAt,
       userCreatedAtDate: new Date(userCreatedAt),
       registrationDays,
@@ -130,7 +129,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(enhancedStats, { status: 200 });
   } catch (err) {
-    console.error('获取用户个人统计失败:', err);
+    logger.error('获取用户个人统计失败:', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 },
@@ -141,7 +140,7 @@ export async function GET(request: NextRequest) {
 // POST 方法：更新用户统计数据（用于智能观看时间统计）
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/user/my-stats - 开始处理请求');
+    logger.log('POST /api/user/my-stats - 开始处理请求');
 
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
@@ -211,7 +210,7 @@ export async function POST(request: NextRequest) {
       userStats: updatedStats,
     });
   } catch (error) {
-    console.error('POST /api/user/my-stats - 详细错误信息:', error);
+    logger.error('POST /api/user/my-stats - 详细错误信息:', error);
     return NextResponse.json(
       {
         error: '更新用户统计数据失败',
@@ -296,7 +295,7 @@ export async function PUT(request: NextRequest) {
         updatedStats.loginCount === 1,
       );
     } catch (saveError) {
-      console.error('保存登入统计失败:', saveError);
+      logger.error('保存登入统计失败:', saveError);
       // 即使保存失败也返回成功，因为登录本身是成功的
     }
 
@@ -307,7 +306,7 @@ export async function PUT(request: NextRequest) {
       loginCount: updatedStats.loginCount,
     });
   } catch (error) {
-    console.error('PUT /api/user/my-stats - 记录登入时间失败:', error);
+    logger.error('PUT /api/user/my-stats - 记录登入时间失败:', error);
     return NextResponse.json(
       {
         error: '记录登入时间失败',
@@ -362,7 +361,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('清除用户统计数据失败:', error);
+    logger.error('清除用户统计数据失败:', error);
     return NextResponse.json(
       { error: '清除用户统计数据失败' },
       { status: 500 },

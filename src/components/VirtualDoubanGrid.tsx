@@ -11,6 +11,8 @@ import React, {
   useState,
 } from 'react';
 
+import { logger } from '@/lib/logger';
+
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -130,7 +132,7 @@ export const VirtualDoubanGrid = React.forwardRef<
           });
         } catch (error) {
           // 忽略滚动错误（可能在组件卸载时发生）
-          console.debug('Grid scroll error (safe to ignore):', error);
+          logger.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [type, primarySelection, totalItemCount, loading]);
@@ -199,10 +201,7 @@ export const VirtualDoubanGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              console.debug(
-                'Grid scroll to top error (safe to ignore):',
-                error,
-              );
+              logger.debug('Grid scroll to top error (safe to ignore):', error);
             }
           }
         },

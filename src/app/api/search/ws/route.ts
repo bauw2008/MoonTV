@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getAvailableApiSites } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
+import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import type { SearchResult } from '@/lib/types';
 import { getYellowWords } from '@/lib/yellow';
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
             return true;
           } catch (error) {
             // 控制器已关闭或出现其他错误
-            console.warn('Failed to enqueue data:', error);
+            logger.warn('Failed to enqueue data:', error);
             streamClosed = true;
             return false;
           }
@@ -223,7 +224,7 @@ export async function GET(request: NextRequest) {
               allResults.push(...filteredResults);
             }
           } catch (error) {
-            console.warn(`搜索失败 ${site.name}:`, error);
+            logger.warn(`搜索失败 ${site.name}:`, error);
 
             // 发送源错误事件
             completedCount++;
@@ -260,7 +261,7 @@ export async function GET(request: NextRequest) {
                 try {
                   controller.close();
                 } catch (error) {
-                  console.warn('Failed to close controller:', error);
+                  logger.warn('Failed to close controller:', error);
                 }
               }
             }
@@ -274,7 +275,7 @@ export async function GET(request: NextRequest) {
       cancel() {
         // 客户端断开连接时，标记流已关闭
         streamClosed = true;
-        console.log('Client disconnected, cancelling search stream');
+        logger.log('Client disconnected, cancelling search stream');
       },
     });
 
@@ -289,7 +290,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('WebSocket搜索失败:', error);
+    logger.error('WebSocket搜索失败:', error);
     return new Response('data: {"error": "搜索失败"}\n\n', {
       headers: {
         'Content-Type': 'text/event-stream',

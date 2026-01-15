@@ -7,6 +7,7 @@ import {
   notifyConfigUpdated,
   updateCustomCategories,
 } from '@/lib/global-config';
+import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -93,7 +94,7 @@ function CategoryConfigContent() {
       });
       return result;
     } catch (error) {
-      console.error('加载分类配置失败:', error);
+      logger.error('加载分类配置失败:', error);
       return [];
     }
   };
@@ -178,7 +179,7 @@ function CategoryConfigContent() {
     withLoading(`toggleCategory_${query}_${type}`, async () => {
       await callCategoryApi({ action, query, type });
     }).catch(() => {
-      console.error('操作失败', action, query, type);
+      logger.error('操作失败', action, query, type);
     });
   };
 
@@ -186,7 +187,7 @@ function CategoryConfigContent() {
     withLoading(`deleteCategory_${query}_${type}`, () =>
       callCategoryApi({ action: 'delete', query, type }),
     ).catch(() => {
-      console.error('操作失败', 'delete', query, type);
+      logger.error('操作失败', 'delete', query, type);
     });
   };
 
@@ -210,7 +211,7 @@ function CategoryConfigContent() {
       setAutoFilledName(false);
       setShowAddForm(false);
     }).catch(() => {
-      console.error('操作失败', 'add', newCategory);
+      logger.error('操作失败', 'add', newCategory);
     });
   };
 

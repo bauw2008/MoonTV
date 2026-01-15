@@ -11,6 +11,8 @@ import React, {
   useState,
 } from 'react';
 
+import { logger } from '@/lib/logger';
+
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -145,7 +147,7 @@ export const VirtualSearchGrid = React.forwardRef<
           });
         } catch (error) {
           // 忽略滚动错误（可能在组件卸载时发生）
-          console.debug('Grid scroll error (safe to ignore):', error);
+          logger.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [searchQuery, viewMode, totalItemCount]);
@@ -156,7 +158,7 @@ export const VirtualSearchGrid = React.forwardRef<
         const element = containerRef.current;
         const actualWidth = element?.offsetWidth || 0;
 
-        console.log('VirtualSearchGrid container debug:', {
+        logger.log('VirtualSearchGrid container debug:', {
           actualWidth,
           containerWidth,
           offsetWidth: element?.offsetWidth,
@@ -203,10 +205,7 @@ export const VirtualSearchGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              console.debug(
-                'Grid scroll to top error (safe to ignore):',
-                error,
-              );
+              logger.debug('Grid scroll to top error (safe to ignore):', error);
             }
           }
         },

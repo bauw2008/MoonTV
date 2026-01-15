@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
 
@@ -6,6 +6,7 @@ import { ChevronDown, ChevronLeft, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { UnifiedVideoItem } from '@/lib/types';
 
 import { CapsuleSelector } from '@/components/CapsuleSelector';
@@ -551,7 +552,7 @@ function TVBoxPageContent() {
           }
         }
       } catch (err: any) {
-        console.error(err);
+        logger.error(err);
         setError(err.message || '获取视频源失败');
       } finally {
         setSourcesLoading(false);
@@ -600,7 +601,7 @@ function TVBoxPageContent() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error('🔴 TVBox API错误:', {
+        logger.error('🔴 TVBox API错误:', {
           status: res.status,
           statusText: res.statusText,
           error: errorData.error || '加载视频失败',
@@ -672,7 +673,7 @@ function TVBoxPageContent() {
 
       setTotalPages(Math.min(data.pagecount || 1, 3)); // 限制最多3页
     } catch (err: any) {
-      console.error('加载视频错误:', err);
+      logger.error('加载视频错误:', err);
       setError(err.message || '加载视频失败');
     } finally {
       setLoading(false);

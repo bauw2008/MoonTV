@@ -1,4 +1,4 @@
-/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
 
 'use client';
 
@@ -14,6 +14,7 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 import { useMenuSettings } from '@/hooks/useMenuSettings';
@@ -222,7 +223,7 @@ function DoubanPageClient() {
             setCustomCategories(enabledCategories);
           }
         } catch (error) {
-          console.error('加载自定义分类失败:', error);
+          logger.error('加载自定义分类失败:', error);
         }
       }
     };
@@ -598,7 +599,7 @@ function DoubanPageClient() {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      console.error('加载数据失败:', err);
+      logger.error('加载数据失败:', err);
       setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false); // 发生错误时总是停止loading状态
     }
@@ -800,7 +801,7 @@ function DoubanPageClient() {
             throw new Error(data.message || '获取数据失败');
           }
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         } finally {
           setIsLoadingMore(false);
         }

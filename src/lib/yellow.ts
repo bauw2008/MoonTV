@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 import { getConfig } from './config';
 
 // 内存缓存
@@ -22,10 +24,10 @@ export async function getYellowWords(): Promise<string[]> {
     const config = await getConfig();
     cachedYellowWords = config.YellowWords || [];
     cacheTimestamp = Date.now();
-    console.log('18+词汇缓存已更新，数量:', cachedYellowWords.length);
+    logger.log('18+词汇缓存已更新，数量:', cachedYellowWords.length);
     return cachedYellowWords;
   } catch (error) {
-    console.error('获取过滤词配置失败:', error);
+    logger.error('获取过滤词配置失败:', error);
     // 出错时返回缓存或空数组，避免阻塞搜索
     return cachedYellowWords || [];
   }
@@ -42,7 +44,7 @@ export async function containsYellowWords(text: string): Promise<boolean> {
     const lowerText = text.toLowerCase();
     return yellowWords.some((word) => lowerText.includes(word.toLowerCase()));
   } catch (error) {
-    console.error('检查过滤词失败:', error);
+    logger.error('检查过滤词失败:', error);
     return false;
   }
 }
@@ -51,5 +53,5 @@ export async function containsYellowWords(text: string): Promise<boolean> {
 export function clearYellowWordsCache(): void {
   cachedYellowWords = null;
   cacheTimestamp = 0;
-  console.log('18+词汇缓存已清除');
+  logger.log('18+词汇缓存已清除');
 }

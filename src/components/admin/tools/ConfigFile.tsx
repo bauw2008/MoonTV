@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 // 使用统一方案中的 hooks
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
@@ -69,11 +70,9 @@ function ConfigFile() {
 
       setConfig(data);
     } catch (error) {
-      console.error('加载配置失败:', error);
+      logger.error('加载配置失败:', error);
     }
   }, [
-    isLoading,
-    configApi,
     setConfigContent,
     setSubscriptionUrl,
     setAutoUpdate,
@@ -121,7 +120,7 @@ function ConfigFile() {
         showError('拉取失败：未获取到配置内容');
       }
     } catch (error) {
-      console.error('拉取配置失败:', error);
+      logger.error('拉取配置失败:', error);
     }
   };
 
@@ -141,7 +140,7 @@ function ConfigFile() {
 
       showSuccess('配置保存成功');
     } catch (error) {
-      console.error('保存配置失败:', error);
+      logger.error('保存配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };

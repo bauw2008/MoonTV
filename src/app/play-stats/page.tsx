@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { PlayRecord, PlayStatsResult } from '@/lib/types';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
@@ -323,13 +324,13 @@ const PlayStatsPage: React.FC = () => {
       // 清除统计缓存
       localStorage.removeItem('vidora_user_stats_cache');
       localStorage.removeItem('vidora_admin_stats_cache');
-      console.log('已清除统计缓存');
+      logger.log('已清除统计缓存');
 
       // 重新获取统计数据
       await fetchStats();
-      console.log('已重新获取统计数据');
+      logger.log('已重新获取统计数据');
     } catch (error) {
-      console.error('刷新数据失败:', error);
+      logger.error('刷新数据失败:', error);
     } finally {
       setLoading(false);
       isRefreshingRef.current = false;

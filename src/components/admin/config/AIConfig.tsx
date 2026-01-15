@@ -3,6 +3,7 @@
 import { AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -94,7 +95,7 @@ function AIConfigContent() {
         });
       }
     } catch {
-      // console.error('加载AI配置失败:', error);
+      // logger.error('加载AI配置失败:', error);
     }
   }, []); // 空依赖数组
 
@@ -160,8 +161,8 @@ function AIConfigContent() {
 
     try {
       await withLoading('saveAIConfig', async () => {
-        console.log('[AIConfig] 准备保存AI配置:', aiSettings);
-        console.log('[AIConfig] enabled 状态:', aiSettings.enabled);
+        logger.log('[AIConfig] 准备保存AI配置:', aiSettings);
+        logger.log('[AIConfig] enabled 状态:', aiSettings.enabled);
 
         const response = await fetch('/api/admin/ai-recommend', {
           method: 'POST',
@@ -171,21 +172,21 @@ function AIConfigContent() {
           body: JSON.stringify(aiSettings),
         });
 
-        console.log('[AIConfig] AI配置保存响应状态:', response.status);
+        logger.log('[AIConfig] AI配置保存响应状态:', response.status);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.log('[AIConfig] 保存失败 - 错误信息:', errorData);
+          logger.log('[AIConfig] 保存失败 - 错误信息:', errorData);
           throw new Error(errorData.error || '保存失败');
         }
 
         const responseData = await response.json();
-        console.log('[AIConfig] 保存成功:', responseData);
+        logger.log('[AIConfig] 保存成功:', responseData);
 
         showSuccess('AI推荐配置保存成功');
       });
     } catch (error) {
-      console.error('[AIConfig] 保存AI配置失败:', error);
+      logger.error('[AIConfig] 保存AI配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };
@@ -204,7 +205,7 @@ function AIConfigContent() {
           model: aiSettings.model,
         };
 
-        console.log('Sending AI test request:', {
+        logger.log('Sending AI test request:', {
           ...requestData,
           apiKey: requestData.apiKey
             ? `${requestData.apiKey.substring(0, 10)}...`
@@ -219,20 +220,20 @@ function AIConfigContent() {
           body: JSON.stringify(requestData),
         });
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
+        logger.log('Response status:', response.status);
+        logger.log('Response headers:', response.headers);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('Error response:', errorData);
+          logger.error('Error response:', errorData);
           throw new Error(errorData.error || '连接测试失败');
         }
 
         const result = await response.json();
-        console.log('Success response:', result);
+        logger.log('Success response:', result);
         showSuccess(result.message || 'API连接测试成功！');
       } catch (error) {
-        console.error('Test error:', error);
+        logger.error('Test error:', error);
         showError('连接测试失败: ' + (error as Error).message);
       }
     });
@@ -314,7 +315,7 @@ function AIConfigContent() {
                             showSuccess('AI功能已关闭并保存');
                           }
                         } catch (error) {
-                          console.error('自动保存失败:', error);
+                          logger.error('自动保存失败:', error);
                           showError('自动保存失败');
                         }
                       }
@@ -421,7 +422,7 @@ function AIConfigContent() {
                                       );
                                       showSuccess('API地址已复制到剪贴板');
                                     } catch (err) {
-                                      console.error('复制失败:', err);
+                                      logger.error('复制失败:', err);
                                     }
                                   }
                                 }}

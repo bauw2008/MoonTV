@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -590,7 +591,7 @@ function TVBoxConfigContent() {
                       }
                     } catch (fetchError) {
                       // 如果获取当前配置失败，使用本地状态
-                      console.error(
+                      logger.error(
                         '获取当前配置失败，使用本地状态:',
                         fetchError,
                       );
@@ -640,7 +641,7 @@ function TVBoxConfigContent() {
                       }
                     }
                   } catch (error) {
-                    console.error('保存频率限制失败:', error);
+                    logger.error('保存频率限制失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -760,7 +761,7 @@ function TVBoxConfigContent() {
                       }
                     } catch (fetchError) {
                       // 如果获取当前配置失败，使用本地状态
-                      console.error(
+                      logger.error(
                         '获取当前配置失败，使用本地状态:',
                         fetchError,
                       );
@@ -810,7 +811,7 @@ function TVBoxConfigContent() {
                       }
                     }
                   } catch (error) {
-                    console.error('保存User-Agent白名单失败:', error);
+                    logger.error('保存User-Agent白名单失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -1039,7 +1040,7 @@ function TVBoxConfigContent() {
                       throw new Error(errorData.error || '保存失败');
                     }
                   } catch (error) {
-                    console.error('保存设备绑定失败:', error);
+                    logger.error('保存设备绑定失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -1315,11 +1316,11 @@ function TVBoxConfigContent() {
                             currentDevices: [],
                             userTokens: clearedTokens,
                           };
-                          console.log(
+                          logger.log(
                             '清空所有设备发送的数据:',
                             JSON.stringify(saveData, null, 2),
                           );
-                          console.log(
+                          logger.log(
                             '清空后的userTokens详情:',
                             saveData.userTokens.map((t) => ({
                               username: t.username,
@@ -1344,7 +1345,7 @@ function TVBoxConfigContent() {
                             }, 500);
                           } else {
                             const errorData = await response.json();
-                            console.error('清空失败:', errorData);
+                            logger.error('清空失败:', errorData);
                             showError(errorData.error || '清空失败');
                           }
                         }}
@@ -1449,11 +1450,11 @@ function TVBoxConfigContent() {
                                         userTokens: updatedTokens,
                                       };
 
-                                      console.log(
+                                      logger.log(
                                         '解绑设备发送的数据:',
                                         JSON.stringify(saveData, null, 2),
                                       );
-                                      console.log(
+                                      logger.log(
                                         '解绑后的userTokens详情:',
                                         saveData.userTokens.map((t) => ({
                                           username: t.username,
@@ -1480,7 +1481,7 @@ function TVBoxConfigContent() {
                                         }, 500);
                                       } else {
                                         const errorData = await response.json();
-                                        console.error('解绑失败:', errorData);
+                                        logger.error('解绑失败:', errorData);
                                         showError(
                                           errorData.error || '解绑失败',
                                         );

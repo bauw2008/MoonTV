@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // 评论数据结构
 interface Comment {
@@ -62,7 +63,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: '评论删除成功' });
   } catch (error) {
-    console.error('删除评论失败:', error);
+    logger.error('删除评论失败:', error);
     return NextResponse.json(
       { success: false, error: '删除评论失败: ' + (error as Error).message },
       { status: 500 },

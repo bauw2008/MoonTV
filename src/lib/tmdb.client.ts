@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import {
   getCache,
   getCacheKey,
@@ -161,7 +162,7 @@ async function fetchTMDB<T>(
     url.searchParams.append(key, value);
   });
 
-  console.log(`[TMDB API] 请求: ${endpoint}`);
+  logger.log(`[TMDB API] 请求: ${endpoint}`);
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -188,7 +189,7 @@ export async function searchTMDBPerson(
   const cacheKey = getCacheKey('person_search', { query: query.trim(), page });
   const cached = await getCache(cacheKey);
   if (cached) {
-    console.log(`TMDB演员搜索缓存命中: ${query}`);
+    logger.log(`TMDB演员搜索缓存命中: ${query}`);
     return cached;
   }
 
@@ -199,7 +200,7 @@ export async function searchTMDBPerson(
 
   // 保存到缓存
   await setCache(cacheKey, result, TMDB_CACHE_EXPIRE.actor_search);
-  console.log(`TMDB演员搜索已缓存: ${query}`);
+  logger.log(`TMDB演员搜索已缓存: ${query}`);
 
   return result;
 }
@@ -214,7 +215,7 @@ export async function getTMDBPersonMovies(
   const cacheKey = getCacheKey('movie_credits', { personId });
   const cached = await getCache(cacheKey);
   if (cached) {
-    console.log(`TMDB演员电影作品缓存命中: ${personId}`);
+    logger.log(`TMDB演员电影作品缓存命中: ${personId}`);
     return cached;
   }
 
@@ -224,7 +225,7 @@ export async function getTMDBPersonMovies(
 
   // 保存到缓存
   await setCache(cacheKey, result, TMDB_CACHE_EXPIRE.movie_credits);
-  console.log(`TMDB演员电影作品已缓存: ${personId}`);
+  logger.log(`TMDB演员电影作品已缓存: ${personId}`);
 
   return result;
 }
@@ -239,7 +240,7 @@ export async function getTMDBPersonTVShows(
   const cacheKey = getCacheKey('tv_credits', { personId });
   const cached = await getCache(cacheKey);
   if (cached) {
-    console.log(`TMDB演员电视剧作品缓存命中: ${personId}`);
+    logger.log(`TMDB演员电视剧作品缓存命中: ${personId}`);
     return cached;
   }
 
@@ -249,7 +250,7 @@ export async function getTMDBPersonTVShows(
 
   // 保存到缓存
   await setCache(cacheKey, result, TMDB_CACHE_EXPIRE.tv_credits);
-  console.log(`TMDB演员电视剧作品已缓存: ${personId}`);
+  logger.log(`TMDB演员电视剧作品已缓存: ${personId}`);
 
   return result;
 }

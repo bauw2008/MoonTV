@@ -1,6 +1,7 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import { detectNetworkEnvironment } from '@/lib/networkDetection';
 import { getSpiderJar, getSpiderStatus } from '@/lib/spiderJar';
 import { OTHER_USER_AGENTS } from '@/lib/user-agent';
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
 
     // 检测网络环境
     const networkEnv = detectNetworkEnvironment(request);
-    console.log('[SmartHealth] 网络环境:', networkEnv);
+    logger.log('[SmartHealth] 网络环境:', networkEnv);
 
     // 获取当前Spider状态
     const spiderStatus = getSpiderStatus();
@@ -256,7 +257,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error('[SmartHealth] 错误:', error);
+    logger.error('[SmartHealth] 错误:', error);
     return NextResponse.json(
       {
         success: false,

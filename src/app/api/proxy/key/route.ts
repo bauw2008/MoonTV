@@ -1,8 +1,9 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
 
   try {
     const decodedUrl = decodeURIComponent(url);
-    console.log(decodedUrl);
+    logger.log(decodedUrl);
     const response = await fetch(decodedUrl, {
       headers: {
         'User-Agent': ua,

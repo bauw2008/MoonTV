@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { SkipSegment } from '@/lib/types';
 
 interface SkipControllerProps {
@@ -78,7 +79,7 @@ export default function SkipController({
         setSkipSettings({ ...DEFAULT_SKIP_CONFIG, ...settings });
       }
     } catch (e) {
-      console.warn('加载跳过设置失败:', e);
+      logger.warn('加载跳过设置失败:', e);
     }
   }, []);
 
@@ -216,7 +217,7 @@ export default function SkipController({
             shouldAutoSkip = settings.autoSkip !== false; // 使用最新的设置
           }
         } catch (e) {
-          console.warn('读取跳过设置失败:', e);
+          logger.warn('读取跳过设置失败:', e);
         }
 
         if (shouldAutoSkip) {
@@ -266,7 +267,7 @@ export default function SkipController({
           const newSettings = JSON.parse(e.newValue);
           setSkipSettings({ ...DEFAULT_SKIP_CONFIG, ...newSettings });
         } catch (err) {
-          console.warn('解析跳过设置失败:', err);
+          logger.warn('解析跳过设置失败:', err);
         }
       }
     };

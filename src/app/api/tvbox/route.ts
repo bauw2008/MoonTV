@@ -1292,7 +1292,7 @@ export async function GET(request: NextRequest) {
       } catch {
         // URL解析失败，使用自动选择结果
         logger.warn('[Spider] 用户配置的jar URL解析失败，使用自动选择结果');
-        console.warn('[Spider] 用户配置的jar解析失败，使用自动选择结果');
+        logger.warn('[Spider] 用户配置的jar解析失败，使用自动选择结果');
       }
     }
 

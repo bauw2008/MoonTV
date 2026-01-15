@@ -100,7 +100,7 @@ export default function MessageBoard() {
         // 标记已加载
         hasLoadedComments.current = true;
       } catch {
-        console.error('获取评论失败，请稍后重试');
+        logger.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -135,7 +135,7 @@ export default function MessageBoard() {
         setComments(data.comments || []);
         hasLoadedComments.current = true; // 标记已加载
       } catch {
-        console.error('获取评论失败，请稍后重试');
+        logger.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
       }

@@ -4,6 +4,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
+import { logger } from '@/lib/logger';
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
@@ -148,7 +149,7 @@ function SiteConfigContent() {
         });
       }
     } catch (error) {
-      console.error('加载站点配置失败:', error);
+      logger.error('加载站点配置失败:', error);
       showError('加载站点配置失败');
     }
   };
@@ -196,7 +197,7 @@ function SiteConfigContent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API错误响应:', errorData);
+        logger.error('API错误响应:', errorData);
         throw new Error(errorData.error || '保存失败');
       }
 
@@ -210,7 +211,7 @@ function SiteConfigContent() {
 
       // 不重新加载配置，避免读到旧数据覆盖用户编辑的内容
     } catch (error) {
-      console.error('保存站点配置失败:', error);
+      logger.error('保存站点配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };

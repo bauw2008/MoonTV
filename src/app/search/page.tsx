@@ -19,6 +19,7 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 import { useMenuSettings } from '@/hooks/useMenuSettings';
@@ -39,14 +40,14 @@ import VirtualSearchGrid, {
 } from '@/components/VirtualSearchGrid';
 
 function SearchPageClient() {
-  console.log('[搜索页面] 组件渲染开始');
+  logger.log('[搜索页面] 组件渲染开始');
 
   // 使用NavigationConfigContext获取功能启用状态
   const { menuSettings } = useMenuSettings();
 
   // 检查用户权限
   const { hasPermission, permissions } = useFeaturePermission();
-  console.log('[搜索页面] 当前权限状态:', permissions);
+  logger.log('[搜索页面] 当前权限状态:', permissions);
 
   // 功能启用状态（从全局配置读取）
   const isNetDiskEnabled =
@@ -440,7 +441,7 @@ function SearchPageClient() {
     ];
 
     // 调试类型选项
-    console.log('类型选项调试:', {
+    logger.log('类型选项调试:', {
       typesSet内容: Array.from(typesSet.values()),
       typeOptions数量: typeOptions.length,
       typeOptions内容: typeOptions,
@@ -728,19 +729,19 @@ function SearchPageClient() {
               break;
             }
             case 'error':
-              console.error('搜索错误:', payload.error);
+              logger.error('搜索错误:', payload.error);
               setIsLoading(false);
               es.close();
               eventSourceRef.current = null;
               break;
           }
         } catch (e) {
-          console.error('解析搜索结果失败:', e);
+          logger.error('解析搜索结果失败:', e);
         }
       };
 
       es.onerror = (err) => {
-        console.error('SSE 连接错误:', err);
+        logger.error('SSE 连接错误:', err);
         setIsLoading(false);
         es.close();
         eventSourceRef.current = null;
@@ -813,7 +814,7 @@ function SearchPageClient() {
         setNetdiskError(data.error || '网盘搜索失败');
       }
     } catch (error: any) {
-      console.error('网盘搜索请求失败:', error);
+      logger.error('网盘搜索请求失败:', error);
       setNetdiskError('网盘搜索请求失败，请稍后重试');
     } finally {
       setNetdiskLoading(false);
@@ -900,7 +901,7 @@ function SearchPageClient() {
         setTmdbActorError(data.error || data.message || '搜索演员失败');
       }
     } catch (error: any) {
-      console.error('TMDB演员搜索请求失败:', error);
+      logger.error('TMDB演员搜索请求失败:', error);
       setTmdbActorError('搜索演员失败，请稍后重试');
     } finally {
       setTmdbActorLoading(false);
@@ -1182,7 +1183,7 @@ function SearchPageClient() {
               {(() => {
                 const showNetDisk =
                   isNetDiskEnabled && hasPermission('netdisk-search');
-                console.log('[搜索页面] 网盘图标显示条件:', {
+                logger.log('[搜索页面] 网盘图标显示条件:', {
                   isNetDiskEnabled,
                   hasPermission: hasPermission('netdisk-search'),
                   showNetDisk,
@@ -1233,7 +1234,7 @@ function SearchPageClient() {
                 const showTMDBActor =
                   isTMDBActorSearchEnabled &&
                   hasPermission('tmdb-actor-search');
-                console.log('[搜索页面] TMDB演员搜索图标显示条件:', {
+                logger.log('[搜索页面] TMDB演员搜索图标显示条件:', {
                   isTMDBActorSearchEnabled,
                   hasPermission: hasPermission('tmdb-actor-search'),
                   showTMDBActor,
@@ -1808,7 +1809,7 @@ function SearchPageClient() {
       {/* 浮动工具组 */}
       {(() => {
         const showAI = isAIEnabled && hasPermission('ai-recommend');
-        console.log('[搜索页面] AI图标显示条件:', {
+        logger.log('[搜索页面] AI图标显示条件:', {
           isAIEnabled,
           hasPermission: hasPermission('ai-recommend'),
           showAI,

@@ -1,6 +1,7 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 import { GET as getTVBoxConfig } from '../route';
@@ -123,11 +124,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 
-    console.log(
+    logger.log(
       '[Diagnose] Backend - Received token:',
       token ? '***' + token.slice(-4) : 'none',
     );
-    console.log('[Diagnose] Backend - Request URL:', req.url);
+    logger.log('[Diagnose] Backend - Request URL:', req.url);
 
     // 直接调用 tvbox API 函数，而不是通过 HTTP fetch
     // 构建模拟请求对象
@@ -136,7 +137,7 @@ export async function GET(req: NextRequest) {
       configUrl += `&token=${encodeURIComponent(token)}`;
     }
 
-    console.log(
+    logger.log(
       '[Diagnose] Backend - Direct calling tvbox GET with URL:',
       configUrl,
     );
@@ -268,7 +269,7 @@ export async function GET(req: NextRequest) {
       headers: { 'cache-control': 'no-store' },
     });
   } catch (e: any) {
-    console.error('Diagnose failed', e);
+    logger.error('Diagnose failed', e);
     return NextResponse.json(
       { ok: false, error: e?.message || 'unknown error' },
       { status: 500 },

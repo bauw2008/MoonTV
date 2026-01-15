@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // 获取用户角色的辅助函数
 async function getUserRole(
@@ -20,7 +21,7 @@ async function getUserRole(
     }
   } catch (error) {
     // 如果获取管理员配置失败，保持为user
-    console.warn('获取管理员配置失败:', error);
+    logger.warn('获取管理员配置失败:', error);
   }
 
   // 默认返回user角色
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取评论失败:', error);
+    logger.error('获取评论失败:', error);
     return NextResponse.json({ error: '获取评论失败' }, { status: 500 });
   }
 }
@@ -128,21 +129,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
 
-    console.log('开始处理POST请求');
+    logger.log('开始处理POST请求');
     const body = await request.json();
-    console.log('请求体:', body);
+    logger.log('请求体:', body);
 
     const { content, category } = body;
 
     if (!content) {
-      console.log('错误: 缺少评论内容');
+      logger.log('错误: 缺少评论内容');
       return NextResponse.json({ error: '缺少评论内容' }, { status: 400 });
     }
 
     // 获取用户角色
     const userRole = await getUserRole(authInfo.username);
 
-    console.log('创建评论对象...');
+    logger.log('创建评论对象...');
     // 创建评论
     const comment: Comment = {
       id: generateId(),
@@ -154,24 +155,24 @@ export async function POST(request: NextRequest) {
       category: category || 'other',
     };
 
-    console.log('保存评论到数据库...');
+    logger.log('保存评论到数据库...');
     // 保存评论到数据库
     const success = await db.addComment(comment);
-    console.log('保存结果:', success);
+    logger.log('保存结果:', success);
 
     if (success) {
-      console.log('评论保存成功');
+      logger.log('评论保存成功');
       return NextResponse.json({
         success: true,
         message: '评论发布成功',
         comment,
       });
     } else {
-      console.log('评论保存失败');
+      logger.log('评论保存失败');
       return NextResponse.json({ error: '评论保存失败' }, { status: 500 });
     }
   } catch (error) {
-    console.error('发布评论失败:', error);
+    logger.error('发布评论失败:', error);
     return NextResponse.json(
       { error: '发布评论失败: ' + (error as Error).message },
       { status: 500 },

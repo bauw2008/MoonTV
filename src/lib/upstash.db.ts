@@ -1,8 +1,9 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 
 import { Redis } from '@upstash/redis';
 
 import { AdminConfig } from './admin.types';
+import { logger } from './logger';
 import {
   ContentStat,
   EpisodeSkipConfig,
@@ -44,10 +45,10 @@ async function withRetry<T>(
         err.name === 'UpstashError';
 
       if (isConnectionError && !isLastAttempt) {
-        console.log(
+        logger.log(
           `Upstash Redis operation failed, retrying... (${i + 1}/${maxRetries})`,
         );
-        console.error('Error:', err.message);
+        logger.error('Error:', err.message);
 
         // 等待一段时间后重试
         await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
@@ -317,7 +318,7 @@ export class UpstashRedisStorage implements IStorage {
       try {
         return JSON.parse(val);
       } catch (e) {
-        console.error('解析 AdminConfig JSON 失败:', e);
+        logger.error('解析 AdminConfig JSON 失败:', e);
         return null;
       }
     }
@@ -333,7 +334,7 @@ export class UpstashRedisStorage implements IStorage {
       await withRetry(() => this.client.set(this.adminConfigKey(), jsonStr));
     } catch (e) {
       // JSON 序列化失败，回退到对象方式
-      console.warn('[Upstash] JSON.stringify 失败，回退到对象方式:', e);
+      logger.warn('[Upstash] JSON.stringify 失败，回退到对象方式:', e);
       await withRetry(() => this.client.set(this.adminConfigKey(), config));
     }
   }
@@ -443,9 +444,9 @@ export class UpstashRedisStorage implements IStorage {
       // 删除管理员配置
       await withRetry(() => this.client.del(this.adminConfigKey()));
 
-      console.log('所有数据已清空');
+      logger.log('所有数据已清空');
     } catch (error) {
-      console.error('清空数据失败:', error);
+      logger.error('清空数据失败:', error);
       throw new Error('清空数据失败');
     }
   }
@@ -465,7 +466,7 @@ export class UpstashRedisStorage implements IStorage {
         try {
           return JSON.parse(val);
         } catch (parseError) {
-          console.warn(`JSON解析失败，返回原字符串 (key: ${key}):`, parseError);
+          logger.warn(`JSON解析失败，返回原字符串 (key: ${key}):`, parseError);
           return val; // 解析失败返回原字符串
         }
       } else {
@@ -473,7 +474,7 @@ export class UpstashRedisStorage implements IStorage {
         return val;
       }
     } catch (error) {
-      console.error(`Upstash getCache error (key: ${key}):`, error);
+      logger.error(`Upstash getCache error (key: ${key}):`, error);
       return null;
     }
   }
@@ -505,7 +506,7 @@ export class UpstashRedisStorage implements IStorage {
 
     if (keys.length > 0) {
       await withRetry(() => this.client.del(...keys));
-      console.log(
+      logger.log(
         `Cleared ${keys.length} cache entries with pattern: ${pattern}`,
       );
     }
@@ -684,7 +685,7 @@ export class UpstashRedisStorage implements IStorage {
       await this.setCache('play_stats_summary', result, 1800);
       return result;
     } catch (error) {
-      console.error('获取播放统计失败:', error);
+      logger.error('获取播放统计失败:', error);
       return {
         totalUsers: 0,
         totalWatchTime: 0,
@@ -733,7 +734,7 @@ export class UpstashRedisStorage implements IStorage {
             lastLoginTime?: number;
             lastLoginDate?: number;
           }>(loginStatsKey);
-          console.log(`[Upstash-NoRecords] 用户 ${userName} 登入统计查询:`, {
+          logger.log(`[Upstash-NoRecords] 用户 ${userName} 登入统计查询:`, {
             key: loginStatsKey,
             rawValue: storedLoginStats,
             hasValue: !!storedLoginStats,
@@ -750,14 +751,12 @@ export class UpstashRedisStorage implements IStorage {
                 storedLoginStats.lastLoginTime ||
                 0,
             };
-            console.log(`[Upstash-NoRecords] 解析后的登入统计:`, loginStats);
+            logger.log(`[Upstash-NoRecords] 解析后的登入统计:`, loginStats);
           } else {
-            console.log(
-              `[Upstash-NoRecords] 用户 ${userName} 没有登入统计数据`,
-            );
+            logger.log(`[Upstash-NoRecords] 用户 ${userName} 没有登入统计数据`);
           }
         } catch (error) {
-          console.error(`获取用户 ${userName} 登入统计失败:`, error);
+          logger.error(`获取用户 ${userName} 登入统计失败:`, error);
         }
         return {
           username: userName,
@@ -852,7 +851,7 @@ export class UpstashRedisStorage implements IStorage {
           // 用户没有登入统计数据
         }
       } catch (error) {
-        console.error(`获取用户 ${userName} 登入统计失败:`, error);
+        logger.error(`获取用户 ${userName} 登入统计失败:`, error);
       }
       return {
         username: userName,
@@ -876,7 +875,7 @@ export class UpstashRedisStorage implements IStorage {
         lastLoginDate: loginStats.lastLoginDate,
       };
     } catch (error) {
-      console.error(`获取用户 ${userName} 统计失败:`, error);
+      logger.error(`获取用户 ${userName} 统计失败:`, error);
       return {
         username: userName,
         totalWatchTime: 0,
@@ -970,7 +969,7 @@ export class UpstashRedisStorage implements IStorage {
 
       return result;
     } catch (error) {
-      console.error('获取内容统计失败:', error);
+      logger.error('获取内容统计失败:', error);
       return [];
     }
   }
@@ -985,7 +984,7 @@ export class UpstashRedisStorage implements IStorage {
       // 清除全站统计缓存，下次查询时重新计算
       await this.deleteCache('play_stats_summary');
     } catch (error) {
-      console.error('更新播放统计失败:', error);
+      logger.error('更新播放统计失败:', error);
     }
   }
 
@@ -1025,7 +1024,7 @@ export class UpstashRedisStorage implements IStorage {
       // 保存更新后的统计数据
       await this.client.set(loginStatsKey, JSON.stringify(loginStats));
     } catch (error) {
-      console.error(`更新用户 ${userName} 登入统计失败:`, error);
+      logger.error(`更新用户 ${userName} 登入统计失败:`, error);
       throw error;
     }
   }
@@ -1058,7 +1057,7 @@ function getUpstashRedisClient(): Redis {
       },
     });
 
-    console.log('Upstash Redis client created successfully');
+    logger.log('Upstash Redis client created successfully');
 
     (global as any)[globalKey] = client;
   }

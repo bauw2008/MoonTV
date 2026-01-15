@@ -17,6 +17,8 @@ import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { logger } from '@/lib/logger';
+
 interface ThemeSettings {
   themeOpacity: number; // 主题背景透明度
   globalUIOpacity: number; // 全局UI组件透明度
@@ -435,7 +437,7 @@ export const ThemeSettingsPanel: React.FC<{
         localStorage.setItem('themeSettings', settingsString);
       } catch (error) {
         // 如果 localStorage 空间不足，只保存其他设置（不包括背景图片）
-        console.warn('保存背景图片失败，localStorage 空间不足');
+        logger.warn('保存背景图片失败，localStorage 空间不足');
         const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
         localStorage.setItem(
           'themeSettings',
@@ -860,7 +862,7 @@ export const ThemeSettingsPanel: React.FC<{
             document.body.classList.add(breathingClass);
           }
 
-          console.log(
+          logger.log(
             `Applied custom dynamic effects: intensity=${settings.dynamicIntensity}%, animation=${animationClass}`,
           );
         } else {
@@ -886,7 +888,7 @@ export const ThemeSettingsPanel: React.FC<{
         document.documentElement.style.opacity = '1';
 
         root.style.setProperty('--bg-gradient', gradientWithOpacity);
-        console.log(
+        logger.log(
           'Applied custom gradient with dynamic effects:',
           gradientWithOpacity,
         );
@@ -1082,7 +1084,7 @@ export const ThemeSettingsPanel: React.FC<{
           setSettings(newSettings);
           saveSettings(newSettings);
         } catch (error) {
-          console.error('Failed to store background image:', error);
+          logger.error('Failed to store background image:', error);
           alert('上传背景图片失败，请重试');
         }
       };
@@ -1135,11 +1137,11 @@ export const ThemeSettingsPanel: React.FC<{
 
         if (isGlassBlue) {
           // 琉璃通透模式：真正的玻璃效果
-          console.log('Applied glass transparent theme - real glass effect');
+          logger.log('Applied glass transparent theme - real glass effect');
 
           // 创建真正的透明玻璃效果
           const createGlassEffect = () => {
-            console.log('Creating glass effect...');
+            logger.log('Creating glass effect...');
 
             // 步骤1：移除所有现有的背景层
             const existingLayers = document.querySelectorAll('[id^="glass-"]');
@@ -1224,7 +1226,7 @@ export const ThemeSettingsPanel: React.FC<{
             const root = document.documentElement;
             root.style.setProperty('--bg-gradient', 'transparent');
 
-            console.log(
+            logger.log(
               'Glass effect created with proper layer structure and animated content',
             );
           };
@@ -1271,8 +1273,7 @@ export const ThemeSettingsPanel: React.FC<{
           document.documentElement.style.opacity = '1';
 
           root.style.setProperty('--bg-gradient', gradientWithOpacity);
-          console.log('Applied preset gradient:', gradientWithOpacity);
-
+          logger.log('Applied preset gradient:', gradientWithOpacity);
           // 移除琉璃通透模式的类
           document.body.classList.remove('glass-transparent-mode');
           document.documentElement.classList.remove('glass-transparent-mode');

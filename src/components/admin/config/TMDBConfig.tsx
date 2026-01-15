@@ -1,7 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   useAdminAuth,
@@ -40,34 +40,43 @@ function TMDBConfigContent() {
     EnableTMDBPosters: false,
   });
 
-  // 加载配置
-  const loadConfig = useCallback(async () => {
-    try {
-      await withLoading('loadTMDBConfig', async () => {
-        const response = await fetch('/api/admin/config');
-        const data = await response.json();
-        setConfig(data.Config);
+  // 使用 ref 来存储最新的 withLoading 和 showError
+  const withLoadingRef = useRef(withLoading);
+  const showErrorRef = useRef(showError);
 
-        if (data.Config?.SiteConfig) {
-          setTmdbSettings({
-            TMDBApiKey: data.Config.SiteConfig.TMDBApiKey || '',
-            TMDBLanguage: data.Config.SiteConfig.TMDBLanguage || 'zh-CN',
-            EnableTMDBActorSearch:
-              data.Config.SiteConfig.EnableTMDBActorSearch || false,
-            EnableTMDBPosters:
-              data.Config.SiteConfig.EnableTMDBPosters || false,
-          });
-        }
-      });
-    } catch (error) {
-      showError('加载TMDB配置失败');
-    }
-  }, [showError, withLoading, setConfig, setTmdbSettings]);
-
-  // 初始化加载
+  // 更新 ref 的值
   useEffect(() => {
+    withLoadingRef.current = withLoading;
+    showErrorRef.current = showError;
+  });
+
+  // 初始化加载 - 只在组件挂载时执行一次
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        await withLoadingRef.current('loadTMDBConfig', async () => {
+          const response = await fetch('/api/admin/config');
+          const data = await response.json();
+          setConfig(data.Config);
+
+          if (data.Config?.SiteConfig) {
+            setTmdbSettings({
+              TMDBApiKey: data.Config.SiteConfig.TMDBApiKey || '',
+              TMDBLanguage: data.Config.SiteConfig.TMDBLanguage || 'zh-CN',
+              EnableTMDBActorSearch:
+                data.Config.SiteConfig.EnableTMDBActorSearch || false,
+              EnableTMDBPosters:
+                data.Config.SiteConfig.EnableTMDBPosters || false,
+            });
+          }
+        });
+      } catch (error) {
+        showErrorRef.current('加载TMDB配置失败');
+      }
+    };
+
     loadConfig();
-  }, [loadConfig]);
+  }, []); // 空依赖数组，只在组件挂载时执行一次
 
   // 加载状态
   if (loading) {

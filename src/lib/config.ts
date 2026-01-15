@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
+/* @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import fs from 'fs';
 import path from 'path';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 import { AdminConfig } from './admin.types';
 import { getRandomUserAgent } from './user-agent';
@@ -726,7 +727,7 @@ export async function resetConfig() {
   try {
     originConfig = await db.getAdminConfig();
   } catch (e) {
-    console.error('获取管理员配置失败:', e);
+    logger.error('获取管理员配置失败:', e);
   }
   if (!originConfig) {
     originConfig = {} as AdminConfig;

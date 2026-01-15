@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 import { CapsuleSelector } from '@/components/CapsuleSelector';
 import PageLayout from '@/components/PageLayout';
@@ -292,9 +293,9 @@ function AdminContent() {
         .then(async (res) => {
           if (!res.ok) {
             if (res.status === 401) {
-              console.warn('无权限访问管理页面');
+              logger.warn('无权限访问管理页面');
             } else {
-              console.warn('服务器验证失败:', res.status);
+              logger.warn('服务器验证失败:', res.status);
             }
             return;
           }
@@ -305,7 +306,7 @@ function AdminContent() {
           }
         })
         .catch((error) => {
-          console.warn('权限验证网络错误:', error);
+          logger.warn('权限验证网络错误:', error);
         });
     };
     checkAccess();

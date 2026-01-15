@@ -1,4 +1,5 @@
 import { db } from './db';
+import { logger } from './logger';
 
 // 格式化字节大小
 function formatBytes(bytes: number): string {
@@ -31,10 +32,10 @@ function getRedisStorage(): any {
       return storage;
     }
 
-    console.warn('当前存储类型不支持缓存统计功能');
+    logger.warn('当前存储类型不支持缓存统计功能');
     return null;
   } catch (error) {
-    console.warn('无法访问存储实例:', error);
+    logger.warn('无法访问存储实例:', error);
     return null;
   }
 }
@@ -44,20 +45,20 @@ export class DatabaseCacheManager {
   // 获取Redis兼容数据库中的缓存统计（支持KVRocks、Upstash、Redis）
   static async getKVRocksCacheStats() {
     const storageType = getStorageType();
-    console.log('🔍 开始获取Redis存储实例...');
-    console.log('🔍 存储类型:', storageType);
+    logger.log('🔍 开始获取Redis存储实例...');
+    logger.log('🔍 存储类型:', storageType);
 
     const storage = getRedisStorage();
     if (!storage) {
-      console.warn('❌ Redis存储不可用，跳过数据库缓存统计');
+      logger.warn('❌ Redis存储不可用，跳过数据库缓存统计');
       return null;
     }
 
-    console.log('✅ Redis存储实例获取成功');
-    console.log('🔍 存储实例类型:', storage.constructor?.name);
-    console.log('🔍 存储方法检查: withRetry =', typeof storage.withRetry);
-    console.log('🔍 存储方法检查: client =', !!storage.client);
-    console.log('🔍 存储方法检查: client.keys =', typeof storage.client?.keys);
+    logger.log('✅ Redis存储实例获取成功');
+    logger.log('🔍 存储实例类型:', storage.constructor?.name);
+    logger.log('🔍 存储方法检查: withRetry =', typeof storage.withRetry);
+    logger.log('🔍 存储方法检查: client =', !!storage.client);
+    logger.log('🔍 存储方法检查: client.keys =', typeof storage.client?.keys);
 
     const stats = {
       douban: { count: 0, size: 0, types: {} as Record<string, number> },
@@ -72,16 +73,16 @@ export class DatabaseCacheManager {
     };
 
     try {
-      console.log('📊 开始从Redis兼容数据库读取缓存统计...');
+      logger.log('📊 开始从Redis兼容数据库读取缓存统计...');
 
       // 获取所有缓存键 - 支持不同的Redis客户端
       let allCacheKeys: string[] = [];
 
-      console.log(`🔍 当前存储类型: ${storageType}`);
+      logger.log(`🔍 当前存储类型: ${storageType}`);
 
       if (storageType === 'upstash') {
         // Upstash Redis - 尝试不同的调用方式
-        console.log('🔍 使用Upstash Redis方式获取键...');
+        logger.log('🔍 使用Upstash Redis方式获取键...');
 
         try {
           if (typeof storage.withRetry === 'function' && storage.client?.keys) {
@@ -91,36 +92,36 @@ export class DatabaseCacheManager {
             );
           } else if (storage.client?.keys) {
             // 方式2：直接调用 client.keys
-            console.log('🔍 withRetry不可用，直接调用client.keys');
+            logger.log('🔍 withRetry不可用，直接调用client.keys');
             allCacheKeys = await storage.client.keys('cache:*');
           } else {
-            console.warn('❌ Upstash存储没有可用的keys方法');
-            console.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
+            logger.warn('❌ Upstash存储没有可用的keys方法');
+            logger.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
             return null;
           }
         } catch (error) {
-          console.error('❌ Upstash键获取失败:', error);
+          logger.error('❌ Upstash键获取失败:', error);
           return null;
         }
       } else if (storageType === 'kvrocks' || storageType === 'redis') {
         // KVRocks/标准Redis (带重试机制) - 保持不变
-        console.log('🔍 使用KVRocks/标准Redis方式获取键...');
+        logger.log('🔍 使用KVRocks/标准Redis方式获取键...');
         if (typeof storage.withRetry === 'function' && storage.client?.keys) {
           allCacheKeys = await storage.withRetry(() =>
             storage.client.keys('cache:*'),
           );
         } else {
-          console.warn('❌ KVRocks/Redis存储没有withRetry或client.keys方法');
+          logger.warn('❌ KVRocks/Redis存储没有withRetry或client.keys方法');
           return null;
         }
       } else {
-        console.warn('❌ 不支持的存储类型或无法找到合适的keys方法');
-        console.log('🔍 存储类型:', storageType);
-        console.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
+        logger.warn('❌ 不支持的存储类型或无法找到合适的keys方法');
+        logger.log('🔍 存储类型:', storageType);
+        logger.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
         return null;
       }
 
-      console.log(
+      logger.log(
         `📊 数据库中找到 ${allCacheKeys.length} 个缓存键:`,
         allCacheKeys.slice(0, 5),
       );
@@ -142,10 +143,10 @@ export class DatabaseCacheManager {
             )) as any[];
           } else if (storage.client?.mget) {
             // 方式2：直接调用 client.mget
-            console.log('🔍 withRetry不可用，直接调用client.mget');
+            logger.log('🔍 withRetry不可用，直接调用client.mget');
             values = (await storage.client.mget(allCacheKeys)) as any[];
           } else {
-            console.warn('Upstash没有client.mget方法，使用逐个获取');
+            logger.warn('Upstash没有client.mget方法，使用逐个获取');
             // 回退：逐个获取
             for (const key of allCacheKeys) {
               try {
@@ -162,13 +163,13 @@ export class DatabaseCacheManager {
                 }
                 values.push(value);
               } catch (error) {
-                console.warn(`获取缓存键 ${key} 失败:`, error);
+                logger.warn(`获取缓存键 ${key} 失败:`, error);
                 values.push(null);
               }
             }
           }
         } catch (error) {
-          console.error('❌ Upstash批量获取失败:', error);
+          logger.error('❌ Upstash批量获取失败:', error);
           return null;
         }
       } else if (storageType === 'kvrocks' || storageType === 'redis') {
@@ -178,7 +179,7 @@ export class DatabaseCacheManager {
             storage.client.mGet(allCacheKeys),
           );
         } else {
-          console.warn('KVRocks/Redis没有mGet方法，使用逐个获取');
+          logger.warn('KVRocks/Redis没有mGet方法，使用逐个获取');
           // 回退：逐个获取
           for (const key of allCacheKeys) {
             try {
@@ -191,14 +192,14 @@ export class DatabaseCacheManager {
               }
               values.push(value);
             } catch (error) {
-              console.warn(`获取缓存键 ${key} 失败:`, error);
+              logger.warn(`获取缓存键 ${key} 失败:`, error);
               values.push(null);
             }
           }
         }
       } else {
         // 通用回退：逐个获取
-        console.warn('使用通用回退方法逐个获取缓存数据');
+        logger.warn('使用通用回退方法逐个获取缓存数据');
         for (const key of allCacheKeys) {
           try {
             let value: any = null;
@@ -207,7 +208,7 @@ export class DatabaseCacheManager {
             }
             values.push(value);
           } catch (error) {
-            console.warn(`获取缓存键 ${key} 失败:`, error);
+            logger.warn(`获取缓存键 ${key} 失败:`, error);
             values.push(null);
           }
         }
@@ -287,19 +288,19 @@ export class DatabaseCacheManager {
         stats.total.size += size;
       });
 
-      console.log(
+      logger.log(
         `✅ Redis缓存统计完成: 总计 ${stats.total.count} 项, ${formatBytes(stats.total.size)}`,
       );
       return stats;
     } catch (error) {
-      console.error('Redis缓存统计失败:', error);
+      logger.error('Redis缓存统计失败:', error);
       return null;
     }
   }
 
   // 获取缓存统计信息（支持KVRocks/Upstash/Redis，localStorage作为备用）
   static async getSimpleCacheStats() {
-    console.log('📊 开始获取缓存统计信息...');
+    logger.log('📊 开始获取缓存统计信息...');
 
     // 从 Redis兼容数据库 获取统计（支持KVRocks、Upstash、Redis）
     const redisStats = await DatabaseCacheManager.getKVRocksCacheStats();
@@ -351,7 +352,7 @@ export class DatabaseCacheManager {
           key === 'lunatv_danmu_cache',
       );
 
-      console.log(`📊 localStorage中找到 ${keys.length} 个相关缓存键`);
+      logger.log(`📊 localStorage中找到 ${keys.length} 个相关缓存键`);
 
       keys.forEach((key) => {
         const data = localStorage.getItem(key);
@@ -447,7 +448,7 @@ export class DatabaseCacheManager {
       switch (type) {
         case 'douban':
           await db.clearExpiredCache('douban-');
-          console.log('🗑️ 豆瓣缓存清理完成');
+          logger.log('🗑️ 豆瓣缓存清理完成');
           break;
         case 'shortdrama':
           await db.clearExpiredCache('shortdrama-');
@@ -460,19 +461,19 @@ export class DatabaseCacheManager {
               localStorage.removeItem(key);
               clearedCount++;
             });
-            console.log(`🗑️ localStorage中清理了 ${keys.length} 个短剧缓存项`);
+            logger.log(`🗑️ localStorage中清理了 ${keys.length} 个短剧缓存项`);
           }
-          console.log('🗑️ 短剧缓存清理完成');
+          logger.log('🗑️ 短剧缓存清理完成');
           break;
         case 'tmdb':
           await db.clearExpiredCache('tmdb-');
           await db.clearExpiredCache('trending:');
           // 搜索缓存不按前缀清理，避免误删其他搜索
-          console.log('🗑️ TMDB缓存清理完成');
+          logger.log('🗑️ TMDB缓存清理完成');
           break;
         case 'danmu':
           await db.clearExpiredCache('danmu-cache');
-          console.log('🗑️ 弹幕缓存清理完成');
+          logger.log('🗑️ 弹幕缓存清理完成');
           break;
         case 'netdisk':
           await db.clearExpiredCache('netdisk-search');
@@ -485,18 +486,18 @@ export class DatabaseCacheManager {
               localStorage.removeItem(key);
               clearedCount++;
             });
-            console.log(
+            logger.log(
               `🗑️ localStorage中清理了 ${keys.length} 个网盘搜索缓存项`,
             );
           }
-          console.log('🗑️ 网盘搜索缓存清理完成');
+          logger.log('🗑️ 网盘搜索缓存清理完成');
           break;
       }
 
       // 由于clearExpiredCache不返回数量，我们无法精确统计
       clearedCount = 1; // 标记操作已执行
     } catch (error) {
-      console.error(`清理${type}缓存失败:`, error);
+      logger.error(`清理${type}缓存失败:`, error);
     }
 
     return clearedCount;
@@ -506,10 +507,10 @@ export class DatabaseCacheManager {
   static async clearExpiredCache(): Promise<number> {
     try {
       await db.clearExpiredCache();
-      console.log('🗑️ 所有过期缓存清理完成');
+      logger.log('🗑️ 所有过期缓存清理完成');
       return 1; // 标记操作已执行
     } catch (error) {
-      console.error('清理过期缓存失败:', error);
+      logger.error('清理过期缓存失败:', error);
       return 0;
     }
   }

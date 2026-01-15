@@ -7,6 +7,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 interface NetDiskLink {
   url: string;
   password: string;
@@ -135,7 +137,7 @@ export default function NetDiskSearchResults({
         setCopiedItems((prev) => ({ ...prev, [key]: false }));
       }, 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 

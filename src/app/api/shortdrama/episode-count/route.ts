@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime, getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 // 标记为动态路由
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       alternativeApiUrl = shortDramaConfig?.alternativeApiUrl;
       enableAlternative = shortDramaConfig?.enableAlternative || false;
     } catch (configError) {
-      console.error('读取短剧配置失败:', configError);
+      logger.error('读取短剧配置失败:', configError);
     }
 
     // 如果没有启用备用API或没有配置地址，返回错误
@@ -139,7 +140,7 @@ export async function GET(request: NextRequest) {
 
     return finalResponse;
   } catch (error) {
-    console.error('获取集数失败:', error);
+    logger.error('获取集数失败:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

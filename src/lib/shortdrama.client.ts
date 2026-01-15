@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* @typescript-eslint/no-explicit-any */
+
+import { logger } from '@/lib/logger';
 
 import {
   getCache,
@@ -85,7 +87,7 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
     await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.categories);
     return result;
   } catch (error) {
-    console.error('获取短剧分类失败:', error);
+    logger.error('获取短剧分类失败:', error);
     return [];
   }
 }
@@ -156,7 +158,7 @@ export async function getRecommendedShortDramas(
     await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.recommends);
     return result;
   } catch (error) {
-    console.error('获取推荐短剧失败:', error);
+    logger.error('获取推荐短剧失败:', error);
     return [];
   }
 }
@@ -235,7 +237,7 @@ export async function getShortDramaList(
     await setCache(cacheKey, result, cacheTime);
     return result;
   } catch (error) {
-    console.error('获取短剧列表失败:', error);
+    logger.error('获取短剧列表失败:', error);
     return { list: [], hasMore: false };
   }
 }
@@ -298,7 +300,7 @@ export async function searchShortDramas(
 
     return result;
   } catch (error) {
-    console.error('搜索短剧失败:', error);
+    logger.error('搜索短剧失败:', error);
     return { list: [], hasMore: false };
   }
 }
@@ -532,7 +534,7 @@ async function parseWithAlternativeApi(
       },
     };
   } catch (error) {
-    console.error('备用API解析失败:', error);
+    logger.error('备用API解析失败:', error);
     // 返回更详细的错误信息
     const errorMsg = error instanceof Error ? error.message : '备用API请求失败';
     return {
@@ -710,7 +712,7 @@ export async function parseShortDramaBatch(
     const data = await response.json();
     return data.results || [];
   } catch (error) {
-    console.error('批量解析短剧失败:', error);
+    logger.error('批量解析短剧失败:', error);
     return [];
   }
 }
@@ -759,7 +761,7 @@ export async function parseShortDramaAll(
     const data = await response.json();
     return data.results || [];
   } catch (error) {
-    console.error('解析完整短剧失败:', error);
+    logger.error('解析完整短剧失败:', error);
     return [];
   }
 }

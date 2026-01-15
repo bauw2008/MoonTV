@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime, getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { parseShortDramaEpisode } from '@/lib/shortdrama.client';
 
 // 标记为动态路由
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
         ? shortDramaConfig.alternativeApiUrl
         : undefined;
     } catch (configError) {
-      console.error('读取短剧配置失败:', configError);
+      logger.error('读取短剧配置失败:', configError);
       // 配置读取失败时，不使用备用API
       alternativeApiUrl = undefined;
     }
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     return finalResponse;
   } catch (error) {
-    console.error('短剧详情获取失败:', error);
+    logger.error('短剧详情获取失败:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

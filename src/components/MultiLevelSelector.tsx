@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { logger } from '@/lib/logger';
 import { getShortDramaCategories } from '@/lib/shortdrama.client';
 
 interface MultiLevelOption {
@@ -75,7 +76,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
           ]);
         })
         .catch((error) => {
-          console.error('加载短剧分类失败:', error);
+          logger.error('加载短剧分类失败:', error);
         })
         .finally(() => {
           setLoadingCategories(false);

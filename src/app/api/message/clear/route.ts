@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 // 清空所有评论（仅管理员和站长）
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '清空评论失败' }, { status: 500 });
     }
   } catch (error) {
-    console.error('清空评论失败:', error);
+    logger.error('清空评论失败:', error);
     return NextResponse.json(
       { error: '清空评论失败: ' + (error as Error).message },
       { status: 500 },

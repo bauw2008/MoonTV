@@ -1,10 +1,9 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
+import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
         const results = await searchFromApi(site, query);
         allResults = allResults.concat(results);
       } catch (error) {
-        console.error(`搜索源 ${site.key} 失败:`, error);
+        logger.error(`搜索源 ${site.key} 失败:`, error);
       }
     }
 
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       total: resultsWithTypes.length,
     });
   } catch (error) {
-    console.error('搜索失败:', error);
+    logger.error('搜索失败:', error);
     return NextResponse.json(
       { error: '搜索失败' },
       {

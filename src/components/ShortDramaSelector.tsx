@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { getShortDramaCategories } from '@/lib/shortdrama.client';
 
 import { CapsuleSelector } from './CapsuleSelector';
@@ -45,7 +46,7 @@ const ShortDramaSelector: React.FC<ShortDramaSelectorProps> = ({
         setShortDramaCategories(options);
       })
       .catch((error) => {
-        console.error('加载短剧分类失败:', error);
+        logger.error('加载短剧分类失败:', error);
       })
       .finally(() => {
         setLoadingCategories(false);

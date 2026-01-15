@@ -11,6 +11,8 @@ import React, {
   useState,
 } from 'react';
 
+import { logger } from '@/lib/logger';
+
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -113,7 +115,7 @@ export const VirtualVideoGrid = React.forwardRef<
             behavior: 'smooth',
           });
         } catch (error) {
-          console.debug('Grid scroll error (safe to ignore):', error);
+          logger.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [totalItemCount, loading]);
@@ -173,10 +175,7 @@ export const VirtualVideoGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              console.debug(
-                'Grid scroll to top error (safe to ignore):',
-                error,
-              );
+              logger.debug('Grid scroll to top error (safe to ignore):', error);
             }
           }
         },

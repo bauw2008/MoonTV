@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 'use client';
 
 import {
@@ -16,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { changelog, ChangelogEntry } from '@/lib/changelog';
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { compareVersions, UpdateStatus } from '@/lib/version_check';
 
@@ -107,14 +106,14 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           );
         }
       } else {
-        console.error(
+        logger.error(
           '获取远程变更日志失败:',
           response.status,
           response.statusText,
         );
       }
     } catch (error) {
-      console.error('获取远程变更日志失败:', error);
+      logger.error('获取远程变更日志失败:', error);
     }
   }, []);
 

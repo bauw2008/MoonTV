@@ -1,5 +1,7 @@
 'use client';
 
+import { logger } from '@/lib/logger';
+
 import {
   generateStorageKey,
   getAllFavorites,
@@ -79,21 +81,21 @@ const CHECK_DEBOUNCE_TIME = 2000; // 2秒内只允许一次检查
 export async function checkWatchingUpdates(): Promise<void> {
   // 全局锁检查
   if (isCheckingUpdates) {
-    console.log('已有更新检查在进行中，跳过本次检查');
+    logger.log('已有更新检查在进行中，跳过本次检查');
     return;
   }
 
   // 防抖检查
   const now = Date.now();
   if (now - lastCheckTime < CHECK_DEBOUNCE) {
-    console.log('检查过于频繁，跳过本次检查');
+    logger.log('检查过于频繁，跳过本次检查');
     return;
   }
   lastCheckTime = now;
   isCheckingUpdates = true;
 
   try {
-    console.log('开始检查收藏剧集更新...');
+    logger.log('开始检查收藏剧集更新...');
 
     // 获取收藏列表
     const favoritesObj = await getAllFavorites();
@@ -103,7 +105,7 @@ export async function checkWatchingUpdates(): Promise<void> {
     }));
 
     if (favorites.length === 0) {
-      console.log('没有收藏内容，跳过检查');
+      logger.log('没有收藏内容，跳过检查');
       const emptyResult: WatchingUpdate = {
         hasUpdates: false,
         timestamp: now,
@@ -123,7 +125,7 @@ export async function checkWatchingUpdates(): Promise<void> {
     });
 
     if (candidateRecords.length === 0) {
-      console.log('没有多集剧收藏，跳过检查');
+      logger.log('没有多集剧收藏，跳过检查');
       const emptyResult: WatchingUpdate = {
         hasUpdates: false,
         timestamp: now,
@@ -137,7 +139,7 @@ export async function checkWatchingUpdates(): Promise<void> {
       return;
     }
 
-    console.log(`检查 ${candidateRecords.length} 个收藏的多集剧...`);
+    logger.log(`检查 ${candidateRecords.length} 个收藏的多集剧...`);
 
     let hasAnyUpdates = false;
     let updatedCount = 0;
@@ -217,7 +219,7 @@ export async function checkWatchingUpdates(): Promise<void> {
           }
           return seriesInfo;
         } catch (error) {
-          console.error(`检查 ${fav.title} 更新失败:`, error);
+          logger.error(`检查 ${fav.title} 更新失败:`, error);
           // 返回默认状态
           const plusIndex = fav.key.indexOf('+');
           const sourceName = fav.key.slice(0, plusIndex);
@@ -264,7 +266,7 @@ export async function checkWatchingUpdates(): Promise<void> {
     cacheWatchingUpdates(result);
     localStorage.setItem(LAST_CHECK_TIME_KEY, now.toString());
 
-    console.log(
+    logger.log(
       `检查完成: ${candidateRecords.length} 个收藏, ${updatedCount} 个有更新`,
     );
 
@@ -280,7 +282,7 @@ export async function checkWatchingUpdates(): Promise<void> {
       );
     }
   } catch (error) {
-    console.error('检查追番更新失败:', error);
+    logger.error('检查追番更新失败:', error);
     notifyListeners(false);
   } finally {
     isCheckingUpdates = false;
@@ -379,7 +381,7 @@ async function checkSingleRecordUpdate(
       latestEpisodes: protectedTotalEpisodes,
     };
   } catch (error) {
-    console.error(`检查${record.title}更新失败:`, error);
+    logger.error(`检查${record.title}更新失败:`, error);
     return {
       hasUpdate: false,
       hasContinueWatching: false,
@@ -453,7 +455,7 @@ export function getCachedWatchingUpdates(): boolean {
 
     return isExpired ? false : data.hasUpdates;
   } catch (error) {
-    console.error('读取更新缓存失败:', error);
+    logger.error('读取更新缓存失败:', error);
     return false;
   }
 }
@@ -472,7 +474,7 @@ function cacheWatchingUpdates(data: WatchingUpdate): void {
     };
     localStorage.setItem(WATCHING_UPDATES_CACHE_KEY, JSON.stringify(cacheData));
   } catch (error) {
-    console.error('缓存更新信息失败:', error);
+    logger.error('缓存更新信息失败:', error);
   }
 }
 
@@ -496,7 +498,7 @@ export function subscribeToWatchingUpdates(
 function notifyListeners(hasUpdates: boolean): void {
   const now = Date.now();
   if (now - lastEventTime < EVENT_DEBOUNCE) {
-    console.log('事件触发过于频繁，跳过本次通知');
+    logger.log('事件触发过于频繁，跳过本次通知');
     return;
   }
   lastEventTime = now;
@@ -505,7 +507,7 @@ function notifyListeners(hasUpdates: boolean): void {
     try {
       callback(hasUpdates);
     } catch (error) {
-      console.error('通知更新监听器失败:', error);
+      logger.error('通知更新监听器失败:', error);
     }
   });
 }
@@ -581,7 +583,7 @@ export function getDetailedWatchingUpdates(): WatchingUpdate | null {
     };
     return result;
   } catch (error) {
-    console.error('读取详细更新信息失败:', error);
+    logger.error('读取详细更新信息失败:', error);
     return null;
   }
 }
@@ -615,7 +617,7 @@ export function markUpdatesAsViewed(): void {
       }
     }
   } catch (error) {
-    console.error('标记更新为已查看失败:', error);
+    logger.error('标记更新为已查看失败:', error);
   }
 }
 
@@ -639,7 +641,7 @@ export function clearWatchingUpdates(): void {
       );
     }
   } catch (error) {
-    console.error('清除新集数更新状态失败:', error);
+    logger.error('清除新集数更新状态失败:', error);
   }
 }
 

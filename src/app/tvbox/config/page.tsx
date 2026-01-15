@@ -13,6 +13,7 @@ interface DeviceInfo {
 
 // 使用统一的类型定义
 import type { AdminConfig } from '@/lib/admin.types';
+import { logger } from '@/lib/logger';
 type SecurityConfig = NonNullable<AdminConfig['TVBoxSecurityConfig']>;
 
 export default function TVBoxConfigPage() {
@@ -68,7 +69,7 @@ export default function TVBoxConfigPage() {
         setDevices(data.devices || []);
       }
     } catch (error) {
-      console.error('获取设备列表失败:', error);
+      logger.error('获取设备列表失败:', error);
     } finally {
       setDevicesLoading(false);
     }
@@ -99,7 +100,7 @@ export default function TVBoxConfigPage() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || '解绑失败');
       } catch (error) {
-        console.error('解绑设备失败:', error);
+        logger.error('解绑设备失败:', error);
         alert(error instanceof Error ? error.message : '解绑设备失败');
         return false;
       }

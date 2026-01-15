@@ -3,6 +3,7 @@
 import { Clock, Save, Shield } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -109,7 +110,7 @@ function NetdiskConfigContent() {
   ];
 
   const handleSave = async () => {
-    console.log('[NetdiskConfig] handleSave 被调用');
+    logger.log('[NetdiskConfig] handleSave 被调用');
     await withLoading('saveNetDiskConfig', async () => {
       try {
         const response = await fetch('/api/admin/netdisk', {
@@ -134,7 +135,7 @@ function NetdiskConfigContent() {
 
   // 处理开关变化
   const handleToggleChange = async (enabled: boolean) => {
-    console.log('[NetdiskConfig] 开关切换:', enabled);
+    logger.log('[NetdiskConfig] 开关切换:', enabled);
 
     // 立即更新本地状态，让UI立即响应
     setNetDiskSettings((prev) => ({ ...prev, enabled }));
@@ -208,7 +209,7 @@ function NetdiskConfigContent() {
                 className='relative inline-flex items-center cursor-pointer'
                 onClick={() => {
                   const newState = !netDiskSettings.enabled;
-                  console.log(
+                  logger.log(
                     '[NetdiskConfig] 开关点击，当前值:',
                     netDiskSettings.enabled,
                     '新值:',

@@ -3,6 +3,8 @@
  * 将跳过设置面板集成到播放器内部，而不是页面覆盖层
  */
 
+import { logger } from './logger';
+
 export interface SkipSettingsConfig {
   // 预设的跳过时间配置
   openingStart: number; // 片头开始时间（秒）
@@ -598,7 +600,7 @@ export default function artplayerPluginSkipSettings(
         '#autoNextEpisode',
       ) as HTMLInputElement;
 
-      console.log('SkipSettings: 绑定事件，元素检查', {
+      logger.log('SkipSettings: 绑定事件，元素检查', {
         locateOpeningBtn: !!locateOpeningBtn,
         locateEndingBtn: !!locateEndingBtn,
         autoSkipCheckbox: !!autoSkipCheckbox,
@@ -609,7 +611,7 @@ export default function artplayerPluginSkipSettings(
       const endingModeRadios = panel.querySelectorAll(
         'input[name="endingMode"]',
       );
-      console.log('SkipSettings: 片尾模式单选框数量', endingModeRadios.length);
+      logger.log('SkipSettings: 片尾模式单选框数量', endingModeRadios.length);
       endingModeRadios.forEach((radio) => {
         radio.addEventListener('change', (e) => {
           const target = e.target as HTMLInputElement;
@@ -630,7 +632,7 @@ export default function artplayerPluginSkipSettings(
               mode === 'remaining' ? '剩余' : '开始';
           }
         } catch (e) {
-          console.error('SkipSettings: 切换片尾模式失败', e);
+          logger.error('SkipSettings: 切换片尾模式失败', e);
         }
       };
 
@@ -705,7 +707,7 @@ export default function artplayerPluginSkipSettings(
             endingMode,
           };
         } catch (e) {
-          console.error('SkipSettings: 获取时间值失败', e);
+          logger.error('SkipSettings: 获取时间值失败', e);
 
           return {
             openingStart: 0,
@@ -744,7 +746,7 @@ export default function artplayerPluginSkipSettings(
             art.notice.show = '跳过设置已保存';
           }
         } catch (e) {
-          console.error('SkipSettings: 保存配置失败', e);
+          logger.error('SkipSettings: 保存配置失败', e);
         }
       };
 
@@ -778,7 +780,7 @@ export default function artplayerPluginSkipSettings(
             art.notice.show = '跳过设置已重置';
           }
         } catch (e) {
-          console.error('SkipSettings: 重置配置失败', e);
+          logger.error('SkipSettings: 重置配置失败', e);
         }
       };
 
@@ -798,23 +800,23 @@ export default function artplayerPluginSkipSettings(
       if (locateOpeningBtn) {
         locateOpeningBtn.addEventListener('click', () => {
           try {
-            console.log('SkipSettings: 片头定位按钮点击');
+            logger.log('SkipSettings: 片头定位按钮点击');
             if (art?.currentTime !== undefined) {
-              console.log('SkipSettings: 当前时间', art.currentTime);
+              logger.log('SkipSettings: 当前时间', art.currentTime);
               const times = getTimeValues();
-              console.log('SkipSettings: 获取到的时间值', times);
+              logger.log('SkipSettings: 获取到的时间值', times);
               setTimeValues(
                 times.openingStart,
                 art.currentTime,
                 times.endingFirst,
                 times.endingEnd,
               );
-              console.log('SkipSettings: 片头定位完成');
+              logger.log('SkipSettings: 片头定位完成');
             } else {
-              console.warn('SkipSettings: 无法获取当前时间');
+              logger.warn('SkipSettings: 无法获取当前时间');
             }
           } catch (e) {
-            console.error('SkipSettings: 片头定位失败', e);
+            logger.error('SkipSettings: 片头定位失败', e);
           }
         });
       }
@@ -822,13 +824,13 @@ export default function artplayerPluginSkipSettings(
       if (locateEndingBtn) {
         locateEndingBtn.addEventListener('click', () => {
           try {
-            console.log('SkipSettings: 片尾定位按钮点击');
+            logger.log('SkipSettings: 片尾定位按钮点击');
             if (
               art?.currentTime !== undefined &&
               art.duration &&
               panelElement
             ) {
-              console.log(
+              logger.log(
                 'SkipSettings: 当前时间',
                 art.currentTime,
                 '总时长',
@@ -848,13 +850,10 @@ export default function artplayerPluginSkipSettings(
                   art.duration - art.currentTime,
                 );
                 endingFirst = remainingTime;
-                console.log('SkipSettings: 剩余模式，剩余时间', remainingTime);
+                logger.log('SkipSettings: 剩余模式，剩余时间', remainingTime);
               } else {
                 endingFirst = art.currentTime;
-                console.log(
-                  'SkipSettings: 绝对模式，开始时间',
-                  art.currentTime,
-                );
+                logger.log('SkipSettings: 绝对模式，开始时间', art.currentTime);
               }
 
               const times = getTimeValues();
@@ -864,12 +863,12 @@ export default function artplayerPluginSkipSettings(
                 endingFirst,
                 times.endingEnd,
               );
-              console.log('SkipSettings: 片尾定位完成');
+              logger.log('SkipSettings: 片尾定位完成');
             } else {
-              console.warn('SkipSettings: 无法获取时间信息');
+              logger.warn('SkipSettings: 无法获取时间信息');
             }
           } catch (e) {
-            console.error('SkipSettings: 片尾定位失败', e);
+            logger.error('SkipSettings: 片尾定位失败', e);
           }
         });
       }
@@ -988,7 +987,7 @@ export default function artplayerPluginSkipSettings(
           endingMode,
         };
       } catch (e) {
-        console.error('SkipSettings: 获取时间值失败', e);
+        logger.error('SkipSettings: 获取时间值失败', e);
         return {
           openingStart: 0,
           openingEnd: 90,
@@ -1017,7 +1016,7 @@ export default function artplayerPluginSkipSettings(
           return `${mins}:${secs.toString().padStart(2, '0')}`;
         };
 
-        console.log('SkipSettings: 设置时间值', {
+        logger.log('SkipSettings: 设置时间值', {
           openingStart,
           openingEnd,
           endingFirst,
@@ -1041,21 +1040,21 @@ export default function artplayerPluginSkipSettings(
 
         if (openingStartEl) {
           openingStartEl.value = formatTime(openingStart);
-          console.log('SkipSettings: 设置片头开始时间', openingStartEl.value);
+          logger.log('SkipSettings: 设置片头开始时间', openingStartEl.value);
         }
         if (openingEndEl) {
           openingEndEl.value = formatTime(openingEnd);
-          console.log('SkipSettings: 设置片头结束时间', openingEndEl.value);
+          logger.log('SkipSettings: 设置片头结束时间', openingEndEl.value);
         }
         if (endingFirstEl) {
           endingFirstEl.value = formatTime(endingFirst);
-          console.log('SkipSettings: 设置片尾时间', endingFirstEl.value);
+          logger.log('SkipSettings: 设置片尾时间', endingFirstEl.value);
         }
         if (endingEndEl) {
           endingEndEl.value = endingEnd > 0 ? formatTime(endingEnd) : '';
         }
       } catch (e) {
-        console.error('SkipSettings: 设置时间值失败', e);
+        logger.error('SkipSettings: 设置时间值失败', e);
       }
     };
 
@@ -1138,7 +1137,7 @@ export default function artplayerPluginSkipSettings(
         config = { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
       }
     } catch (e) {
-      console.warn('加载跳过设置失败:', e);
+      logger.warn('加载跳过设置失败:', e);
     }
 
     // 创建面板
@@ -1276,7 +1275,7 @@ export default function artplayerPluginSkipSettings(
       // 监听视频元数据加载完成，进行智能检测
       if (art) {
         art.on('video:loadedmetadata', () => {
-          console.log('SkipSettings: 视频元数据加载完成，执行短剧检测');
+          logger.log('SkipSettings: 视频元数据加载完成，执行短剧检测');
           detectShortDrama();
         });
       }
@@ -1309,7 +1308,7 @@ export default function artplayerPluginSkipSettings(
       }
     });
 
-    console.log('SkipSettings: 插件初始化完成');
+    logger.log('SkipSettings: 插件初始化完成');
     return {
       name: 'artplayerPluginSkipSettings',
       version: '1.0.0',

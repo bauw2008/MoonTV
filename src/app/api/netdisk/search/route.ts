@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { OTHER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // 检查网盘搜索是否启用
     if (!config.NetDiskConfig?.enabled) {
-      console.log('[NetDisk Search] 网盘搜索功能未启用');
+      logger.log('[NetDisk Search] 网盘搜索功能未启用');
       return NextResponse.json(
         { error: '网盘搜索功能未启用' },
         { status: 403 },
@@ -57,11 +58,11 @@ export async function GET(request: NextRequest) {
       'uc',
     ];
 
-    console.log('=== 网盘搜索调试 ===');
-    console.log('搜索关键词:', query);
-    console.log('PanSou服务地址:', pansouUrl);
-    console.log('网盘搜索启用状态:', config.NetDiskConfig?.enabled);
-    console.log('启用的网盘类型:', enabledCloudTypes);
+    logger.log('=== 网盘搜索调试 ===');
+    logger.log('搜索关键词:', query);
+    logger.log('PanSou服务地址:', pansouUrl);
+    logger.log('网盘搜索启用状态:', config.NetDiskConfig?.enabled);
+    logger.log('启用的网盘类型:', enabledCloudTypes);
 
     // 调用PanSou搜索API
     const searchUrl = `${pansouUrl}/api/search`;
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       cloud_types: enabledCloudTypes,
     };
 
-    console.log('PanSou请求详情:', {
+    logger.log('PanSou请求详情:', {
       url: searchUrl,
       method: 'POST',
       headers: {
@@ -97,17 +98,13 @@ export async function GET(request: NextRequest) {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.error(
-        'PanSou服务响应错误:',
-        response.status,
-        response.statusText,
-      );
+      logger.error('PanSou服务响应错误:', response.status, response.statusText);
       // 尝试读取错误响应体
       try {
         const errorText = await response.text();
-        console.error('错误响应内容:', errorText);
+        logger.error('错误响应内容:', errorText);
       } catch (e) {
-        console.error('无法读取错误响应内容');
+        logger.error('无法读取错误响应内容');
       }
       return NextResponse.json(
         { error: `网盘搜索服务暂时不可用 (${response.status})` },
@@ -116,7 +113,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('PanSou搜索结果:', {
+    logger.log('PanSou搜索结果:', {
       success: data.success,
       total: data.data?.total || 0,
       types: Object.keys(data.data?.merged_by_type || {}),
@@ -132,14 +129,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (fetchError) {
     if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-      console.error('网盘搜索请求超时');
+      logger.error('网盘搜索请求超时');
       return NextResponse.json(
         { error: '网盘搜索请求超时，请稍后重试' },
         { status: 408 },
       );
     }
 
-    console.error('网盘搜索请求失败:', fetchError);
+    logger.error('网盘搜索请求失败:', fetchError);
     return NextResponse.json(
       { error: '网盘搜索服务连接失败' },
       { status: 502 },
