@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+  
+export async function proxy(request: NextRequest) {
+  return await middleware(request);
+}
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl;  
+  
+  
 
   // 跳过不需要认证的路径
   if (shouldSkipAuth(pathname)) {
