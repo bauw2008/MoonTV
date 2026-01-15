@@ -4,15 +4,16 @@
   <img src="public/logo.png" alt="Vidora Logo" width="120">
 </div>
 
-> 🎬 **Vidora** 是基于 [MoonTV](https://github.com/MoonTechLab/LunaTV) 的二次开发项目，保留了原有的核心功能并进行了负优化自适用改进。它基于 **Next.js 14** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多源聚合搜索、在线播放、收藏同步、播放记录、云端存储。
+> 🎬 **Vidora** 是基于 [MoonTV](https://github.com/MoonTechLab/LunaTV) 的二次开发项目，保留了原有的核心功能并进行了负优化自适用改进。它基于 **Next.js 16** + **Tailwind&nbsp;CSS** + **TypeScript** 构建，支持多源聚合搜索、在线播放、收藏同步、播放记录、云端存储。
 
 **原始项目地址**：[MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV)
 
 <div align="center">
 
-![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=nextdotjs)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwindcss)
-![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?logo=typescript)
+![Next.js](https://img.shields.io/badge/Next.js-16.1-000?logo=nextdotjs)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38bdf8?logo=tailwindcss)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 
@@ -22,37 +23,35 @@
 
 ## ✨ 功能特性
 
-- 🔍 **多源搜索**：聚合多个影视资源站点，一次搜索返回全部结果
-- 📺 **直播功能**：支持电视直播源观看
-- 🎬 **豆瓣集成**：热门电影、电视剧、综艺推荐，发布日历
-- 📱 **TVBox 支持**：支持Token 认证，数组和配置文件格式导出等
-- ▶️ **在线播放**：HLS.js + ArtPlayer，支持多种视频格式
-- ❤️ **数据同步**：收藏、播放记录、观看进度云端同步
-- ⏭️ **智能跳过**：自动跳过片头片尾，可自定义时间
-- 👤 **用户系统**：注册登录，个人数据管理
-- 📊 **播放统计**：观看时长、历史记录分析
-- 🔧 **后台管理**：站点配置、用户管理、数据导入导出
+- 🔍 **多源搜索**：支持多源聚合搜索，快速找到想要的影视资源
+- 📺 **直播功能**：支持 TVBox 直播源，提供流畅的直播观看体验
+- 🎬 **豆瓣集成**：深度集成豆瓣数据，提供丰富的影视元数据和评分信息
+- 📱 **TVBox 支持**：完美支持 TVBox 格式，兼容广泛的播放源
+- ▶️ **在线播放**：内置强大的播放器，支持多种视频格式和流媒体
+- ❤️ **数据同步**：支持收藏同步，跨设备保持一致的用户体验
+- ⏭️ **智能跳过**：支持片头片尾自动跳过，提升观看体验
+- 👤 **用户系统**：完善的用户认证和管理系统
+- 📊 **播放统计**：详细的播放统计和数据分析功能
+- 🎭 **短剧支持**：支持短剧搜索和播放
+- 📅 **上映日历**：提供影视作品上映时间日历
+- 💬 **留言系统**：支持用户留言和互动
+- 🔧 **后台管理**：强大的后台管理系统，支持配置管理和用户管理
+- 🎨 **现代化 UI**：基于 Tailwind CSS 4.1 的现代化界面设计
+- 🌓 **主题切换**：支持深色/浅色主题切换
+- 📱 **响应式设计**：完美适配各种设备屏幕
 
 ### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
 
-<details>
-  <summary>点击查看项目截图</summary>
-  <img src="public/screenshot1.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot2.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
-</details>
 
 ### 请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
 
 ## 🗺 目录
 
 - [技术栈](#技术栈)
+- [功能特性](#功能特性)
 - [部署](#部署)
 - [配置文件](#配置文件)
-- [自动更新](#自动更新)
 - [环境变量](#环境变量)
-- [AndroidTV 使用](#AndroidTV-使用)
-- [Roadmap](#roadmap)
 - [安全与隐私提醒](#安全与隐私提醒)
 - [License](#license)
 - [致谢](#致谢)
@@ -61,12 +60,12 @@
 
 | 分类      | 主要依赖                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------- |
-| 前端框架  | [Next.js 14](https://nextjs.org/) · App Router                                                        |
-| UI & 样式 | [Tailwind&nbsp;CSS 3](https://tailwindcss.com/)                                                       |
-| 语言      | TypeScript 4                                                                                          |
+| 前端框架  | [Next.js 16.1](https://nextjs.org/) · App Router · React 19                                          |
+| UI & 样式 | [Tailwind&nbsp;CSS 4.1](https://tailwindcss.com/) · PostCSS 8.5                                      |
+| 语言      | TypeScript 5.8                                                                                        |
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
-| 代码质量  | ESLint · Prettier · Jest                                                                              |
-| 部署      | Docker                                                                                                |
+| 代码质量  | ESLint 9 · Prettier 3.5 · Jest 29 · Husky 7                                                          |
+| 部署      | Docker · pnpm 10.14                                                                                   |
 
 ## 部署
 
@@ -77,7 +76,7 @@
 ```yml
 services:
   vidora-core:
-    image: ghcr.io/moontechlab/lunatv:latest
+    image: ghcr.io/bauw2008/vidora:latest
     container_name: vidora-core
     restart: on-failure
     ports:
@@ -87,7 +86,7 @@ services:
       - PASSWORD=admin_password
       - NEXT_PUBLIC_STORAGE_TYPE=kvrocks
       - KVROCKS_URL=redis://vidora-kvrocks:6666
-      - AUTH_TOKEN=授权码
+      - AUTH_TOKEN=授权码 #可选
     networks:
       - vidora-network
     depends_on:
@@ -107,12 +106,42 @@ volumes:
   kvrocks-data:
 ```
 
+### Openwrt-Kvrocks
+
+```yml
+services:
+  vidora-core:
+    image: ghcr.io/bauw2008/vidora:latest
+    container_name: vidora-core
+    restart: on-failure
+    network_mode: host
+    environment:
+      - USERNAME=admin
+      - PASSWORD=admin_password
+      - NEXT_PUBLIC_STORAGE_TYPE=kvrocks
+      - KVROCKS_URL=redis://127.0.0.1:6666
+      - PORT=3060
+    depends_on:
+      - vidora-kvrocks
+
+  vidora-kvrocks:
+    image: apache/kvrocks
+    container_name: vidora-kvrocks
+    restart: unless-stopped
+    ports:
+      - '6666:6666'
+    volumes:
+      - kvrocks-data:/var/lib/kvrocks
+
+volumes:
+  kvrocks-data:
+
 ### Redis 存储（有一定的丢数据风险）
 
 ```yml
 services:
   vidora-core:
-    image: ghcr.io/moontechlab/lunatv:latest
+    image: ghcr.io/bauw2008/vidora:latest
     container_name: vidora-core
     restart: on-failure
     ports:
@@ -122,7 +151,7 @@ services:
       - PASSWORD=admin_password
       - NEXT_PUBLIC_STORAGE_TYPE=redis
       - REDIS_URL=redis://vidora-redis:6379
-      - AUTH_TOKEN=授权码
+      - AUTH_TOKEN=授权码  #可选
     networks:
       - vidora-network
     depends_on:
@@ -141,6 +170,35 @@ networks:
     driver: bridge
 ```
 
+### Openwrt-Redis
+
+```yml
+services:
+  vidora-core:
+    image: ghcr.io/bauw2008/vidora:latest
+    container_name: vidora-core
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - USERNAME=admin
+      - PASSWORD=admin_password
+      - NEXT_PUBLIC_STORAGE_TYPE=redis
+      - REDIS_URL=redis://127.0.0.1:6379
+      - PORT=3060
+    depends_on:
+      - vidora-redis
+
+  vidora-redis:
+    image: redis:alpine
+    container_name: vidora-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./data:/data
+
+
 ### Upstash 存储
 
 1. 在 [upstash](https://upstash.com/) 注册账号并新建一个 Redis 实例，名称任意。
@@ -150,7 +208,7 @@ networks:
 ```yml
 services:
   vidora-core:
-    image: ghcr.io/moontechlab/lunatv:latest
+    image: ghcr.io/bauw2008/vidora:latest
     container_name: vidora-core
     restart: on-failure
     ports:
@@ -283,7 +341,7 @@ NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE 选项解释：
 ## 致谢
 
 - [MoonTechLab/LunaTV](https://github.com/MoonTechLab/LunaTV) — 原始项目仓库
-- [MoonTV](https://github.com/SzeMeng76/LunaTV) — 隐藏的小黄人
+- [MoonTV](https://github.com/SzeMeng76/LunaTV) — SzeMeng76
 - [ts-nextjs-tailwind-starter](https://github.com/theodorusclarence/ts-nextjs-tailwind-starter) — 项目脚手架
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 网页视频播放器
 - [HLS.js](https://github.com/video-dev/hls.js) — HLS 流媒体播放支持

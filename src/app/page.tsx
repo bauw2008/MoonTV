@@ -4,18 +4,17 @@
 
 import { Calendar, ChevronRight, Film, Tv, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   BangumiCalendarData,
   GetBangumiCalendarData,
 } from '@/lib/bangumi.client';
 import { getDoubanCategories } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { getPosterCarouselData } from '@/lib/poster-carousel.client';
 import { DoubanItem } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import ContinueWatching from '@/components/ContinueWatching';
 import FloatingTools from '@/components/FloatingTools';
@@ -28,15 +27,7 @@ import SkeletonCard from '@/components/SkeletonCard';
 import VideoCard from '@/components/VideoCard';
 
 function HomeClient() {
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
-  const authInfo = useMemo(
-    () => getAuthInfoFromBrowserCookie(),
-    [
-      // 当页面可见性变化时重新读取
-      typeof document !== 'undefined' ? document.visibilityState : null,
-    ],
-  );
 
   // 功能启用状态（从全局配置读取）
   const isAIEnabled =
@@ -86,7 +77,7 @@ function HomeClient() {
         }
       } catch (error) {
         // 发生错误时默认不启用
-        setTmdbPostersEnabled(false);
+        logger.error('检查 TMDB 状态失败:', error);
       }
     };
 
@@ -169,6 +160,7 @@ function HomeClient() {
         }
       } catch (error) {
         // 静默处理错误
+        logger.error('获取推荐数据失败:', error);
       } finally {
         setLoading(false);
       }

@@ -4,19 +4,11 @@
 import Hls from 'hls.js';
 import { Cloud, Heart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import artplayerPluginChromecast from '@/lib/artplayer-plugin-chromecast';
 import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
 import artplayerPluginSkipSettings from '@/lib/artplayer-plugin-skip-settings';
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { ClientCache } from '@/lib/client-cache';
 import {
   deleteFavorite,
@@ -34,7 +26,6 @@ import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 import AcgSearch from '@/components/AcgSearch';
@@ -95,13 +86,6 @@ interface WakeLockSentinel {
 function PlayPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const authInfo = useMemo(
-    () => getAuthInfoFromBrowserCookie(),
-    [
-      // 当页面可见性变化时重新读取
-      typeof document !== 'undefined' ? document.visibilityState : null,
-    ],
-  );
   const updateActivity = useCallback(() => {
     // 这里可以添加更新用户活动的逻辑
   }, []);
@@ -152,8 +136,6 @@ function PlayPageClient() {
   >('netdisk');
   const [acgTriggerSearch, setAcgTriggerSearch] = useState(false);
 
-  // 使用NavigationConfigContext获取功能启用状态
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
@@ -664,6 +646,7 @@ function PlayPageClient() {
       }
     } catch (error) {
       // 静默失败
+      logger.error('获取 Bangumi 详情失败:', error);
     }
     return null;
   };
