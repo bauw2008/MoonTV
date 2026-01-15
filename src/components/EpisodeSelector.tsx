@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -146,6 +147,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       const info = await getVideoResolutionFromM3u8(episodeUrl);
       setVideoInfoMap((prev) => new Map(prev).set(sourceKey, info));
     } catch (error) {
+      logger.error('获取视频分辨率失败:', error);
       // 失败时保存错误状态
       setVideoInfoMap((prev) =>
         new Map(prev).set(sourceKey, {

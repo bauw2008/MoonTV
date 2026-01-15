@@ -22,7 +22,6 @@ import {
 import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 import AcgSearch from '@/components/AcgSearch';
@@ -41,9 +40,6 @@ import VirtualSearchGrid, {
 
 function SearchPageClient() {
   logger.log('[搜索页面] 组件渲染开始');
-
-  // 使用NavigationConfigContext获取功能启用状态
-  const { menuSettings } = useMenuSettings();
 
   // 检查用户权限
   const { hasPermission, permissions } = useFeaturePermission();
@@ -112,7 +108,7 @@ function SearchPageClient() {
   const [netdiskError, setNetdiskError] = useState<string | null>(null);
   const [netdiskTotal, setNetdiskTotal] = useState(0);
   const [acgTriggerSearch, setAcgTriggerSearch] = useState<boolean>();
-  const [acgError, setAcgError] = useState<string | null>(null);
+  const [, setAcgError] = useState<string | null>(null);
 
   // TMDB演员搜索相关状态
   const [tmdbActorResults, setTmdbActorResults] = useState<any[] | null>(null);
@@ -607,9 +603,6 @@ function SearchPageClient() {
         }
       }
     }
-
-    // 使用 useUserSettings hook 中的 fluidSearch 设置
-    let currentFluidSearch = settings.fluidSearch;
 
     // 监听搜索历史更新事件
     const unsubscribe = subscribeToDataUpdates(

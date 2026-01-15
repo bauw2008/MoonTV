@@ -738,15 +738,6 @@ function TVBoxPageContent() {
     setFromCache(false);
   };
 
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) {
-      return;
-    }
-    setCurrentPage(page);
-    setFromCache(false);
-    window.scrollTo(0, 0);
-  };
-
   // ==================== 渲染 ====================
   if (error) {
     return (

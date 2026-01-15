@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -825,7 +826,7 @@ const PlayStatsPage: React.FC = () => {
                             <div className='flex items-center space-x-4'>
                               <div className='flex-shrink-0 relative'>
                                 {userStat.avatar ? (
-                                  <img
+                                  <Image
                                     src={
                                       userStat.avatar.startsWith('data:')
                                         ? userStat.avatar
@@ -835,6 +836,7 @@ const PlayStatsPage: React.FC = () => {
                                     width={64}
                                     height={64}
                                     className='w-16 h-16 rounded-full object-cover ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-800'
+                                    unoptimized
                                     onError={(e) => {
                                       const target =
                                         e.target as HTMLImageElement;
@@ -1059,10 +1061,13 @@ const PlayStatsPage: React.FC = () => {
                                         >
                                           <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                                             {record.cover ? (
-                                              <img
+                                              <Image
                                                 src={record.cover}
                                                 alt={record.title}
+                                                width={80}
+                                                height={112}
                                                 className='w-full h-full object-cover'
+                                                unoptimized
                                                 onError={(e) => {
                                                   (
                                                     e.target as HTMLImageElement
@@ -1261,10 +1266,13 @@ const PlayStatsPage: React.FC = () => {
                           >
                             <div className='flex-shrink-0 w-20 h-28 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                               {record.cover ? (
-                                <img
+                                <Image
                                   src={record.cover}
                                   alt={record.title}
+                                  width={80}
+                                  height={112}
                                   className='w-full h-full object-cover'
+                                  unoptimized
                                   onError={(e) => {
                                     (
                                       e.target as HTMLImageElement
@@ -1494,10 +1502,13 @@ const PlayStatsPage: React.FC = () => {
                     >
                       <div className='flex-shrink-0 w-20 h-28 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                         {record.cover ? (
-                          <img
+                          <Image
                             src={record.cover}
                             alt={record.title}
+                            width={80}
+                            height={112}
                             className='w-full h-full object-cover'
+                            unoptimized
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display =
                                 'none';

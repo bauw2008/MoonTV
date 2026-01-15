@@ -45,7 +45,7 @@ function HomeClient() {
   const { announcement } = useSite();
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
-  const [tmdbPostersEnabled, setTmdbPostersEnabled] = useState(false);
+  const [, setTmdbPostersEnabled] = useState(false);
 
   // 认证检查现在由中间件处理，无需在客户端重复检查
 

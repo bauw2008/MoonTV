@@ -10,7 +10,6 @@ import {
   Tag,
   Tv,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
@@ -35,8 +34,7 @@ function removeDuplicateItems(
 }
 
 export default function ReleaseCalendarPage() {
-  const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated } = useCurrentAuth();
+  const { isAuthenticated } = useCurrentAuth();
   const { fetchWithAuth } = useAuthenticatedFetch();
 
   // 所有状态 hooks 必须在条件判断之前声明

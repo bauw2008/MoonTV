@@ -29,19 +29,13 @@
 - 📱 **TVBox 支持**：完美支持 TVBox 格式，兼容广泛的播放源
 - ▶️ **在线播放**：内置强大的播放器，支持多种视频格式和流媒体
 - ❤️ **数据同步**：支持收藏同步，跨设备保持一致的用户体验
-- ⏭️ **智能跳过**：支持片头片尾自动跳过，提升观看体验
-- 👤 **用户系统**：完善的用户认证和管理系统
 - 📊 **播放统计**：详细的播放统计和数据分析功能
-- 🎭 **短剧支持**：支持短剧搜索和播放
-- 📅 **上映日历**：提供影视作品上映时间日历
-- 💬 **留言系统**：支持用户留言和互动
 - 🔧 **后台管理**：强大的后台管理系统，支持配置管理和用户管理
 - 🎨 **现代化 UI**：基于 Tailwind CSS 4.1 的现代化界面设计
 - 🌓 **主题切换**：支持深色/浅色主题切换
 - 📱 **响应式设计**：完美适配各种设备屏幕
 
 ### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
-
 
 ### 请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
 
@@ -60,11 +54,11 @@
 
 | 分类      | 主要依赖                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------- |
-| 前端框架  | [Next.js 16.1](https://nextjs.org/) · App Router · React 19                                          |
-| UI & 样式 | [Tailwind&nbsp;CSS 4.1](https://tailwindcss.com/) · PostCSS 8.5                                      |
+| 前端框架  | [Next.js 16.1](https://nextjs.org/) · App Router · React 19                                           |
+| UI & 样式 | [Tailwind&nbsp;CSS 4.1](https://tailwindcss.com/) · PostCSS 8.5                                       |
 | 语言      | TypeScript 5.8                                                                                        |
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
-| 代码质量  | ESLint 9 · Prettier 3.5 · Jest 29 · Husky 7                                                          |
+| 代码质量  | ESLint 9 · Prettier 3.5 · Jest 29 · Husky 7                                                           |
 | 部署      | Docker · pnpm 10.14                                                                                   |
 
 ## 部署
@@ -108,7 +102,7 @@ volumes:
 
 ### Openwrt-Kvrocks
 
-```yml
+````yml
 services:
   vidora-core:
     image: ghcr.io/bauw2008/vidora:latest
@@ -135,6 +129,7 @@ services:
 
 volumes:
   kvrocks-data:
+```
 
 ### Redis 存储（有一定的丢数据风险）
 
@@ -197,7 +192,7 @@ services:
       - '6379:6379'
     volumes:
       - ./data:/data
-
+```
 
 ### Upstash 存储
 
@@ -220,7 +215,7 @@ services:
       - UPSTASH_URL=上面 https 开头的 HTTPS ENDPOINT
       - UPSTASH_TOKEN=上面的 TOKEN
       - AUTH_TOKEN=授权码
-```
+````
 
 ## 配置文件
 

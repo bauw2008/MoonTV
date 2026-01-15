@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -63,9 +64,9 @@ export default function MessageBoard() {
   // 分页相关状态
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [hasPrevPage, setHasPrevPage] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [, setHasNextPage] = useState(false);
+  const [, setHasPrevPage] = useState(false);
+  const [, setLoadingMore] = useState(false);
   // 分类筛选状态
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<
     'all' | 'suggestion' | 'feedback' | 'discussion' | 'other'
@@ -571,10 +572,13 @@ export default function MessageBoard() {
                               <div className='flex-shrink-0 relative'>
                                 {comment.avatar ? (
                                   <div className='w-10 h-10 rounded-full overflow-hidden relative z-10'>
-                                    <img
+                                    <Image
                                       src={comment.avatar}
                                       alt={comment.username}
+                                      width={40}
+                                      height={40}
                                       className='w-full h-full object-cover'
+                                      unoptimized
                                     />
                                   </div>
                                 ) : (
@@ -837,10 +841,13 @@ export default function MessageBoard() {
                                           <div className='flex-shrink-0 relative'>
                                             {reply.avatar ? (
                                               <div className='w-8 h-8 rounded-full overflow-hidden relative z-10'>
-                                                <img
+                                                <Image
                                                   src={reply.avatar}
                                                   alt={reply.username}
+                                                  width={32}
+                                                  height={32}
                                                   className='w-full h-full object-cover'
+                                                  unoptimized
                                                 />
                                               </div>
                                             ) : (

@@ -128,22 +128,6 @@ export default function AIRecommendModal({
     onClose(); // 关闭对话框
   };
 
-  // 处理推荐卡片点击
-  const handleMovieSelect = (movie: MovieRecommendation) => {
-    const searchQuery = encodeURIComponent(movie.title);
-    router.push(`/search?q=${searchQuery}`);
-    onClose(); // 关闭对话框
-  };
-
-  // 处理视频链接解析结果
-  const handleVideoLinkPlay = (video: any) => {
-    if (video.playable && video.embedUrl) {
-      setPlayingVideoId(
-        playingVideoId === video.videoId ? null : video.videoId,
-      );
-    }
-  };
-
   // 发送消息
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) {

@@ -1,10 +1,11 @@
-/* @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, @next/next/no-img-element */
+/* @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 'use client';
 
 import Artplayer from 'artplayer';
 import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
@@ -1554,11 +1555,13 @@ function LivePageClient() {
                               <div className='flex items-center gap-3'>
                                 <div className='w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                                   {channel.logo ? (
-                                    <img
+                                    <Image
                                       src={`/api/proxy/logo?url=${encodeURIComponent(channel.logo)}&source=${currentSource?.key || ''}`}
                                       alt={channel.name}
+                                      width={20}
+                                      height={20}
                                       className='w-full h-full rounded object-contain'
-                                      loading='lazy'
+                                      unoptimized
                                     />
                                   ) : (
                                     <Tv className='w-5 h-5 text-gray-500' />
@@ -1675,11 +1678,13 @@ function LivePageClient() {
                 <div className='flex items-center gap-4'>
                   <div className='w-20 h-20 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                     {currentChannel.logo ? (
-                      <img
+                      <Image
                         src={`/api/proxy/logo?url=${encodeURIComponent(currentChannel.logo)}&source=${currentSource?.key || ''}`}
                         alt={currentChannel.name}
+                        width={80}
+                        height={80}
                         className='w-full h-full rounded object-contain'
-                        loading='lazy'
+                        unoptimized
                       />
                     ) : (
                       <Tv className='w-10 h-10 text-gray-500' />

@@ -108,11 +108,6 @@ export default function TVBoxConfigPage() {
     [fetchDevices, fetchSecurityConfig],
   );
 
-  const handleRefreshConfig = async () => {
-    setLoading(true);
-    await fetchSecurityConfig();
-  };
-
   useEffect(() => {
     fetchSecurityConfig();
   }, [fetchSecurityConfig]);
@@ -143,21 +138,6 @@ export default function TVBoxConfigPage() {
 
     return `${baseUrl}/api/tvbox?${params.toString()}`;
   }, [format, configMode, securityConfig]);
-
-  const handleCopy = async (text: string, type: 'token' | 'url') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (type === 'token') {
-        setTokenCopied(true);
-        setTimeout(() => setTokenCopied(false), 2000);
-      } else {
-        setUrlCopied(true);
-        setTimeout(() => setUrlCopied(false), 2000);
-      }
-    } catch {
-      // Copy failed silently
-    }
-  };
 
   return (
     <PageLayout activePath='/tvbox'>

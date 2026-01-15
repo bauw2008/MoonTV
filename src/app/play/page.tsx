@@ -103,7 +103,7 @@ function PlayPageClient() {
   const [detail, setDetail] = useState<SearchResult | null>(null); // 视频详情数据
 
   // 测速进度状态
-  const [speedTestProgress, setSpeedTestProgress] = useState<{
+  const [, setSpeedTestProgress] = useState<{
     current: number;
     total: number;
     currentSource: string;

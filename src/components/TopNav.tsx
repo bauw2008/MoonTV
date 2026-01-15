@@ -703,7 +703,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           <div className='flex justify-between items-center h-12'>
             {/* Logo骨架 */}
             <div className='flex items-center flex-none'>
-              <a
+              <Link
                 href='/'
                 className='logo-container flex items-center space-x-3 group'
               >
@@ -732,12 +732,12 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                   {/* 名称下方装饰线 */}
                   <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
                 </div>
-              </a>
+              </Link>
             </div>
             {/* 桌面导航菜单骨架 */}
             <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
               {/* 菜单项骨架 - 完全匹配客户端结构 */}
-              <a
+              <Link
                 href='/'
                 className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
               >
@@ -750,7 +750,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                 <span className='relative bg-gray-300 dark:bg-gray-600 text-transparent text-xs'>
                   首页
                 </span>
-              </a>
+              </Link>
               <a
                 href='/douban?type=movie'
                 className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
