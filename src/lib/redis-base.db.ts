@@ -94,7 +94,12 @@ export function createRedisClient(
 
   if (!client) {
     if (!config.url) {
-      throw new Error(`${config.clientName}_URL env variable not set`);
+      logger.error(
+        `${config.clientName}_URL env variable not set. Please configure ${config.clientName.toUpperCase()}_URL environment variable.`,
+      );
+      throw new Error(
+        `${config.clientName}_URL env variable not set. Please configure ${config.clientName.toUpperCase()}_URL environment variable.`,
+      );
     }
 
     // 创建客户端配置

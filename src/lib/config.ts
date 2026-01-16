@@ -385,6 +385,8 @@ export async function getConfig(): Promise<AdminConfig> {
     adminConfig = await db.getAdminConfig();
   } catch (e) {
     // 获取管理员配置失败
+    logger.error('获取管理员配置失败:', e);
+    logger.error('错误详情:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
   }
 
   // db 中无配置，执行一次初始化
