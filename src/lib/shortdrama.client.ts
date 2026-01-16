@@ -11,7 +11,6 @@ import {
   ShortDramaItem,
   ShortDramaParseResult,
 } from './types';
-import { getRandomUserAgent } from './user-agent';
 
 const SHORTDRAMA_API_BASE = 'https://api.r2afosne.dpdns.org';
 
@@ -56,7 +55,8 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -116,7 +116,8 @@ export async function getRecommendedShortDramas(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -188,7 +189,8 @@ export async function getShortDramaList(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -257,7 +259,8 @@ export async function searchShortDramas(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -326,7 +329,8 @@ async function parseWithAlternativeApi(
 
     const searchResponse = await fetch(searchUrl, {
       headers: {
-        'User-Agent': getRandomUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(15000), // 15秒超时
@@ -365,7 +369,8 @@ async function parseWithAlternativeApi(
     const episodesUrl = `${alternativeApiBase}/api/v1/drama/dramas?dramaId=${dramaId}`;
     const episodesResponse = await fetch(episodesUrl, {
       headers: {
-        'User-Agent': getRandomUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(15000), // 15秒超时
@@ -456,7 +461,8 @@ async function parseWithAlternativeApi(
       try {
         const directResponse = await fetch(directUrl, {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
           signal: AbortSignal.timeout(15000), // 15秒超时
@@ -592,7 +598,8 @@ export async function parseShortDramaEpisode(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -696,7 +703,8 @@ export async function parseShortDramaBatch(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };
@@ -745,7 +753,8 @@ export async function parseShortDramaAll(
         }
       : {
           headers: {
-            'User-Agent': getRandomUserAgent(),
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             Accept: 'application/json',
           },
         };

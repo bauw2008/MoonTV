@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
-import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
-  const ua = liveSource.ua || LIVE_PLAYER_USER_AGENTS.APTV_PLAYER;
+  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
   let response: Response | null = null;
   let responseUsed = false;

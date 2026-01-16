@@ -8,8 +8,6 @@ import {
   TMDB_CACHE_EXPIRE,
 } from '@/lib/tmdb-cache';
 
-import { getRandomUserAgent } from './user-agent';
-
 // TMDB API 配置
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -166,7 +164,8 @@ async function fetchTMDB<T>(
   const response = await fetch(url.toString(), {
     headers: {
       Accept: 'application/json',
-      'User-Agent': getRandomUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     },
   });
 

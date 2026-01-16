@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { getCandidates, getSpiderJar } from '@/lib/spiderJar';
-import { getMobileUserAgent, TVBOX_USER_AGENTS } from '@/lib/user-agent';
 
 // 根据用户权限过滤源站
 function filterSourcesByUserPermissions(
@@ -296,7 +295,7 @@ async function getCachedCategories(
     const response = await fetch(categoriesUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent': TVBOX_USER_AGENTS.TVBOX_OFFICIAL,
+        'User-Agent': 'TVBox/1.0.0',
       },
     });
 
@@ -897,7 +896,8 @@ export async function GET(request: NextRequest) {
           if (type === 0 || type === 1) {
             // 苹果CMS接口优化配置
             siteHeader = {
-              'User-Agent': getMobileUserAgent(),
+              'User-Agent':
+                'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
               Accept: 'application/json, text/plain, */*',
               'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
               'Cache-Control': 'no-cache',
@@ -908,7 +908,7 @@ export async function GET(request: NextRequest) {
           } else if (type === 3) {
             // CSP源优化配置
             siteHeader = {
-              'User-Agent': TVBOX_USER_AGENTS.OKHTTP_3_15,
+              'User-Agent': 'okhttp/3.15',
               Accept: '*/*',
               Connection: 'close',
             };
@@ -1254,10 +1254,11 @@ export async function GET(request: NextRequest) {
 
             // 优化请求头，提升响应速度
             if (fastSite.type === 3) {
-              fastSite.header = { 'User-Agent': TVBOX_USER_AGENTS.OKHTTP_3_15 };
+              fastSite.header = { 'User-Agent': 'okhttp/3.15' };
             } else {
               fastSite.header = {
-                'User-Agent': getMobileUserAgent(),
+                'User-Agent':
+                  'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36',
                 Connection: 'close',
               };
             }

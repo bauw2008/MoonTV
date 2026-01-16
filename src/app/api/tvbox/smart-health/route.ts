@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { detectNetworkEnvironment } from '@/lib/networkDetection';
 import { getSpiderJar, getSpiderStatus } from '@/lib/spiderJar';
-import { OTHER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +33,7 @@ async function testUrlReachability(
       method: 'HEAD',
       signal: controller.signal,
       headers: {
-        'User-Agent': OTHER_USER_AGENTS.LUNA_TV_HEALTH,
+        'User-Agent': 'LunaTV-HealthCheck/1.0',
         Accept: '*/*',
         'Cache-Control': 'no-cache',
       },

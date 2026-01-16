@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
-import { OTHER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 
@@ -88,7 +87,7 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': OTHER_USER_AGENTS.LUNA_TV,
+        'User-Agent': 'LunaTV/1.0',
       },
       body: JSON.stringify(requestBody),
       signal: controller.signal,

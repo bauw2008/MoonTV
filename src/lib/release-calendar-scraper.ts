@@ -1,44 +1,54 @@
 'use server';
 
 import { ReleaseCalendarItem } from './types';
-import { getRandomUserAgentWithInfo } from './user-agent';
 
 const baseUrl = 'https://g.manmankan.com/dy2013';
 
+// 用户代理池 - 2025 最新版本（多浏览器策略）
+const USER_AGENTS = [
+  // Chrome 133 (2025最新)
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+  // Firefox 133 (2025最新)
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
+  // Safari 18 (2025最新)
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+  // Edge 133 (2025最新)
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+];
+
 /**
  * 获取随机 User-Agent 及对应的浏览器指纹
- * 使用统一的user-agent模块，支持最新浏览器版本
  */
 function getRandomUserAgent(): {
   ua: string;
   browser: 'chrome' | 'firefox' | 'safari' | 'edge';
   platform: string;
 } {
-  const { ua, browser, platform } = getRandomUserAgentWithInfo({
-    browserType: 'desktop',
-    includeMobile: false,
-  });
+  const index = Math.floor(Math.random() * USER_AGENTS.length);
+  const ua = USER_AGENTS[index];
 
-  // 确保browser类型匹配（getRandomUserAgentWithInfo可能返回'other'，但这里不会）
-  const typedBrowser: 'chrome' | 'firefox' | 'safari' | 'edge' =
-    browser === 'chrome' ||
-    browser === 'firefox' ||
-    browser === 'safari' ||
-    browser === 'edge'
-      ? browser
-      : 'chrome';
+  // 识别浏览器类型和平台
+  let browser: 'chrome' | 'firefox' | 'safari' | 'edge' = 'chrome';
+  let platform = 'Windows';
 
-  // 平台类型转换
-  const typedPlatform =
-    platform === 'windows'
-      ? 'Windows'
-      : platform === 'macos'
-        ? 'macOS'
-        : platform === 'linux'
-          ? 'Linux'
-          : 'Windows';
+  if (ua.includes('Firefox')) {
+    browser = 'firefox';
+  } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+    browser = 'safari';
+  } else if (ua.includes('Edg/')) {
+    browser = 'edge';
+  }
 
-  return { ua, browser: typedBrowser, platform: typedPlatform };
+  if (ua.includes('Macintosh')) {
+    platform = 'macOS';
+  } else if (ua.includes('Linux')) {
+    platform = 'Linux';
+  }
+
+  return { ua, browser, platform };
 }
 
 /**

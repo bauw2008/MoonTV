@@ -289,46 +289,35 @@ export const UserMenu: React.FC = () => {
       return;
     }
 
-    // 验证文件是图片
+    // 验证文件是图片且小于 2MB
     if (!file.type.startsWith('image/')) {
-      showError('请选择图片文件，仅支持 JPG、PNG、GIF、WEBP 等图片格式');
+      showError('请选择图片文件，仅支持 JPG、PNG、GIF 等图片格式');
       return;
     }
 
-    // 根据用户角色设置不同的文件大小限制
-    const userRole = authInfo?.role || 'user';
-    const isOwner = userRole === 'owner';
-
-    // 站长无限制，普通用户和管理员限制150KB
-    const maxSizeBytes = isOwner ? Number.MAX_SAFE_INTEGER : 150 * 1024; // 150KB
-
-    if (file.size > maxSizeBytes) {
-      const sizeKB = Math.round(file.size / 1024);
-      const maxSizeKB = Math.round(maxSizeBytes / 1024);
-      showError(`头像大小不能超过${maxSizeKB}KB（当前：${sizeKB}KB）`);
+    if (file.size > 1 * 1024 * 1024) {
+      showError('图片大小不能超过 1MB，请选择较小的图片文件');
       return;
     }
 
-    // GIF和WEBP直接上传，不走裁剪流程（避免破坏动画）
-    // 检查 MIME type 和文件扩展名
+    // GIF 直接上传，不走裁剪流程
+    // 检查 MIME type 和文件扩展名，确保 GIF 不会被误判
     const isGif =
       file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
-    const isWebp =
-      file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp');
 
-    if (isGif || isWebp) {
+    if (isGif) {
       const reader = new FileReader();
       reader.onload = async (event) => {
         if (event.target?.result) {
           try {
             setIsUploadingAvatar(true);
-            const imageBase64 = event.target.result.toString();
+            const gifBase64 = event.target.result.toString();
 
             // 调用 API 上传头像
             const response = await fetch('/api/avatar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ avatar: imageBase64 }),
+              body: JSON.stringify({ avatar: gifBase64 }),
             });
 
             if (!response.ok) {
@@ -1154,35 +1143,6 @@ export const UserMenu: React.FC = () => {
               </div>
             )}
 
-            {/* 分割线 */}
-            <div className='border-t border-gray-200 dark:border-gray-700'></div>
-
-            {/* 提醒消息免打扰 */}
-            <div className='flex items-center justify-between'>
-              <div>
-                <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  提醒消息免打扰
-                </h4>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                  关闭后不再显示版本更新、集数更新，新消息等提醒
-                </p>
-              </div>
-              <label className='flex items-center cursor-pointer'>
-                <div className='relative'>
-                  <input
-                    type='checkbox'
-                    className='sr-only peer'
-                    checked={!settings.enableNotifications}
-                    onChange={(e) =>
-                      updateSetting('enableNotifications', !e.target.checked)
-                    }
-                  />
-                  <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                  <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
-                </div>
-              </label>
-            </div>
-
             {/* 底部说明 */}
             <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
               <p className='text-xs text-gray-500 dark:text-gray-400 text-center'>
@@ -1459,7 +1419,7 @@ export const UserMenu: React.FC = () => {
 
                 {/* 底部提示 */}
                 <p className='text-xs text-gray-500 dark:text-gray-400 text-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                  支持 JPG、PNG、GIF、WEBP 等格式
+                  支持 JPG、PNG、GIF 等格式，文件大小不超过 2MB
                 </p>
               </div>
             </div>

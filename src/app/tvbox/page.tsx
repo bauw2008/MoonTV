@@ -413,29 +413,17 @@ function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
   return result;
 }
 
-// 权限检查组件
-function TVBoxPagePermissionCheck({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const disabledMenus = (window as any).__DISABLED_MENUS || {};
-      if (disabledMenus.showTvbox) {
-        window.location.href = '/';
-      }
-    }
-  }, []);
-
+// ==================== 主组件 ====================
+export default function TVBoxPage() {
+  // 检查菜单访问权限
   if (typeof window !== 'undefined') {
     const disabledMenus = (window as any).__DISABLED_MENUS || {};
     if (disabledMenus.showTvbox) {
+      window.location.href = '/';
       return null;
     }
   }
 
-  return <>{children}</>;
-}
-
-// ==================== 主组件 ====================
-function TVBoxPageContent() {
   const { siteName: _siteName } = useSite();
   const [sourceList, setSourceList] = useState<VideoSource[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
@@ -944,13 +932,5 @@ function TVBoxPageContent() {
         virtualGridRef={virtualGridRef}
       />
     </PageLayout>
-  );
-}
-
-export default function TVBoxPage() {
-  return (
-    <TVBoxPagePermissionCheck>
-      <TVBoxPageContent />
-    </TVBoxPagePermissionCheck>
   );
 }

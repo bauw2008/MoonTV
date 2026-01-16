@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getRandomUserAgent } from '@/lib/user-agent';
-
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -17,7 +15,8 @@ async function getRecommendedShortDramasInternal(category?: number, size = 10) {
     `https://api.r2afosne.dpdns.org/vod/recommend?${params.toString()}`,
     {
       headers: {
-        'User-Agent': getRandomUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         Accept: 'application/json',
       },
     },

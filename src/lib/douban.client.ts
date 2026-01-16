@@ -2,7 +2,6 @@
 
 import { ClientCache } from './client-cache';
 import { DoubanItem, DoubanResult } from './types';
-import { getDoubanRandomUserAgent } from './user-agent';
 
 // 豆瓣数据缓存配置（秒）
 const DOUBAN_CACHE_EXPIRE = {
@@ -251,7 +250,8 @@ async function fetchWithTimeout(
   const fetchOptions: RequestInit = {
     signal: controller.signal,
     headers: {
-      'User-Agent': getDoubanRandomUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       Referer: 'https://movie.douban.com/',
       Accept: 'application/json, text/plain, */*',
     },
@@ -865,7 +865,8 @@ export async function getDoubanActorMovies(
 
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': getDoubanRandomUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         Accept:
           'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',

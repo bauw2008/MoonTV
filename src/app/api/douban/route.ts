@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { getCacheTime } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
 import { DoubanItem, DoubanResult } from '@/lib/types';
-import { getRandomUserAgent } from '@/lib/user-agent';
 
 interface DoubanApiResponse {
   subjects: Array<{
@@ -106,7 +105,8 @@ function handleTop250(pageStart: number) {
   const fetchOptions = {
     signal: controller.signal,
     headers: {
-      'User-Agent': getRandomUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       Referer: 'https://movie.douban.com/',
       Accept:
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',

@@ -269,6 +269,7 @@ const PlayStatsPage: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log('API返回的用户统计数据:', data);
       setUserStats(data);
 
       // 缓存数据

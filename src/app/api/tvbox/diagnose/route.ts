@@ -1,8 +1,6 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getRandomUserAgent } from '@/lib/user-agent';
-
 import { GET as getTVBoxConfig } from '../route';
 
 export const runtime = 'nodejs';
@@ -89,7 +87,8 @@ async function checkSpiderHealth(spider: string): Promise<{
       method: 'HEAD',
       signal: controller.signal,
       headers: {
-        'User-Agent': getRandomUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 

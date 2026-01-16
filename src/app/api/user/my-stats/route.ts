@@ -205,6 +205,7 @@ export async function POST(request: NextRequest) {
 
     // 更新统计数据（这里需要扩展存储层支持）
     // TODO: 需要在存储层添加 updateUserStats 方法
+    console.log('更新用户统计数据:', updatedStats);
 
     return NextResponse.json({
       success: true,
@@ -228,6 +229,8 @@ export async function POST(request: NextRequest) {
 // PUT 方法：记录用户登入时间
 export async function PUT(request: NextRequest) {
   try {
+    console.log('PUT /api/user/my-stats - 记录用户登入时间');
+
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -295,6 +298,11 @@ export async function PUT(request: NextRequest) {
         loginTime,
         updatedStats.loginCount === 1,
       );
+      console.log('用户登入统计已保存到数据库:', {
+        username: authInfo.username,
+        loginTime,
+        isFirstLogin: updatedStats.loginCount === 1,
+      });
     } catch (saveError) {
       console.error('保存登入统计失败:', saveError);
       // 即使保存失败也返回成功，因为登录本身是成功的
@@ -359,6 +367,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // TODO: 需要在存储层添加清除用户统计数据的方法
+    console.log('清除用户统计数据:', authInfo.username);
 
     return NextResponse.json({ success: true });
   } catch (error) {

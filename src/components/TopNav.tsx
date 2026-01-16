@@ -25,7 +25,6 @@ import { createPortal } from 'react-dom';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
-import { useUserSettings } from '@/hooks/useUserSettings';
 
 import { MenuSettings } from '@/types/menu';
 
@@ -59,7 +58,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { siteName } = useSite();
-  const { settings: userSettings } = useUserSettings();
   const [configVersion, setConfigVersion] = useState(0);
 
   // 监听配置更新事件
@@ -169,14 +167,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [isNotificationMuted, setIsNotificationMuted] = useState(false);
   const [notifications, setNotifications] = useState({
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
     pendingUsers: { count: 0 },
     messages: { count: 0, hasUnread: false },
-    episodeUpdates: {
-      count: 0,
-      items: [] as Array<{ title: string; newEpisodes: number }>,
-    },
   });
 
   // 鼠标滚轮隐藏逻辑
@@ -476,54 +471,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 监听集数更新事件
-  useEffect(() => {
-    const handleWatchingUpdates = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { hasUpdates, updatedCount } = customEvent.detail;
-
-      if (hasUpdates && updatedCount > 0) {
-        // 获取更新的剧集信息
-        try {
-          const cached = localStorage.getItem('vidora_watching_updates');
-          if (cached) {
-            const data = JSON.parse(cached);
-            const updatedSeries = data.updatedSeries || [];
-
-            // 提取有新集数的剧集
-            const items = updatedSeries
-              .filter((item: any) => item.hasNewEpisode && item.newEpisodes > 0)
-              .map((item: any) => ({
-                title: item.title,
-                newEpisodes: item.newEpisodes,
-              }));
-
-            if (items.length > 0) {
-              setNotifications((prev) => ({
-                ...prev,
-                episodeUpdates: {
-                  count: items.length,
-                  items,
-                },
-              }));
-            }
-          }
-        } catch (_error) {
-          // 忽略解析错误
-        }
-      }
-    };
-
-    window.addEventListener('watchingUpdatesChanged', handleWatchingUpdates);
-
-    return () => {
-      window.removeEventListener(
-        'watchingUpdatesChanged',
-        handleWatchingUpdates,
-      );
-    };
-  }, []);
-
   // 页面切换动画效果
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
   const previousPathname = useRef(pathname);
@@ -570,17 +517,26 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     return false;
   };
 
+  // 静音状态管理
+  useEffect(() => {
+    const savedMuteState = localStorage.getItem('notification-muted');
+    if (savedMuteState !== null) {
+      setIsNotificationMuted(JSON.parse(savedMuteState));
+    }
+  }, []);
+
+  const toggleNotificationMute = () => {
+    const newMuteState = !isNotificationMuted;
+    setIsNotificationMuted(newMuteState);
+    localStorage.setItem('notification-muted', JSON.stringify(newMuteState));
+  };
+
   // 计算提醒状态
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
   const hasPendingUsers = notifications.pendingUsers.count > 0;
   const hasUnreadMessages = notifications.messages.hasUnread;
-  const hasEpisodeUpdates = notifications.episodeUpdates.count > 0;
   const hasAnyNotifications =
-    userSettings.enableNotifications &&
-    (hasVersionUpdate ||
-      hasPendingUsers ||
-      hasUnreadMessages ||
-      hasEpisodeUpdates);
+    hasVersionUpdate || hasPendingUsers || hasUnreadMessages;
 
   // 提醒弹窗组件
   const NotificationModal = () => {
@@ -595,7 +551,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     return createPortal(
       <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4'>
-        <div className='bg-white dark:bg-gray-900 rounded-xl shadow-lg max-w-lg w-full p-5 relative max-h-[80vh] overflow-y-auto border border-gray-200 dark:border-gray-700'>
+        <div className='bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6 relative max-h-[80vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50'>
           {/* 关闭按钮 */}
           <button
             onClick={() => setShowNotificationModal(false)}
@@ -603,63 +559,88 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           >
             <X className='w-5 h-5' />
           </button>
+
           {/* 标题 */}
           <div className='flex items-center gap-3 mb-4'>
-            <div className='w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center'>
+            <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg'>
               <Bell className='w-5 h-5 text-white' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
               提醒事项
             </h3>
+            <div className='flex items-center gap-2 ml-4'>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {isNotificationMuted ? '已静音' : '已开启'}
+              </span>
+              <button
+                onClick={toggleNotificationMute}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  isNotificationMuted
+                    ? 'bg-gray-300 dark:bg-gray-600'
+                    : 'bg-blue-600 dark:bg-blue-500'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                    isNotificationMuted ? 'translate-x-1' : 'translate-x-6'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
+
           {/* 内容区域 */}
-          <div className='space-y-2'>
+          <div className='space-y-3'>
             {/* 版本更新提醒 */}
             {hasVersionUpdate && (
-              <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <AlertCircle className='w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    版本更新
+              <div className='group relative p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
+                <div className='flex items-start space-x-4'>
+                  <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
+                    <AlertCircle className='w-5 h-5 text-white' />
+                  </div>
+                  <div className='flex-1'>
+                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
+                      发现新版本
+                    </p>
+                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                      当前版本: v{CURRENT_VERSION}
+                    </p>
+                  </div>
+                  {/* 版本更新徽章 */}
+                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-blue-500 rounded-full'>
+                    新版本
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
+                    // 这里可以触发版本详情弹窗
                   }}
-                  className='text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-shrink-0'
+                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
                 >
-                  查看
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      versionUpdate: {
-                        hasUpdate: false,
-                        version: '',
-                        count: 0,
-                      },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
+                  查看版本详情
                 </button>
               </div>
             )}
 
             {/* 注册审核提醒 */}
             {pendingUsersCount > 0 && (
-              <div className='flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <Users className='w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    待审核用户
-                  </span>
-                  <span className='text-xs text-orange-500 dark:text-orange-400 font-medium'>
-                    {pendingUsersCount}
+              <div className='group relative p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-200/50 dark:border-red-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
+                <div className='flex items-start space-x-4'>
+                  <div className='w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
+                    <Users className='w-5 h-5 text-white' />
+                  </div>
+                  <div className='flex-1'>
+                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
+                      待审核用户
+                    </p>
+                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                      有 {pendingUsersCount} 个用户等待审核
+                    </p>
+                  </div>
+                  {/* 待审核用户徽章 */}
+                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-orange-500 rounded-full'>
+                    {pendingUsersCount > 99 ? '99+' : pendingUsersCount}
                   </span>
                 </div>
                 <button
@@ -667,40 +648,39 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     setShowNotificationModal(false);
                     router.push('/admin');
                   }}
-                  className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'
+                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
                 >
-                  前往
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      pendingUsers: { count: 0 },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
+                  前往审核
                 </button>
               </div>
             )}
 
             {/* 消息提醒 */}
             {notifications.messages.hasUnread && (
-              <div className='flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <MessageSquare className='w-4 h-4 text-purple-500 dark:text-purple-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    新消息
-                  </span>
-                  <span className='text-xs text-purple-500 dark:text-purple-400 font-medium'>
-                    {notifications.messages.count}
+              <div className='group relative p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border border-purple-200/50 dark:border-pink-800/50 shadow-sm hover:shadow-md transition-all duration-300'>
+                <div className='flex items-start space-x-4'>
+                  <div className='w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg'>
+                    <MessageSquare className='w-5 h-5 text-white' />
+                  </div>
+                  <div className='flex-1'>
+                    <p className='font-semibold text-gray-900 dark:text-gray-100'>
+                      新消息
+                    </p>
+                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                      有 {notifications.messages.count} 条未读消息
+                    </p>
+                  </div>
+                  {/* 消息徽章 */}
+                  <span className='absolute top-2 right-2 px-2 py-0.5 text-[10px] font-medium text-white bg-purple-500 rounded-full'>
+                    {notifications.messages.count > 99
+                      ? '99+'
+                      : notifications.messages.count}
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
+                    // 标记消息为已查看
                     localStorage.setItem(
                       'lastViewedMessages',
                       Date.now().toString(),
@@ -711,74 +691,13 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     }));
                     router.push('/message');
                   }}
-                  className='text-sm text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 flex-shrink-0'
+                  className='mt-3 w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] font-medium'
                 >
-                  查看
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(
-                      'lastViewedMessages',
-                      Date.now().toString(),
-                    );
-                    setNotifications((prev) => ({
-                      ...prev,
-                      messages: { count: 0, hasUnread: false },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
+                  查看消息
                 </button>
               </div>
             )}
-
-            {/* 集数更新提醒 */}
-            {hasEpisodeUpdates && (
-              <div className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <PlayCircle className='w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0' />
-                  <div className='flex-1 min-w-0'>
-                    <span className='text-sm text-gray-900 dark:text-gray-100'>
-                      {notifications.episodeUpdates.items.length === 1
-                        ? notifications.episodeUpdates.items[0].title
-                        : `${notifications.episodeUpdates.items.length} 部剧集`}
-                    </span>
-                    <span className='text-xs text-green-500 dark:text-green-400 font-medium ml-2'>
-                      +
-                      {notifications.episodeUpdates.items.reduce(
-                        (sum, item) => sum + item.newEpisodes,
-                        0,
-                      )}{' '}
-                      集
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNotificationModal(false);
-                    router.push('/favorites');
-                  }}
-                  className='text-sm text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300 flex-shrink-0'
-                >
-                  前往
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      episodeUpdates: { count: 0, items: [] },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
-                </button>
-              </div>
-            )}
-          </div>{' '}
+          </div>
         </div>
       </div>,
       document.body,
@@ -903,322 +822,304 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   }
 
   return (
-    <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-      @keyframes card-shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-      .text-shimmer {
-        background: linear-gradient(90deg, #374151 0%, #ffffff 50%, #374151 100%);
-        background-size: 200% 100%;
-        animation: card-shimmer 4s infinite linear;
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-      }
-      .dark .text-shimmer {
-        background: linear-gradient(90deg, #6b7280 0%, #e5e7eb 50%, #6b7280 100%);
-        background-size: 200% 100%;
-        animation: card-shimmer 4s infinite linear;
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-      }
-      `,
-        }}
-      />{' '}
-      <nav
-        suppressHydrationWarning={true}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
-        } ${
-          isPageTransitioning
-            ? 'scale-[0.98] opacity-80'
-            : 'scale-100 opacity-100'
-        }`}
-        style={{ willChange: 'transform, opacity' }}
-      >
-        {/* 透明背景层 */}
-        <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
-          {/* 页面切换进度条 */}
-          <div
-            className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
-              isPageTransitioning ? 'w-full' : 'w-0'
-            }`}
-          ></div>
-        </div>
-        <div className='relative px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between items-center h-12'>
-            {/* Logo */}
-            <div className='flex items-center flex-none'>
-              <Link
-                href='/'
-                className='logo-container flex items-center space-x-3 group'
-              >
-                {/* 站点名称 */}
-                <div className='relative'>
-                  <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
-                    {(siteName || 'Vidora').split('').map((char, index) => {
-                      if (index === 0) {
-                        // 第一个字母：应用颜色和旋转效果
-                        return (
-                          <span
-                            key={index}
-                            className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'
-                          >
-                            {char}
-                          </span>
-                        );
-                      }
-                      return null;
-                    })}
-                    {/* 后续字母整体应用扫光效果 */}
-                    <span className='inline-block text-shimmer'>
-                      {(siteName || 'Vidora').slice(1)}
-                    </span>
+    <nav
+      suppressHydrationWarning={true}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      } ${
+        isPageTransitioning
+          ? 'scale-[0.98] opacity-80'
+          : 'scale-100 opacity-100'
+      }`}
+      style={{ willChange: 'transform, opacity' }}
+    >
+      {/* 透明背景层 */}
+      <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+        {/* 页面切换进度条 */}
+        <div
+          className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
+            isPageTransitioning ? 'w-full' : 'w-0'
+          }`}
+        ></div>
+      </div>
+      <div className='relative px-4 sm:px-6 lg:px-8'>
+        <div className='flex justify-between items-center h-12'>
+          {/* Logo */}
+          <div className='flex items-center flex-none'>
+            <Link
+              href='/'
+              className='logo-container flex items-center space-x-3 group'
+            >
+              {/* 站点名称 */}
+              <div className='relative'>
+                <span className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300'>
+                  {(siteName || 'Vidora').split('').map((char, index) => {
+                    if (index === 0) {
+                      // 第一个字母：应用颜色和旋转效果
+                      return (
+                        <span
+                          key={index}
+                          className='inline-block bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 bg-clip-text text-transparent transition-transform duration-500 group-hover:rotate-180'
+                        >
+                          {char}
+                        </span>
+                      );
+                    }
+                    // 其他字母：应用柔和的渐变色，不抢第一个字母的风头
+                    return (
+                      <span
+                        key={index}
+                        className='inline-block bg-gradient-to-r from-gray-700 via-gray-600 to-blue-500 dark:from-gray-200 dark:via-gray-300 dark:to-blue-400 bg-clip-text text-transparent transition-all duration-300 group-hover:from-gray-600 group-hover:via-blue-500 group-hover:to-blue-600 dark:group-hover:from-gray-100 dark:group-hover:via-blue-300 dark:group-hover:to-blue-500'
+                      >
+                        {char}
+                      </span>
+                    );
+                  })}
+                </span>
+
+                {/* 名称下方装饰线 */}
+                <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
+            {menuItems.map((item, _index) => {
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
+                    isActive(item.href)
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
+                  }`}
+                >
+                  {/* 悬停背景效果 */}
+                  <div
+                    className={`absolute inset-0 rounded-lg transition-all duration-300 ${
+                      isActive(item.href)
+                        ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30'
+                        : 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
+                    }`}
+                  ></div>
+
+                  {/* 图标容器 */}
+                  <div className='relative mr-2'>
+                    {/* 图标 */}
+                    <Icon
+                      className={`relative w-4 h-4 transition-all duration-500 z-10 ${
+                        isActive(item.href)
+                          ? 'text-white drop-shadow-sm'
+                          : (() => {
+                              // 根据不同的菜单项设置不同的颜色
+                              const colorMap: Record<string, string> = {
+                                '/': 'text-purple-500 dark:text-purple-400',
+                                '/douban?type=movie':
+                                  'text-red-500 dark:text-red-400',
+                                '/douban?type=tv':
+                                  'text-blue-500 dark:text-blue-400',
+                                '/douban?type=short-drama':
+                                  'text-pink-500 dark:text-pink-400',
+                                '/douban?type=anime':
+                                  'text-indigo-500 dark:text-indigo-400',
+                                '/douban?type=show':
+                                  'text-orange-500 dark:text-orange-400',
+                                '/live': 'text-green-500 dark:text-green-400',
+                                '/tvbox': 'text-cyan-500 dark:text-cyan-400',
+                                '/favorites':
+                                  'text-yellow-500 dark:text-yellow-400',
+                                '/douban?type=custom':
+                                  'text-teal-500 dark:text-teal-400',
+                              };
+                              return (
+                                colorMap[item.href] ||
+                                'text-gray-500 dark:text-gray-400'
+                              );
+                            })()
+                      } group-hover:rotate-12`}
+                    />
+                  </div>
+
+                  {/* 文字 */}
+                  <span
+                    className={`relative transition-all duration-300 z-10 whitespace-nowrap text-sm ${
+                      isActive(item.href)
+                        ? 'text-blue-600 dark:text-blue-400 font-medium'
+                        : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                    }`}
+                  >
+                    {item.label}
                   </span>
 
-                  {/* 名称下方装饰线 */}
-                  <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
-                </div>
-              </Link>
-            </div>
+                  {/* 激活状态指示器 */}
+                  {isActive(item.href) && (
+                    <div className='absolute -bottom-px left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full'></div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
-            {/* Desktop Navigation */}
-            <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
+          {/* Right side items */}
+          <div className='flex items-center justify-end flex-none space-x-3 sm:space-x-4'>
+            {/* Search icon */}
+            <button
+              onClick={() => router.push('/search')}
+              className='group relative transition-all duration-200 flex items-center justify-center'
+              title='搜索'
+            >
+              <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
+            </button>
+
+            {/* 主题切换按钮 */}
+            <button
+              className='group relative transition-all duration-200 flex items-center justify-center'
+              title='切换主题'
+            >
+              <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
+            </button>
+
+            {/* 提醒图标按钮 - 只在有通知时显示 */}
+            {hasAnyNotifications && (
+              <button
+                onClick={() => setShowNotificationModal(true)}
+                className={`group relative transition-all duration-200 ${
+                  !isNotificationMuted ? 'animate-pulse' : ''
+                }`}
+                title='提醒'
+              >
+                <Bell
+                  className={`w-5 h-5 transition-transform duration-300 group-hover:rotate-90 ${
+                    isNotificationMuted
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : 'text-orange-500 dark:text-orange-400'
+                  }`}
+                />
+                {/* 统一提醒徽章 */}
+                {(() => {
+                  const totalCount =
+                    notifications.versionUpdate.count +
+                    notifications.pendingUsers.count +
+                    notifications.messages.count;
+
+                  // 只有有提醒且未静音时才显示徽章
+                  if (totalCount > 0 && !isNotificationMuted) {
+                    return (
+                      <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
+                        {totalCount > 99 ? '99+' : totalCount}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </button>
+            )}
+
+            {/* 用户菜单 */}
+            <UserMenu />
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className='md:hidden transition-colors duration-200'
+            >
+              {isMobileMenuOpen ? (
+                <X className='w-6 h-6' />
+              ) : (
+                <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
+                  <div className='w-6 h-0.5 bg-current rounded-full'></div>
+                  <div className='w-5 h-0.5 bg-current rounded-full'></div>
+                  <div className='w-4 h-0.5 bg-current rounded-full'></div>
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div
+          className={`md:hidden transition-all duration-500 ease-out overflow-hidden ${
+            isMobileMenuOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className='relative border-t border-white/20 dark:border-gray-700/20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl backdrop-saturate-180'>
+            <div className='relative px-3 pt-3 pb-4 space-y-1'>
               {menuItems.map((item, _index) => {
                 const Icon = item.icon;
 
                 return (
-                  <Link
+                  <button
                     key={item.href}
-                    href={item.href}
-                    className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
+                    onClick={() => {
+                      router.push(item.href);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`nav-item flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group ${
                       isActive(item.href)
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
+                        ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:from-blue-500/25 dark:to-purple-500/25 dark:text-blue-300 shadow-md shadow-blue-500/20 dark:shadow-blue-500/25 border border-blue-200/25 dark:border-blue-700/25'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
                     }`}
+                    style={{
+                      animationDelay: isMobileMenuOpen
+                        ? `${_index * 30}ms`
+                        : '0ms',
+                    }}
                   >
-                    {/* 悬停背景效果 */}
-                    <div
-                      className={`absolute inset-0 rounded-lg transition-all duration-300 ${
-                        isActive(item.href)
-                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30'
-                          : 'bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 group-hover:scale-105'
-                      }`}
-                    ></div>
-
                     {/* 图标容器 */}
-                    <div className='relative mr-2'>
-                      {/* 图标 */}
+                    <div
+                      className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-300 mr-3 flex-shrink-0 ${
+                        isActive(item.href)
+                          ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30 text-blue-600 dark:text-blue-400'
+                          : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gradient-to-br group-hover:from-indigo-400 group-hover:to-purple-500 group-hover:rotate-6'
+                      }`}
+                    >
+                      {' '}
                       <Icon
-                        className={`relative w-4 h-4 transition-all duration-500 z-10 ${
-                          isActive(item.href)
-                            ? 'text-white drop-shadow-sm'
-                            : (() => {
-                                // 根据不同的菜单项设置不同的颜色
-                                const colorMap: Record<string, string> = {
-                                  '/': 'text-purple-500 dark:text-purple-400',
-                                  '/douban?type=movie':
-                                    'text-red-500 dark:text-red-400',
-                                  '/douban?type=tv':
-                                    'text-blue-500 dark:text-blue-400',
-                                  '/douban?type=short-drama':
-                                    'text-pink-500 dark:text-pink-400',
-                                  '/douban?type=anime':
-                                    'text-indigo-500 dark:text-indigo-400',
-                                  '/douban?type=show':
-                                    'text-orange-500 dark:text-orange-400',
-                                  '/live': 'text-green-500 dark:text-green-400',
-                                  '/tvbox': 'text-cyan-500 dark:text-cyan-400',
-                                  '/favorites':
-                                    'text-yellow-500 dark:text-yellow-400',
-                                  '/douban?type=custom':
-                                    'text-teal-500 dark:text-teal-400',
-                                };
-                                return (
-                                  colorMap[item.href] ||
-                                  'text-gray-500 dark:text-gray-400'
-                                );
-                              })()
-                        } group-hover:rotate-12`}
+                        className={`w-3.5 h-3.5 transition-all duration-300 group-hover:rotate-12 ${(() => {
+                          // 根据不同的菜单项设置不同的颜色
+                          const colorMap: Record<string, string> = {
+                            '/': 'text-purple-500 dark:text-purple-400',
+                            '/douban?type=movie':
+                              'text-red-500 dark:text-red-400',
+                            '/douban?type=tv':
+                              'text-blue-500 dark:text-blue-400',
+                            '/douban?type=short-drama':
+                              'text-pink-500 dark:text-pink-400',
+                            '/douban?type=anime':
+                              'text-indigo-500 dark:text-indigo-400',
+                            '/douban?type=show':
+                              'text-orange-500 dark:text-orange-400',
+                            '/live': 'text-green-500 dark:text-green-400',
+                            '/tvbox': 'text-cyan-500 dark:text-cyan-400',
+                            '/favorites':
+                              'text-yellow-500 dark:text-yellow-400',
+                            '/douban?type=custom':
+                              'text-teal-500 dark:text-teal-400',
+                          };
+                          return (
+                            colorMap[item.href] ||
+                            'text-gray-500 dark:text-gray-400'
+                          );
+                        })()}`}
                       />
                     </div>
 
                     {/* 文字 */}
-                    <span
-                      className={`relative transition-all duration-300 z-10 whitespace-nowrap text-sm ${
-                        isActive(item.href)
-                          ? 'text-blue-600 dark:text-blue-400 font-medium'
-                          : 'text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-
-                    {/* 激活状态指示器 */}
-                    {isActive(item.href) && (
-                      <div className='absolute -bottom-px left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full'></div>
-                    )}
-                  </Link>
+                    <span className='flex-1 text-left'>{item.label}</span>
+                  </button>
                 );
               })}
             </div>
-
-            {/* Right side items */}
-            <div className='flex items-center justify-end flex-none space-x-3 sm:space-x-4'>
-              {/* Search icon */}
-              <button
-                onClick={() => router.push('/search')}
-                className='group relative transition-all duration-200 flex items-center justify-center'
-                title='搜索'
-              >
-                <Search className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
-              </button>
-
-              {/* 主题切换按钮 */}
-              <button
-                className='group relative transition-all duration-200 flex items-center justify-center'
-                title='切换主题'
-              >
-                <ThemeToggle className='w-5 h-5 text-blue-500 dark:text-blue-400 transition-transform duration-300 group-hover:rotate-90' />
-              </button>
-
-              {/* 提醒图标按钮 - 只在有通知时显示 */}
-              {hasAnyNotifications && (
-                <button
-                  onClick={() => setShowNotificationModal(true)}
-                  className='group relative transition-all duration-200 animate-pulse'
-                  title='提醒'
-                >
-                  <Bell className='w-5 h-5 text-orange-500 dark:text-orange-400 transition-transform duration-300 group-hover:rotate-90' />
-                  {/* 统一提醒徽章 */}
-                  {(() => {
-                    const totalCount =
-                      notifications.versionUpdate.count +
-                      notifications.pendingUsers.count +
-                      notifications.messages.count +
-                      notifications.episodeUpdates.count;
-
-                    if (totalCount > 0) {
-                      return (
-                        <span className='absolute -top-0.5 -right-0.5 min-w-[16px] h-4 text-[10px] font-medium text-white bg-red-500 rounded-full flex items-center justify-center px-1 animate-pulse'>
-                          {totalCount > 99 ? '99+' : totalCount}
-                        </span>
-                      );
-                    }
-                    return null;
-                  })()}
-                </button>
-              )}
-
-              {/* 用户菜单 */}
-              <UserMenu />
-
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className='md:hidden transition-colors duration-200'
-              >
-                {isMobileMenuOpen ? (
-                  <X className='w-6 h-6' />
-                ) : (
-                  <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
-                    <div className='w-6 h-0.5 bg-current rounded-full'></div>
-                    <div className='w-5 h-0.5 bg-current rounded-full'></div>
-                    <div className='w-4 h-0.5 bg-current rounded-full'></div>
-                  </div>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          <div
-            className={`md:hidden transition-all duration-500 ease-out overflow-hidden ${
-              isMobileMenuOpen
-                ? 'max-h-[80vh] opacity-100'
-                : 'max-h-0 opacity-0'
-            }`}
-          >
-            <div className='relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/20 dark:border-gray-700/20 overflow-hidden select-none'>
-              <div className='relative px-3 pt-3 pb-4 space-y-1'>
-                {menuItems.map((item, _index) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <button
-                      key={item.href}
-                      onClick={() => {
-                        router.push(item.href);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`nav-item flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group ${
-                        isActive(item.href)
-                          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:from-blue-500/25 dark:to-purple-500/25 dark:text-blue-300 shadow-md shadow-blue-500/20 dark:shadow-blue-500/25 border border-blue-200/25 dark:border-blue-700/25'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800/50 hover:shadow-md hover:shadow-black/10 dark:hover:shadow-black/20'
-                      }`}
-                      style={{
-                        animationDelay: isMobileMenuOpen
-                          ? `${_index * 30}ms`
-                          : '0ms',
-                      }}
-                    >
-                      {/* 图标容器 */}
-                      <div
-                        className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-300 mr-3 flex-shrink-0 ${
-                          isActive(item.href)
-                            ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 dark:border-blue-400/30 text-blue-600 dark:text-blue-400'
-                            : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gradient-to-br group-hover:from-indigo-400 group-hover:to-purple-500 group-hover:rotate-6'
-                        }`}
-                      >
-                        {' '}
-                        <Icon
-                          className={`w-3.5 h-3.5 transition-all duration-300 group-hover:rotate-12 ${(() => {
-                            // 根据不同的菜单项设置不同的颜色
-                            const colorMap: Record<string, string> = {
-                              '/': 'text-purple-500 dark:text-purple-400',
-                              '/douban?type=movie':
-                                'text-red-500 dark:text-red-400',
-                              '/douban?type=tv':
-                                'text-blue-500 dark:text-blue-400',
-                              '/douban?type=short-drama':
-                                'text-pink-500 dark:text-pink-400',
-                              '/douban?type=anime':
-                                'text-indigo-500 dark:text-indigo-400',
-                              '/douban?type=show':
-                                'text-orange-500 dark:text-orange-400',
-                              '/live': 'text-green-500 dark:text-green-400',
-                              '/tvbox': 'text-cyan-500 dark:text-cyan-400',
-                              '/favorites':
-                                'text-yellow-500 dark:text-yellow-400',
-                              '/douban?type=custom':
-                                'text-teal-500 dark:text-teal-400',
-                            };
-                            return (
-                              colorMap[item.href] ||
-                              'text-gray-500 dark:text-gray-400'
-                            );
-                          })()}`}
-                        />
-                      </div>
-
-                      {/* 文字 */}
-                      <span className='flex-1 text-left'>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
+      </div>
 
-        <NotificationModal />
-      </nav>
-    </>
+      <NotificationModal />
+    </nav>
   );
 };
 

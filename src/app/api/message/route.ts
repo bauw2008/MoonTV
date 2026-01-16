@@ -139,8 +139,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少评论内容' }, { status: 400 });
     }
 
+    console.log('获取用户角色...');
     // 获取用户角色
     const userRole = await getUserRole(authInfo.username);
+    console.log('用户角色:', userRole);
 
     console.log('创建评论对象...');
     // 创建评论

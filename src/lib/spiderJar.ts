@@ -6,8 +6,6 @@
  */
 import crypto from 'crypto';
 
-import { getMobileUserAgent } from './user-agent';
-
 // Remote jar candidates (order by stability and SSL compatibility)
 // 经过验证可用的源（2025-10-06 测试通过）
 const CANDIDATES: string[] = [
@@ -64,7 +62,8 @@ async function fetchRemote(
 
       // 优化的请求头，提升兼容性，减少 SSL 问题
       const headers = {
-        'User-Agent': getMobileUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36',
         Accept: '*/*',
         'Accept-Encoding': 'identity', // 避免压缩导致的问题
         Connection: 'close', // 避免连接复用问题

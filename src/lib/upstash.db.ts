@@ -836,6 +836,11 @@ export class UpstashRedisStorage implements IStorage {
           lastLoginTime?: number;
           lastLoginDate?: number;
         }>(loginStatsKey);
+        console.log(`[Upstash] 用户 ${userName} 登入统计查询:`, {
+          key: loginStatsKey,
+          rawValue: storedLoginStats,
+          hasValue: !!storedLoginStats,
+        });
 
         if (storedLoginStats) {
           // Upstash Redis返回的是对象，不需要JSON.parse
@@ -848,8 +853,9 @@ export class UpstashRedisStorage implements IStorage {
               storedLoginStats.lastLoginTime ||
               0,
           };
+          console.log(`[Upstash] 解析后的登入统计:`, loginStats);
         } else {
-          // 用户没有登入统计数据
+          console.log(`[Upstash] 用户 ${userName} 没有登入统计数据`);
         }
       } catch (error) {
         console.error(`获取用户 ${userName} 登入统计失败:`, error);
@@ -1024,6 +1030,8 @@ export class UpstashRedisStorage implements IStorage {
 
       // 保存更新后的统计数据
       await this.client.set(loginStatsKey, JSON.stringify(loginStats));
+
+      console.log(`用户 ${userName} 登入统计已更新:`, loginStats);
     } catch (error) {
       console.error(`更新用户 ${userName} 登入统计失败:`, error);
       throw error;
