@@ -16,6 +16,7 @@
       "schedule": "0 1 * * *"
     }
   ],
+  "name": "vidora",
   "framework": "nextjs",
   "buildCommand": "pnpm run build",
   "outputDirectory": ".next",
