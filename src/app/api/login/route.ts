@@ -90,7 +90,17 @@ export async function POST(req: NextRequest) {
         return response;
       }
 
-      const { password } = await req.json();
+      let requestBody;
+      try {
+        requestBody = await req.json();
+      } catch (jsonError) {
+        return NextResponse.json(
+          { error: '请求体必须是有效的JSON格式' },
+          { status: 400 }
+        );
+      }
+      
+      const { password } = requestBody;
       if (typeof password !== 'string') {
         return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
       }
@@ -125,7 +135,17 @@ export async function POST(req: NextRequest) {
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (jsonError) {
+      return NextResponse.json(
+        { error: '请求体必须是有效的JSON格式' },
+        { status: 400 }
+      );
+    }
+    
+    const { username, password } = requestBody;
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
