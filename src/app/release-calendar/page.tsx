@@ -10,9 +10,9 @@ import {
   Tag,
   Tv,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
@@ -34,8 +34,7 @@ function removeDuplicateItems(
 }
 
 export default function ReleaseCalendarPage() {
-  const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated } = useCurrentAuth();
+  const { isAuthenticated } = useCurrentAuth();
   const { fetchWithAuth } = useAuthenticatedFetch();
 
   // 所有状态 hooks 必须在条件判断之前声明
@@ -88,7 +87,7 @@ export default function ReleaseCalendarPage() {
       setError(null);
 
       // 🌐 直接从API获取数据（API有数据库缓存，全局共享，24小时有效）
-      console.log('🌐 正在从API获取发布日历数据...');
+      logger.log('🌐 正在从API获取发布日历数据...');
       const apiUrl = reset
         ? '/api/release-calendar?refresh=true'
         : '/api/release-calendar';
@@ -104,7 +103,7 @@ export default function ReleaseCalendarPage() {
       }
 
       const result: ReleaseCalendarResult = await response.json();
-      console.log(`📊 获取到 ${result.items.length} 条上映数据`);
+      logger.log(`📊 获取到 ${result.items.length} 条上映数据`);
 
       // 前端过滤（无需缓存，API数据库缓存已处理）
       const filteredData = applyClientSideFilters(result);
@@ -191,14 +190,14 @@ export default function ReleaseCalendarPage() {
 
   // 处理刷新按钮点击（清除数据库缓存并刷新）
   const handleRefreshClick = async () => {
-    console.log('📅 刷新上映日程数据...');
+    logger.log('📅 刷新上映日程数据...');
 
     try {
       // 🔄 强制刷新（API会清除数据库缓存并重新获取）
       await fetchData(true);
-      console.log('🎉 上映日程数据刷新成功！');
+      logger.log('🎉 上映日程数据刷新成功！');
     } catch (error) {
-      console.error('❌ 刷新上映日程数据失败:', error);
+      logger.error('❌ 刷新上映日程数据失败:', error);
     }
   };
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { getShortDramaCategories } from '@/lib/shortdrama.client';
 
 import { CapsuleSelector } from './CapsuleSelector';
@@ -28,11 +29,15 @@ const ShortDramaSelector: React.FC<ShortDramaSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     SelectorOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  const [, setLoadingCategories] = useState(false);
 
   // 加载短剧分类
   useEffect(() => {
-    setLoadingCategories(true);
+    // 使用 requestAnimationFrame 来延迟 setState 调用
+    requestAnimationFrame(() => {
+      setLoadingCategories(true);
+    });
     getShortDramaCategories()
       .then((categories) => {
         const options = categories.map((cat) => ({
@@ -42,7 +47,7 @@ const ShortDramaSelector: React.FC<ShortDramaSelectorProps> = ({
         setShortDramaCategories(options);
       })
       .catch((error) => {
-        console.error('加载短剧分类失败:', error);
+        logger.error('加载短剧分类失败:', error);
       })
       .finally(() => {
         setLoadingCategories(false);

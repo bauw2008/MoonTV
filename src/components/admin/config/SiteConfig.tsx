@@ -1,10 +1,10 @@
 'use client';
 
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
-import { useAdminApi } from '@/hooks/admin/useAdminApi';
+import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -60,7 +60,6 @@ function SiteConfigContent() {
   // 使用统一接口
   const { isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { configApi } = useAdminApi();
 
   // 站点配置状态
   const [siteSettings, setSiteSettings] = useState<SiteConfigSettings>({
@@ -148,17 +147,13 @@ function SiteConfigContent() {
         });
       }
     } catch (error) {
-      console.error('加载站点配置失败:', error);
+      logger.error('加载站点配置失败:', error);
       showError('加载站点配置失败');
     }
   };
 
   const saveConfig = async () => {
     try {
-      // 获取当前完整的 MenuSettings，包括导航菜单字段
-      const currentMenuSettings =
-        config?.Config?.SiteConfig?.MenuSettings || {};
-
       // 更新菜单设置，只包含导航菜单相关的字段
       const updatedMenuSettings = {
         // 导航菜单字段
@@ -196,7 +191,7 @@ function SiteConfigContent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API错误响应:', errorData);
+        logger.error('API错误响应:', errorData);
         throw new Error(errorData.error || '保存失败');
       }
 
@@ -210,7 +205,7 @@ function SiteConfigContent() {
 
       // 不重新加载配置，避免读到旧数据覆盖用户编辑的内容
     } catch (error) {
-      console.error('保存站点配置失败:', error);
+      logger.error('保存站点配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };
@@ -231,12 +226,14 @@ function SiteConfigContent() {
   };
 
   // 初始化时同步菜单配置到 NavigationConfig（仅在首次加载时执行）
+  const hasInitializedMenu = useRef(false);
+
   useEffect(() => {
-    if (siteSettings.MenuSettings && config) {
+    if (!hasInitializedMenu.current && siteSettings.MenuSettings && config) {
       updateMenuSettings(siteSettings.MenuSettings);
+      hasInitializedMenu.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [siteSettings.MenuSettings, config]);
 
   // 处理豆瓣数据源变化
   const handleDoubanDataSourceChange = (value: string) => {

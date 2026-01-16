@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -13,7 +14,7 @@ function OwnerConfigContent() {
   const { loading, error, isOwner } = useAdminAuth();
 
   // 调试信息
-  console.log('OwnerConfig debug:', { loading, error, isOwner });
+  logger.log('OwnerConfig debug:', { loading, error, isOwner });
   const { withLoading, isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
@@ -36,7 +37,7 @@ function OwnerConfigContent() {
         setConfig(data.data);
       }
     } catch (error) {
-      console.error('加载站长配置失败:', error);
+      logger.error('加载站长配置失败:', error);
     }
   };
 
@@ -116,7 +117,7 @@ function OwnerConfigContent() {
           window.location.reload();
         }, 1500);
       } catch (error) {
-        console.error('重置配置失败:', error);
+        logger.error('重置配置失败:', error);
         showError('重置失败: ' + (error as Error).message);
       }
     });
@@ -125,7 +126,7 @@ function OwnerConfigContent() {
   const handleSave = async () => {
     await withLoading('saveOwnerConfig', async () => {
       try {
-        console.log('保存站长配置:', config);
+        logger.log('保存站长配置:', config);
         const response = await fetch('/api/admin/owner-config', {
           method: 'POST',
           headers: {
@@ -140,7 +141,7 @@ function OwnerConfigContent() {
 
         showSuccess('站长配置保存成功');
       } catch (error) {
-        console.error('保存站长配置失败:', error);
+        logger.error('保存站长配置失败:', error);
         showError('保存失败: ' + (error as Error).message);
       }
     });
@@ -271,7 +272,7 @@ function OwnerConfigContent() {
                   value={config.maxUsers}
                   onChange={(e) => {
                     const newValue = parseInt(e.target.value) || 1000;
-                    console.log('用户数输入变化:', newValue);
+                    logger.log('用户数输入变化:', newValue);
                     setConfig({ ...config, maxUsers: newValue });
                   }}
                   className='w-24 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-gray-900 dark:text-gray-100'

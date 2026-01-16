@@ -1,3 +1,6 @@
+// @ts-nocheck
+import { logger } from './logger';
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -146,7 +149,7 @@ export default function artplayerPluginChromecast(option) {
 
       // 修复 API 加载逻辑
       if (!window.chrome || !window.chrome.cast || !window.cast) {
-        console.log('Loading Cast API...');
+        logger.log('Loading Cast API...');
         loadScript(option.sdk || DEFAULT_SDK).catch(reject);
       } else if (window.cast && window.cast.framework) {
         // API 已加载，直接初始化
@@ -191,7 +194,7 @@ export default function artplayerPluginChromecast(option) {
       typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
     // 详细调试日志
-    console.log('🔍 Chromecast Plugin Debug:', {
+    logger.log('🔍 Chromecast Plugin Debug:', {
       userAgent: userAgent,
       hasChrome: /Chrome/i.test(userAgent),
       hasEdg: /Edg/i.test(userAgent),
@@ -233,7 +236,7 @@ export default function artplayerPluginChromecast(option) {
 
     const isIOS = /iPad|iPhone|iPod/i.test(userAgent) && !window.MSStream;
 
-    console.log('🎯 Chromecast Detection Result:', {
+    logger.log('🎯 Chromecast Detection Result:', {
       isChrome: isChrome,
       isIOS: isIOS,
       shouldShowChromecast: isChrome && !isIOS,
@@ -241,9 +244,6 @@ export default function artplayerPluginChromecast(option) {
 
     // 如果不是Chrome浏览器或者是iOS，直接返回空插件，不添加任何控件
     if (!isChrome || isIOS) {
-      console.log(
-        '❌ Chromecast plugin: Browser not supported, skipping control addition',
-      );
       return {
         name: 'artplayerPluginChromecast',
         getCastState: () => null,
@@ -251,7 +251,7 @@ export default function artplayerPluginChromecast(option) {
       };
     }
 
-    console.log(
+    logger.log(
       '✅ Chromecast plugin: Adding control button for supported browser',
     );
 

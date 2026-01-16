@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -7,6 +5,7 @@ import { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取管理员配置失败:', error);
+    logger.error('获取管理员配置失败:', error);
     return NextResponse.json(
       {
         error: '获取管理员配置失败',
@@ -161,7 +160,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error('保存管理员配置失败:', error);
+    logger.error('保存管理员配置失败:', error);
     return NextResponse.json(
       {
         error: '保存配置失败',

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { removeDeviceBinding } from '@/lib/tvbox-device-fingerprint';
 
 interface TVBoxSecurityConfig {
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
       maxDevices: securityConfig.maxDevices || 1,
     });
   } catch (error) {
-    console.error('获取设备列表失败:', error);
+    logger.error('获取设备列表失败:', error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
     const updatedDevices = removeDeviceBinding(userTokenInfo.devices, deviceId);
 
     // 记录解绑操作
-    console.log(`用户 ${username} 解绑设备: ${deviceId}`);
+    logger.log(`用户 ${username} 解绑设备: ${deviceId}`);
 
     // 更新用户设备列表
     userTokenInfo.devices = updatedDevices;
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
       remainingDevices: updatedDevices.length,
     });
   } catch (error) {
-    console.error('设备解绑失败:', error);
+    logger.error('设备解绑失败:', error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',

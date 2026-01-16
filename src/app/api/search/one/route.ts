@@ -4,8 +4,8 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites } from '@/lib/config';
 import { shouldApplyYellowFilter } from '@/lib/config-separation';
 import { searchFromApi } from '@/lib/downstream';
+import { logger } from '@/lib/logger';
 import { getYellowWords } from '@/lib/yellow';
-
 export const runtime = 'nodejs';
 
 // OrionTV 兼容接口
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       source: targetSite.name,
     });
   } catch (error) {
-    console.error('单个源搜索失败:', error);
+    logger.error('单个源搜索失败:', error);
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }
 }

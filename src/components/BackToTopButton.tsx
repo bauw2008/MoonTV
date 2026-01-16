@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 // 虚拟网格引用接口
 interface VirtualGridRef {
   scrollToTop: () => void;
@@ -40,6 +42,7 @@ export default function BackToTopButton({
         virtualGridRef.current.scrollToTop();
       }
     } catch (error) {
+      logger.error('平滑滚动失败:', error);
       // 如果平滑滚动完全失败，使用立即滚动
       document.body.scrollTop = 0;
       if (virtualGridRef?.current) {

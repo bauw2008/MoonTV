@@ -2,20 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
-
-// 评论数据结构
-interface Comment {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-  replies: Reply[];
-  commentCount?: number;
-  category?: 'suggestion' | 'feedback' | 'discussion' | 'other';
-  isPinned?: boolean;
-}
+import { logger } from '@/lib/logger';
 
 interface Reply {
   id: string;
@@ -44,33 +31,11 @@ async function getUserRole(
     }
   } catch (error) {
     // 如果获取管理员配置失败，保持为user
-    console.warn('获取管理员配置失败:', error);
+    logger.warn('获取管理员配置失败:', error);
   }
 
   // 默认返回user角色
   return 'user';
-}
-
-// 计算用户留言数量的辅助函数
-function calculateUserCommentCounts(
-  comments: Comment[],
-): Record<string, number> {
-  const userCommentCounts: Record<string, number> = {};
-
-  // 计算每个用户的评论数量
-  comments.forEach((comment) => {
-    // 计算主评论
-    userCommentCounts[comment.username] =
-      (userCommentCounts[comment.username] || 0) + 1;
-
-    // 计算回复
-    comment.replies.forEach((reply) => {
-      userCommentCounts[reply.username] =
-        (userCommentCounts[reply.username] || 0) + 1;
-    });
-  });
-
-  return userCommentCounts;
 }
 
 // 评论数据结构已在文件开头定义
@@ -124,7 +89,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('发布回复失败:', error);
+    logger.error('发布回复失败:', error);
     return NextResponse.json({ error: '发布回复失败' }, { status: 500 });
   }
 }

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
+import { getRandomUserAgent } from '@/lib/user-agent';
+
 export const runtime = 'nodejs';
 
 // OrionTV 兼容接口
@@ -15,8 +18,7 @@ export async function GET(request: Request) {
     const imageResponse = await fetch(imageUrl, {
       headers: {
         Referer: 'https://movie.douban.com/',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'User-Agent': getRandomUserAgent(),
       },
     });
 
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
+    logger.error('获取图片失败:', error);
     return NextResponse.json(
       { error: 'Error fetching image' },
       { status: 500 },

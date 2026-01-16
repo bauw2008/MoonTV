@@ -7,6 +7,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 interface NetDiskLink {
   url: string;
   password: string;
@@ -135,7 +137,7 @@ export default function NetDiskSearchResults({
         setCopiedItems((prev) => ({ ...prev, [key]: false }));
       }, 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 
@@ -488,11 +490,8 @@ export default function NetDiskSearchResults({
                 {links.map((link, index) => {
                   const linkKey = `${type}-${index}`;
                   const isPasswordVisible = visiblePasswords[linkKey];
-                  const isCopied = copiedItems[linkKey];
                   const isTitleExpanded = expandedTitles[linkKey];
                   const title = link.note || '未命名资源';
-                  const shouldShowExpandMobile = title.length > 30;
-                  const shouldShowExpandDesktop = title.length > 80;
 
                   return (
                     <div

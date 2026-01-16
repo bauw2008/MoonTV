@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
 
@@ -6,6 +6,7 @@ import { ChevronDown, ChevronLeft, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { UnifiedVideoItem } from '@/lib/types';
 
 import { CapsuleSelector } from '@/components/CapsuleSelector';
@@ -79,6 +80,15 @@ function SourceSelector({
   const [debounceId, setDebounceId] = useState<NodeJS.Timeout | null>(null);
   const selectedSourceData = sources.find((s) => s.key === selectedSource);
 
+  // 组件卸载时清除防抖定时器
+  useEffect(() => {
+    return () => {
+      if (debounceId) {
+        clearTimeout(debounceId);
+      }
+    };
+  }, [debounceId]);
+
   // 无可用视频源提示
   if (!sources || sources.length === 0) {
     return (
@@ -121,15 +131,6 @@ function SourceSelector({
 
     setDebounceId(newDebounceId);
   };
-
-  // 组件卸载时清除防抖定时器
-  useEffect(() => {
-    return () => {
-      if (debounceId) {
-        clearTimeout(debounceId);
-      }
-    };
-  }, [debounceId]);
 
   return (
     <div className='relative max-w-3xl'>
@@ -413,21 +414,33 @@ function toUnifiedVideoItem(v: VideoItem): UnifiedVideoItem {
   return result;
 }
 
-// ==================== 主组件 ====================
-export default function TVBoxPage() {
-  // 检查菜单访问权限
+// 权限检查组件
+function TVBoxPagePermissionCheck({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      if (disabledMenus.showTvbox) {
+        window.location.href = '/';
+      }
+    }
+  }, []);
+
   if (typeof window !== 'undefined') {
     const disabledMenus = (window as any).__DISABLED_MENUS || {};
     if (disabledMenus.showTvbox) {
-      window.location.href = '/';
       return null;
     }
   }
 
+  return <>{children}</>;
+}
+
+// ==================== 主组件 ====================
+function TVBoxPageContent() {
   const { siteName: _siteName } = useSite();
   const [sourceList, setSourceList] = useState<VideoSource[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
-  const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
+  const [, setRawVideos] = useState<VideoItem[]>([]);
   const [videos, setVideos] = useState<UnifiedVideoItem[]>([]);
   const [categories, setCategories] = useState<CategoryStructure>({
     primary_categories: [],
@@ -539,7 +552,7 @@ export default function TVBoxPage() {
           }
         }
       } catch (err: any) {
-        console.error(err);
+        logger.error(err);
         setError(err.message || '获取视频源失败');
       } finally {
         setSourcesLoading(false);
@@ -588,7 +601,7 @@ export default function TVBoxPage() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error('🔴 TVBox API错误:', {
+        logger.error('🔴 TVBox API错误:', {
           status: res.status,
           statusText: res.statusText,
           error: errorData.error || '加载视频失败',
@@ -660,7 +673,7 @@ export default function TVBoxPage() {
 
       setTotalPages(Math.min(data.pagecount || 1, 3)); // 限制最多3页
     } catch (err: any) {
-      console.error('加载视频错误:', err);
+      logger.error('加载视频错误:', err);
       setError(err.message || '加载视频失败');
     } finally {
       setLoading(false);
@@ -723,15 +736,6 @@ export default function TVBoxPage() {
     setIsSearchMode(!!keyword);
     setCurrentPage(1);
     setFromCache(false);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) {
-      return;
-    }
-    setCurrentPage(page);
-    setFromCache(false);
-    window.scrollTo(0, 0);
   };
 
   // ==================== 渲染 ====================
@@ -932,5 +936,13 @@ export default function TVBoxPage() {
         virtualGridRef={virtualGridRef}
       />
     </PageLayout>
+  );
+}
+
+export default function TVBoxPage() {
+  return (
+    <TVBoxPagePermissionCheck>
+      <TVBoxPageContent />
+    </TVBoxPagePermissionCheck>
   );
 }

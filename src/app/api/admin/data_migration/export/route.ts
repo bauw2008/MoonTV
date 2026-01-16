@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
@@ -7,6 +7,7 @@ import { gzip } from 'zlib';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('数据导出失败:', error);
+    logger.error('数据导出失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '导出失败' },
       { status: 500 },
@@ -136,7 +137,7 @@ async function getUserPassword(username: string): Promise<string | null> {
     }
     return null;
   } catch (error) {
-    console.error(`获取用户 ${username} 密码失败:`, error);
+    logger.error(`获取用户 ${username} 密码失败:`, error);
     return null;
   }
 }

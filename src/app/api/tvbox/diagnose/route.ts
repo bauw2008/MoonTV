@@ -1,5 +1,8 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
+
+import { logger } from '@/lib/logger';
+import { getRandomUserAgent } from '@/lib/user-agent';
 
 import { GET as getTVBoxConfig } from '../route';
 
@@ -48,28 +51,6 @@ function isPrivateHost(urlStr: string): boolean {
   }
 }
 
-async function tryFetchHead(
-  url: string,
-  timeoutMs = 3500,
-): Promise<{ ok: boolean; status?: number; error?: string }> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { Range: 'bytes=0-0' },
-      redirect: 'follow',
-      signal: ctrl.signal as any,
-      cache: 'no-store',
-    } as any);
-    clearTimeout(timer);
-    return { ok: res.ok, status: res.status };
-  } catch (e: any) {
-    clearTimeout(timer);
-    return { ok: false, error: e?.message || 'fetch error' };
-  }
-}
-
 // 调用 health 端点检查 spider jar 健康状态
 async function checkSpiderHealth(spider: string): Promise<{
   accessible: boolean;
@@ -87,8 +68,7 @@ async function checkSpiderHealth(spider: string): Promise<{
       method: 'HEAD',
       signal: controller.signal,
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
       },
     });
 
@@ -122,11 +102,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 
-    console.log(
+    logger.log(
       '[Diagnose] Backend - Received token:',
       token ? '***' + token.slice(-4) : 'none',
     );
-    console.log('[Diagnose] Backend - Request URL:', req.url);
+    logger.log('[Diagnose] Backend - Request URL:', req.url);
 
     // 直接调用 tvbox API 函数，而不是通过 HTTP fetch
     // 构建模拟请求对象
@@ -135,7 +115,7 @@ export async function GET(req: NextRequest) {
       configUrl += `&token=${encodeURIComponent(token)}`;
     }
 
-    console.log(
+    logger.log(
       '[Diagnose] Backend - Direct calling tvbox GET with URL:',
       configUrl,
     );
@@ -267,7 +247,7 @@ export async function GET(req: NextRequest) {
       headers: { 'cache-control': 'no-store' },
     });
   } catch (e: any) {
-    console.error('Diagnose failed', e);
+    logger.error('Diagnose failed', e);
     return NextResponse.json(
       { ok: false, error: e?.message || 'unknown error' },
       { status: 500 },

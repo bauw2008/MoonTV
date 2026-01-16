@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { PlayRecord, PlayStatsResult } from '@/lib/types';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
@@ -269,7 +271,6 @@ const PlayStatsPage: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('API返回的用户统计数据:', data);
       setUserStats(data);
 
       // 缓存数据
@@ -304,7 +305,6 @@ const PlayStatsPage: React.FC = () => {
   // 添加防抖变量
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 处理刷新按钮点击
   const handleRefreshClick = async () => {
@@ -324,13 +324,13 @@ const PlayStatsPage: React.FC = () => {
       // 清除统计缓存
       localStorage.removeItem('vidora_user_stats_cache');
       localStorage.removeItem('vidora_admin_stats_cache');
-      console.log('已清除统计缓存');
+      logger.log('已清除统计缓存');
 
       // 重新获取统计数据
       await fetchStats();
-      console.log('已重新获取统计数据');
+      logger.log('已重新获取统计数据');
     } catch (error) {
-      console.error('刷新数据失败:', error);
+      logger.error('刷新数据失败:', error);
     } finally {
       setLoading(false);
       isRefreshingRef.current = false;
@@ -385,30 +385,7 @@ const PlayStatsPage: React.FC = () => {
     if (user) {
       fetchStats();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]); // ✅ 只在 user 变化时调用
-
-  // 格式化更新时间
-  const formatLastUpdate = (timestamp: number): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-
-    if (minutes < 1) {
-      return '刚刚更新';
-    }
-    if (minutes < 60) {
-      return `${minutes}分钟前`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-      return `${hours}小时前`;
-    }
-
-    const days = Math.floor(hours / 24);
-    return `${days}天前`;
-  };
+  }, [user, fetchStats]);
 
   // 未授权时显示加载
   if (authLoading || !user) {
@@ -849,7 +826,7 @@ const PlayStatsPage: React.FC = () => {
                             <div className='flex items-center space-x-4'>
                               <div className='flex-shrink-0 relative'>
                                 {userStat.avatar ? (
-                                  <img
+                                  <Image
                                     src={
                                       userStat.avatar.startsWith('data:')
                                         ? userStat.avatar
@@ -859,6 +836,7 @@ const PlayStatsPage: React.FC = () => {
                                     width={64}
                                     height={64}
                                     className='w-16 h-16 rounded-full object-cover ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-800'
+                                    unoptimized
                                     onError={(e) => {
                                       const target =
                                         e.target as HTMLImageElement;
@@ -1083,10 +1061,13 @@ const PlayStatsPage: React.FC = () => {
                                         >
                                           <div className='flex-shrink-0 w-16 h-20 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                                             {record.cover ? (
-                                              <img
+                                              <Image
                                                 src={record.cover}
                                                 alt={record.title}
+                                                width={80}
+                                                height={112}
                                                 className='w-full h-full object-cover'
+                                                unoptimized
                                                 onError={(e) => {
                                                   (
                                                     e.target as HTMLImageElement
@@ -1285,10 +1266,13 @@ const PlayStatsPage: React.FC = () => {
                           >
                             <div className='flex-shrink-0 w-20 h-28 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                               {record.cover ? (
-                                <img
+                                <Image
                                   src={record.cover}
                                   alt={record.title}
+                                  width={80}
+                                  height={112}
                                   className='w-full h-full object-cover'
+                                  unoptimized
                                   onError={(e) => {
                                     (
                                       e.target as HTMLImageElement
@@ -1518,10 +1502,13 @@ const PlayStatsPage: React.FC = () => {
                     >
                       <div className='flex-shrink-0 w-20 h-28 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden'>
                         {record.cover ? (
-                          <img
+                          <Image
                             src={record.cover}
                             alt={record.title}
+                            width={80}
+                            height={112}
                             className='w-full h-full object-cover'
+                            unoptimized
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display =
                                 'none';

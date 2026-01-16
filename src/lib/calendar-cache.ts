@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 import { db } from './db';
 
 // 日历缓存键
@@ -16,7 +18,7 @@ function getDatabaseStorage(): any {
     const storage = (db as any).storage;
     return storage && (storage.client || storage) ? storage : null;
   } catch (error) {
-    console.warn('获取数据库存储实例失败:', error);
+    logger.warn('获取数据库存储实例失败:', error);
     return null;
   }
 }
@@ -29,13 +31,13 @@ export class CalendarCacheManager {
 
     // 如果是localStorage模式，跳过数据库缓存
     if (storageType === 'localstorage') {
-      console.log('⚠️ localStorage模式，跳过数据库缓存');
+      logger.log('⚠️ localStorage模式，跳过数据库缓存');
       return false;
     }
 
     const storage = getDatabaseStorage();
     if (!storage) {
-      console.warn('❌ 数据库存储不可用');
+      logger.warn('❌ 数据库存储不可用');
       return false;
     }
 
@@ -44,7 +46,7 @@ export class CalendarCacheManager {
       const timestamp = Date.now().toString();
       const sizeKB = Math.round(dataStr.length / 1024);
 
-      console.log(`💾 保存日历数据到数据库缓存，大小: ${sizeKB} KB`);
+      logger.log(`💾 保存日历数据到数据库缓存，大小: ${sizeKB} KB`);
 
       if (storageType === 'upstash') {
         // Upstash Redis
@@ -76,10 +78,10 @@ export class CalendarCacheManager {
         throw new Error(`不支持的存储类型: ${storageType}`);
       }
 
-      console.log('✅ 日历数据已成功保存到数据库缓存');
+      logger.log('✅ 日历数据已成功保存到数据库缓存');
       return true;
     } catch (error) {
-      console.error('❌ 保存日历数据到数据库缓存失败:', error);
+      logger.error('❌ 保存日历数据到数据库缓存失败:', error);
       return false;
     }
   }
@@ -95,7 +97,7 @@ export class CalendarCacheManager {
 
     const storage = getDatabaseStorage();
     if (!storage) {
-      console.warn('❌ 数据库存储不可用');
+      logger.warn('❌ 数据库存储不可用');
       return null;
     }
 
@@ -134,14 +136,14 @@ export class CalendarCacheManager {
       }
 
       if (!dataStr || !timeStr) {
-        console.log('📭 数据库中无日历缓存数据');
+        logger.log('📭 数据库中无日历缓存数据');
         return null;
       }
 
       // 检查缓存是否过期
       const age = Date.now() - parseInt(timeStr);
       if (age >= CACHE_DURATION) {
-        console.log(
+        logger.log(
           `⏰ 数据库中的日历缓存已过期，年龄: ${Math.round(
             age / 1000 / 60 / 60,
           )} 小时`,
@@ -160,7 +162,7 @@ export class CalendarCacheManager {
           // Upstash 已经返回了对象，直接使用
           data = dataStr;
         } else {
-          console.warn('⚠️ Upstash 返回的数据格式不正确:', typeof dataStr);
+          logger.warn('⚠️ Upstash 返回的数据格式不正确:', typeof dataStr);
           return null;
         }
       } else {
@@ -168,12 +170,12 @@ export class CalendarCacheManager {
         data = JSON.parse(dataStr);
       }
 
-      console.log(
+      logger.log(
         `✅ 从数据库读取日历缓存，缓存年龄: ${Math.round(age / 1000 / 60)} 分钟`,
       );
       return data;
     } catch (error) {
-      console.error('❌ 从数据库读取日历缓存失败:', error);
+      logger.error('❌ 从数据库读取日历缓存失败:', error);
       return null;
     }
   }
@@ -183,13 +185,13 @@ export class CalendarCacheManager {
     const storageType = getStorageType();
 
     if (storageType === 'localstorage') {
-      console.log('localStorage模式，跳过数据库缓存清理');
+      logger.log('localStorage模式，跳过数据库缓存清理');
       return;
     }
 
     const storage = getDatabaseStorage();
     if (!storage) {
-      console.warn('❌ 数据库存储不可用，无法清理缓存');
+      logger.warn('❌ 数据库存储不可用，无法清理缓存');
       return;
     }
 
@@ -212,9 +214,9 @@ export class CalendarCacheManager {
         }
       }
 
-      console.log('✅ 已清除数据库中的日历缓存');
+      logger.log('✅ 已清除数据库中的日历缓存');
     } catch (error) {
-      console.error('❌ 清除数据库日历缓存失败:', error);
+      logger.error('❌ 清除数据库日历缓存失败:', error);
     }
   }
 
@@ -257,7 +259,7 @@ export class CalendarCacheManager {
       const age = Date.now() - parseInt(timeStr);
       return age < CACHE_DURATION;
     } catch (error) {
-      console.error('检查缓存有效性失败:', error);
+      logger.error('检查缓存有效性失败:', error);
       return false;
     }
   }

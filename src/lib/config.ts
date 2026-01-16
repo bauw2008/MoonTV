@@ -1,11 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion */
+/* @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import fs from 'fs';
 import path from 'path';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 import { AdminConfig } from './admin.types';
+import { getRandomUserAgent } from './user-agent';
 
 export interface ApiSite {
   key: string;
@@ -40,18 +42,20 @@ export const API_CONFIG = {
   search: {
     path: '?ac=videolist&wd=',
     pagePath: '?ac=videolist&wd={query}&pg={page}',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      Accept: 'application/json',
+    get headers() {
+      return {
+        'User-Agent': getRandomUserAgent(),
+        Accept: 'application/json',
+      };
     },
   },
   detail: {
     path: '?ac=videolist&ids=',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      Accept: 'application/json',
+    get headers() {
+      return {
+        'User-Agent': getRandomUserAgent(),
+        Accept: 'application/json',
+      };
     },
   },
 };
@@ -381,6 +385,8 @@ export async function getConfig(): Promise<AdminConfig> {
     adminConfig = await db.getAdminConfig();
   } catch (e) {
     // 获取管理员配置失败
+    logger.error('获取管理员配置失败:', e);
+    logger.error('错误详情:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
   }
 
   // db 中无配置，执行一次初始化
@@ -723,7 +729,7 @@ export async function resetConfig() {
   try {
     originConfig = await db.getAdminConfig();
   } catch (e) {
-    console.error('获取管理员配置失败:', e);
+    logger.error('获取管理员配置失败:', e);
   }
   if (!originConfig) {
     originConfig = {} as AdminConfig;

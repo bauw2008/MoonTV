@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
@@ -21,8 +22,9 @@ function VersionDisplay() {
       try {
         const status = await checkForUpdates();
         setUpdateStatus(status);
-      } catch (_) {
+      } catch (error) {
         // do nothing
+        logger.error('检查更新失败:', error);
       } finally {
         setIsChecking(false);
       }
@@ -69,8 +71,7 @@ function LoginPageClient() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [shouldAskUsername, setShouldAskUsername] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldAskUsername] = useState(true);
 
   const { siteName } = useSite();
 
@@ -107,6 +108,7 @@ function LoginPageClient() {
         setError(data.error ?? '服务器错误');
       }
     } catch (error) {
+      logger.error('登录请求失败:', error);
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);

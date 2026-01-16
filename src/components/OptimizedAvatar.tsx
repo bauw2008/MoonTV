@@ -1,7 +1,10 @@
 'use client';
 
 import { User } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+
+import { logger } from '@/lib/logger';
 
 interface OptimizedAvatarProps {
   onClick?: () => void;
@@ -19,7 +22,7 @@ export const clearAvatarFromLocalStorage = async (): Promise<void> => {
   try {
     await fetch('/api/avatar', { method: 'DELETE' });
   } catch (error) {
-    // 忽略错误
+    logger.error('清除头像失败:', error);
   }
 };
 
@@ -140,9 +143,8 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
 
   const sizeClasses = getSizeClasses();
   const [internalAvatarUrl, setInternalAvatarUrl] = useState('');
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isLoadingCustomAvatar, setIsLoadingCustomAvatar] = useState(true);
-  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [, setHasCustomAvatar] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
   // 使用外部传入的头像URL或内部获取的
@@ -151,7 +153,10 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
   // 从 API 读取头像（仅在没有外部传入时）
   useEffect(() => {
     if (!externalAvatarUrl) {
-      setIsLoadingCustomAvatar(true);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setIsLoadingCustomAvatar(true);
+      });
       fetch('/api/avatar')
         .then((res) => res.json())
         .then((data) => {
@@ -169,8 +174,11 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
           setIsLoadingCustomAvatar(false);
         });
     } else {
-      setHasCustomAvatar(true);
-      setIsLoadingCustomAvatar(false);
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setHasCustomAvatar(true);
+        setIsLoadingCustomAvatar(false);
+      });
     }
   }, [externalAvatarUrl]);
 
@@ -189,12 +197,13 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
         >
           {/* 使用网络随机头像或本地生成的头像 */}
           {defaultAvatar.avatarUrl ? (
-            <img
+            <Image
               src={defaultAvatar.avatarUrl}
               alt='默认头像'
               width={sizeClasses.imageWidth}
               height={sizeClasses.imageHeight}
               className='w-full h-full object-cover rounded-full'
+              unoptimized
               onError={(e) => {
                 // 如果网络头像加载失败，显示本地生成的头像
                 e.currentTarget.style.display = 'none';
@@ -242,7 +251,7 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
               : ''
           }`}
         >
-          <img
+          <Image
             ref={imageRef}
             src={
               displayImage.startsWith('data:')
@@ -253,6 +262,7 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
             width={sizeClasses.imageWidth}
             height={sizeClasses.imageHeight}
             className='w-full h-full object-cover rounded-full'
+            unoptimized
             style={{
               // 提前加载图片以减少闪动
               transform: 'translateZ(0)',

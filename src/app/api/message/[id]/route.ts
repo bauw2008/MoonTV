@@ -2,31 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
-
-// 评论数据结构
-interface Comment {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-  replies: Reply[];
-}
-
-interface Reply {
-  id: string;
-  username: string;
-  avatar?: string;
-  role?: 'owner' | 'admin' | 'user';
-  content: string;
-  timestamp: number;
-}
-
-// 生成唯一ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
+import { logger } from '@/lib/logger';
 
 // 删除评论（仅管理员和站长）
 export async function DELETE(request: NextRequest) {
@@ -62,7 +38,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: '评论删除成功' });
   } catch (error) {
-    console.error('删除评论失败:', error);
+    logger.error('删除评论失败:', error);
     return NextResponse.json(
       { success: false, error: '删除评论失败: ' + (error as Error).message },
       { status: 500 },

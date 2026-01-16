@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       aiConfig.model?.trim()
     );
 
-    console.log('🔍 配置模式检测:', {
+    logger.log('🔍 配置模式检测:', {
       hasAIModel,
       apiKeyLength: aiConfig.apiKey?.length || 0,
       apiUrlLength: aiConfig.apiUrl?.length || 0,
@@ -101,11 +102,10 @@ export async function POST(request: NextRequest) {
       temperature,
       max_tokens,
       max_completion_tokens,
-      context,
       stream,
-    } = body as ChatRequest & { context?: any };
+    } = body as ChatRequest;
 
-    console.log('🔍 请求参数:', { stream, hasAIModel });
+    logger.log('🔍 请求参数:', { stream, hasAIModel });
 
     // 验证请求格式
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -150,9 +150,6 @@ export async function POST(request: NextRequest) {
     ];
     const randomHint =
       randomElements[Math.floor(Math.random() * randomElements.length)];
-
-    // 获取最后一条用户消息用于分析
-    const userMessage = messages[messages.length - 1]?.content || '';
 
     // 构建功能列表和详细说明
     const capabilities = ['影视剧推荐'];
@@ -252,12 +249,12 @@ export async function POST(request: NextRequest) {
     if (useMaxCompletionTokens) {
       requestBody.max_completion_tokens = tokenLimit;
       // 推理模型不支持这些参数
-      console.log(
+      logger.log(
         `使用推理模型 ${requestModel}，max_completion_tokens: ${tokenLimit}，stream: ${stream}`,
       );
     } else {
       requestBody.max_tokens = tokenLimit;
-      console.log(
+      logger.log(
         `使用标准模型 ${requestModel}，max_tokens: ${tokenLimit}，stream: ${stream}`,
       );
     }
@@ -279,7 +276,7 @@ export async function POST(request: NextRequest) {
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.text();
-      console.error('OpenAI API Error:', errorData);
+      logger.error('OpenAI API Error:', errorData);
 
       // 提供更详细的错误信息
       let errorMessage = 'AI服务暂时不可用，请稍后重试';
@@ -317,10 +314,7 @@ export async function POST(request: NextRequest) {
 
     // 🔥 流式响应处理
     if (stream) {
-      console.log('📡 返回SSE流式响应');
-
-      // 累积完整内容用于后处理
-      let fullContent = '';
+      logger.log('📡 返回SSE流式响应');
 
       // 创建转换流处理OpenAI的SSE格式
       const transformStream = new TransformStream({
@@ -334,7 +328,7 @@ export async function POST(request: NextRequest) {
 
               if (data === '[DONE]') {
                 // 流式结束
-                console.log('📡 流式响应完成');
+                logger.log('📡 流式响应完成');
 
                 controller.enqueue(
                   new TextEncoder().encode('data: [DONE]\n\n'),
@@ -347,9 +341,6 @@ export async function POST(request: NextRequest) {
                 const content = json.choices?.[0]?.delta?.content || '';
 
                 if (content) {
-                  // 累积内容
-                  fullContent += content;
-
                   // 转换为统一的SSE格式
                   controller.enqueue(
                     new TextEncoder().encode(
@@ -358,6 +349,7 @@ export async function POST(request: NextRequest) {
                   );
                 }
               } catch (e) {
+                logger.error('解析 SSE 数据失败:', e);
                 // 忽略解析错误，继续处理下一行
               }
             }
@@ -385,7 +377,7 @@ export async function POST(request: NextRequest) {
       aiResult.choices.length === 0 ||
       !aiResult.choices[0].message
     ) {
-      console.error('AI响应格式异常:', aiResult);
+      logger.error('AI响应格式异常:', aiResult);
       return NextResponse.json(
         {
           error: 'AI服务响应格式异常，请稍后重试',
@@ -399,7 +391,7 @@ export async function POST(request: NextRequest) {
 
     // 检查内容是否为空
     if (!aiContent || aiContent.trim() === '') {
-      console.error('AI返回空内容:', {
+      logger.error('AI返回空内容:', {
         model: requestModel,
         tokenLimit,
         useMaxCompletionTokens,
@@ -490,12 +482,12 @@ export async function POST(request: NextRequest) {
       ];
       await db.setCache(historyKey, newHistory, 7 * 24 * 3600); // 缓存一周
     } catch (error) {
-      console.warn('保存AI推荐历史失败:', error);
+      logger.warn('保存AI推荐历史失败:', error);
     }
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('AI推荐API错误:', error);
+    logger.error('AI推荐API错误:', error);
 
     // 提供更详细的错误信息
     let errorMessage = '服务器内部错误';
@@ -562,7 +554,7 @@ export async function GET(request: NextRequest) {
       total: history.length,
     });
   } catch (error) {
-    console.error('获取AI推荐历史错误:', error);
+    logger.error('获取AI推荐历史错误:', error);
     return NextResponse.json(
       {
         error: '获取历史记录失败',

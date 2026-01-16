@@ -1,6 +1,8 @@
 import he from 'he';
 import Hls from 'hls.js';
 
+import { logger } from './logger';
+
 // 增强的设备检测逻辑，参考最新的设备特征
 const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
@@ -160,8 +162,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
 
     if (isIPad) {
       // iPad使用最简单的ping测试，不创建任何video或HLS实例
-      // eslint-disable-next-line no-console
-      console.log('iPad检测，使用简化测速避免崩溃');
+      logger.debug('iPad检测，使用简化测速避免崩溃');
 
       const startTime = performance.now();
       try {
@@ -300,8 +301,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
             hls.destroy();
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
-          console.warn('HLS cleanup error:', e);
+          logger.warn('HLS cleanup error:', e);
         }
         try {
           if (video && video.parentNode) {
@@ -310,8 +310,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
             video.remove();
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
-          console.warn('Video cleanup error:', e);
+          logger.warn('Video cleanup error:', e);
         }
       };
 
@@ -366,8 +365,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
         }
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      hls.on(Hls.Events.FRAG_LOADED, (event: any, data: any) => {
+      hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
         if (fragmentStartTime > 0 && data?.payload && !hasSpeedCalculated) {
           const loadTime = performance.now() - fragmentStartTime;
           const size = data.payload.byteLength || 0;
@@ -391,15 +389,12 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
       });
 
       // 监听HLS错误 - v1.6.13增强处理
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      hls.on(Hls.Events.ERROR, (event: any, data: any) => {
-        // eslint-disable-next-line no-console
-        console.warn('HLS测速错误:', data);
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        logger.warn('HLS测速错误:', data);
 
         // v1.6.13 特殊处理：片段解析错误不应该导致测速失败
         if (data.details === Hls.ErrorDetails.FRAG_PARSING_ERROR) {
-          // eslint-disable-next-line no-console
-          console.log('测速中遇到片段解析错误，v1.6.13已修复，继续测速');
+          logger.debug('测速中遇到片段解析错误，v1.6.13已修复，继续测速');
           return;
         }
 
@@ -408,8 +403,7 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
           data.details === Hls.ErrorDetails.BUFFER_APPEND_ERROR &&
           data.err?.message?.includes('timestamp')
         ) {
-          // eslint-disable-next-line no-console
-          console.log('测速中遇到时间戳错误，v1.6.13已修复，继续测速');
+          logger.debug('测速中遇到时间戳错误，v1.6.13已修复，继续测速');
           return;
         }
 

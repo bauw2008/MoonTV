@@ -28,6 +28,7 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { isSeriesCompleted, processImageUrl } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -136,7 +137,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       setEpisodes: (eps?: number) => setDynamicEpisodes(eps),
       setSourceNames: (names?: string[]) => setDynamicSourceNames(names),
       setDoubanId: (id?: number) => setDynamicDoubanId(id),
-    }));
+    }), []);
 
     // 使用 useMemo 缓存计算值，避免每次渲染重新计算
     const actualTitle = title;
@@ -180,7 +181,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           const fav = await isFavorited(actualSource, actualId);
           setFavorited(fav);
         } catch (err) {
-          console.error('检查收藏状态失败:', err);
+          logger.error('检查收藏状态失败:', err);
           ToastManager.error('检查收藏状态失败');
         }
       };
@@ -251,7 +252,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             }
           }
         } catch (err) {
-          console.error('切换收藏状态失败:', err);
+          logger.error('切换收藏状态失败:', err);
           ToastManager.error('切换收藏状态失败');
         }
       },
@@ -273,22 +274,23 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('删除操作:', { from, actualSource, actualId });
+        logger.log('删除操作:', { from, actualSource, actualId });
         if (!actualSource || !actualId) {
-          console.log('删除失败: 缺少必要参数');
+          logger.log('删除失败: 缺少必要参数');
           return;
         }
 
         try {
           if (from === 'playrecord') {
-            console.log('删除播放记录:', actualSource, actualId);
+            logger.log('删除播放记录:', actualSource, actualId);
             await deletePlayRecord(actualSource, actualId);
           } else if (from === 'favorite') {
-            console.log('删除收藏:', actualSource, actualId);
+            logger.log('删除收藏:', actualSource, actualId);
             await deleteFavorite(actualSource, actualId);
           }
           onDelete?.();
         } catch (err) {
+          logger.error('删除记录失败:', err);
           const errorMsg =
             from === 'playrecord' ? '删除播放记录失败' : '删除收藏失败';
           throw new Error(errorMsg);
@@ -371,7 +373,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             }
           }
         } catch (error) {
-          console.warn('获取详情失败:', error);
+          logger.warn('获取详情失败:', error);
         }
       }
 
@@ -438,6 +440,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           const fav = await isFavorited(actualSource, actualId);
           setSearchFavorited(fav);
         } catch (err) {
+          logger.error('检查收藏状态失败:', err);
           setSearchFavorited(false);
         }
       }

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { logger } from '@/lib/logger';
 import { getShortDramaCategories } from '@/lib/shortdrama.client';
 
 interface MultiLevelOption {
@@ -46,12 +47,24 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const [shortDramaCategories, setShortDramaCategories] = useState<
     MultiLevelOption[]
   >([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  const [, setLoadingCategories] = useState(
+    () => contentType === 'short-drama',
+  );
+
+  // 使用 useRef 来跟踪 contentType 的前一个值
+  const prevContentTypeRef = useRef<string | undefined>(undefined);
 
   // 加载短剧分类
   useEffect(() => {
-    if (contentType === 'short-drama') {
-      setLoadingCategories(true);
+    const prevContentType = prevContentTypeRef.current;
+    const hasChanged = prevContentType !== contentType;
+
+    if (hasChanged && contentType === 'short-drama') {
+      // 使用 requestAnimationFrame 来延迟 setState 调用
+      requestAnimationFrame(() => {
+        setLoadingCategories(true);
+      });
       getShortDramaCategories()
         .then((categories) => {
           const options = categories.map((cat) => ({
@@ -64,11 +77,13 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
           ]);
         })
         .catch((error) => {
-          console.error('加载短剧分类失败:', error);
+          logger.error('加载短剧分类失败:', error);
         })
         .finally(() => {
           setLoadingCategories(false);
         });
+
+      prevContentTypeRef.current = contentType;
     }
   }, [contentType]);
 

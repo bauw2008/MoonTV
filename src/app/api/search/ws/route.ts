@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getAvailableApiSites } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
+import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import type { SearchResult } from '@/lib/types';
 import { getYellowWords } from '@/lib/yellow';
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
             return true;
           } catch (error) {
             // 控制器已关闭或出现其他错误
-            console.warn('Failed to enqueue data:', error);
+            logger.warn('Failed to enqueue data:', error);
             streamClosed = true;
             return false;
           }
@@ -142,19 +143,16 @@ export async function GET(request: NextRequest) {
                 (u) => u.username === authInfo.username,
               );
               let shouldFilter = false;
-              let filterReason = '';
 
               // 1. 检查全局开关（主开关）
               if (config.SiteConfig.DisableYellowFilter) {
                 shouldFilter = false;
-                filterReason = '全局关闭18禁过滤';
               }
               // 2. 全局开关开启，检查具体设置
               else {
                 // 站长永远不过滤
                 if (userConfig?.role === 'owner') {
                   shouldFilter = false;
-                  filterReason = '站长豁免';
                 }
                 // 检查用户组设置
                 else if (
@@ -169,20 +167,17 @@ export async function GET(request: NextRequest) {
                     // disableYellowFilter = true 表示用户组开启过滤
                     if ((tagConfig as any)?.disableYellowFilter === true) {
                       shouldFilter = true;
-                      filterReason = `用户组开启过滤: ${tagName}`;
                       break;
                     }
                   }
                   // 如果用户组没有开启过滤，则不过滤
                   if (!shouldFilter) {
                     shouldFilter = false;
-                    filterReason = '用户组关闭过滤';
                   }
                 }
                 // 默认情况：没有用户组设置，不过滤
                 else {
                   shouldFilter = false;
-                  filterReason = '无用户组设置';
                 }
               }
 
@@ -223,7 +218,7 @@ export async function GET(request: NextRequest) {
               allResults.push(...filteredResults);
             }
           } catch (error) {
-            console.warn(`搜索失败 ${site.name}:`, error);
+            logger.warn(`搜索失败 ${site.name}:`, error);
 
             // 发送源错误事件
             completedCount++;
@@ -260,7 +255,7 @@ export async function GET(request: NextRequest) {
                 try {
                   controller.close();
                 } catch (error) {
-                  console.warn('Failed to close controller:', error);
+                  logger.warn('Failed to close controller:', error);
                 }
               }
             }
@@ -274,7 +269,7 @@ export async function GET(request: NextRequest) {
       cancel() {
         // 客户端断开连接时，标记流已关闭
         streamClosed = true;
-        console.log('Client disconnected, cancelling search stream');
+        logger.log('Client disconnected, cancelling search stream');
       },
     });
 
@@ -289,7 +284,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('WebSocket搜索失败:', error);
+    logger.error('WebSocket搜索失败:', error);
     return new Response('data: {"error": "搜索失败"}\n\n', {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -298,13 +293,4 @@ export async function GET(request: NextRequest) {
       },
     });
   }
-}
-
-// 检查是否包含敏感词
-function containsYellowWords(title: string, yellowWords: string[]): boolean {
-  if (!yellowWords || yellowWords.length === 0) return false;
-
-  return yellowWords.some((word) =>
-    title.toLowerCase().includes(word.toLowerCase()),
-  );
 }

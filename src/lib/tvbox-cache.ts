@@ -1,5 +1,6 @@
 import { getConfig } from './config';
 import { db } from './db';
+import { logger } from './logger';
 import { isCacheExpired } from './tvbox-utils';
 
 interface VideoItem {
@@ -138,8 +139,7 @@ export async function getTVBoxVideoCache(
 
     return null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(
+    logger.error(
       `[CACHE-GET] 获取缓存失败: ${source} - 分类: ${
         category || '全部'
       } - 页码: ${page}`,
@@ -178,7 +178,7 @@ export async function getTVBoxCategoryCache(
     }
     return cached;
   } catch (error) {
-    console.error(`[CACHE-GET] 获取分类缓存失败: ${source}`, error);
+    logger.error(`[CACHE-GET] 获取分类缓存失败: ${source}`, error);
     return null;
   }
 }
@@ -228,7 +228,7 @@ export async function getTVBoxCache(
 
     return cached;
   } catch (error) {
-    console.error('[CACHE-GET] 获取TVBox缓存失败:', error);
+    logger.error('[CACHE-GET] 获取TVBox缓存失败:', error);
     return null;
   }
 }
@@ -276,7 +276,7 @@ export async function setTVBoxVideoCache(
 
     await db.setCache(cacheKey, cacheData, ttl);
   } catch (error) {
-    console.error('[CACHE-SET] 设置TVBox视频缓存失败:', error);
+    logger.error('[CACHE-SET] 设置TVBox视频缓存失败:', error);
   }
 }
 
@@ -312,7 +312,7 @@ export async function setTVBoxCategoryCache(
 
     await db.setCache(cacheKey, cacheData, ttl);
   } catch (error) {
-    console.error('[CACHE-SET] 设置TVBox分类缓存失败:', error);
+    logger.error('[CACHE-SET] 设置TVBox分类缓存失败:', error);
   }
 }
 
@@ -353,9 +353,9 @@ export async function setTVBoxCache(
 
     // 设置缓存，有效期30分钟
     await db.setCache(cacheKey, cacheData, 30 * 60);
-    console.log(`[CACHE-SET] TVBox缓存已设置: ${cacheKey}`);
+    logger.log(`[CACHE-SET] TVBox缓存已设置: ${cacheKey}`);
   } catch (error) {
-    console.error('[CACHE-SET] 设置TVBox缓存失败:', error);
+    logger.error('[CACHE-SET] 设置TVBox缓存失败:', error);
   }
 }
 
@@ -390,9 +390,9 @@ export async function clearTVBoxCache(
       clearedCount++;
     }
 
-    console.log(`[CACHE-CLEAR] 清理TVBox缓存完成: ${clearedCount} 项`);
+    logger.log(`[CACHE-CLEAR] 清理TVBox缓存完成: ${clearedCount} 项`);
   } catch (error) {
-    console.error('[CACHE-CLEAR] 清理TVBox缓存失败:', error);
+    logger.error('[CACHE-CLEAR] 清理TVBox缓存失败:', error);
   }
 
   return clearedCount;
@@ -408,7 +408,7 @@ export async function clearExpiredTVBoxCache(): Promise<number> {
     await db.clearExpiredCache('tvbox-');
     return 1;
   } catch (error) {
-    console.error('[CACHE-CLEAR] 清理过期TVBox缓存失败:', error);
+    logger.error('[CACHE-CLEAR] 清理过期TVBox缓存失败:', error);
     return 0;
   }
 }

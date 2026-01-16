@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 export type FeatureType =
   | 'ai-recommend'
@@ -56,10 +57,7 @@ export function useFeaturePermission() {
 
         return false;
       } catch (error) {
-        console.error(
-          `[useFeaturePermission] 检查 ${feature} 权限失败:`,
-          error,
-        );
+        logger.error(`[useFeaturePermission] 检查 ${feature} 权限失败:`, error);
         return false;
       }
     },
@@ -100,7 +98,7 @@ export function useFeaturePermission() {
         ...newPermissions,
       }));
     } catch (error) {
-      console.error('[useFeaturePermission] 刷新权限失败:', error);
+      logger.error('[useFeaturePermission] 刷新权限失败:', error);
     } finally {
       setLoading(false);
     }

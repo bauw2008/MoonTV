@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getVideosByCategory } from '@/lib/tvbox-analysis';
 import {
   getTVBoxCategoryCache,
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     try {
       availableSites = await getAvailableApiSites(currentUsername);
     } catch (error) {
-      console.error('获取可用站点失败:', error);
+      logger.error('获取可用站点失败:', error);
       return NextResponse.json({ error: '获取可用站点失败' }, { status: 500 });
     }
 
@@ -133,7 +134,6 @@ export async function GET(request: NextRequest) {
 
             // 当应该应用过滤时，进行过滤
             if (shouldFilter) {
-              const beforeFilter = videosWithSourceName.length;
               videosWithSourceName = videosWithSourceName.filter(
                 (item: any) =>
                   !yellowWords.some((word: string) => {
@@ -157,6 +157,7 @@ export async function GET(request: NextRequest) {
         }
       } catch (cacheError) {
         // 缓存读取失败，继续从API获取
+        logger.error('从缓存读取视频失败:', cacheError);
       }
     }
 
@@ -275,7 +276,7 @@ export async function GET(request: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`获取分类信息失败 (源站: ${source}):`, error);
+        logger.error(`获取分类信息失败 (源站: ${source}):`, error);
         finalCategoryStructure = {
           primary_categories: [],
           secondary_categories: [],
@@ -343,6 +344,7 @@ export async function GET(request: NextRequest) {
         );
       } catch (cacheError) {
         // 缓存写入失败，不影响响应
+        logger.error('写入缓存失败:', cacheError);
       }
 
       return NextResponse.json({
@@ -352,11 +354,11 @@ export async function GET(request: NextRequest) {
         fromCache: false,
       });
     } catch (err) {
-      console.error('加载视频失败:', err);
+      logger.error('加载视频失败:', err);
       return NextResponse.json({ error: '加载视频失败' }, { status: 500 });
     }
   } catch (error) {
-    console.error('TVBox API错误:', error);
+    logger.error('TVBox API错误:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

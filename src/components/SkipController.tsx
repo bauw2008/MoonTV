@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { SkipSegment } from '@/lib/types';
 
 interface SkipControllerProps {
@@ -46,29 +47,6 @@ export default function SkipController({
   } | null>(null);
   const episodeSwitchCooldownRef = useRef<number>(0);
 
-  // 时间格式转换函数
-  const timeToSeconds = useCallback((timeStr: string): number => {
-    if (!timeStr || timeStr.trim() === '') {
-      return 0;
-    }
-
-    // 支持多种格式: "2:10", "2:10.5", "130", "130.5"
-    if (timeStr.includes(':')) {
-      const parts = timeStr.split(':');
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseFloat(parts[1]) || 0;
-      return minutes * 60 + seconds;
-    } else {
-      return parseFloat(timeStr) || 0;
-    }
-  }, []);
-
-  const formatTime = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
   // 从 localStorage 加载跳过设置
   const loadSkipSettings = useCallback(() => {
     try {
@@ -78,7 +56,7 @@ export default function SkipController({
         setSkipSettings({ ...DEFAULT_SKIP_CONFIG, ...settings });
       }
     } catch (e) {
-      console.warn('加载跳过设置失败:', e);
+      logger.warn('加载跳过设置失败:', e);
     }
   }, []);
 
@@ -148,7 +126,7 @@ export default function SkipController({
           }
         }
       } catch (e) {
-        // 静默处理错误
+        logger.error('处理跳过配置失败:', e);
       }
 
       // 根据 skipSettings 生成跳过配置
@@ -202,7 +180,10 @@ export default function SkipController({
           return;
         }
 
-        setCurrentSkipSegment(currentSegment);
+        // 使用 requestAnimationFrame 来延迟 setState 调用
+        requestAnimationFrame(() => {
+          setCurrentSkipSegment(currentSegment);
+        });
 
         // 实时检查是否开启自动跳过（从 localStorage 读取最新设置）
         let shouldAutoSkip = true; // 默认开启
@@ -213,7 +194,7 @@ export default function SkipController({
             shouldAutoSkip = settings.autoSkip !== false; // 使用最新的设置
           }
         } catch (e) {
-          console.warn('读取跳过设置失败:', e);
+          logger.warn('读取跳过设置失败:', e);
         }
 
         if (shouldAutoSkip) {
@@ -230,7 +211,10 @@ export default function SkipController({
           handleAutoSkip(currentSegment);
         }
       } else if (!currentSegment && currentSkipSegment?.type) {
-        setCurrentSkipSegment(null);
+        // 使用 requestAnimationFrame 来延迟 setState 调用
+        requestAnimationFrame(() => {
+          setCurrentSkipSegment(null);
+        });
       }
     },
     [
@@ -246,7 +230,10 @@ export default function SkipController({
 
   // 初始化加载配置
   useEffect(() => {
-    loadSkipSettings();
+    // 使用 requestAnimationFrame 来延迟 loadSkipSettings 调用
+    requestAnimationFrame(() => {
+      loadSkipSettings();
+    });
   }, [loadSkipSettings]);
 
   // 监听 localStorage 变化，同步跳过设置
@@ -257,7 +244,7 @@ export default function SkipController({
           const newSettings = JSON.parse(e.newValue);
           setSkipSettings({ ...DEFAULT_SKIP_CONFIG, ...newSettings });
         } catch (err) {
-          console.warn('解析跳过设置失败:', err);
+          logger.warn('解析跳过设置失败:', err);
         }
       }
     };
@@ -292,7 +279,10 @@ export default function SkipController({
 
   // 当 source 或 id 或 episodeIndex 变化时，清理所有状态（换集时）
   useEffect(() => {
-    setCurrentSkipSegment(null);
+    // 使用 requestAnimationFrame 来延迟 setState 调用
+    requestAnimationFrame(() => {
+      setCurrentSkipSegment(null);
+    });
     // 清除已处理标记，允许新集数重新处理
     lastProcessedSegmentRef.current = null;
     // 设置冷却时间，防止新集数立即触发自动跳过

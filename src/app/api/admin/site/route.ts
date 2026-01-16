@@ -1,11 +1,10 @@
-/* eslint-disable no-console */
-
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 参数校验
-    console.log('API收到参数:', body);
+    logger.log('API收到参数:', body);
 
     if (
       typeof SiteName !== 'string' ||
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
       typeof MenuSettings?.showTvbox !== 'boolean' ||
       typeof MenuSettings?.showShortDrama !== 'boolean'
     ) {
-      console.error('参数验证失败:', {
+      logger.error('参数验证失败:', {
         SiteName: typeof SiteName,
         Announcement: typeof Announcement,
         SearchDownstreamMaxPage: typeof SearchDownstreamMaxPage,
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error('更新站点配置失败:', error);
+    logger.error('更新站点配置失败:', error);
     return NextResponse.json(
       {
         error: '更新站点配置失败',

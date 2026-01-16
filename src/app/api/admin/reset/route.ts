@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const username = authInfo.username;
   const role = authInfo.role;
 
   if (role !== 'owner') {
@@ -64,7 +63,6 @@ export async function GET(request: NextRequest) {
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const username = authInfo.username;
   const role = authInfo.role;
 
   if (role !== 'owner') {

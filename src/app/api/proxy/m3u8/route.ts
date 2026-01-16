@@ -1,9 +1,11 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
+import { logger } from '@/lib/logger';
+import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 
@@ -21,7 +23,7 @@ export async function GET(request: Request) {
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  const ua = liveSource.ua || LIVE_PLAYER_USER_AGENTS.APTV_PLAYER;
 
   let response: Response | null = null;
   let responseUsed = false;
@@ -106,6 +108,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
+    logger.error('获取 m3u8 失败:', error);
     return NextResponse.json(
       { error: 'Failed to fetch m3u8' },
       { status: 500 },
@@ -117,7 +120,7 @@ export async function GET(request: Request) {
         response.body?.cancel();
       } catch (error) {
         // 忽略关闭时的错误
-        console.warn('Failed to close response body:', error);
+        logger.warn('Failed to close response body:', error);
       }
     }
   }
@@ -137,6 +140,7 @@ function rewriteM3U8Content(
       const refererUrl = new URL(referer);
       protocol = refererUrl.protocol.replace(':', '');
     } catch (error) {
+      logger.error('解析 referer URL 失败:', error);
       // ignore
     }
   }

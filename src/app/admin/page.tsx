@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 import { CapsuleSelector } from '@/components/CapsuleSelector';
 import PageLayout from '@/components/PageLayout';
@@ -270,7 +271,7 @@ const configCategories = {
 
 function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = typeof window !== 'undefined';
   const router = useRouter();
 
   const [activeCategory, setActiveCategory] =
@@ -278,8 +279,6 @@ function AdminContent() {
   const [activeItem, setActiveItem] = useState<string>('configFile');
 
   useEffect(() => {
-    setIsClient(true);
-
     // 单次权限验证
     const checkAccess = async () => {
       if (typeof window === 'undefined') return;
@@ -294,9 +293,9 @@ function AdminContent() {
         .then(async (res) => {
           if (!res.ok) {
             if (res.status === 401) {
-              console.warn('无权限访问管理页面');
+              logger.warn('无权限访问管理页面');
             } else {
-              console.warn('服务器验证失败:', res.status);
+              logger.warn('服务器验证失败:', res.status);
             }
             return;
           }
@@ -307,7 +306,7 @@ function AdminContent() {
           }
         })
         .catch((error) => {
-          console.warn('权限验证网络错误:', error);
+          logger.warn('权限验证网络错误:', error);
         });
     };
     checkAccess();

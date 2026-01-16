@@ -2,7 +2,10 @@
 'use client';
 
 import { AlertCircle, Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { logger } from '@/lib/logger';
 
 interface AcgSearchItem {
   title: string;
@@ -146,7 +149,7 @@ export default function AcgSearch({
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 
@@ -231,12 +234,14 @@ export default function AcgSearch({
             {item.images && item.images.length > 0 && (
               <div className='mb-3 flex gap-2 overflow-x-auto'>
                 {item.images.slice(0, 3).map((img, imgIndex) => (
-                  <img
+                  <Image
                     key={imgIndex}
                     src={img}
                     alt=''
+                    width={80}
+                    height={80}
                     className='h-20 w-auto rounded-lg object-cover shadow-sm border border-blue-200 dark:border-slate-700'
-                    loading='lazy'
+                    unoptimized
                   />
                 ))}
               </div>

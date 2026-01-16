@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
+import { getRandomUserAgent } from '@/lib/user-agent';
+
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,8 +18,7 @@ async function getShortDramaListInternal(
     `https://api.r2afosne.dpdns.org/vod/list?categoryId=${category}&page=${page}&size=${size}`,
     {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
         Accept: 'application/json',
       },
     },
@@ -96,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('获取短剧列表失败:', error);
+    logger.error('获取短剧列表失败:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

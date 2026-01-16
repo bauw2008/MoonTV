@@ -1,54 +1,46 @@
 'use server';
 
+import { logger } from '@/lib/logger';
+
 import { ReleaseCalendarItem } from './types';
+import { getRandomUserAgentWithInfo } from './user-agent';
 
 const baseUrl = 'https://g.manmankan.com/dy2013';
 
-// 用户代理池 - 2025 最新版本（多浏览器策略）
-const USER_AGENTS = [
-  // Chrome 133 (2025最新)
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-  // Firefox 133 (2025最新)
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
-  // Safari 18 (2025最新)
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
-  // Edge 133 (2025最新)
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
-];
-
 /**
  * 获取随机 User-Agent 及对应的浏览器指纹
+ * 使用统一的user-agent模块，支持最新浏览器版本
  */
 function getRandomUserAgent(): {
   ua: string;
   browser: 'chrome' | 'firefox' | 'safari' | 'edge';
   platform: string;
 } {
-  const index = Math.floor(Math.random() * USER_AGENTS.length);
-  const ua = USER_AGENTS[index];
+  const { ua, browser, platform } = getRandomUserAgentWithInfo({
+    browserType: 'desktop',
+    includeMobile: false,
+  });
 
-  // 识别浏览器类型和平台
-  let browser: 'chrome' | 'firefox' | 'safari' | 'edge' = 'chrome';
-  let platform = 'Windows';
+  // 确保browser类型匹配（getRandomUserAgentWithInfo可能返回'other'，但这里不会）
+  const typedBrowser: 'chrome' | 'firefox' | 'safari' | 'edge' =
+    browser === 'chrome' ||
+    browser === 'firefox' ||
+    browser === 'safari' ||
+    browser === 'edge'
+      ? browser
+      : 'chrome';
 
-  if (ua.includes('Firefox')) {
-    browser = 'firefox';
-  } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
-    browser = 'safari';
-  } else if (ua.includes('Edg/')) {
-    browser = 'edge';
-  }
+  // 平台类型转换
+  const typedPlatform =
+    platform === 'windows'
+      ? 'Windows'
+      : platform === 'macos'
+        ? 'macOS'
+        : platform === 'linux'
+          ? 'Linux'
+          : 'Windows';
 
-  if (ua.includes('Macintosh')) {
-    platform = 'macOS';
-  } else if (ua.includes('Linux')) {
-    platform = 'Linux';
-  }
-
-  return { ua, browser, platform };
+  return { ua, browser: typedBrowser, platform: typedPlatform };
 }
 
 /**
@@ -200,7 +192,7 @@ function parseMovieHTML(html: string): ReleaseCalendarItem[] {
       }
     }
   } catch (error) {
-    console.error('解析电影HTML失败:', error);
+    logger.error('解析电影HTML失败:', error);
   }
 
   return items;
@@ -314,7 +306,7 @@ function parseTVHTML(html: string): ReleaseCalendarItem[] {
       }
     }
   } catch (error) {
-    console.error('解析电视剧HTML失败:', error);
+    logger.error('解析电视剧HTML失败:', error);
   }
 
   return items;
@@ -367,24 +359,24 @@ export async function scrapeMovieReleases(
     const html = await response.text();
     const items = parseMovieHTML(html);
 
-    console.log(`✅ 电影数据抓取成功: ${items.length} 部`);
+    logger.log(`✅ 电影数据抓取成功: ${items.length} 部`);
     return items;
   } catch (error) {
-    console.error(
+    logger.error(
       `抓取电影数据失败 (重试 ${retryCount}/${MAX_RETRIES}):`,
       error,
     );
 
     // 重试机制
     if (retryCount < MAX_RETRIES) {
-      console.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
+      logger.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
       await new Promise((resolve) =>
         setTimeout(resolve, RETRY_DELAYS[retryCount]),
       );
       return scrapeMovieReleases(retryCount + 1);
     }
 
-    console.error('电影数据抓取失败，已达到最大重试次数');
+    logger.error('电影数据抓取失败，已达到最大重试次数');
     return [];
   }
 }
@@ -436,24 +428,24 @@ export async function scrapeTVReleases(
     const html = await response.text();
     const items = parseTVHTML(html);
 
-    console.log(`✅ 电视剧数据抓取成功: ${items.length} 部`);
+    logger.log(`✅ 电视剧数据抓取成功: ${items.length} 部`);
     return items;
   } catch (error) {
-    console.error(
+    logger.error(
       `抓取电视剧数据失败 (重试 ${retryCount}/${MAX_RETRIES}):`,
       error,
     );
 
     // 重试机制
     if (retryCount < MAX_RETRIES) {
-      console.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
+      logger.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
       await new Promise((resolve) =>
         setTimeout(resolve, RETRY_DELAYS[retryCount]),
       );
       return scrapeTVReleases(retryCount + 1);
     }
 
-    console.error('电视剧数据抓取失败，已达到最大重试次数');
+    logger.error('电视剧数据抓取失败，已达到最大重试次数');
     return [];
   }
 }
@@ -709,7 +701,7 @@ function parseHomepageHTML(
       }
     }
   } catch (error) {
-    console.error(
+    logger.error(
       `解析${type === 'movie' ? '电影' : '电视剧'}首页HTML失败:`,
       error,
     );
@@ -763,23 +755,23 @@ export async function scrapeMovieHomepage(
     const html = await response.text();
     const items = parseHomepageHTML(html, 'movie');
 
-    console.log(`✅ 电影首页数据抓取成功: ${items.length} 部`);
+    logger.log(`✅ 电影首页数据抓取成功: ${items.length} 部`);
     return items;
   } catch (error) {
-    console.error(
+    logger.error(
       `抓取电影首页数据失败 (重试 ${retryCount}/${MAX_RETRIES}):`,
       error,
     );
 
     if (retryCount < MAX_RETRIES) {
-      console.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
+      logger.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
       await new Promise((resolve) =>
         setTimeout(resolve, RETRY_DELAYS[retryCount]),
       );
       return scrapeMovieHomepage(retryCount + 1);
     }
 
-    console.error('电影首页数据抓取失败，已达到最大重试次数');
+    logger.error('电影首页数据抓取失败，已达到最大重试次数');
     return [];
   }
 }
@@ -828,23 +820,23 @@ export async function scrapeTVHomepage(
     const html = await response.text();
     const items = parseHomepageHTML(html, 'tv');
 
-    console.log(`✅ 电视剧首页数据抓取成功: ${items.length} 部`);
+    logger.log(`✅ 电视剧首页数据抓取成功: ${items.length} 部`);
     return items;
   } catch (error) {
-    console.error(
+    logger.error(
       `抓取电视剧首页数据失败 (重试 ${retryCount}/${MAX_RETRIES}):`,
       error,
     );
 
     if (retryCount < MAX_RETRIES) {
-      console.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
+      logger.warn(`等待 ${RETRY_DELAYS[retryCount]}ms 后重试...`);
       await new Promise((resolve) =>
         setTimeout(resolve, RETRY_DELAYS[retryCount]),
       );
       return scrapeTVHomepage(retryCount + 1);
     }
 
-    console.error('电视剧首页数据抓取失败，已达到最大重试次数');
+    logger.error('电视剧首页数据抓取失败，已达到最大重试次数');
     return [];
   }
 }
@@ -854,36 +846,36 @@ export async function scrapeTVHomepage(
  */
 export async function scrapeAllReleases(): Promise<ReleaseCalendarItem[]> {
   try {
-    console.log('📅 开始抓取发布日历数据...');
+    logger.log('📅 开始抓取发布日历数据...');
 
     // 抓取电影时间表数据
-    console.log('🎬 抓取电影时间表数据...');
+    logger.log('🎬 抓取电影时间表数据...');
     const movies = await scrapeMovieReleases();
-    console.log(`✅ 电影时间表数据抓取完成: ${movies.length} 部`);
+    logger.log(`✅ 电影时间表数据抓取完成: ${movies.length} 部`);
 
     // 添加随机延迟
     await randomDelay(2000, 4000);
 
     // 抓取电影首页数据（包含2026年1月）
-    console.log('🎬 抓取电影首页数据（2026年）...');
+    logger.log('🎬 抓取电影首页数据（2026年）...');
     const moviesHomepage = await scrapeMovieHomepage();
-    console.log(`✅ 电影首页数据抓取完成: ${moviesHomepage.length} 部`);
+    logger.log(`✅ 电影首页数据抓取完成: ${moviesHomepage.length} 部`);
 
     // 添加随机延迟
     await randomDelay(2000, 4000);
 
     // 抓取电视剧时间表数据
-    console.log('📺 抓取电视剧时间表数据...');
+    logger.log('📺 抓取电视剧时间表数据...');
     const tvShows = await scrapeTVReleases();
-    console.log(`✅ 电视剧时间表数据抓取完成: ${tvShows.length} 部`);
+    logger.log(`✅ 电视剧时间表数据抓取完成: ${tvShows.length} 部`);
 
     // 添加随机延迟
     await randomDelay(2000, 4000);
 
     // 抓取电视剧首页数据（包含2026年1月）
-    console.log('📺 抓取电视剧首页数据（2026年）...');
+    logger.log('📺 抓取电视剧首页数据（2026年）...');
     const tvHomepage = await scrapeTVHomepage();
-    console.log(`✅ 电视剧首页数据抓取完成: ${tvHomepage.length} 部`);
+    logger.log(`✅ 电视剧首页数据抓取完成: ${tvHomepage.length} 部`);
 
     // 合并所有数据，去重（按title和releaseDate去重）
     const allItems = [...movies, ...moviesHomepage, ...tvShows, ...tvHomepage];
@@ -895,13 +887,13 @@ export async function scrapeAllReleases(): Promise<ReleaseCalendarItem[]> {
         ),
     );
 
-    console.log(
+    logger.log(
       `🎉 总共抓取到 ${allItems.length} 条发布数据（去重后 ${uniqueItems.length} 条）`,
     );
 
     return uniqueItems;
   } catch (error) {
-    console.error('❌ 抓取发布日历数据失败:', error);
+    logger.error('❌ 抓取发布日历数据失败:', error);
     return [];
   }
 }
@@ -976,7 +968,7 @@ export async function getReleaseCalendar(
 
     return { items, total, hasMore };
   } catch (error) {
-    console.error('获取发布日历失败:', error);
+    logger.error('获取发布日历失败:', error);
     return { items: [], total: 0, hasMore: false };
   }
 }
@@ -1025,7 +1017,7 @@ export async function getFilters(): Promise<{
         .map(([genre, count]) => ({ value: genre, label: genre, count })),
     };
   } catch (error) {
-    console.error('获取过滤器失败:', error);
+    logger.error('获取过滤器失败:', error);
     return { types: [], regions: [], genres: [] };
   }
 }

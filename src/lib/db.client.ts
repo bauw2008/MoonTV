@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 'use client';
 
 /**
@@ -17,6 +17,7 @@
 import { ToastManager } from '@/components/Toast';
 
 import { getAuthInfoFromBrowserCookie } from './auth';
+import { logger } from './logger';
 import type { Favorite, PlayRecord } from './types';
 import { UserPlayStat } from './types';
 import { clearWatchingUpdates } from './watching-updates';
@@ -157,7 +158,7 @@ class HybridCacheManager {
       const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : {};
     } catch (error) {
-      console.warn('获取用户缓存失败:', error);
+      logger.warn('获取用户缓存失败:', error);
       return {};
     }
   }
@@ -181,14 +182,14 @@ class HybridCacheManager {
       // 检查缓存大小，超过15MB时清理旧数据
       const cacheSize = JSON.stringify(cache).length;
       if (cacheSize > 15 * 1024 * 1024) {
-        console.warn('缓存过大，清理旧数据');
+        logger.warn('缓存过大，清理旧数据');
         this.cleanOldCache(cache);
       }
 
       const cacheKey = this.getUserCacheKey(username);
       localStorage.setItem(cacheKey, JSON.stringify(cache));
     } catch (error) {
-      console.warn('保存用户缓存失败:', error);
+      logger.warn('保存用户缓存失败:', error);
       // 存储空间不足时清理缓存后重试
       if (
         error instanceof DOMException &&
@@ -199,7 +200,7 @@ class HybridCacheManager {
           const cacheKey = this.getUserCacheKey(username);
           localStorage.setItem(cacheKey, JSON.stringify(cache));
         } catch (retryError) {
-          console.error('重试保存缓存仍然失败:', retryError);
+          logger.error('重试保存缓存仍然失败:', retryError);
         }
       }
     }
@@ -410,7 +411,7 @@ class HybridCacheManager {
       const cacheKey = this.getUserCacheKey(targetUsername);
       localStorage.removeItem(cacheKey);
     } catch (error) {
-      console.warn('清除用户缓存失败:', error);
+      logger.warn('清除用户缓存失败:', error);
     }
   }
 
@@ -430,11 +431,11 @@ class HybridCacheManager {
       if (immediate) {
         // 🔧 优化：立即清除缓存，而不是仅标记过期
         delete userCache.playRecords;
-        console.log('✅ 立即清除播放记录缓存');
+        logger.log('✅ 立即清除播放记录缓存');
       } else {
         // 将播放记录缓存时间戳设置为过期
         userCache.playRecords.timestamp = 0;
-        console.log('✅ 标记播放记录缓存为过期');
+        logger.log('✅ 标记播放记录缓存为过期');
       }
       this.saveUserCache(username, userCache);
     }
@@ -476,7 +477,7 @@ class HybridCacheManager {
 
       keysToRemove.forEach((key) => localStorage.removeItem(key));
     } catch (error) {
-      console.warn('清除过期缓存失败:', error);
+      logger.warn('清除过期缓存失败:', error);
     }
   }
 
@@ -591,7 +592,7 @@ async function handleDatabaseOperationFailure(
   dataType: 'playRecords' | 'favorites' | 'searchHistory',
   error: any,
 ): Promise<void> {
-  console.error(`数据库操作失败 (${dataType}):`, error);
+  logger.error(`数据库操作失败 (${dataType}):`, error);
   triggerGlobalError('数据库操作失败');
 
   try {
@@ -625,7 +626,7 @@ async function handleDatabaseOperationFailure(
       }),
     );
   } catch (refreshErr) {
-    console.error(`刷新${dataType}缓存失败:`, refreshErr);
+    logger.error(`刷新${dataType}缓存失败:`, refreshErr);
     triggerGlobalError(`刷新${dataType}缓存失败`);
   }
 }
@@ -688,7 +689,7 @@ async function fetchWithAuth(
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('注销请求失败:', error);
+        logger.error('注销请求失败:', error);
       }
       const currentUrl = window.location.pathname + window.location.search;
       const loginUrl = new URL('/login', window.location.origin);
@@ -713,13 +714,13 @@ async function fetchFromApi<T>(path: string, retries = 2): Promise<T> {
       return (await res.json()) as T;
     } catch (error) {
       lastError = error as Error;
-      console.warn(`请求失败 (尝试 ${i + 1}/${retries + 1}):`, error);
+      logger.warn(`请求失败 (尝试 ${i + 1}/${retries + 1}):`, error);
 
       // 如果不是最后一次尝试，等待后重试
       if (i < retries) {
         // 使用指数退避：第一次重试等待500ms，第二次等待1000ms
         const delay = 500 * Math.pow(2, i);
-        console.log(`等待 ${delay}ms 后重试...`);
+        logger.log(`等待 ${delay}ms 后重试...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -768,7 +769,7 @@ async function checkShouldUpdateOriginalEpisodes(
   let freshRecord = existingRecord;
 
   try {
-    console.log(`🔍 从数据库读取最新的 original_episodes (${recordKey})...`);
+    logger.log(`🔍 从数据库读取最新的 original_episodes (${recordKey})...`);
     const freshRecordsResponse = await fetch('/api/playrecords');
     if (freshRecordsResponse.ok) {
       const freshRecords = await freshRecordsResponse.json();
@@ -781,22 +782,22 @@ async function checkShouldUpdateOriginalEpisodes(
 
         // 🔧 自动修复：如果 original_episodes 大于当前 total_episodes，说明之前存错了
         if (originalEpisodes > freshRecord.total_episodes) {
-          console.warn(
+          logger.warn(
             `⚠️ 检测到错误数据：original_episodes(${originalEpisodes}) > total_episodes(${freshRecord.total_episodes})，自动修正为 ${freshRecord.total_episodes}`,
           );
           originalEpisodes = freshRecord.total_episodes;
           freshRecord.original_episodes = freshRecord.total_episodes;
         }
 
-        console.log(
+        logger.log(
           `📚 从数据库读取到最新 original_episodes: ${existingRecord.title} (${recordKey}) = ${originalEpisodes}集`,
         );
       } else {
-        console.warn(`⚠️ 数据库中未找到记录: ${recordKey}`);
+        logger.warn(`⚠️ 数据库中未找到记录: ${recordKey}`);
       }
     }
   } catch (error) {
-    console.warn('⚠️ 从数据库读取 original_episodes 失败，使用缓存值', error);
+    logger.warn('⚠️ 从数据库读取 original_episodes 失败，使用缓存值', error);
   }
 
   // 条件1：用户观看进度超过了原始集数（说明用户已经看了新更新的集数）
@@ -806,7 +807,7 @@ async function checkShouldUpdateOriginalEpisodes(
   const hasSignificantProgress = newRecord.play_time > 60; // 观看超过1分钟
 
   if (!hasWatchedBeyondOriginal || !hasSignificantProgress) {
-    console.log(
+    logger.log(
       `✗ 不更新原始集数: ${existingRecord.title} - 观看第${
         newRecord.index
       }集，原始${originalEpisodes}集 (${
@@ -820,7 +821,7 @@ async function checkShouldUpdateOriginalEpisodes(
   }
 
   // 用户看了超过原始集数的集数，获取最新的 total_episodes
-  console.log(
+  logger.log(
     `🔍 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），从数据库获取最新集数...`,
   );
 
@@ -829,13 +830,13 @@ async function checkShouldUpdateOriginalEpisodes(
       freshRecord.total_episodes,
       originalEpisodes,
     );
-    console.log(
+    logger.log(
       `✓ 应更新原始集数: ${existingRecord.title} - 用户看了第${newRecord.index}集（超过原始${originalEpisodes}集），数据库最新集数${freshRecord.total_episodes}集 → 更新原始集数为${latestTotalEpisodes}集`,
     );
 
     return { shouldUpdate: true, latestTotalEpisodes };
   } catch (error) {
-    console.error('❌ 获取最新集数失败:', error);
+    logger.error('❌ 获取最新集数失败:', error);
     // 失败时仍然更新，使用保守的值
     return {
       shouldUpdate: true,
@@ -864,7 +865,7 @@ export async function getAllPlayRecords(
     // 🔧 优化：如果强制刷新，跳过缓存直接获取最新数据
     if (forceRefresh) {
       try {
-        console.log('🔄 强制刷新播放记录，跳过缓存直接从API获取');
+        logger.log('🔄 强制刷新播放记录，跳过缓存直接从API获取');
         const freshData =
           await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
         cacheManager.cachePlayRecords(freshData);
@@ -876,7 +877,7 @@ export async function getAllPlayRecords(
         );
         return freshData;
       } catch (err) {
-        console.error('强制刷新播放记录失败:', err);
+        logger.error('强制刷新播放记录失败:', err);
         triggerGlobalError('获取播放记录失败');
         // 失败时尝试返回缓存数据作为降级
         const cachedData = cacheManager.getCachedPlayRecords();
@@ -903,7 +904,7 @@ export async function getAllPlayRecords(
           }
         })
         .catch((err) => {
-          console.warn('后台同步播放记录失败:', err);
+          logger.warn('后台同步播放记录失败:', err);
           triggerGlobalError('后台同步播放记录失败');
         });
 
@@ -916,7 +917,7 @@ export async function getAllPlayRecords(
         cacheManager.cachePlayRecords(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取播放记录失败:', err);
+        logger.error('获取播放记录失败:', err);
         triggerGlobalError('获取播放记录失败');
         return {};
       }
@@ -931,7 +932,7 @@ export async function getAllPlayRecords(
     }
     return JSON.parse(raw) as Record<string, PlayRecord>;
   } catch (err) {
-    console.error('读取播放记录失败:', err);
+    logger.error('读取播放记录失败:', err);
     triggerGlobalError('读取播放记录失败');
     return {};
   }
@@ -961,13 +962,13 @@ export async function savePlayRecord(
     ) {
       // 使用现有记录的 original_episodes
       record.original_episodes = existingRecord.original_episodes;
-      console.log(
+      logger.log(
         `✓ 使用现有原始集数: ${key} = ${existingRecord.original_episodes}集`,
       );
     } else {
       // 首次保存或旧数据补充：使用当前 total_episodes
       record.original_episodes = record.total_episodes;
-      console.log(
+      logger.log(
         `✓ 设置原始集数: ${key} = ${record.total_episodes}集 ${
           existingRecord ? '(补充旧数据)' : '(首次保存)'
         }`,
@@ -989,7 +990,7 @@ export async function savePlayRecord(
       record.original_episodes = updateResult.latestTotalEpisodes;
       // 🔑 同时更新 total_episodes 为最新值
       record.total_episodes = updateResult.latestTotalEpisodes;
-      console.log(
+      logger.log(
         `✓ 更新原始集数: ${key} = ${existingRecord.original_episodes}集 -> ${updateResult.latestTotalEpisodes}集（用户已观看新集数）`,
       );
 
@@ -1045,12 +1046,12 @@ export async function savePlayRecord(
             }),
           );
 
-          console.log(
+          logger.log(
             '✅ 数据库更新成功，已清除 watching-updates 和播放记录缓存，并刷新最新数据',
           );
           delete (record as any)._shouldClearCache;
         } catch (cacheError) {
-          console.warn('清除缓存失败:', cacheError);
+          logger.warn('清除缓存失败:', cacheError);
         }
       } else {
         // 🔧 优化：即使没有 _shouldClearCache 标志，也要从服务器同步最新数据以确保缓存一致性
@@ -1066,16 +1067,16 @@ export async function savePlayRecord(
                 detail: freshData,
               }),
             );
-            console.log('✅ 播放记录已同步最新数据');
+            logger.log('✅ 播放记录已同步最新数据');
           }
         } catch (syncError) {
-          console.warn('同步最新播放记录失败:', syncError);
+          logger.warn('同步最新播放记录失败:', syncError);
         }
       }
 
       // 异步更新用户统计数据（不阻塞主流程）
       updateUserStats(record).catch((err) => {
-        console.warn('更新用户统计数据失败:', err);
+        logger.warn('更新用户统计数据失败:', err);
       });
 
       // 🔧 优化：如果播放记录更新了总集数，同步更新对应的收藏项
@@ -1090,12 +1091,12 @@ export async function savePlayRecord(
               total_episodes: record.total_episodes,
             };
             await saveFavorite(source, id, updatedFavorite);
-            console.log(
+            logger.log(
               `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`,
             );
           }
         } catch (favError) {
-          console.warn('同步更新收藏项总集数失败:', favError);
+          logger.warn('同步更新收藏项总集数失败:', favError);
           // 不阻塞主流程，继续执行
         }
       }
@@ -1109,7 +1110,7 @@ export async function savePlayRecord(
 
   // localstorage 模式
   if (typeof window === 'undefined') {
-    console.warn('无法在服务端保存播放记录到 localStorage');
+    logger.warn('无法在服务端保存播放记录到 localStorage');
     return;
   }
 
@@ -1125,7 +1126,7 @@ export async function savePlayRecord(
 
     // 异步更新用户统计数据（不阻塞主流程）
     updateUserStats(record).catch((err) => {
-      console.warn('更新用户统计数据失败:', err);
+      logger.warn('更新用户统计数据失败:', err);
     });
 
     // 🔧 优化：如果播放记录更新了总集数，同步更新对应的收藏项
@@ -1140,17 +1141,17 @@ export async function savePlayRecord(
             total_episodes: record.total_episodes,
           };
           await saveFavorite(source, id, updatedFavorite);
-          console.log(
+          logger.log(
             `✅ 同步更新收藏项总集数: ${record.title} = ${record.total_episodes}集`,
           );
         }
       } catch (favError) {
-        console.warn('同步更新收藏项总集数失败:', favError);
+        logger.warn('同步更新收藏项总集数失败:', favError);
         // 不阻塞主流程，继续执行
       }
     }
   } catch (err) {
-    console.error('保存播放记录失败:', err);
+    logger.error('保存播放记录失败:', err);
     triggerGlobalError('保存播放记录失败');
     throw err;
   }
@@ -1202,7 +1203,7 @@ export async function deletePlayRecord(
 
   // localstorage 模式
   if (typeof window === 'undefined') {
-    console.warn('无法在服务端删除播放记录到 localStorage');
+    logger.warn('无法在服务端删除播放记录到 localStorage');
     return;
   }
 
@@ -1216,7 +1217,7 @@ export async function deletePlayRecord(
       }),
     );
   } catch (err) {
-    console.error('删除播放记录失败:', err);
+    logger.error('删除播放记录失败:', err);
     triggerGlobalError('删除播放记录失败');
     throw err;
   }
@@ -1255,7 +1256,7 @@ export async function getSearchHistory(): Promise<string[]> {
           }
         })
         .catch((err) => {
-          console.warn('后台同步搜索历史失败:', err);
+          logger.warn('后台同步搜索历史失败:', err);
           triggerGlobalError('后台同步搜索历史失败');
         });
 
@@ -1267,7 +1268,7 @@ export async function getSearchHistory(): Promise<string[]> {
         cacheManager.cacheSearchHistory(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取搜索历史失败:', err);
+        logger.error('获取搜索历史失败:', err);
         triggerGlobalError('获取搜索历史失败');
         return [];
       }
@@ -1284,7 +1285,7 @@ export async function getSearchHistory(): Promise<string[]> {
     // 仅返回字符串数组
     return Array.isArray(arr) ? arr : [];
   } catch (err) {
-    console.error('读取搜索历史失败:', err);
+    logger.error('读取搜索历史失败:', err);
     triggerGlobalError('读取搜索历史失败');
     return [];
   }
@@ -1356,7 +1357,7 @@ export async function addSearchHistory(keyword: string): Promise<void> {
       }),
     );
   } catch (err) {
-    console.error('保存搜索历史失败:', err);
+    logger.error('保存搜索历史失败:', err);
     triggerGlobalError('保存搜索历史失败');
   }
 }
@@ -1462,7 +1463,7 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
       }),
     );
   } catch (err) {
-    console.error('删除搜索历史失败:', err);
+    logger.error('删除搜索历史失败:', err);
     triggerGlobalError('删除搜索历史失败');
   }
 }
@@ -1500,7 +1501,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
           }
         })
         .catch((err) => {
-          console.warn('后台同步收藏失败:', err);
+          logger.warn('后台同步收藏失败:', err);
           triggerGlobalError('后台同步收藏失败');
         });
 
@@ -1513,7 +1514,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
         cacheManager.cacheFavorites(freshData);
         return freshData;
       } catch (err) {
-        console.error('获取收藏失败:', err);
+        logger.error('获取收藏失败:', err);
         triggerGlobalError('获取收藏失败');
         return {};
       }
@@ -1528,7 +1529,7 @@ export async function getAllFavorites(): Promise<Record<string, Favorite>> {
     }
     return JSON.parse(raw) as Record<string, Favorite>;
   } catch (err) {
-    console.error('读取收藏失败:', err);
+    logger.error('读取收藏失败:', err);
     triggerGlobalError('读取收藏失败');
     return {};
   }
@@ -1561,7 +1562,7 @@ export async function saveFavorite(
 
     // 异步同步到数据库
     try {
-      console.log('发送收藏数据到API:', { key, favorite });
+      logger.log('发送收藏数据到API:', { key, favorite });
       const response = await fetch('/api/favorites', {
         method: 'POST',
         headers: {
@@ -1583,7 +1584,7 @@ export async function saveFavorite(
 
   // localStorage 模式
   if (typeof window === 'undefined') {
-    console.warn('无法在服务端保存收藏到 localStorage');
+    logger.warn('无法在服务端保存收藏到 localStorage');
     return;
   }
 
@@ -1597,7 +1598,7 @@ export async function saveFavorite(
       }),
     );
   } catch (err) {
-    console.error('保存收藏失败:', err);
+    logger.error('保存收藏失败:', err);
     triggerGlobalError('保存收藏失败');
     throw err;
   }
@@ -1649,7 +1650,7 @@ export async function deleteFavorite(
 
   // localStorage 模式
   if (typeof window === 'undefined') {
-    console.warn('无法在服务端删除收藏到 localStorage');
+    logger.warn('无法在服务端删除收藏到 localStorage');
     return;
   }
 
@@ -1663,7 +1664,7 @@ export async function deleteFavorite(
       }),
     );
   } catch (err) {
-    console.error('删除收藏失败:', err);
+    logger.error('删除收藏失败:', err);
     triggerGlobalError('删除收藏失败');
     throw err;
   }
@@ -1699,7 +1700,7 @@ export async function isFavorited(
           }
         })
         .catch((err) => {
-          console.warn('后台同步收藏失败:', err);
+          logger.warn('后台同步收藏失败:', err);
           triggerGlobalError('后台同步收藏失败');
         });
 
@@ -1712,7 +1713,7 @@ export async function isFavorited(
         cacheManager.cacheFavorites(freshData);
         return !!freshData[key];
       } catch (err) {
-        console.error('检查收藏状态失败:', err);
+        logger.error('检查收藏状态失败:', err);
         ToastManager.error('检查收藏状态失败');
         return false;
       }
@@ -1894,7 +1895,7 @@ export async function refreshAllCache(): Promise<void> {
       );
     }
   } catch (err) {
-    console.error('刷新缓存失败:', err);
+    logger.error('刷新缓存失败:', err);
     triggerGlobalError('刷新缓存失败');
   }
 }
@@ -1986,7 +1987,7 @@ export async function preloadUserData(): Promise<void> {
 
   // 后台静默预加载，不阻塞界面
   refreshAllCache().catch((err) => {
-    console.warn('预加载用户数据失败:', err);
+    logger.warn('预加载用户数据失败:', err);
     triggerGlobalError('预加载用户数据失败');
   });
 }
@@ -2120,7 +2121,7 @@ export async function getUserStats(forceRefresh = false): Promise<UserStats> {
             }
           })
           .catch((err) => {
-            console.warn('后台同步用户统计数据失败:', err);
+            logger.warn('后台同步用户统计数据失败:', err);
           });
 
         return cached;
@@ -2132,12 +2133,12 @@ export async function getUserStats(forceRefresh = false): Promise<UserStats> {
         cacheManager.cacheUserStats(freshData);
         return freshData;
       } catch (error) {
-        console.error('获取用户统计数据失败:', error);
+        logger.error('获取用户统计数据失败:', error);
 
         // 如果服务器请求失败，检查是否有缓存的统计数据
         const cachedStats = cacheManager.getCachedUserStats();
         if (cachedStats) {
-          console.log('使用缓存的统计数据:', cachedStats);
+          logger.log('使用缓存的统计数据:', cachedStats);
           return cachedStats;
         }
 
@@ -2149,7 +2150,7 @@ export async function getUserStats(forceRefresh = false): Promise<UserStats> {
     // localStorage 模式
     return await calculateStatsFromLocalData();
   } catch (error) {
-    console.error('获取用户统计数据失败:', error);
+    logger.error('获取用户统计数据失败:', error);
     return await calculateStatsFromLocalData();
   }
 }
@@ -2232,7 +2233,7 @@ async function calculateStatsFromLocalData(): Promise<UserStats> {
 
     return stats;
   } catch (error) {
-    console.error('计算本地统计数据失败:', error);
+    logger.error('计算本地统计数据失败:', error);
     return {
       username: getAuthInfoFromBrowserCookie()?.username || 'unknown',
       totalWatchTime: 0,
@@ -2255,7 +2256,7 @@ async function calculateStatsFromLocalData(): Promise<UserStats> {
  * 智能计算观看时间增量，支持防刷机制
  */
 export async function updateUserStats(record: PlayRecord): Promise<void> {
-  console.log('=== updateUserStats 开始执行 ===', {
+  logger.log('=== updateUserStats 开始执行 ===', {
     title: record.title,
     source: record.source_name,
     year: record.year,
@@ -2268,7 +2269,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
   try {
     // 统一使用相同的movieKey格式，确保影片数量统计准确
     const movieKey = `${record.title}_${record.source_name}_${record.year}`;
-    console.log('生成的movieKey:', movieKey);
+    logger.log('生成的movieKey:', movieKey);
 
     // 使用包含集数信息的键来缓存每一集的播放进度
     const episodeKey = `${record.source_name}+${record.title}-${record.year}+${record.index}`;
@@ -2291,7 +2292,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
       timeSinceLastUpdate < 10 * 1000 &&
       Math.abs(record.play_time - lastProgress) < 1
     ) {
-      console.log(
+      logger.log(
         `跳过统计数据更新: 时间间隔过短 (${Math.floor(
           timeSinceLastUpdate / 1000,
         )}s) 且进度无变化`,
@@ -2311,7 +2312,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           watchTimeIncrement,
           Math.floor(timeSinceLastUpdate / 1000) + 60,
         );
-        console.log(
+        logger.log(
           `检测到快进操作: ${record.title} 第${record.index}集 - 进度增加: ${
             record.play_time - lastProgress
           }s, 限制增量为: ${watchTimeIncrement}s`,
@@ -2322,13 +2323,13 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
       if (timeSinceLastUpdate > 1 * 60 * 1000) {
         // 1分钟以上认为是重新开始观看
         watchTimeIncrement = Math.min(record.play_time, 60); // 重新观看最多给60秒增量
-        console.log(
+        logger.log(
           `检测到重新观看: ${record.title} 第${record.index}集 - 当前进度: ${record.play_time}s, 上次进度: ${lastProgress}s`,
         );
       } else {
         // 短时间内的回退，可能是快退操作，不给增量
         watchTimeIncrement = 0;
-        console.log(
+        logger.log(
           `检测到快退操作: ${record.title} 第${record.index}集 - 不计入观看时间`,
         );
       }
@@ -2340,19 +2341,19 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           Math.floor(timeSinceLastUpdate / 1000),
           60,
         ); // 最多1分钟
-        console.log(
+        logger.log(
           `检测到暂停后继续: ${record.title} 第${record.index}集 - 使用增量: ${watchTimeIncrement}s`,
         );
       }
     }
 
-    console.log(
+    logger.log(
       `观看时间增量计算: ${record.title} 第${record.index}集 - 增量: ${watchTimeIncrement}s`,
     );
 
     // 只要有观看时间增量就更新统计数据
     if (watchTimeIncrement > 0) {
-      console.log(
+      logger.log(
         `发送统计数据更新请求: 增量 ${watchTimeIncrement}s, movieKey: ${movieKey}`,
       );
 
@@ -2376,7 +2377,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           }
 
           const responseData = await response.json();
-          console.log('API响应数据:', responseData);
+          logger.log('API响应数据:', responseData);
 
           // 更新localStorage中的上次播放进度和更新时间
           localStorage.setItem(lastProgressKey, record.play_time.toString());
@@ -2385,7 +2386,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
           // 立即更新缓存中的用户统计数据
           if (responseData.userStats) {
             cacheManager.cacheUserStats(responseData.userStats);
-            console.log('更新用户统计数据缓存:', responseData.userStats);
+            logger.log('更新用户统计数据缓存:', responseData.userStats);
 
             // 触发用户统计数据更新事件
             window.dispatchEvent(
@@ -2395,7 +2396,7 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
             );
           }
         } catch (error) {
-          console.error('更新用户统计数据失败:', error);
+          logger.error('更新用户统计数据失败:', error);
           // API调用失败时，仍然更新本地进度记录
           localStorage.setItem(lastProgressKey, record.play_time.toString());
           localStorage.setItem(lastUpdateTimeKey, currentTime.toString());
@@ -2433,19 +2434,19 @@ export async function updateUserStats(record: PlayRecord): Promise<void> {
             }),
           );
 
-          console.log(`本地统计数据已更新: 增量 ${watchTimeIncrement}s`);
+          logger.log(`本地统计数据已更新: 增量 ${watchTimeIncrement}s`);
         } catch (error) {
-          console.error('本地统计数据更新失败:', error);
+          logger.error('本地统计数据更新失败:', error);
         }
       }
     } else {
-      console.log(`无需更新用户统计数据: 增量为 ${watchTimeIncrement}s`);
+      logger.log(`无需更新用户统计数据: 增量为 ${watchTimeIncrement}s`);
       // 即使没有增量，也要更新时间戳和进度
       localStorage.setItem(lastProgressKey, record.play_time.toString());
       localStorage.setItem(lastUpdateTimeKey, currentTime.toString());
     }
   } catch (error) {
-    console.error('更新用户统计数据失败:', error);
+    logger.error('更新用户统计数据失败:', error);
     // 静默失败，不影响用户体验
   }
 }
@@ -2495,7 +2496,7 @@ export async function clearUserStats(): Promise<void> {
       }),
     );
   } catch (error) {
-    console.error('清除用户统计数据失败:', error);
+    logger.error('清除用户统计数据失败:', error);
     throw error;
   }
 }

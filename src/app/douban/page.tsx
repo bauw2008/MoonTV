@@ -1,4 +1,4 @@
-/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
 
 'use client';
 
@@ -6,7 +6,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
@@ -14,9 +14,9 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
@@ -28,9 +28,58 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
+// 权限检查组件
+function DoubanPagePermissionCheck({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const searchParams = useSearchParams();
+
+  // 检查菜单访问权限
+  const shouldRedirect = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    const type = searchParams.get('type') || 'movie';
+
+    if (type === 'tv' && disabledMenus.showTVShows) {
+      return true;
+    } else if (type === 'anime' && disabledMenus.showAnime) {
+      return true;
+    } else if (type === 'show' && disabledMenus.showVariety) {
+      return true;
+    } else if (disabledMenus.showMovies) {
+      return true;
+    } else if (type === 'custom') {
+      const customCategories =
+        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES || [];
+      const hasEnabledCategory = customCategories.some(
+        (cat: any) => !cat.disabled,
+      );
+      return !hasEnabledCategory;
+    }
+
+    return false;
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      window.location.href = '/';
+    }
+  }, [shouldRedirect]);
+
+  if (shouldRedirect) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 function DoubanPageClient() {
   const searchParams = useSearchParams();
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
@@ -39,40 +88,8 @@ function DoubanPageClient() {
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
 
-  // 检查菜单访问权限
-  if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
-    const type = searchParams.get('type') || 'movie';
-
-    if (type === 'tv' && disabledMenus.showTVShows) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'anime' && disabledMenus.showAnime) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'show' && disabledMenus.showVariety) {
-      window.location.href = '/';
-      return null;
-    } else if (disabledMenus.showMovies) {
-      window.location.href = '/';
-      return null;
-    } else if (type === 'custom') {
-      // 检查是否有启用的自定义分类
-      const customCategories =
-        (window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES || [];
-      const hasEnabledCategory = customCategories.some(
-        (cat: any) => !cat.disabled,
-      );
-      if (!hasEnabledCategory) {
-        window.location.href = '/';
-        return null;
-      }
-    }
-  }
-
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -202,7 +219,7 @@ function DoubanPageClient() {
             setCustomCategories(enabledCategories);
           }
         } catch (error) {
-          console.error('加载自定义分类失败:', error);
+          logger.error('加载自定义分类失败:', error);
         }
       }
     };
@@ -321,39 +338,6 @@ function DoubanPageClient() {
 
   // 生成骨架屏数据
   const skeletonData = Array.from({ length: 25 }, (_, index) => index);
-
-  // 参数快照比较函数
-  const isSnapshotEqual = useCallback(
-    (
-      snapshot1: {
-        type: string;
-        primarySelection: string;
-        secondarySelection: string;
-        multiLevelSelection: Record<string, string>;
-        selectedWeekday: string;
-        currentPage: number;
-      },
-      snapshot2: {
-        type: string;
-        primarySelection: string;
-        secondarySelection: string;
-        multiLevelSelection: Record<string, string>;
-        selectedWeekday: string;
-        currentPage: number;
-      },
-    ) => {
-      return (
-        snapshot1.type === snapshot2.type &&
-        snapshot1.primarySelection === snapshot2.primarySelection &&
-        snapshot1.secondarySelection === snapshot2.secondarySelection &&
-        snapshot1.selectedWeekday === snapshot2.selectedWeekday &&
-        snapshot1.currentPage === snapshot2.currentPage &&
-        JSON.stringify(snapshot1.multiLevelSelection) ===
-          JSON.stringify(snapshot2.multiLevelSelection)
-      );
-    },
-    [],
-  );
 
   // 生成API请求参数的辅助函数
   const getRequestParams = useCallback(
@@ -578,8 +562,7 @@ function DoubanPageClient() {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      console.error('加载数据失败:', err);
-      setError(err instanceof Error ? err.message : '加载数据失败');
+      logger.error('加载数据失败:', err);
       setLoading(false); // 发生错误时总是停止loading状态
     }
   }, [
@@ -780,7 +763,7 @@ function DoubanPageClient() {
             throw new Error(data.message || '获取数据失败');
           }
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         } finally {
           setIsLoadingMore(false);
         }
@@ -1269,7 +1252,9 @@ function DoubanPageClient() {
 export default function DoubanPage() {
   return (
     <Suspense>
-      <DoubanPageClient />
+      <DoubanPagePermissionCheck>
+        <DoubanPageClient />
+      </DoubanPagePermissionCheck>
     </Suspense>
   );
 }

@@ -1,9 +1,10 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
         );
       }
     } catch (err) {
-      console.error('检查注册配置失败', err);
+      logger.error('检查注册配置失败', err);
       return NextResponse.json(
         { error: '注册失败，请稍后重试' },
         { status: 500 },
@@ -238,14 +239,14 @@ export async function POST(req: NextRequest) {
 
       return response;
     } catch (err) {
-      console.error('注册用户失败', err);
+      logger.error('注册用户失败', err);
       return NextResponse.json(
         { error: '注册失败，请稍后重试' },
         { status: 500 },
       );
     }
   } catch (error) {
-    console.error('注册接口异常', error);
+    logger.error('注册接口异常', error);
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }
 }

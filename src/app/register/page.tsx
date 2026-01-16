@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
@@ -21,8 +22,8 @@ function VersionDisplay() {
       try {
         const status = await checkForUpdates();
         setUpdateStatus(status);
-      } catch (_) {
-        // do nothing
+      } catch (error) {
+        logger.error('检查更新失败:', error);
       } finally {
         setIsChecking(false);
       }
@@ -113,6 +114,7 @@ function RegisterPageClient() {
 
           setShouldShowRegister(true);
         } catch (error) {
+          logger.error('检查注册可用性失败:', error);
           // 网络错误也显示注册页面
           setShouldShowRegister(true);
         }
@@ -262,6 +264,7 @@ function RegisterPageClient() {
         setError(data.error ?? '注册失败');
       }
     } catch (error) {
+      logger.error('注册请求失败:', error);
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);

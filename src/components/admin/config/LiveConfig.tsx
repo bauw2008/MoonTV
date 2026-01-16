@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { useAdminApi } from '@/hooks/admin/useAdminApi';
+import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -249,9 +249,7 @@ function LiveConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const { configApi } = useAdminApi();
 
-  const [config, setConfig] = useState<any>(null);
   const [liveSources, setLiveSources] = useState<LiveDataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLiveSource, setEditingLiveSource] =
@@ -280,12 +278,11 @@ function LiveConfigContent() {
         throw new Error('获取配置失败');
       }
       const data = await response.json();
-      setConfig(data.Config);
       if (data.Config?.LiveConfig) {
         setLiveSources(data.Config.LiveConfig);
       }
     } catch (error) {
-      console.error('加载直播配置失败:', error);
+      logger.error('加载直播配置失败:', error);
       showError('加载配置失败');
     }
   };
@@ -307,7 +304,7 @@ function LiveConfigContent() {
       await loadConfig();
       showSuccess('操作成功');
     } catch (err) {
-      console.error('API调用失败:', err);
+      logger.error('API调用失败:', err);
       showError(err instanceof Error ? err.message : '操作失败');
       throw err;
     }
@@ -326,7 +323,7 @@ function LiveConfigContent() {
       const message = target.disabled ? '直播源已启用' : '直播源已禁用';
       showSuccess(message);
     } catch (error) {
-      console.error('操作失败', action, key);
+      logger.error('操作失败', action, key, error);
       showError('操作失败');
     }
   };
@@ -341,7 +338,7 @@ function LiveConfigContent() {
       // 显示成功提示
       showSuccess('直播源已删除');
     } catch (error) {
-      console.error('删除失败', error);
+      logger.error('删除失败', error);
       showError('删除失败');
     }
   };
@@ -376,7 +373,7 @@ function LiveConfigContent() {
       // 显示成功提示
       showSuccess('直播源添加成功');
     } catch (error) {
-      console.error('操作失败', 'add', error);
+      logger.error('操作失败', 'add', error);
       showError('添加直播源失败');
     }
   };
@@ -402,7 +399,7 @@ function LiveConfigContent() {
       // 显示成功提示
       showSuccess('直播源已更新');
     } catch (error) {
-      console.error('操作失败', 'edit', editingLiveSource);
+      logger.error('操作失败', 'edit', editingLiveSource, error);
       showError('更新直播源失败');
     }
   };
@@ -427,7 +424,7 @@ function LiveConfigContent() {
         await loadConfig();
         showSuccess('直播源已刷新');
       } catch (error) {
-        console.error('刷新直播源失败:', error);
+        logger.error('刷新直播源失败:', error);
         showError('刷新失败');
       } finally {
         setIsRefreshing(false);

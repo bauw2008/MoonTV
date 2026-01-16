@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+/* @typescript-eslint/no-explicit-any */
+
+import { logger } from '@/lib/logger';
 
 import {
   getCache,
@@ -11,6 +13,7 @@ import {
   ShortDramaItem,
   ShortDramaParseResult,
 } from './types';
+import { getRandomUserAgent } from './user-agent';
 
 const SHORTDRAMA_API_BASE = 'https://api.r2afosne.dpdns.org';
 
@@ -55,8 +58,7 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -85,7 +87,7 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
     await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.categories);
     return result;
   } catch (error) {
-    console.error('获取短剧分类失败:', error);
+    logger.error('获取短剧分类失败:', error);
     return [];
   }
 }
@@ -116,8 +118,7 @@ export async function getRecommendedShortDramas(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -157,7 +158,7 @@ export async function getRecommendedShortDramas(
     await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.recommends);
     return result;
   } catch (error) {
-    console.error('获取推荐短剧失败:', error);
+    logger.error('获取推荐短剧失败:', error);
     return [];
   }
 }
@@ -189,8 +190,7 @@ export async function getShortDramaList(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -237,7 +237,7 @@ export async function getShortDramaList(
     await setCache(cacheKey, result, cacheTime);
     return result;
   } catch (error) {
-    console.error('获取短剧列表失败:', error);
+    logger.error('获取短剧列表失败:', error);
     return { list: [], hasMore: false };
   }
 }
@@ -259,8 +259,7 @@ export async function searchShortDramas(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -301,7 +300,7 @@ export async function searchShortDramas(
 
     return result;
   } catch (error) {
-    console.error('搜索短剧失败:', error);
+    logger.error('搜索短剧失败:', error);
     return { list: [], hasMore: false };
   }
 }
@@ -329,8 +328,7 @@ async function parseWithAlternativeApi(
 
     const searchResponse = await fetch(searchUrl, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(15000), // 15秒超时
@@ -369,8 +367,7 @@ async function parseWithAlternativeApi(
     const episodesUrl = `${alternativeApiBase}/api/v1/drama/dramas?dramaId=${dramaId}`;
     const episodesResponse = await fetch(episodesUrl, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': getRandomUserAgent(),
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(15000), // 15秒超时
@@ -461,8 +458,7 @@ async function parseWithAlternativeApi(
       try {
         const directResponse = await fetch(directUrl, {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
           signal: AbortSignal.timeout(15000), // 15秒超时
@@ -538,7 +534,7 @@ async function parseWithAlternativeApi(
       },
     };
   } catch (error) {
-    console.error('备用API解析失败:', error);
+    logger.error('备用API解析失败:', error);
     // 返回更详细的错误信息
     const errorMsg = error instanceof Error ? error.message : '备用API请求失败';
     return {
@@ -598,8 +594,7 @@ export async function parseShortDramaEpisode(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -703,8 +698,7 @@ export async function parseShortDramaBatch(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -718,7 +712,7 @@ export async function parseShortDramaBatch(
     const data = await response.json();
     return data.results || [];
   } catch (error) {
-    console.error('批量解析短剧失败:', error);
+    logger.error('批量解析短剧失败:', error);
     return [];
   }
 }
@@ -753,8 +747,7 @@ export async function parseShortDramaAll(
         }
       : {
           headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': getRandomUserAgent(),
             Accept: 'application/json',
           },
         };
@@ -768,7 +761,7 @@ export async function parseShortDramaAll(
     const data = await response.json();
     return data.results || [];
   } catch (error) {
-    console.error('解析完整短剧失败:', error);
+    logger.error('解析完整短剧失败:', error);
     return [];
   }
 }

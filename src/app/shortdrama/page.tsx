@@ -1,11 +1,11 @@
-/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
 
 'use client';
 
 import { Search, X } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
 import {
   getRecommendedShortDramas,
   getShortDramaCategories,
@@ -14,7 +14,6 @@ import {
 } from '@/lib/shortdrama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
-import { useMenuSettings } from '@/hooks/useMenuSettings';
 
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import FloatingTools from '@/components/FloatingTools';
@@ -25,9 +24,32 @@ import VirtualDoubanGrid, {
   VirtualDoubanGridRef,
 } from '@/components/VirtualDoubanGrid';
 
+// 权限检查组件
+function ShortDramaPagePermissionCheck({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      if (disabledMenus.showShortDrama) {
+        window.location.href = '/';
+      }
+    }
+  }, []);
+
+  if (typeof window !== 'undefined') {
+    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    if (disabledMenus.showShortDrama) {
+      return null;
+    }
+  }
+
+  return <>{children}</>;
+}
+
 function ShortDramaPageClient() {
-  const searchParams = useSearchParams();
-  const { menuSettings } = useMenuSettings();
   const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
@@ -35,15 +57,6 @@ function ShortDramaPageClient() {
     typeof window !== 'undefined'
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
-
-  // 检查菜单访问权限
-  if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
-    if (disabledMenus.showShortDrama) {
-      window.location.href = '/';
-      return null;
-    }
-  }
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,7 +95,7 @@ function ShortDramaPageClient() {
   // 搜索状态
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [, setIsSearching] = useState(false);
 
   // 保存虚拟化设置
   const toggleVirtualization = () => {
@@ -124,7 +137,7 @@ function ShortDramaPageClient() {
           setShortDramaType(categories[0].type_id.toString());
         }
       } catch (err) {
-        console.error('加载分类失败:', err);
+        logger.error('加载分类失败:', err);
       }
     };
 
@@ -259,7 +272,7 @@ function ShortDramaPageClient() {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      console.error('加载数据失败:', err);
+      logger.error('加载数据失败:', err);
       setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false);
     }
@@ -388,7 +401,7 @@ function ShortDramaPageClient() {
           }
         }
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       } finally {
         setIsLoadingMore(false);
       }
@@ -503,7 +516,7 @@ function ShortDramaPageClient() {
       setHasMore(result.hasMore);
       setLoading(false);
     } catch (err) {
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setError(err instanceof Error ? err.message : '搜索失败');
       setLoading(false);
     } finally {
@@ -586,7 +599,7 @@ function ShortDramaPageClient() {
                   value={searchQuery}
                   onChange={handleSearchInputChange}
                   placeholder='搜索短剧...'
-                  className='w-full px-4 py-3 pr-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-pink-500 dark:focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none'
+                  className='w-full px-4 py-3 pr-12 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
                   autoFocus
                 />
                 <button
@@ -603,10 +616,10 @@ function ShortDramaPageClient() {
 
           {/* 选择器组件 */}
           {!showSearch && (
-            <div className='relative bg-gradient-to-br from-white/80 via-pink-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-pink-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-pink-200/40 dark:border-pink-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
+            <div className='relative bg-gradient-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
               {/* 装饰性光晕 */}
-              <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-pink-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
-              <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-300/20 to-pink-300/20 rounded-full blur-3xl pointer-events-none'></div>
+              <div className='absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>
+              <div className='absolute -bottom-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-300/20 to-blue-300/20 rounded-full blur-3xl pointer-events-none'></div>
 
               <div className='relative'>
                 <ShortDramaSelector
@@ -712,7 +725,9 @@ function ShortDramaPageClient() {
 export default function ShortDramaPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ShortDramaPageClient />
+      <ShortDramaPagePermissionCheck>
+        <ShortDramaPageClient />
+      </ShortDramaPagePermissionCheck>
     </Suspense>
   );
 }

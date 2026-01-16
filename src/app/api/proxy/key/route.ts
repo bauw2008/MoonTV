@@ -1,8 +1,10 @@
-/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
+import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
 
@@ -19,11 +21,11 @@ export async function GET(request: Request) {
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  const ua = liveSource.ua || LIVE_PLAYER_USER_AGENTS.APTV_PLAYER;
 
   try {
     const decodedUrl = decodeURIComponent(url);
-    console.log(decodedUrl);
+    logger.log(decodedUrl);
     const response = await fetch(decodedUrl, {
       headers: {
         'User-Agent': ua,
@@ -48,6 +50,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    logger.error('获取 key 失败:', error);
     return NextResponse.json({ error: 'Failed to fetch key' }, { status: 500 });
   }
 }
