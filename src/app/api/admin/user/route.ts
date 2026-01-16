@@ -1,4 +1,4 @@
-/* @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any,no-console,@typescript-eslint/no-non-null-assertion */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,7 +6,6 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -366,8 +365,9 @@ export async function POST(request: NextRequest) {
           await db.deleteUser(targetUsername!);
         } catch (error) {
           // 用户可能不存在于数据库中（例如重置后），只从配置中删除
-          logger.error(`删除用户 ${targetUsername} 失败:`, error);
-          logger.log(`用户 ${targetUsername} 不存在于数据库中，仅从配置中删除`);
+          console.log(
+            `用户 ${targetUsername} 不存在于数据库中，仅从配置中删除`,
+          );
         }
 
         // 从配置中移除用户
@@ -482,7 +482,7 @@ export async function POST(request: NextRequest) {
             adminConfig.UserConfig.Tags.splice(groupIndex, 1);
 
             // 记录删除操作的影响
-            logger.log(
+            console.log(
               `删除用户组 "${groupName}"，影响用户: ${
                 affectedUsers.length > 0 ? affectedUsers.join(', ') : '无'
               }`,
@@ -627,7 +627,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    logger.error('用户管理操作失败:', error);
+    console.error('用户管理操作失败:', error);
     return NextResponse.json(
       {
         error: '用户管理操作失败',

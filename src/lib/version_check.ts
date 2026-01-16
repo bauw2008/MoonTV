@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
+
 'use client';
 
-import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 
 // 版本检查结果枚举
@@ -28,7 +29,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
       const result = compareVersions(primaryVersion);
       // 如果比较结果是获取失败，说明版本格式有问题
       if (result === UpdateStatus.FETCH_FAILED) {
-        logger.warn('主URL返回的版本格式无效，尝试备用URL');
+        console.warn('主URL返回的版本格式无效，尝试备用URL');
       } else {
         return result;
       }
@@ -41,7 +42,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
       if (backupVersion) {
         const result = compareVersions(backupVersion);
         if (result === UpdateStatus.FETCH_FAILED) {
-          logger.warn('备用URL返回的版本格式无效');
+          console.warn('备用URL返回的版本格式无效');
         } else {
           return result;
         }
@@ -51,7 +52,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
     // 如果所有URL都失败或返回无效版本，返回获取失败状态
     return UpdateStatus.FETCH_FAILED;
   } catch (error) {
-    logger.error('版本检查失败:', error);
+    console.error('版本检查失败:', error);
     return UpdateStatus.FETCH_FAILED;
   }
 }
@@ -102,7 +103,7 @@ async function fetchVersionFromUrl(url: string): Promise<string | null> {
 
     return trimmedVersion;
   } catch (error) {
-    logger.warn(`从 ${url} 获取版本信息失败:`, error);
+    console.warn(`从 ${url} 获取版本信息失败:`, error);
     return null;
   }
 }
@@ -115,7 +116,7 @@ async function fetchVersionFromUrl(url: string): Promise<string | null> {
 export function compareVersions(remoteVersion: string): UpdateStatus {
   // 检查远程版本是否有效
   if (!remoteVersion || typeof remoteVersion !== 'string') {
-    logger.error('远程版本号无效:', remoteVersion);
+    console.error('远程版本号无效:', remoteVersion);
     return UpdateStatus.FETCH_FAILED;
   }
 
@@ -175,14 +176,14 @@ export function compareVersions(remoteVersion: string): UpdateStatus {
     // 所有级别都相等，无需更新
     return UpdateStatus.NO_UPDATE;
   } catch (error) {
-    logger.error('版本号比较失败:', error);
+    console.error('版本号比较失败:', error);
     // 如果版本号格式无效，回退到字符串比较
     try {
       return remoteVersion.trim() !== CURRENT_VERSION
         ? UpdateStatus.HAS_UPDATE
         : UpdateStatus.NO_UPDATE;
     } catch (e) {
-      logger.error('版本字符串比较也失败:', e);
+      console.error('版本字符串比较也失败:', e);
       return UpdateStatus.FETCH_FAILED;
     }
   }

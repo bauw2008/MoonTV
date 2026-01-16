@@ -1,13 +1,14 @@
+/* eslint-disable no-console */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  logger.log('server-config called: ', request.url);
+  console.log('server-config called: ', request.url);
 
   const config = await getConfig();
   const result = {

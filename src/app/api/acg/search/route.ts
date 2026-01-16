@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -109,7 +108,7 @@ export async function POST(req: NextRequest) {
       items: results,
     });
   } catch (error: any) {
-    logger.error('ACG 搜索失败:', error);
+    console.error('ACG 搜索失败:', error);
     return NextResponse.json(
       { error: error.message || '搜索失败' },
       { status: 500 },

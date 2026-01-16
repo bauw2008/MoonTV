@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getAvailableApiSites } from '@/lib/config';
-import { logger } from '@/lib/logger';
 import { TVBOX_USER_AGENTS } from '@/lib/user-agent';
 
 export const dynamic = 'force-dynamic';
@@ -74,7 +73,7 @@ export async function GET(request: NextRequest) {
         searchUrl = `${sourceConfig.api}?${params.toString()}`;
       }
 
-      logger.log('TVBox搜索URL:', searchUrl);
+      console.log('TVBox搜索URL:', searchUrl);
 
       const response = await fetch(searchUrl, {
         headers: {
@@ -171,7 +170,7 @@ export async function GET(request: NextRequest) {
         page: parseInt(page),
       });
     } catch (searchError) {
-      logger.error('TVBox搜索失败:', searchError);
+      console.error('TVBox搜索失败:', searchError);
       return NextResponse.json({
         list: [],
         total: 0,
@@ -179,7 +178,7 @@ export async function GET(request: NextRequest) {
       });
     }
   } catch (error) {
-    logger.error('TVBox搜索失败:', error);
+    console.error('TVBox搜索失败:', error);
     return NextResponse.json({ error: 'TVBox搜索失败' }, { status: 500 });
   }
 }

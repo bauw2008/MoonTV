@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
@@ -8,7 +8,6 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -76,7 +75,6 @@ export async function POST(req: NextRequest) {
     try {
       importData = JSON.parse(decompressedData);
     } catch (error) {
-      logger.error('解析备份文件失败:', error);
       return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
     }
 
@@ -151,7 +149,7 @@ export async function POST(req: NextRequest) {
           : '未知版本',
     });
   } catch (error) {
-    logger.error('数据导入失败:', error);
+    console.error('数据导入失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '导入失败' },
       { status: 500 },

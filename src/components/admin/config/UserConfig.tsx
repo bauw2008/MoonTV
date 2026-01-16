@@ -11,11 +11,9 @@ import {
   Video,
   X,
 } from 'lucide-react';
-import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
 import { notifyConfigUpdated } from '@/lib/global-config';
-import { logger } from '@/lib/logger';
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
 import {
   useAdminApi,
@@ -88,7 +86,7 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
         const data = await response.json();
         setAvatarUrl(data.avatar || null);
       } catch (error) {
-        logger.error('获取头像失败:', error);
+        console.error('获取头像失败:', error);
       }
       setLoading(false);
     };
@@ -115,7 +113,7 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
       {loading ? (
         <div className='w-full h-full bg-gray-100 dark:bg-gray-800 animate-pulse' />
       ) : avatarUrl ? (
-        <Image
+        <img
           src={
             avatarUrl.startsWith('data:')
               ? avatarUrl
@@ -125,7 +123,6 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
           width={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
           height={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
           className='w-full h-full object-cover'
-          unoptimized
         />
       ) : (
         <div className='w-full h-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center'>
@@ -145,6 +142,9 @@ function UserConfigContent() {
   const { userApi } = useAdminApi();
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
+
+  // 构造 currentUser 对象
+  const currentUser = username && role ? { username, role } : null;
 
   // 所有状态定义必须在任何条件渲染之前
   const [userSettings, setUserSettings] = useState<UserSettings>({
@@ -201,15 +201,20 @@ function UserConfigContent() {
   const [showAddUserGroupForm, setShowAddUserGroupForm] = useState(false);
 
   // 获取用户组的详细信息
+  const getTagDetails = (tagName: string) => {
+    const tag = userSettings.Tags.find((t) => t.name === tagName);
+    return tag || null;
+  };
+
   // 加载视频源配置
   const loadVideoSources = async () => {
     try {
-      logger.log('开始加载视频源列表...');
+      console.log('开始加载视频源列表...');
       const response = await fetch('/api/admin/config');
       const data = await response.json();
 
-      logger.log('完整配置:', data);
-      logger.log('SourceConfig:', data.Config?.SourceConfig);
+      console.log('完整配置:', data);
+      console.log('SourceConfig:', data.Config?.SourceConfig);
 
       let sources = [];
 
@@ -218,7 +223,7 @@ function UserConfigContent() {
         data.Config?.SourceConfig &&
         Array.isArray(data.Config.SourceConfig)
       ) {
-        logger.log('从SourceConfig加载视频源:', data.Config.SourceConfig);
+        console.log('从SourceConfig加载视频源:', data.Config.SourceConfig);
         sources = data.Config.SourceConfig.map((source) => ({
           key: source.key,
           name: source.name || source.key,
@@ -227,14 +232,14 @@ function UserConfigContent() {
         }));
       }
 
-      logger.log('处理后的视频源列表:', sources);
+      console.log('处理后的视频源列表:', sources);
       setVideoSources(sources);
 
       if (sources.length === 0) {
-        logger.warn('未找到任何视频源配置');
+        console.warn('未找到任何视频源配置');
       }
     } catch (error) {
-      logger.error('获取视频源列表失败:', error);
+      console.error('获取视频源列表失败:', error);
       // 设置空数组避免界面崩溃
       setVideoSources([]);
     }
@@ -243,17 +248,20 @@ function UserConfigContent() {
   // 加载配置
   const loadConfig = async () => {
     try {
-      logger.log('=== loadConfig 开始 ===');
+      console.log('=== loadConfig 开始 ===');
       const response = await fetch('/api/admin/config');
       const data = await response.json();
 
-      logger.log('获取到的完整配置:', data);
-      logger.log('UserConfig是否存在:', !!data?.Config?.UserConfig);
+      console.log('获取到的完整配置:', data);
+      console.log('UserConfig是否存在:', !!data?.Config?.UserConfig);
 
       if (data?.Config?.UserConfig) {
-        logger.log('原始UserConfig:', data.Config.UserConfig);
-        logger.log('原始Users数量:', data.Config.UserConfig.Users?.length || 0);
-        logger.log(
+        console.log('原始UserConfig:', data.Config.UserConfig);
+        console.log(
+          '原始Users数量:',
+          data.Config.UserConfig.Users?.length || 0,
+        );
+        console.log(
           '原始Tags数量:',
           Array.isArray(data.Config.UserConfig.Tags)
             ? data.Config.UserConfig.Tags.length
@@ -274,13 +282,13 @@ function UserConfigContent() {
         //   if (response.ok) {
         //     const userData = await response.json();
         //     dbUsers = userData.users || [];
-        //     logger.log('从数据库同步的最新用户列表:', dbUsers);
-        //     logger.log('数据库用户数量:', dbUsers.length);
+        //     console.log('从数据库同步的最新用户列表:', dbUsers);
+        //     console.log('数据库用户数量:', dbUsers.length);
         //   } else {
-        //     logger.error('获取用户列表失败:', response.status);
+        //     console.error('获取用户列表失败:', response.status);
         //   }
         // } catch (error) {
-        //   logger.error('从数据库同步用户失败:', error);
+        //   console.error('从数据库同步用户失败:', error);
         // }
 
         // 使用配置中的用户组数据
@@ -288,7 +296,7 @@ function UserConfigContent() {
           ? data.Config.UserConfig.Tags
           : [];
 
-        logger.log('处理后的用户组列表:', tagsToUse);
+        console.log('处理后的用户组列表:', tagsToUse);
 
         // 获取用户统计信息（包含登录时间）
         let userStats: any[] = [];
@@ -297,10 +305,10 @@ function UserConfigContent() {
           if (statsResponse.ok) {
             const statsData = await statsResponse.json();
             userStats = statsData.userStats || [];
-            logger.log('获取到用户统计数量:', userStats.length);
+            console.log('获取到用户统计数量:', userStats.length);
           }
         } catch (error) {
-          logger.error('获取用户统计失败:', error);
+          console.error('获取用户统计失败:', error);
         }
 
         // 创建配置对象
@@ -359,7 +367,7 @@ function UserConfigContent() {
             // 1. 如果用户有独立的videoSources，使用它
             if (finalUser.videoSources && finalUser.videoSources.length > 0) {
               userVideoSources = finalUser.videoSources;
-              logger.log(`用户 ${finalUser.username} 有独立视频源:`, {
+              console.log(`用户 ${finalUser.username} 有独立视频源:`, {
                 videoSources: userVideoSources,
               });
             }
@@ -367,7 +375,7 @@ function UserConfigContent() {
             // 2. 如果用户有独立的features，使用它
             if (finalUser.features) {
               userFeatures = { ...finalUser.features };
-              logger.log(`用户 ${finalUser.username} 有独立功能配置:`, {
+              console.log(`用户 ${finalUser.username} 有独立功能配置:`, {
                 features: userFeatures,
               });
             }
@@ -398,7 +406,7 @@ function UserConfigContent() {
             finalUser.videoSources = userVideoSources;
             finalUser.features = userFeatures;
 
-            logger.log(`用户 ${finalUser.username} 权限继承结果:`, {
+            console.log(`用户 ${finalUser.username} 权限继承结果:`, {
               videoSources: finalUser.videoSources,
               features: finalUser.features,
             });
@@ -433,7 +441,7 @@ function UserConfigContent() {
 
         setUserSettings(newSettings);
       } else {
-        logger.error('配置中没有UserConfig');
+        console.error('配置中没有UserConfig');
         // 设置默认空配置
         setUserSettings({
           Users: [],
@@ -446,7 +454,7 @@ function UserConfigContent() {
         });
       }
     } catch (error) {
-      logger.error('加载用户配置失败:', error);
+      console.error('加载用户配置失败:', error);
     }
   };
 
@@ -524,7 +532,7 @@ function UserConfigContent() {
         [username]: true,
       }));
     } catch (error) {
-      logger.error('获取用户密码失败:', error);
+      console.error('获取用户密码失败:', error);
       setUserPasswords((prev) => ({
         ...prev,
         [username]: '获取失败',
@@ -561,21 +569,26 @@ function UserConfigContent() {
   //     if (response.ok) {
   //       const data = await response.json();
   //       dbUsers = data.users || [];
-  //       logger.log('数据库同步成功，获取用户数量:', dbUsers.length);
+  //       console.log('数据库同步成功，获取用户数量:', dbUsers.length);
   //     } else {
-  //       logger.error('获取用户列表失败:', response.status);
+  //       console.error('获取用户列表失败:', response.status);
   //     }
   //   } catch (error) {
-  //     logger.error('从数据库同步用户失败:', error);
+  //     console.error('从数据库同步用户失败:', error);
   //   }
   //   return dbUsers;
   // };
 
   // 工具函数：配置更新日志（索引系统已移除）
   const updateIndexes = async (type: 'userGroup' | 'all' = 'userGroup') => {
-    logger.log(
+    console.log(
       `[配置更新] ${type === 'all' ? '所有配置' : '用户组配置'}已更新`,
     );
+  };
+
+  // 工具函数：获取用户状态
+  const getUserStatus = (user: User) => {
+    return user.enabled !== undefined ? user.enabled : !user.banned;
   };
 
   // 通用用户操作函数
@@ -610,7 +623,7 @@ function UserConfigContent() {
       await loadConfig();
     } catch (error) {
       // 错误处理已在useAdminApi中完成
-      logger.error('用户操作失败:', error);
+      console.error('用户操作失败:', error);
     }
   };
 
@@ -655,7 +668,7 @@ function UserConfigContent() {
     setShowConfigureApisModal(true);
 
     // 调试信息
-    logger.log(`配置用户 ${user.username} 的采集权限:`, {
+    console.log(`配置用户 ${user.username} 的采集权限:`, {
       userVideoSources: user.videoSources,
       userTags: user.tags,
       // 如果用户没有独立的videoSources，显示用户组的权限作为参考
@@ -681,7 +694,7 @@ function UserConfigContent() {
 
     await withLoading('saveUserApis', async () => {
       try {
-        logger.log(
+        console.log(
           `保存用户 ${selectedUser.username} 的采集权限:`,
           selectedApis,
         );
@@ -713,7 +726,7 @@ function UserConfigContent() {
         setSelectedApis([]);
       } catch (error) {
         // 错误处理已在useAdminApi中完成
-        logger.error('保存用户API权限失败:', error);
+        console.error('保存用户API权限失败:', error);
       }
     });
   };
@@ -727,9 +740,9 @@ function UserConfigContent() {
       showMessage?: boolean;
     } = {},
   ) => {
-    logger.log('[UserConfig] saveUnifiedConfig 开始执行');
-    logger.log('[UserConfig] 传入设置:', settings);
-    logger.log('[UserConfig] 选项:', options);
+    console.log('[UserConfig] saveUnifiedConfig 开始执行');
+    console.log('[UserConfig] 传入设置:', settings);
+    console.log('[UserConfig] 选项:', options);
 
     try {
       // 使用传入的设置或当前设置
@@ -737,7 +750,7 @@ function UserConfigContent() {
         ? { ...userSettings, ...settings }
         : userSettings;
 
-      logger.log('[UserConfig] 准备保存的配置:', {
+      console.log('[UserConfig] 准备保存的配置:', {
         Users: currentSettings.Users?.length || 0,
         Tags: currentSettings.Tags?.length || 0,
       });
@@ -753,48 +766,51 @@ function UserConfigContent() {
         }),
       });
 
-      logger.log('[UserConfig] API 响应状态:', response.status);
+      console.log('[UserConfig] API 响应状态:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error('[UserConfig] 保存配置失败，响应内容:', errorText);
+        console.error('[UserConfig] 保存配置失败，响应内容:', errorText);
         throw new Error('保存配置失败: ' + response.status);
       }
 
-      logger.log('[UserConfig] 配置保存成功');
+      console.log('[UserConfig] 配置保存成功');
 
       // 更新索引
       if (!options.skipIndexUpdate) {
-        logger.log('[UserConfig] 开始更新索引');
+        console.log('[UserConfig] 开始更新索引');
         await updateIndexes('all');
-        logger.log('[UserConfig] 索引更新完成');
+        console.log('[UserConfig] 索引更新完成');
       }
 
       // 显示成功消息
       if (options.showMessage !== false) {
-        logger.log('[UserConfig] 显示成功消息');
+        console.log('[UserConfig] 显示成功消息');
         showSuccess('配置保存成功');
       }
 
       // 通知其他窗口重新获取配置
-      logger.log('[UserConfig] 准备调用 notifyConfigUpdated');
+      console.log('[UserConfig] 准备调用 notifyConfigUpdated');
       try {
         notifyConfigUpdated();
-        logger.log('[UserConfig] notifyConfigUpdated 调用成功');
+        console.log('[UserConfig] notifyConfigUpdated 调用成功');
       } catch (notifyError) {
-        logger.error('[UserConfig] notifyConfigUpdated 调用失败:', notifyError);
+        console.error(
+          '[UserConfig] notifyConfigUpdated 调用失败:',
+          notifyError,
+        );
         // 继续执行，不阻断保存流程
       }
 
       // 更新本地状态
       if (settings) {
-        logger.log('[UserConfig] 更新本地状态');
+        console.log('[UserConfig] 更新本地状态');
         setUserSettings(currentSettings as UserSettings);
       }
 
-      logger.log('[UserConfig] saveUnifiedConfig 执行完成');
+      console.log('[UserConfig] saveUnifiedConfig 执行完成');
     } catch (error) {
-      logger.error('[UserConfig] 保存配置失败:', error);
+      console.error('[UserConfig] 保存配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };
@@ -803,9 +819,12 @@ function UserConfigContent() {
   const saveConfig = () => saveUnifiedConfig(undefined, { showMessage: true });
 
   // 保持向后兼容的saveConfigWithSettings函数
+  const saveConfigWithSettings = (settings: any) =>
+    saveUnifiedConfig(settings, { showMessage: true });
+
   const handleToggleSwitch = async (key: keyof UserSettings, value: any) => {
     try {
-      logger.log(`切换开关: ${key} = ${value}`);
+      console.log(`切换开关: ${key} = ${value}`);
 
       // 先更新本地状态
       const newSettings = { ...userSettings, [key]: value };
@@ -826,17 +845,17 @@ function UserConfigContent() {
         throw new Error('保存配置失败');
       }
 
-      logger.log(`开关 ${key} 已更新为: ${value}`);
+      console.log(`开关 ${key} 已更新为: ${value}`);
       showSuccess('设置已保存');
     } catch (error) {
-      logger.error('切换开关失败:', error);
+      console.error('切换开关失败:', error);
       // 如果保存失败，恢复原状态
       setUserSettings(userSettings);
       showError('保存失败: ' + (error as Error).message);
     }
   };
 
-  const handleApproveUser = async (username: string) => {
+  const handleApproveUser = async (username: string, index: number) => {
     try {
       const response = await fetch('/api/admin/user', {
         method: 'POST',
@@ -859,12 +878,11 @@ function UserConfigContent() {
         showError(data.error || '批准失败');
       }
     } catch (error) {
-      logger.error('批准用户失败:', error);
       showError('批准失败');
     }
   };
 
-  const handleRejectUser = async (username: string) => {
+  const handleRejectUser = async (username: string, index: number) => {
     try {
       const response = await fetch('/api/admin/user', {
         method: 'POST',
@@ -887,7 +905,6 @@ function UserConfigContent() {
         showError(data.error || '拒绝失败');
       }
     } catch (error) {
-      logger.error('拒绝用户失败:', error);
       showError('拒绝失败');
     }
   };
@@ -937,8 +954,30 @@ function UserConfigContent() {
       }
     } catch (error) {
       // 错误处理已在useAdminApi中完成
-      logger.error('添加用户组失败:', error);
+      console.error('添加用户组失败:', error);
     }
+  };
+
+  const handleToggleVideoSource = async (
+    index: number,
+    sourceKey: string,
+    checked: boolean,
+  ) => {
+    const tag = userSettings.Tags[index];
+    if (!tag) return;
+
+    // 只更新videoSources字段
+    const videoSources = [...(tag.videoSources || [])];
+    if (checked && !videoSources.includes(sourceKey)) {
+      videoSources.push(sourceKey);
+    } else if (!checked) {
+      const idx = videoSources.indexOf(sourceKey);
+      if (idx > -1) videoSources.splice(idx, 1);
+    }
+
+    await updateUserGroup(index, {
+      videoSources,
+    });
   };
 
   // 通用的用户组更新函数
@@ -977,7 +1016,7 @@ function UserConfigContent() {
         showSuccess(options.showMessage);
       }
     } catch (error) {
-      logger.error('更新用户组失败:', error);
+      console.error('更新用户组失败:', error);
       showError('更新失败: ' + (error as Error).message);
     }
   };
@@ -989,7 +1028,7 @@ function UserConfigContent() {
   ) => {
     const tag = userSettings.Tags[index];
     if (!tag) {
-      logger.error('用户组不存在，索引:', index);
+      console.error('用户组不存在，索引:', index);
       return;
     }
 
@@ -1016,7 +1055,7 @@ function UserConfigContent() {
     ) {
       updates.tmdbActorSearchEnabled = checked;
     } else {
-      logger.warn('未知的权限类型:', permissionType);
+      console.warn('未知的权限类型:', permissionType);
       return;
     }
 
@@ -1047,6 +1086,71 @@ function UserConfigContent() {
 
     setShowEditUserGroupModal(false);
     setEditingUserGroupIndex(null);
+  };
+
+  // 提取域名
+  const extractDomain = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return url;
+    }
+  };
+
+  const handleUpdateUserGroup = async (
+    index: number,
+    field: string,
+    value: any,
+  ) => {
+    setUserSettings((prev) => {
+      const newTags = [...prev.Tags];
+      newTags[index] = {
+        ...newTags[index],
+        [field]: value,
+      };
+      const newSettings = {
+        ...prev,
+        Tags: newTags,
+      };
+      return newSettings;
+    });
+
+    // 直接保存，避免延迟保存导致的竞态条件
+    await saveConfig();
+  };
+
+  const handleToggleUserGroupPermission = async (
+    index: number,
+    permissionType: PermissionType,
+    value: any,
+  ) => {
+    setUserSettings((prev) => {
+      const newTags = [...prev.Tags];
+      const tag = { ...newTags[index] };
+
+      switch (permissionType) {
+        case PermissionType.DISABLE_YELLOW_FILTER:
+          tag.disableYellowFilter = value;
+          break;
+        case PermissionType.AI_RECOMMEND:
+          tag.aiEnabled = value;
+          break;
+        case PermissionType.VIDEO_SOURCE:
+          tag.videoSources = value;
+          break;
+      }
+
+      newTags[index] = tag;
+      const newSettings = {
+        ...prev,
+        Tags: newTags,
+      };
+      return newSettings;
+    });
+
+    // 直接保存，避免延迟保存导致的竞态条件
+    await saveConfig();
   };
 
   const handleDeleteUserGroup = async (index: number) => {
@@ -1083,7 +1187,7 @@ function UserConfigContent() {
     } catch (error) {
       // 错误处理已在useAdminApi中完成
 
-      logger.error('删除用户组失败:', error);
+      console.error('删除用户组失败:', error);
     }
   };
 
@@ -1191,7 +1295,7 @@ function UserConfigContent() {
                   <div className='flex gap-2'>
                     <button
                       onClick={() =>
-                        handleApproveUser(pendingUser.username)
+                        handleApproveUser(pendingUser.username, index)
                       }
                       className='px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700'
                     >
@@ -1199,7 +1303,7 @@ function UserConfigContent() {
                     </button>
                     <button
                       onClick={() =>
-                        handleRejectUser(pendingUser.username)
+                        handleRejectUser(pendingUser.username, index)
                       }
                       className='px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700'
                     >
@@ -1259,7 +1363,7 @@ function UserConfigContent() {
                       throw new Error('更新配置失败');
                     }
                   } catch (err) {
-                    logger.error('切换开关失败:', err);
+                    console.error('切换开关失败:', err);
                     showError('保存失败: ' + (err as Error).message);
                   }
                 }}
@@ -1428,7 +1532,7 @@ function UserConfigContent() {
                 />
                 <button
                   onClick={() => {
-                    logger.log('保存按钮被点击');
+                    console.log('保存按钮被点击');
                     handleAddUserGroupWithClose();
                   }}
                   className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
@@ -1666,6 +1770,12 @@ function UserConfigContent() {
                             setEditingUserGroupIndex(index);
                             // 初始化采集源选择：只包含视频源，排除特殊功能
                             const tag = userSettings.Tags[index];
+                            const specialFeatures = [
+                              'ai-recommend',
+                              'disable-yellow-filter',
+                              'netdisk-search',
+                              'tmdb-actor-search',
+                            ];
                             const videoSourcesOnly = tag.videoSources || [];
                             setSelectedApis(videoSourcesOnly);
                             setShowEditUserGroupModal(true);
@@ -1973,7 +2083,7 @@ function UserConfigContent() {
 
                     await withLoading('addUser', async () => {
                       try {
-                        logger.log(`添加用户: ${newUser.username}`);
+                        console.log(`添加用户: ${newUser.username}`);
 
                         // 使用新的API系统
                         await userApi.addUser(
@@ -1994,7 +2104,7 @@ function UserConfigContent() {
                         setShowAddUserForm(false);
                       } catch (error) {
                         // 错误处理已在useAdminApi中完成
-                        logger.error('添加用户失败:', error);
+                        console.error('添加用户失败:', error);
                       }
                     });
                   }}
@@ -2166,7 +2276,7 @@ function UserConfigContent() {
                                     isEnabled ? '用户已禁用' : '用户已启用',
                                   );
                                 } catch (error) {
-                                  logger.error('操作失败:', error);
+                                  console.error('操作失败:', error);
                                   showError(
                                     '操作失败: ' + (error as Error).message,
                                   );
@@ -2223,6 +2333,12 @@ function UserConfigContent() {
                           <div className='text-center'>
                             <div className='mb-2'>
                               {(() => {
+                                const specialFeatures = [
+                                  'ai-recommend',
+                                  'disable-yellow-filter',
+                                  'netdisk-search',
+                                  'tmdb-actor-search',
+                                ];
                                 const videoSourceCount =
                                   user.videoSources?.length || 0;
 
@@ -2353,7 +2469,7 @@ function UserConfigContent() {
 
                                 showSuccess('用户组已更新');
                               } catch (error) {
-                                logger.error('更新用户组失败:', error);
+                                console.error('更新用户组失败:', error);
                                 showError('更新用户组失败');
                               }
                             }}
@@ -2443,7 +2559,7 @@ function UserConfigContent() {
                                     await loadConfig();
                                   } catch (error) {
                                     // 错误处理已在useAdminApi中完成
-                                    logger.error('删除用户失败:', error);
+                                    console.error('删除用户失败:', error);
                                   }
                                 }}
                                 className='px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center'

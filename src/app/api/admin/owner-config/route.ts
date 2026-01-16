@@ -4,7 +4,6 @@ import path from 'path';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache } from '@/lib/config';
-import { logger } from '@/lib/logger';
 
 // 获取站长配置
 export const GET = async (request: NextRequest) => {
@@ -33,12 +32,12 @@ export const GET = async (request: NextRequest) => {
         };
       }
     } catch (fileError) {
-      logger.error('读取配置文件失败:', fileError);
+      console.error('读取配置文件失败:', fileError);
     }
 
     return NextResponse.json({ success: true, data: config });
   } catch (error) {
-    logger.error('获取站长配置失败:', error);
+    console.error('获取站长配置失败:', error);
     return NextResponse.json({ error: '获取配置失败' }, { status: 500 });
   }
 };
@@ -73,7 +72,7 @@ export const POST = async (request: NextRequest) => {
         existingConfig = JSON.parse(fileContent);
       }
     } catch (fileError) {
-      logger.error('读取现有配置失败:', fileError);
+      console.error('读取现有配置失败:', fileError);
     }
 
     // 更新站长配置
@@ -87,7 +86,7 @@ export const POST = async (request: NextRequest) => {
     // 保存到配置文件
     try {
       fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
-      logger.log('站长配置已更新:', {
+      console.log('站长配置已更新:', {
         siteMaintenance,
         debugMode,
         maxUsers,
@@ -98,7 +97,7 @@ export const POST = async (request: NextRequest) => {
       // 清除配置缓存，确保下次读取时获取最新的 MaxUsers
       clearConfigCache();
     } catch (saveError) {
-      logger.error('保存配置文件失败:', saveError);
+      console.error('保存配置文件失败:', saveError);
       throw new Error('保存配置文件失败');
     }
 
@@ -107,7 +106,7 @@ export const POST = async (request: NextRequest) => {
       message: '站长配置保存成功',
     });
   } catch (error) {
-    logger.error('保存站长配置失败:', error);
+    console.error('保存站长配置失败:', error);
     return NextResponse.json({ error: '保存配置失败' }, { status: 500 });
   }
 };

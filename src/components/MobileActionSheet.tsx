@@ -1,5 +1,4 @@
 import { Radio, X } from 'lucide-react';
-import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -39,7 +38,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   totalEpisodes,
   origin = 'vod',
 }) => {
-  const [isVisible, setIsVisible] = useState(() => isOpen);
+  const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
   // 控制动画状态
@@ -48,18 +47,15 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     let timer: NodeJS.Timeout;
 
     if (isOpen) {
-      // 使用 requestAnimationFrame 确保 DOM 渲染后再更新状态
+      setIsVisible(true);
+      // 使用双重 requestAnimationFrame 确保DOM完全渲染
       animationId = requestAnimationFrame(() => {
         animationId = requestAnimationFrame(() => {
-          setIsVisible(true);
           setIsAnimating(true);
         });
       });
     } else {
-      // 使用 requestAnimationFrame 来延迟 setState 调用
-      requestAnimationFrame(() => {
-        setIsAnimating(false);
-      });
+      setIsAnimating(false);
       // 等待动画完成后隐藏组件
       timer = setTimeout(() => {
         setIsVisible(false);
@@ -200,13 +196,13 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
           <div className='flex items-center gap-3 flex-1 min-w-0'>
             {poster && (
               <div className='relative w-12 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0'>
-                <Image
+                <img
                   src={poster}
                   alt={title}
                   width={48}
                   height={64}
                   className='w-full h-full object-cover'
-                  unoptimized
+                  loading='lazy'
                 />
               </div>
             )}

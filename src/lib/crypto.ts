@@ -1,7 +1,5 @@
 import CryptoJS from 'crypto-js';
 
-import { logger } from '@/lib/logger';
-
 /**
  * 简单的对称加密工具
  * 使用 AES 加密算法
@@ -18,7 +16,6 @@ export class SimpleCrypto {
       const encrypted = CryptoJS.AES.encrypt(data, password).toString();
       return encrypted;
     } catch (error) {
-      logger.error('加密失败:', error);
       throw new Error('加密失败');
     }
   }
@@ -40,7 +37,6 @@ export class SimpleCrypto {
 
       return decrypted;
     } catch (error) {
-      logger.error('解密失败:', error);
       throw new Error('解密失败，请检查密码是否正确');
     }
   }

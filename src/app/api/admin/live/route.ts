@@ -1,4 +1,4 @@
-/* eslint-disable no-case-declarations */
+/* eslint-disable no-console,no-case-declarations */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,7 +6,6 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { deleteCachedLiveChannels, refreshLiveChannels } from '@/lib/live';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(liveInfo);
           liveInfo.channelNumber = nums;
         } catch (error) {
-          logger.error('刷新直播源失败:', error);
+          console.error('刷新直播源失败:', error);
           liveInfo.channelNumber = 0;
         }
 
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(editSource);
           editSource.channelNumber = nums;
         } catch (error) {
-          logger.error('刷新直播源失败:', error);
+          console.error('刷新直播源失败:', error);
           editSource.channelNumber = 0;
         }
         break;

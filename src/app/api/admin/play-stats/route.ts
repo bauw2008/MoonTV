@@ -1,11 +1,10 @@
-/* @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 import { PlayRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -150,7 +149,7 @@ export async function GET(request: NextRequest) {
             userAvatar = await (storage as any).getUserAvatar(user.username);
           }
         } catch (error) {
-          logger.error(`获取用户 ${user.username} 头像失败:`, error);
+          console.error(`获取用户 ${user.username} 头像失败:`, error);
         }
 
         // 获取用户登录IP
@@ -163,7 +162,7 @@ export async function GET(request: NextRequest) {
             userLoginIp = loginIp || '暂无IP记录';
           }
         } catch (error) {
-          logger.error(`获取用户 ${user.username} 登录IP失败:`, error);
+          console.error(`获取用户 ${user.username} 登录IP失败:`, error);
         }
 
         if (records.length === 0) {
@@ -234,7 +233,7 @@ export async function GET(request: NextRequest) {
 
         // 添加调试日志
         if (user.username === process.env.USERNAME) {
-          logger.log(`站长 ${user.username} 的播放数据:`, {
+          console.log(`站长 ${user.username} 的播放数据:`, {
             userLastPlayTime,
             userLastPlayTimeDate: userLastPlayTime
               ? new Date(userLastPlayTime)
@@ -268,7 +267,7 @@ export async function GET(request: NextRequest) {
         totalWatchTime += userWatchTime;
         totalPlays += records.length;
       } catch {
-        // logger.error(`获取用户 ${user.username} 播放记录失败:`, error);
+        // console.error(`获取用户 ${user.username} 播放记录失败:`, error);
         // 出错的用户显示为空统计
         // 设置项目开始时间，2025年9月14日
         const PROJECT_START_DATE = new Date('2025-09-14').getTime();
@@ -420,7 +419,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    // logger.error('获取播放统计失败:', error);
+    // console.error('获取播放统计失败:', error);
     return NextResponse.json(
       {
         error: '获取播放统计失败',

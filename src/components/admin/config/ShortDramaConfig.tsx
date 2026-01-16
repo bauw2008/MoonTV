@@ -3,7 +3,6 @@
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -56,7 +55,7 @@ function ShortDramaConfigContent() {
         });
       }
     } catch (error) {
-      logger.error('加载短剧配置失败:', error);
+      console.error('加载短剧配置失败:', error);
       showError('加载配置失败');
     }
   };
@@ -90,7 +89,7 @@ function ShortDramaConfigContent() {
       showSuccess('短剧配置已保存');
       await loadConfig(); // 重新加载配置
     } catch (error) {
-      logger.error('保存短剧配置失败:', error);
+      console.error('保存短剧配置失败:', error);
       showError('保存配置失败');
     } finally {
       setIsSaving(false);

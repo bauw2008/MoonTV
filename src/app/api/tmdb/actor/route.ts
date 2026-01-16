@@ -7,7 +7,6 @@ import {
   hasSpecialFeaturePermission,
 } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 import {
   isTMDBEnabled,
   searchTMDBActorWorks,
@@ -151,44 +150,44 @@ export async function GET(request: NextRequest) {
     const cacheParams = { actorName: actorName.trim(), type, ...filterOptions };
     const cacheKey = `tmdb-actor_works-${JSON.stringify(cacheParams)}`;
 
-    logger.log(`🔍 [TMDB API] 检查缓存: ${cacheKey}`);
+    console.log(`🔍 [TMDB API] 检查缓存: ${cacheKey}`);
 
     // 检查缓存
     try {
       const cachedResult = await db.getCache(cacheKey);
       if (cachedResult) {
-        logger.log(
+        console.log(
           `✅ [TMDB API] 缓存命中: ${actorName} - ${cachedResult.list?.length || 0} 项`,
         );
         return NextResponse.json(cachedResult);
       }
-      logger.log(`❌ [TMDB API] 缓存未命中，开始搜索...`);
+      console.log(`❌ [TMDB API] 缓存未命中，开始搜索...`);
     } catch (cacheError) {
-      logger.warn('TMDB缓存检查失败:', cacheError);
+      console.warn('TMDB缓存检查失败:', cacheError);
     }
 
-    logger.log(`[TMDB演员搜索API] 搜索演员: ${actorName}, 类型: ${type}`);
-    logger.log(`[TMDB演员搜索API] 筛选参数:`, filterOptions);
+    console.log(`[TMDB演员搜索API] 搜索演员: ${actorName}, 类型: ${type}`);
+    console.log(`[TMDB演员搜索API] 筛选参数:`, filterOptions);
 
     // 调用TMDB演员搜索函数（不使用内部缓存）
-    logger.log(`[TMDB演员搜索API] 开始调用 searchTMDBActorWorks...`);
+    console.log(`[TMDB演员搜索API] 开始调用 searchTMDBActorWorks...`);
     const result = await searchTMDBActorWorks(
       actorName.trim(),
       type as 'movie' | 'tv',
       filterOptions,
     );
-    logger.log(`[TMDB演员搜索API] searchTMDBActorWorks 调用完成`);
+    console.log(`[TMDB演员搜索API] searchTMDBActorWorks 调用完成`);
 
-    logger.log(`[TMDB演员搜索API] 搜索结果: ${result.list?.length || 0} 项`);
+    console.log(`[TMDB演员搜索API] 搜索结果: ${result.list?.length || 0} 项`);
 
     // 缓存结果
     try {
       await db.setCache(cacheKey, result, TMDB_CACHE_TIME);
-      logger.log(
+      console.log(
         `💾 TMDB演员搜索结果已缓存(数据库): "${actorName}" - ${result.list?.length || 0} 个结果, TTL: ${TMDB_CACHE_TIME}s`,
       );
     } catch (cacheError) {
-      logger.warn('TMDB演员搜索缓存保存失败:', cacheError);
+      console.warn('TMDB演员搜索缓存保存失败:', cacheError);
     }
 
     // 设置合理的缓存时间
@@ -199,7 +198,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error(
+    console.error(
       `[TMDB演员搜索API] 搜索失败: ${actorName}`,
       (error as Error).message,
     );

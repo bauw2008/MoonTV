@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest) {
       yellowWords: config.YellowWords || [],
     });
   } catch (error) {
-    logger.error('获取敏感词失败:', error);
+    console.error('获取敏感词失败:', error);
     return NextResponse.json({ error: '获取敏感词失败' }, { status: 500 });
   }
 }

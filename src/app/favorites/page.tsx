@@ -1,4 +1,4 @@
-/* @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 'use client';
 
@@ -9,7 +9,6 @@ import {
   getAllFavorites,
   getAllPlayRecords,
 } from '@/lib/db.client';
-import { logger } from '@/lib/logger';
 import {
   checkWatchingUpdates,
   getDetailedWatchingUpdates,
@@ -139,7 +138,7 @@ export default function FavoritesPage() {
         const allFavorites = await getAllFavorites();
         await updateFavoriteItems(allFavorites);
       } catch (error) {
-        logger.error('加载收藏失败:', error);
+        console.error('加载收藏失败:', error);
       } finally {
         setLoading(false);
       }
@@ -175,27 +174,27 @@ export default function FavoritesPage() {
     }
 
     const updateWatchingUpdates = async () => {
-      logger.log('FavoritesPage: 开始获取更新数据...');
+      console.log('FavoritesPage: 开始获取更新数据...');
 
       // 先尝试从缓存加载（快速显示）
       let updates = getDetailedWatchingUpdates();
-      logger.log('FavoritesPage: 缓存数据:', updates);
+      console.log('FavoritesPage: 缓存数据:', updates);
 
       if (updates) {
         setWatchingUpdates(updates);
-        logger.log('FavoritesPage: 使用缓存数据');
+        console.log('FavoritesPage: 使用缓存数据');
       }
 
       // 如果缓存为空，主动检查一次
       if (!updates) {
-        logger.log('FavoritesPage: 缓存为空，主动检查更新...');
+        console.log('FavoritesPage: 缓存为空，主动检查更新...');
         try {
           await checkWatchingUpdates();
           updates = getDetailedWatchingUpdates();
           setWatchingUpdates(updates);
-          logger.log('FavoritesPage: 主动检查完成，获得数据:', updates);
+          console.log('FavoritesPage: 主动检查完成，获得数据:', updates);
         } catch (error) {
-          logger.error('FavoritesPage: 主动检查更新失败:', error);
+          console.error('FavoritesPage: 主动检查更新失败:', error);
         }
       }
     };
@@ -205,7 +204,7 @@ export default function FavoritesPage() {
 
     // 订阅watching updates事件
     const unsubscribeWatchingUpdates = subscribeToWatchingUpdatesEvent(() => {
-      logger.log('FavoritesPage: 收到watching updates更新事件');
+      console.log('FavoritesPage: 收到watching updates更新事件');
       const updates = getDetailedWatchingUpdates();
       setWatchingUpdates(updates);
     });
@@ -429,7 +428,7 @@ export default function FavoritesPage() {
                             const allFavorites = await getAllFavorites();
                             await updateFavoriteItems(allFavorites);
                           } catch (error) {
-                            logger.error('重新加载收藏失败:', error);
+                            console.error('重新加载收藏失败:', error);
                           }
                         }}
                       />

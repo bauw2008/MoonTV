@@ -1,7 +1,5 @@
 'use client';
 
-import { logger } from '@/lib/logger';
-
 import { GetBangumiCalendarData } from './bangumi.client';
 import { getDoubanDetails } from './douban.client';
 
@@ -240,7 +238,7 @@ const searchTMDBPoster = async (
           }
         }
       } catch (error) {
-        logger.warn('[PosterCarousel] 搜索TMDB海报失败:', searchTitle, error);
+        console.warn('[PosterCarousel] 搜索TMDB海报失败:', searchTitle, error);
       }
     }
   }
@@ -256,7 +254,7 @@ const checkTMDBStatus = async () => {
 
     return response.ok && data.success;
   } catch (error) {
-    logger.error('[PosterCarousel] TMDB海报功能检查失败:', error);
+    console.error('[PosterCarousel] TMDB海报功能检查失败:', error);
     return false;
   }
 };
@@ -309,7 +307,7 @@ export async function getPosterCarouselData(): Promise<{
                   };
                 }
               } catch (error) {
-                logger.warn(`获取电影详情失败: ${movieObj.title}`, error);
+                console.warn(`获取电影详情失败: ${movieObj.title}`, error);
               }
             }
 
@@ -340,10 +338,10 @@ export async function getPosterCarouselData(): Promise<{
           }
         }
       } catch (error) {
-        logger.error('处理电影数据失败:', error);
+        console.error('处理电影数据失败:', error);
       }
     } else {
-      logger.warn(
+      console.warn(
         '[PosterCarousel] 电影数据请求失败:',
         moviesResponse.status,
         moviesResponse.reason,
@@ -372,7 +370,7 @@ export async function getPosterCarouselData(): Promise<{
                   };
                 }
               } catch (error) {
-                logger.warn(`获取剧集详情失败: ${showObj.title}`, error);
+                console.warn(`获取剧集详情失败: ${showObj.title}`, error);
               }
             }
 
@@ -402,10 +400,10 @@ export async function getPosterCarouselData(): Promise<{
           }
         }
       } catch (error) {
-        logger.error('处理剧集数据失败:', error);
+        console.error('处理剧集数据失败:', error);
       }
     } else {
-      logger.warn(
+      console.warn(
         '[PosterCarousel] 剧集数据请求失败:',
         tvShowsResponse.status,
         tvShowsResponse.reason,
@@ -449,7 +447,7 @@ export async function getPosterCarouselData(): Promise<{
                 }
               }
             } catch (error) {
-              logger.warn(`获取动漫 ${title} 详情失败:`, error);
+              console.warn(`获取动漫 ${title} 详情失败:`, error);
             }
           }
 
@@ -478,10 +476,10 @@ export async function getPosterCarouselData(): Promise<{
           });
         }
       } catch (error) {
-        logger.error('处理动漫数据失败:', error);
+        console.error('处理动漫数据失败:', error);
       }
     } else {
-      logger.warn(
+      console.warn(
         '[PosterCarousel] 动漫数据请求失败:',
         bangumiData.status,
         bangumiData.status === 'rejected'
@@ -498,7 +496,7 @@ export async function getPosterCarouselData(): Promise<{
       loading: false,
     };
   } catch (error) {
-    logger.error('获取海报轮播数据失败:', error);
+    console.error('获取海报轮播数据失败:', error);
     return {
       posters: [],
       loading: false,

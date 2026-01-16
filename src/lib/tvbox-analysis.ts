@@ -3,8 +3,6 @@ import { extractEpisodesFromPlayUrl } from '@/lib/tvbox-episode-utils';
 import type { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
 
-import { logger } from './logger';
-
 interface ApiSearchItem {
   vod_id: string;
   vod_name: string;
@@ -141,7 +139,8 @@ export async function getVideosByCategory(
       clearTimeout(timeoutId);
     }
 
-    logger.error('分类筛选失败:', error);
+    // eslint-disable-next-line no-console
+    console.error('分类筛选失败:', error);
     return { results: [], pageCount: 1 };
   }
 }

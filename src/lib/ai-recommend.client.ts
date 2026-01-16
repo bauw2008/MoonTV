@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { logger } from '@/lib/logger';
-
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -129,7 +127,6 @@ export async function checkAIRecommendAvailable(): Promise<boolean> {
 
     return response.ok;
   } catch (error) {
-    logger.error('检查API密钥有效性失败:', error);
     // 静默处理错误
     return false;
   }

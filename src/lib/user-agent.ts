@@ -447,7 +447,7 @@ export function getUserAgentDescription(userAgent: string): string {
   return '其他客户端';
 }
 
-const userAgentModule = {
+export default {
   // 常量导出
   CHROME_USER_AGENTS,
   FIREFOX_USER_AGENTS,
@@ -476,5 +476,3 @@ const userAgentModule = {
   isAptvPlayerUserAgent,
   getUserAgentDescription,
 };
-
-export default userAgentModule;

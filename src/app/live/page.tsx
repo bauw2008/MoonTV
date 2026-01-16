@@ -1,11 +1,10 @@
-/* @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
 
 'use client';
 
 import Artplayer from 'artplayer';
 import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
@@ -16,7 +15,6 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { logger } from '@/lib/logger';
 import { parseCustomTimeFormat } from '@/lib/time';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
@@ -326,7 +324,7 @@ function LivePageClient() {
         setLoading(false);
       }, 1000);
     } catch (err) {
-      logger.error('获取直播源失败:', err);
+      console.error('获取直播源失败:', err);
       // 不设置错误，而是显示空状态
       setLiveSources([]);
       setLoading(false);
@@ -467,7 +465,7 @@ function LivePageClient() {
 
       setIsVideoLoading(false);
     } catch (err) {
-      logger.error('获取频道列表失败:', err);
+      console.error('获取频道列表失败:', err);
       // 不设置错误，而是设置空频道列表
       setCurrentChannels([]);
       setGroupedChannels({});
@@ -502,7 +500,7 @@ function LivePageClient() {
       setCurrentSource(source);
       await fetchChannels(source);
     } catch (err) {
-      logger.error('切换直播源失败:', err);
+      console.error('切换直播源失败:', err);
       // 不设置错误，保持当前状态
     } finally {
       // 切换完成，解锁频道切换器
@@ -550,7 +548,7 @@ function LivePageClient() {
           }
         }
       } catch (error) {
-        logger.error('获取节目单信息失败:', error);
+        console.error('获取节目单信息失败:', error);
       } finally {
         setIsEpgLoading(false); // 无论成功失败都结束加载状态
       }
@@ -650,7 +648,7 @@ function LivePageClient() {
             // 确保引用被清空
             artPlayerRef.current.video.flv = null;
           } catch (flvError) {
-            logger.warn('FLV实例销毁时出错:', flvError);
+            console.warn('FLV实例销毁时出错:', flvError);
             // 强制清空引用
             artPlayerRef.current.video.flv = null;
           }
@@ -668,7 +666,7 @@ function LivePageClient() {
         artPlayerRef.current.destroy();
         artPlayerRef.current = null;
       } catch (err) {
-        logger.warn('清理播放器资源时出错:', err);
+        console.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
       }
     }
@@ -763,13 +761,13 @@ function LivePageClient() {
           );
         }
       } catch (err) {
-        logger.error('收藏操作失败:', err);
+        console.error('收藏操作失败:', err);
         // 如果操作失败，回滚状态
         setFavorited(currentFavorited);
         favoritedRef.current = currentFavorited;
       }
     } catch (err) {
-      logger.error('切换收藏失败:', err);
+      console.error('切换收藏失败:', err);
     }
   };
 
@@ -790,7 +788,7 @@ function LivePageClient() {
         setFavorited(fav);
         favoritedRef.current = fav;
       } catch (err) {
-        logger.error('检查收藏状态失败:', err);
+        console.error('检查收藏状态失败:', err);
       }
     })();
   }, [currentSource, currentChannel]);
@@ -862,7 +860,6 @@ function LivePageClient() {
           context.url = url.toString();
         } catch (error) {
           // ignore
-          logger.error('设置 source 参数失败:', error);
         }
         // 拦截manifest和level请求
         if (
@@ -882,7 +879,6 @@ function LivePageClient() {
             } catch (error) {
               // 如果 URL 解析失败，回退到字符串拼接
               context.url = context.url + '&allowCORS=true';
-              logger.error('解析 URL 失败:', error);
             }
           }
         }
@@ -894,7 +890,7 @@ function LivePageClient() {
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) {
-      logger.error('HLS.js 未加载');
+      console.error('HLS.js 未加载');
       return;
     }
 
@@ -904,7 +900,7 @@ function LivePageClient() {
         video.hls.destroy();
         video.hls = null;
       } catch (err) {
-        logger.warn('清理 HLS 实例时出错:', err);
+        console.warn('清理 HLS 实例时出错:', err);
       }
     }
 
@@ -923,7 +919,7 @@ function LivePageClient() {
     video.hls = hls;
 
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-      logger.error('HLS Error:', event, data);
+      console.error('HLS Error:', event, data);
 
       if (data.fatal) {
         switch (data.type) {
@@ -954,7 +950,7 @@ function LivePageClient() {
         return;
       }
 
-      logger.log('视频URL:', videoUrl);
+      console.log('视频URL:', videoUrl);
 
       // 销毁之前的播放器实例并创建新的
       if (artPlayerRef.current) {
@@ -966,7 +962,7 @@ function LivePageClient() {
       const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(videoUrl)}&vidora-source=${currentSourceRef.current?.key || ''}`;
       const precheckResponse = await fetch(precheckUrl);
       if (!precheckResponse.ok) {
-        logger.error('预检查失败:', precheckResponse.statusText);
+        console.error('预检查失败:', precheckResponse.statusText);
         return;
       }
       const precheckResult = await precheckResponse.json();
@@ -1057,7 +1053,7 @@ function LivePageClient() {
         });
 
         artPlayerRef.current.on('error', (err: any) => {
-          logger.error('播放器错误:', err);
+          console.error('播放器错误:', err);
         });
 
         if (artPlayerRef.current?.video) {
@@ -1067,7 +1063,7 @@ function LivePageClient() {
           );
         }
       } catch (err) {
-        logger.error('创建播放器失败:', err);
+        console.error('创建播放器失败:', err);
         // 不设置错误，只记录日志
       }
     };
@@ -1555,13 +1551,11 @@ function LivePageClient() {
                               <div className='flex items-center gap-3'>
                                 <div className='w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                                   {channel.logo ? (
-                                    <Image
+                                    <img
                                       src={`/api/proxy/logo?url=${encodeURIComponent(channel.logo)}&source=${currentSource?.key || ''}`}
                                       alt={channel.name}
-                                      width={20}
-                                      height={20}
                                       className='w-full h-full rounded object-contain'
-                                      unoptimized
+                                      loading='lazy'
                                     />
                                   ) : (
                                     <Tv className='w-5 h-5 text-gray-500' />
@@ -1678,13 +1672,11 @@ function LivePageClient() {
                 <div className='flex items-center gap-4'>
                   <div className='w-20 h-20 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                     {currentChannel.logo ? (
-                      <Image
+                      <img
                         src={`/api/proxy/logo?url=${encodeURIComponent(currentChannel.logo)}&source=${currentSource?.key || ''}`}
                         alt={currentChannel.name}
-                        width={80}
-                        height={80}
                         className='w-full h-full rounded object-contain'
-                        unoptimized
+                        loading='lazy'
                       />
                     ) : (
                       <Tv className='w-10 h-10 text-gray-500' />

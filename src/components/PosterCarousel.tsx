@@ -25,33 +25,9 @@ export default function PosterCarousel({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // 使用 useRef 来跟踪 initialPosters 的前一个值
-  const prevInitialPostersRef = useRef<PosterItem[] | undefined>(undefined);
-
   // 更新海报数据当props变化时
   useEffect(() => {
-    const prevPosters = prevInitialPostersRef.current;
-    const hasChanged =
-      !prevPosters ||
-      prevPosters.length !== (initialPosters?.length || 0) ||
-      (initialPosters || []).some((poster, index) => {
-        const prevPoster = prevPosters[index];
-        return (
-          !prevPoster ||
-          prevPoster.id !== poster.id ||
-          prevPoster.poster !== poster.poster
-        );
-      });
-
-    if (hasChanged) {
-      // 使用 requestAnimationFrame 来延迟 setState 调用
-      requestAnimationFrame(() => {
-        setPosters(initialPosters || []);
-      });
-      prevInitialPostersRef.current = initialPosters
-        ? [...initialPosters]
-        : undefined;
-    }
+    setPosters(initialPosters || []);
   }, [initialPosters]);
 
   // 预加载图片

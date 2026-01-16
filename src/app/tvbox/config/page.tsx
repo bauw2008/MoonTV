@@ -13,7 +13,6 @@ interface DeviceInfo {
 
 // 使用统一的类型定义
 import type { AdminConfig } from '@/lib/admin.types';
-import { logger } from '@/lib/logger';
 type SecurityConfig = NonNullable<AdminConfig['TVBoxSecurityConfig']>;
 
 export default function TVBoxConfigPage() {
@@ -53,8 +52,7 @@ export default function TVBoxConfigPage() {
           data.securityConfig.configGenerator.configMode || 'standard',
         );
       }
-    } catch {
-      // 静默处理错误，配置加载失败不影响功能
+    } catch (error) {
     } finally {
       setLoading(false);
     }
@@ -69,7 +67,7 @@ export default function TVBoxConfigPage() {
         setDevices(data.devices || []);
       }
     } catch (error) {
-      logger.error('获取设备列表失败:', error);
+      console.error('获取设备列表失败:', error);
     } finally {
       setDevicesLoading(false);
     }
@@ -100,13 +98,18 @@ export default function TVBoxConfigPage() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || '解绑失败');
       } catch (error) {
-        logger.error('解绑设备失败:', error);
+        console.error('解绑设备失败:', error);
         alert(error instanceof Error ? error.message : '解绑设备失败');
         return false;
       }
     },
     [fetchDevices, fetchSecurityConfig],
   );
+
+  const handleRefreshConfig = async () => {
+    setLoading(true);
+    await fetchSecurityConfig();
+  };
 
   useEffect(() => {
     fetchSecurityConfig();
@@ -138,6 +141,21 @@ export default function TVBoxConfigPage() {
 
     return `${baseUrl}/api/tvbox?${params.toString()}`;
   }, [format, configMode, securityConfig]);
+
+  const handleCopy = async (text: string, type: 'token' | 'url') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'token') {
+        setTokenCopied(true);
+        setTimeout(() => setTokenCopied(false), 2000);
+      } else {
+        setUrlCopied(true);
+        setTimeout(() => setUrlCopied(false), 2000);
+      }
+    } catch {
+      // Copy failed silently
+    }
+  };
 
   return (
     <PageLayout activePath='/tvbox'>

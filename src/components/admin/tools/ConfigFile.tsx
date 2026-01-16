@@ -21,9 +21,8 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 // 使用统一方案中的 hooks
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
@@ -41,9 +40,17 @@ function ConfigFile() {
   const [isValidJson, setIsValidJson] = useState(true);
   const [config, setConfig] = useState<any>(null);
 
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  useEffect(() => {
+    validateJson();
+  }, [configContent]);
+
   const { configApi } = useAdminApi(); // API 调用
 
-  const loadConfig = useCallback(async () => {
+  const loadConfig = async () => {
     // 防止重复加载
     if (isLoading('api_/api/admin/config')) {
       return;
@@ -70,40 +77,23 @@ function ConfigFile() {
 
       setConfig(data);
     } catch (error) {
-      logger.error('加载配置失败:', error);
+      console.error('加载配置失败:', error);
     }
-  }, [
-    setConfigContent,
-    setSubscriptionUrl,
-    setAutoUpdate,
-    setLastCheckTime,
-    setConfig,
-  ]);
+  };
 
-   
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const validateJson = () => {
+    if (!configContent.trim()) {
+      setIsValidJson(true);
+      return;
+    }
 
-  useEffect(() => {
-    const validateJson = () => {
-      if (!configContent.trim()) {
-        setIsValidJson(true);
-        return;
-      }
-
-      try {
-        JSON.parse(configContent);
-        setIsValidJson(true);
-      } catch (error) {
-        setIsValidJson(false);
-      }
-    };
-
-    validateJson();
-  }, [configContent]);
+    try {
+      JSON.parse(configContent);
+      setIsValidJson(true);
+    } catch (error) {
+      setIsValidJson(false);
+    }
+  };
 
   const handleFetchConfig = async () => {
     if (!subscriptionUrl.trim()) {
@@ -123,7 +113,7 @@ function ConfigFile() {
         showError('拉取失败：未获取到配置内容');
       }
     } catch (error) {
-      logger.error('拉取配置失败:', error);
+      console.error('拉取配置失败:', error);
     }
   };
 
@@ -143,7 +133,7 @@ function ConfigFile() {
 
       showSuccess('配置保存成功');
     } catch (error) {
-      logger.error('保存配置失败:', error);
+      console.error('保存配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
     }
   };

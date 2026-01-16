@@ -2,11 +2,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
 
 import PageLayout from '@/components/PageLayout';
@@ -64,9 +62,9 @@ export default function MessageBoard() {
   // 分页相关状态
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [, setHasNextPage] = useState(false);
-  const [, setHasPrevPage] = useState(false);
-  const [, setLoadingMore] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPrevPage, setHasPrevPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   // 分类筛选状态
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<
     'all' | 'suggestion' | 'feedback' | 'discussion' | 'other'
@@ -101,7 +99,7 @@ export default function MessageBoard() {
         // 标记已加载
         hasLoadedComments.current = true;
       } catch {
-        logger.error('获取评论失败，请稍后重试');
+        console.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -136,7 +134,7 @@ export default function MessageBoard() {
         setComments(data.comments || []);
         hasLoadedComments.current = true; // 标记已加载
       } catch {
-        logger.error('获取评论失败，请稍后重试');
+        console.error('获取评论失败，请稍后重试');
       } finally {
         setLoading(false);
       }
@@ -186,7 +184,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('发布失败，请稍后重试');
-      logger.error('发布评论失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('发布评论失败:', error);
     }
   };
 
@@ -213,7 +212,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('回复失败，请稍后重试');
-      logger.error('发布回复失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('发布回复失败:', error);
     }
   };
 
@@ -237,7 +237,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败，请稍后重试');
-      logger.error('删除评论失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('删除评论失败:', error);
     } finally {
       setDeletingId(null);
     }
@@ -266,7 +267,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('删除失败，请稍后重试');
-      logger.error('删除回复失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('删除回复失败:', error);
     } finally {
       setDeletingId(null);
     }
@@ -291,7 +293,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('清空失败，请稍后重试');
-      logger.error('清空留言失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('清空留言失败:', error);
     }
   };
 
@@ -316,7 +319,8 @@ export default function MessageBoard() {
       }
     } catch (error) {
       showError('操作失败，请稍后重试');
-      logger.error('置顶操作失败:', error);
+      // eslint-disable-next-line no-console
+      console.error('置顶操作失败:', error);
     }
   };
 
@@ -572,13 +576,10 @@ export default function MessageBoard() {
                               <div className='flex-shrink-0 relative'>
                                 {comment.avatar ? (
                                   <div className='w-10 h-10 rounded-full overflow-hidden relative z-10'>
-                                    <Image
+                                    <img
                                       src={comment.avatar}
                                       alt={comment.username}
-                                      width={40}
-                                      height={40}
                                       className='w-full h-full object-cover'
-                                      unoptimized
                                     />
                                   </div>
                                 ) : (
@@ -841,13 +842,10 @@ export default function MessageBoard() {
                                           <div className='flex-shrink-0 relative'>
                                             {reply.avatar ? (
                                               <div className='w-8 h-8 rounded-full overflow-hidden relative z-10'>
-                                                <Image
+                                                <img
                                                   src={reply.avatar}
                                                   alt={reply.username}
-                                                  width={32}
-                                                  height={32}
                                                   className='w-full h-full object-cover'
-                                                  unoptimized
                                                 />
                                               </div>
                                             ) : (

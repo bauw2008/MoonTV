@@ -11,8 +11,6 @@ import React, {
   useState,
 } from 'react';
 
-import { logger } from '@/lib/logger';
-
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -66,11 +64,14 @@ export const VirtualSearchGrid = React.forwardRef<
 >(
   (
     {
+      allResults,
       filteredResults,
+      aggregatedResults,
       filteredAggResults,
       viewMode,
       searchQuery,
       isLoading,
+      groupRefs,
       groupStatsRef,
       getGroupRef,
       computeGroupStats,
@@ -125,11 +126,8 @@ export const VirtualSearchGrid = React.forwardRef<
 
     // 重置可见项目数量（当搜索或过滤变化时）
     useEffect(() => {
-      // 使用 requestAnimationFrame 来延迟 setState 调用
-      requestAnimationFrame(() => {
-        setVisibleItemCount(INITIAL_BATCH_SIZE);
-        setIsLoadingMore(false);
-      });
+      setVisibleItemCount(INITIAL_BATCH_SIZE);
+      setIsLoadingMore(false);
     }, [currentData, viewMode]);
 
     // 当搜索关键词或视图模式改变时，滚动到顶部
@@ -144,7 +142,7 @@ export const VirtualSearchGrid = React.forwardRef<
           });
         } catch (error) {
           // 忽略滚动错误（可能在组件卸载时发生）
-          logger.debug('Grid scroll error (safe to ignore):', error);
+          console.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [searchQuery, viewMode, totalItemCount]);
@@ -155,7 +153,7 @@ export const VirtualSearchGrid = React.forwardRef<
         const element = containerRef.current;
         const actualWidth = element?.offsetWidth || 0;
 
-        logger.log('VirtualSearchGrid container debug:', {
+        console.log('VirtualSearchGrid container debug:', {
           actualWidth,
           containerWidth,
           offsetWidth: element?.offsetWidth,
@@ -202,7 +200,10 @@ export const VirtualSearchGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              logger.debug('Grid scroll to top error (safe to ignore):', error);
+              console.debug(
+                'Grid scroll to top error (safe to ignore):',
+                error,
+              );
             }
           }
         },
@@ -370,7 +371,7 @@ export const VirtualSearchGrid = React.forwardRef<
                 maxHeight: itemHeight + 32,
               }),
             }}
-            onCellsRendered={(visibleCells) => {
+            onCellsRendered={(visibleCells, allCells) => {
               // 使用react-window v2.1.2的API：
               // 1. visibleCells: 真实可见的单元格范围
               // 2. allCells: 包含overscan的所有渲染单元格范围

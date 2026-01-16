@@ -1,9 +1,8 @@
-/* @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { createClient, RedisClientType } from 'redis';
 
 import { AdminConfig } from './admin.types';
-import { logger } from './logger';
 import {
   ContentStat,
   EpisodeSkipConfig,
@@ -54,12 +53,12 @@ function createRetryWrapper(
           err.code === 'EPIPE';
 
         if (isConnectionError && !isLastAttempt) {
-          logger.log(
+          console.log(
             `${clientName} operation failed, retrying... (${
               i + 1
             }/${maxRetries})`,
           );
-          logger.error('Error:', err.message);
+          console.error('Error:', err.message);
 
           // 等待一段时间后重试
           await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
@@ -71,7 +70,7 @@ function createRetryWrapper(
               await client.connect();
             }
           } catch (reconnectErr) {
-            logger.error('Failed to reconnect:', reconnectErr);
+            console.error('Failed to reconnect:', reconnectErr);
           }
 
           continue;
@@ -94,12 +93,7 @@ export function createRedisClient(
 
   if (!client) {
     if (!config.url) {
-      logger.error(
-        `${config.clientName}_URL env variable not set. Please configure ${config.clientName.toUpperCase()}_URL environment variable.`,
-      );
-      throw new Error(
-        `${config.clientName}_URL env variable not set. Please configure ${config.clientName.toUpperCase()}_URL environment variable.`,
-      );
+      throw new Error(`${config.clientName}_URL env variable not set`);
     }
 
     // 创建客户端配置
@@ -108,11 +102,11 @@ export function createRedisClient(
       socket: {
         // 重连策略：指数退避，最大30秒
         reconnectStrategy: (retries: number) => {
-          logger.log(
+          console.log(
             `${config.clientName} reconnection attempt ${retries + 1}`,
           );
           if (retries > 10) {
-            logger.error(
+            console.error(
               `${config.clientName} max reconnection attempts exceeded`,
             );
             return false; // 停止重连
@@ -131,29 +125,29 @@ export function createRedisClient(
 
     // 添加错误事件监听
     client.on('error', (err) => {
-      logger.error(`${config.clientName} client error:`, err);
+      console.error(`${config.clientName} client error:`, err);
     });
 
     client.on('connect', () => {
-      logger.log(`${config.clientName} connected`);
+      console.log(`${config.clientName} connected`);
     });
 
     client.on('reconnecting', () => {
-      logger.log(`${config.clientName} reconnecting...`);
+      console.log(`${config.clientName} reconnecting...`);
     });
 
     client.on('ready', () => {
-      logger.log(`${config.clientName} ready`);
+      console.log(`${config.clientName} ready`);
     });
 
     // 初始连接，带重试机制
     const connectWithRetry = async () => {
       try {
         await client!.connect();
-        logger.log(`${config.clientName} connected successfully`);
+        console.log(`${config.clientName} connected successfully`);
       } catch (err) {
-        logger.error(`${config.clientName} initial connection failed:`, err);
-        logger.log('Will retry in 5 seconds...');
+        console.error(`${config.clientName} initial connection failed:`, err);
+        console.log('Will retry in 5 seconds...');
         setTimeout(connectWithRetry, 5000);
       }
     };
@@ -564,9 +558,9 @@ export abstract class BaseRedisStorage implements IStorage {
       // 删除管理员配置
       await this.withRetry(() => this.client.del(this.adminConfigKey()));
 
-      logger.log('所有数据已清空');
+      console.log('所有数据已清空');
     } catch (error) {
-      logger.error('清空数据失败:', error);
+      console.error('清空数据失败:', error);
       throw new Error('清空数据失败');
     }
   }
@@ -592,7 +586,7 @@ export abstract class BaseRedisStorage implements IStorage {
           val.trim().startsWith('<!DOCTYPE') ||
           val.trim().startsWith('<html')
         ) {
-          logger.error(
+          console.error(
             `${this.config.clientName} returned HTML instead of JSON. Connection issue detected.`,
           );
           return null;
@@ -601,7 +595,7 @@ export abstract class BaseRedisStorage implements IStorage {
         try {
           return JSON.parse(val);
         } catch (parseError) {
-          logger.warn(
+          console.warn(
             `${this.config.clientName} JSON解析失败，返回原字符串 (key: ${key}):`,
             parseError,
           );
@@ -612,7 +606,7 @@ export abstract class BaseRedisStorage implements IStorage {
         return val;
       }
     } catch (error: any) {
-      logger.error(
+      console.error(
         `${this.config.clientName} getCache error (key: ${key}):`,
         error,
       );
@@ -637,7 +631,7 @@ export abstract class BaseRedisStorage implements IStorage {
         await this.withRetry(() => this.client.set(cacheKey, value));
       }
     } catch (error) {
-      logger.error(
+      console.error(
         `${this.config.clientName} setCache error (key: ${key}):`,
         error,
       );
@@ -657,7 +651,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
     if (keys.length > 0) {
       await this.withRetry(() => this.client.del(keys));
-      logger.log(
+      console.log(
         `Cleared ${keys.length} cache entries with pattern: ${pattern}`,
       );
     }
@@ -831,7 +825,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
       return result;
     } catch (error) {
-      logger.error('获取播放统计失败:', error);
+      console.error('获取播放统计失败:', error);
       return {
         totalUsers: 0,
         totalWatchTime: 0,
@@ -886,7 +880,7 @@ export abstract class BaseRedisStorage implements IStorage {
             };
           }
         } catch (error) {
-          logger.error(`获取用户 ${userName} 登入统计失败:`, error);
+          console.error(`获取用户 ${userName} 登入统计失败:`, error);
         }
 
         return {
@@ -972,7 +966,7 @@ export abstract class BaseRedisStorage implements IStorage {
           };
         }
       } catch (error) {
-        logger.error(`获取用户 ${userName} 登入统计失败:`, error);
+        console.error(`获取用户 ${userName} 登入统计失败:`, error);
       }
 
       return {
@@ -995,7 +989,7 @@ export abstract class BaseRedisStorage implements IStorage {
         lastLoginDate: loginStats.lastLoginDate,
       };
     } catch (error) {
-      logger.error(`获取用户 ${userName} 统计失败:`, error);
+      console.error(`获取用户 ${userName} 统计失败:`, error);
       return {
         username: userName,
         totalWatchTime: 0,
@@ -1081,7 +1075,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
       return contentStats;
     } catch (error) {
-      logger.error('获取内容统计失败:', error);
+      console.error('获取内容统计失败:', error);
       return [];
     }
   }
@@ -1101,7 +1095,7 @@ export abstract class BaseRedisStorage implements IStorage {
       // 比如更新用户统计缓存、内容热度等
       // 暂时只是清除缓存，实际统计在查询时重新计算
     } catch (error) {
-      logger.error('更新播放统计失败:', error);
+      console.error('更新播放统计失败:', error);
     }
   }
 
@@ -1138,7 +1132,7 @@ export abstract class BaseRedisStorage implements IStorage {
       // 保存更新后的统计数据
       await this.client.set(loginStatsKey, JSON.stringify(loginStats));
     } catch (error) {
-      logger.error(`更新用户 ${userName} 登入统计失败:`, error);
+      console.error(`更新用户 ${userName} 登入统计失败:`, error);
       throw error;
     }
   }

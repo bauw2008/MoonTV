@@ -1,11 +1,10 @@
-/* react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
+/* eslint-disable no-console,react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
 
 'use client';
 
 import { Search, X } from 'lucide-react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 import {
   getRecommendedShortDramas,
   getShortDramaCategories,
@@ -95,7 +94,7 @@ function ShortDramaPageClient() {
   // 搜索状态
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [, setIsSearching] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   // 保存虚拟化设置
   const toggleVirtualization = () => {
@@ -137,7 +136,7 @@ function ShortDramaPageClient() {
           setShortDramaType(categories[0].type_id.toString());
         }
       } catch (err) {
-        logger.error('加载分类失败:', err);
+        console.error('加载分类失败:', err);
       }
     };
 
@@ -272,7 +271,7 @@ function ShortDramaPageClient() {
         throw new Error(data.message || '获取数据失败');
       }
     } catch (err) {
-      logger.error('加载数据失败:', err);
+      console.error('加载数据失败:', err);
       setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false);
     }
@@ -401,7 +400,7 @@ function ShortDramaPageClient() {
           }
         }
       } catch (err) {
-        logger.error(err);
+        console.error(err);
       } finally {
         setIsLoadingMore(false);
       }
@@ -516,7 +515,7 @@ function ShortDramaPageClient() {
       setHasMore(result.hasMore);
       setLoading(false);
     } catch (err) {
-      logger.error('搜索失败:', err);
+      console.error('搜索失败:', err);
       setError(err instanceof Error ? err.message : '搜索失败');
       setLoading(false);
     } finally {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -56,7 +55,6 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    logger.error('获取图片失败:', error);
     return NextResponse.json(
       { error: 'Error fetching image' },
       { status: 500 },

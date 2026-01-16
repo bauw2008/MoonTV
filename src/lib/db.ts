@@ -1,6 +1,4 @@
-/* @typescript-eslint/no-explicit-any */
-
-import { logger } from '@/lib/logger';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AdminConfig } from './admin.types';
 import { KvrocksStorage } from './kvrocks.db';
@@ -270,7 +268,7 @@ export class DbManager {
         return adminConfig.UserConfig.Users;
       }
     } catch (error) {
-      logger.error('获取用户详细信息失败:', error);
+      console.error('获取用户详细信息失败:', error);
     }
 
     return [];
@@ -495,7 +493,7 @@ export class DbManager {
   ): Promise<void> {
     // 检查storage是否存在且支持统计功能
     if (!this.storage) {
-      logger.warn('存储实例不存在，跳过登录统计记录');
+      console.warn('存储实例不存在，跳过登录统计记录');
       return;
     }
 
@@ -506,7 +504,7 @@ export class DbManager {
         isFirstLogin,
       );
     } else {
-      logger.warn('当前存储类型不支持登录统计功能');
+      console.warn('当前存储类型不支持登录统计功能');
     }
   }
 
@@ -593,7 +591,7 @@ export class DbManager {
       await fs.writeFile(filePath, JSON.stringify(comments, null, 2));
       return true;
     } catch (error) {
-      logger.error('保存留言到文件失败:', error);
+      console.error('保存留言到文件失败:', error);
       return false;
     }
   }
@@ -643,7 +641,7 @@ export class DbManager {
       }
       return false;
     } catch (error) {
-      logger.error('添加回复失败:', error);
+      console.error('添加回复失败:', error);
       return false;
     }
   }

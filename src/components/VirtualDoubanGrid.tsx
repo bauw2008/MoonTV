@@ -11,8 +11,6 @@ import React, {
   useState,
 } from 'react';
 
-import { logger } from '@/lib/logger';
-
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -113,11 +111,8 @@ export const VirtualDoubanGrid = React.forwardRef<
 
     // 重置可见项目数量（当数据变化时）
     useEffect(() => {
-      // 使用 requestAnimationFrame 来延迟 setState 调用
-      requestAnimationFrame(() => {
-        setVisibleItemCount(INITIAL_BATCH_SIZE);
-        setIsVirtualLoadingMore(false);
-      });
+      setVisibleItemCount(INITIAL_BATCH_SIZE);
+      setIsVirtualLoadingMore(false);
     }, [doubanData, type, primarySelection]);
 
     // 当类型或筛选条件改变时，滚动到顶部
@@ -132,7 +127,7 @@ export const VirtualDoubanGrid = React.forwardRef<
           });
         } catch (error) {
           // 忽略滚动错误（可能在组件卸载时发生）
-          logger.debug('Grid scroll error (safe to ignore):', error);
+          console.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [type, primarySelection, totalItemCount, loading]);
@@ -201,7 +196,10 @@ export const VirtualDoubanGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              logger.debug('Grid scroll to top error (safe to ignore):', error);
+              console.debug(
+                'Grid scroll to top error (safe to ignore):',
+                error,
+              );
             }
           }
         },
@@ -223,8 +221,8 @@ export const VirtualDoubanGrid = React.forwardRef<
         rowIndex,
         style,
         displayData: cellDisplayData,
-        type: _cellType,
-        primarySelection: _cellPrimarySelection,
+        type: cellType,
+        primarySelection: cellPrimarySelection,
         isBangumi: cellIsBangumi,
         columnCount: cellColumnCount,
         displayItemCount: cellDisplayItemCount,
@@ -370,7 +368,7 @@ export const VirtualDoubanGrid = React.forwardRef<
                 maxHeight: itemHeight + 32,
               }),
             }}
-            onCellsRendered={(visibleCells) => {
+            onCellsRendered={(visibleCells, allCells) => {
               // 使用react-window v2.1.2的API：
               // 1. visibleCells: 真实可见的单元格范围
               // 2. allCells: 包含overscan的所有渲染单元格范围

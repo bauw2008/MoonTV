@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 强制动态渲染
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
       const userTokenInfo = securityConfig.userTokens.find(
         (t) => t.username === user.username,
       );
-      logger.log('[TVBoxConfig] 查找用户Token:', {
+      console.log('[TVBoxConfig] 查找用户Token:', {
         username: user.username,
         userTokens: securityConfig.userTokens.map((t) => ({
           username: t.username,
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
         if (!userTokenInfo.token) {
           // 生成一个默认token
           userTokenInfo.token = 'BYXBX6Ysyb9WMgw92vDLnntv0WGYbJav';
-          logger.log('[TVBoxConfig] 为用户生成默认Token');
+          console.log('[TVBoxConfig] 为用户生成默认Token');
         }
         userSecurityConfig.token = userTokenInfo.token;
         // 为了向后兼容，同时设置enableAuth为true
@@ -110,7 +109,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 只返回用户特定的 TVBox 安全配置和站点名称
-    logger.log('[TVBoxConfig] 返回的数据:', {
+    console.log('[TVBoxConfig] 返回的数据:', {
       securityConfig: userSecurityConfig,
       siteName: config.SiteConfig?.SiteName || 'Vidora',
     });
@@ -119,7 +118,7 @@ export async function GET(request: NextRequest) {
       siteName: config.SiteConfig?.SiteName || 'Vidora',
     });
   } catch (error) {
-    logger.error('获取TVBox配置失败:', error);
+    console.error('获取TVBox配置失败:', error);
     return NextResponse.json({ error: '获取TVBox配置失败' }, { status: 500 });
   }
 }
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('保存TMDB配置失败:', error);
+    console.error('保存TMDB配置失败:', error);
     return NextResponse.json({ error: '保存TMDB配置失败' }, { status: 500 });
   }
 }

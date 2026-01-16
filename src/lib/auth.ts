@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server';
 
-import { logger } from '@/lib/logger';
-
 // 从cookie获取认证信息 (服务端使用)
 export function getAuthInfoFromCookie(request: NextRequest): {
   password?: string;
@@ -21,7 +19,6 @@ export function getAuthInfoFromCookie(request: NextRequest): {
     const authData = JSON.parse(decoded);
     return authData;
   } catch (error) {
-    logger.error('解析认证cookie失败:', error);
     return null;
   }
 }
@@ -74,7 +71,6 @@ export function getAuthInfoFromBrowserCookie(): {
     const authData = JSON.parse(decoded);
     return authData;
   } catch (error) {
-    logger.error('解析浏览器认证cookie失败:', error);
     return null;
   }
 }

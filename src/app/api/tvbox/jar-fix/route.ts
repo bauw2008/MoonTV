@@ -1,7 +1,6 @@
-/* @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { logger } from '@/lib/logger';
 import { getUserRegion } from '@/lib/networkDetection';
 import { getRandomUserAgent, OTHER_USER_AGENTS } from '@/lib/user-agent';
 
@@ -202,7 +201,7 @@ export async function GET(request: NextRequest) {
     // 检测用户网络环境
     const userRegion = getUserRegion(request);
 
-    logger.log(`[JAR-FIX] 开始测试JAR源，检测到用户区域：${userRegion}`);
+    console.log(`[JAR-FIX] 开始测试JAR源，检测到用户区域：${userRegion}`);
 
     // 根据用户区域排序测试源
     const sortedSources = VERIFIED_JAR_SOURCES.sort((a, b) => {
@@ -286,13 +285,13 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    logger.log(
+    console.log(
       `[JAR-FIX] 测试完成，成功源：${bestSources.length}/${testResults.length}`,
     );
 
     return NextResponse.json(response);
   } catch (error) {
-    logger.error('[JAR-FIX] 测试过程出错:', error);
+    console.error('[JAR-FIX] 测试过程出错:', error);
 
     return NextResponse.json(
       {

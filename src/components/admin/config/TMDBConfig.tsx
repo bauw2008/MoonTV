@@ -1,9 +1,8 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -30,6 +29,9 @@ function TMDBConfigContent() {
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 
+  // 所有状态定义必须在任何条件渲染之前
+  const [config, setConfig] = useState<any>(null);
+
   // TMDB配置状态 - 使用合理的默认值
   const [tmdbSettings, setTmdbSettings] = useState<TMDBSettings>({
     TMDBApiKey: '',
@@ -38,43 +40,34 @@ function TMDBConfigContent() {
     EnableTMDBPosters: false,
   });
 
-  // 使用 ref 来存储最新的 withLoading 和 showError
-  const withLoadingRef = useRef(withLoading);
-  const showErrorRef = useRef(showError);
+  // 加载配置
+  const loadConfig = useCallback(async () => {
+    try {
+      await withLoading('loadTMDBConfig', async () => {
+        const response = await fetch('/api/admin/config');
+        const data = await response.json();
+        setConfig(data.Config);
 
-  // 更新 ref 的值
+        if (data.Config?.SiteConfig) {
+          setTmdbSettings({
+            TMDBApiKey: data.Config.SiteConfig.TMDBApiKey || '',
+            TMDBLanguage: data.Config.SiteConfig.TMDBLanguage || 'zh-CN',
+            EnableTMDBActorSearch:
+              data.Config.SiteConfig.EnableTMDBActorSearch || false,
+            EnableTMDBPosters:
+              data.Config.SiteConfig.EnableTMDBPosters || false,
+          });
+        }
+      });
+    } catch (error) {
+      showError('加载TMDB配置失败');
+    }
+  }, []);
+
+  // 初始化加载
   useEffect(() => {
-    withLoadingRef.current = withLoading;
-    showErrorRef.current = showError;
-  });
-
-  // 初始化加载 - 只在组件挂载时执行一次
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        await withLoadingRef.current('loadTMDBConfig', async () => {
-          const response = await fetch('/api/admin/config');
-          const data = await response.json();
-
-          if (data.Config?.SiteConfig) {
-            setTmdbSettings({
-              TMDBApiKey: data.Config.SiteConfig.TMDBApiKey || '',
-              TMDBLanguage: data.Config.SiteConfig.TMDBLanguage || 'zh-CN',
-              EnableTMDBActorSearch:
-                data.Config.SiteConfig.EnableTMDBActorSearch || false,
-              EnableTMDBPosters:
-                data.Config.SiteConfig.EnableTMDBPosters || false,
-            });
-          }
-        });
-      } catch (error) {
-        logger.error('加载TMDB配置失败:', error);
-        showErrorRef.current('加载TMDB配置失败');
-      }
-    };
-
     loadConfig();
-  }, []); // 空依赖数组，只在组件挂载时执行一次
+  }, [loadConfig]);
 
   // 加载状态
   if (loading) {

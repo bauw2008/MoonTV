@@ -17,7 +17,6 @@ import {
 import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -108,6 +107,7 @@ function TVBoxConfigContent() {
   // 所有状态定义必须在任何条件渲染之前
   const [config, setConfig] = useState<any>(null);
   const [showToken, setShowToken] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<any>(null);
   const [showDiagnoseResult, setShowDiagnoseResult] = useState(false);
   const [configMode, setConfigMode] = useState<
@@ -179,7 +179,6 @@ function TVBoxConfigContent() {
         }
         showSuccess('配置加载成功');
       } catch (error) {
-        logger.error('加载配置失败:', error);
         showError('加载配置失败');
       }
     });
@@ -367,7 +366,6 @@ function TVBoxConfigContent() {
         setJarRefreshMsg(`✗ 刷新失败: ${data.error}`);
       }
     } catch (error) {
-      logger.error('刷新JAR缓存失败:', error);
       setJarRefreshMsg('✗ 刷新失败，请稍后重试');
     } finally {
       setRefreshingJar(false);
@@ -383,7 +381,6 @@ function TVBoxConfigContent() {
       const data = await response.json();
       setSmartHealthResult(data);
     } catch (error) {
-      logger.error('智能健康检查失败:', error);
       setSmartHealthResult({
         success: false,
         error: '智能健康检查失败，请稍后重试',
@@ -593,7 +590,7 @@ function TVBoxConfigContent() {
                       }
                     } catch (fetchError) {
                       // 如果获取当前配置失败，使用本地状态
-                      logger.error(
+                      console.error(
                         '获取当前配置失败，使用本地状态:',
                         fetchError,
                       );
@@ -643,7 +640,7 @@ function TVBoxConfigContent() {
                       }
                     }
                   } catch (error) {
-                    logger.error('保存频率限制失败:', error);
+                    console.error('保存频率限制失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -763,7 +760,7 @@ function TVBoxConfigContent() {
                       }
                     } catch (fetchError) {
                       // 如果获取当前配置失败，使用本地状态
-                      logger.error(
+                      console.error(
                         '获取当前配置失败，使用本地状态:',
                         fetchError,
                       );
@@ -813,7 +810,7 @@ function TVBoxConfigContent() {
                       }
                     }
                   } catch (error) {
-                    logger.error('保存User-Agent白名单失败:', error);
+                    console.error('保存User-Agent白名单失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -1042,7 +1039,7 @@ function TVBoxConfigContent() {
                       throw new Error(errorData.error || '保存失败');
                     }
                   } catch (error) {
-                    logger.error('保存设备绑定失败:', error);
+                    console.error('保存设备绑定失败:', error);
                     // 如果保存失败，恢复状态
                     setSecuritySettings((prev) => ({
                       ...prev,
@@ -1318,11 +1315,11 @@ function TVBoxConfigContent() {
                             currentDevices: [],
                             userTokens: clearedTokens,
                           };
-                          logger.log(
+                          console.log(
                             '清空所有设备发送的数据:',
                             JSON.stringify(saveData, null, 2),
                           );
-                          logger.log(
+                          console.log(
                             '清空后的userTokens详情:',
                             saveData.userTokens.map((t) => ({
                               username: t.username,
@@ -1347,7 +1344,7 @@ function TVBoxConfigContent() {
                             }, 500);
                           } else {
                             const errorData = await response.json();
-                            logger.error('清空失败:', errorData);
+                            console.error('清空失败:', errorData);
                             showError(errorData.error || '清空失败');
                           }
                         }}
@@ -1452,11 +1449,11 @@ function TVBoxConfigContent() {
                                         userTokens: updatedTokens,
                                       };
 
-                                      logger.log(
+                                      console.log(
                                         '解绑设备发送的数据:',
                                         JSON.stringify(saveData, null, 2),
                                       );
-                                      logger.log(
+                                      console.log(
                                         '解绑后的userTokens详情:',
                                         saveData.userTokens.map((t) => ({
                                           username: t.username,
@@ -1483,7 +1480,7 @@ function TVBoxConfigContent() {
                                         }, 500);
                                       } else {
                                         const errorData = await response.json();
-                                        logger.error('解绑失败:', errorData);
+                                        console.error('解绑失败:', errorData);
                                         showError(
                                           errorData.error || '解绑失败',
                                         );

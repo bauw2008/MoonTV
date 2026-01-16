@@ -3,7 +3,6 @@
 import { Plus, Save, Shield, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
 import {
   useAdminAuth,
   useAdminLoading,
@@ -38,7 +37,7 @@ function YellowConfigContent() {
             : true,
         );
       } catch (error) {
-        logger.error('加载18+配置失败:', error);
+        console.error('加载18+配置失败:', error);
       }
     });
   };
@@ -112,7 +111,7 @@ function YellowConfigContent() {
 
         showSuccess('18+配置已保存');
       } catch (error) {
-        logger.error('保存18+配置失败:', error);
+        console.error('保存18+配置失败:', error);
         showError('保存失败: ' + (error as Error).message);
       }
     });
@@ -220,7 +219,7 @@ function YellowConfigContent() {
                           }
                         });
                       } catch (error) {
-                        logger.error('自动保存失败:', error);
+                        console.error('自动保存失败:', error);
                         // 恢复开关状态
                         setFilterEnabled(oldFilterEnabled);
                         showError('自动保存失败');

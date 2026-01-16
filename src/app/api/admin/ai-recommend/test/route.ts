@@ -2,23 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  logger.log('=== AI Test API Called ===');
-  logger.log('URL:', request.url);
-  logger.log('Method:', request.method);
-  logger.log('Headers:', Object.fromEntries(request.headers.entries()));
-  logger.log('Cookies:', request.cookies.getAll());
+  console.log('=== AI Test API Called ===');
+  console.log('URL:', request.url);
+  console.log('Method:', request.method);
+  console.log('Headers:', Object.fromEntries(request.headers.entries()));
+  console.log('Cookies:', request.cookies.getAll());
 
   // 检查存储类型
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-  logger.log('Storage type:', storageType);
+  console.log('Storage type:', storageType);
 
   if (storageType === 'localstorage') {
-    logger.log('Local storage not supported');
+    console.log('Local storage not supported');
     return NextResponse.json(
       {
         error: '不支持本地存储进行AI推荐测试',
@@ -29,11 +28,11 @@ export async function POST(request: NextRequest) {
 
   // 先进行认证检查
   const authInfo = getAuthInfoFromCookie(request);
-  logger.log('Auth info from cookie:', authInfo);
+  console.log('Auth info from cookie:', authInfo);
 
   // 检查用户权限
   if (!authInfo || !authInfo.username) {
-    logger.error('No auth info in cookie');
+    console.error('No auth info in cookie');
     return NextResponse.json(
       {
         error: 'Unauthorized - 请先登录',
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
   }
 
   const username = authInfo.username;
-  logger.log('AI Test: Authenticated user:', username);
+  console.log('AI Test: Authenticated user:', username);
 
   try {
     // 权限校验 - 只有站长和管理员可以测试
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
         (u) => u.username === username,
       );
       if (!user || user.role !== 'admin' || user.banned) {
-        logger.error('AI Test: User not authorized:', username);
+        console.error('AI Test: User not authorized:', username);
         return NextResponse.json(
           { error: '权限不足 - 需要管理员权限' },
           { status: 401 },
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
     let body;
     try {
       const text = await request.text();
-      logger.log('AI Test: Raw request body:', text);
+      console.log('AI Test: Raw request body:', text);
       if (!text) {
         return NextResponse.json(
           {
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
       }
       body = JSON.parse(text);
     } catch (e) {
-      logger.error('AI Test: Failed to parse request body:', e);
+      console.error('AI Test: Failed to parse request body:', e);
       return NextResponse.json(
         {
           error: '请求体格式错误',
@@ -95,7 +94,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.log('AI Test Request Body:', JSON.stringify(body, null, 2));
+    console.log('AI Test Request Body:', JSON.stringify(body, null, 2));
 
     const { apiUrl, apiKey, model } = body;
 
@@ -143,7 +142,7 @@ export async function POST(request: NextRequest) {
       ? apiUrl
       : `${apiUrl.replace(/\/$/, '')}/chat/completions`;
 
-    logger.log('Testing AI API:', testUrl);
+    console.log('Testing AI API:', testUrl);
 
     const response = await fetch(testUrl, {
       method: 'POST',
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
 
-      logger.error('AI API Test Error:', errorText);
+      console.error('AI API Test Error:', errorText);
       return NextResponse.json(
         {
           error: errorMessage,
@@ -228,8 +227,8 @@ export async function POST(request: NextRequest) {
     }
 
     const message = result.choices[0].message;
-    logger.log('Message fields:', Object.keys(message));
-    logger.log('Full message:', message);
+    console.log('Message fields:', Object.keys(message));
+    console.log('Full message:', message);
 
     // 尝试从多个可能的字段获取回复内容
     let testReply =
@@ -237,12 +236,12 @@ export async function POST(request: NextRequest) {
 
     // 如果还是为空，打印更多调试信息
     if (!testReply || testReply.trim() === '') {
-      logger.log('All message fields:', message);
+      console.log('All message fields:', message);
       // 尝试获取任何字符串字段
       for (const [key, value] of Object.entries(message)) {
         if (typeof value === 'string' && value.trim()) {
           testReply = value;
-          logger.log(`Found content in field '${key}':`, value);
+          console.log(`Found content in field '${key}':`, value);
           break;
         }
       }
@@ -279,7 +278,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('AI API test error:', error);
+    console.error('AI API test error:', error);
 
     let errorMessage = '连接测试失败';
     if (error instanceof Error) {

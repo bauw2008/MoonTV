@@ -3,7 +3,6 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
 import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -63,7 +62,6 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    logger.error('获取 logo 失败:', error);
     return NextResponse.json(
       { error: 'Error fetching image' },
       { status: 500 },

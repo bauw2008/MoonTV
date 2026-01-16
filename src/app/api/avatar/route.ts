@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
     const avatarData = await db.getUserAvatar(username);
     return NextResponse.json({ avatar: avatarData });
   } catch (error) {
-    logger.error('获取头像失败:', error);
+    console.error('获取头像失败:', error);
     return NextResponse.json({ error: '获取头像失败' }, { status: 500 });
   }
 }
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest) {
       userRole,
     });
   } catch (error) {
-    logger.error('上传头像失败:', error);
+    console.error('上传头像失败:', error);
     return NextResponse.json({ error: '上传头像失败' }, { status: 500 });
   }
 }
@@ -133,7 +132,7 @@ export async function DELETE(request: NextRequest) {
     await db.setUserAvatar(username, '');
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('删除头像失败:', error);
+    console.error('删除头像失败:', error);
     return NextResponse.json({ error: '删除头像失败' }, { status: 500 });
   }
 }

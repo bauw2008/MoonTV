@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(shortDramaConfig);
   } catch (error) {
-    logger.error('获取短剧API配置失败:', error);
+    console.error('获取短剧API配置失败:', error);
     return NextResponse.json({ error: '获取短剧API配置失败' }, { status: 500 });
   }
 }
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('保存短剧API配置失败:', error);
+    console.error('保存短剧API配置失败:', error);
     return NextResponse.json({ error: '保存短剧API配置失败' }, { status: 500 });
   }
 }

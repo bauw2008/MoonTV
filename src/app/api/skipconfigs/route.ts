@@ -1,8 +1,10 @@
+/* eslint-disable no-console */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
+import { EpisodeSkipConfig } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({});
     }
   } catch (error) {
-    logger.error('获取跳过片头片尾配置失败:', error);
+    console.error('获取跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '获取跳过片头片尾配置失败' },
       { status: 500 },
@@ -83,12 +85,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '无效的key格式' }, { status: 400 });
     }
 
+    // 验证配置格式
+    const skipConfig: EpisodeSkipConfig = {
+      source: source,
+      id: id,
+      title: config.title || '',
+      segments: config.segments || [],
+      updated_time: Date.now(),
+    };
+
     // 保存配置 - 功能未实现
     // await db.setSkipConfig(authInfo.username, source, id, skipConfig);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('保存跳过片头片尾配置失败:', error);
+    console.error('保存跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '保存跳过片头片尾配置失败' },
       { status: 500 },
@@ -135,7 +146,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('删除跳过片头片尾配置失败:', error);
+    console.error('删除跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '删除跳过片头片尾配置失败' },
       { status: 500 },

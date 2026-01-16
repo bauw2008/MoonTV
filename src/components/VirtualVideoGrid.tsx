@@ -11,8 +11,6 @@ import React, {
   useState,
 } from 'react';
 
-import { logger } from '@/lib/logger';
-
 const Grid = dynamic(
   () => import('react-window').then((mod) => ({ default: mod.Grid })),
   {
@@ -62,6 +60,7 @@ export const VirtualVideoGrid = React.forwardRef<
       loading,
       isBangumi = false,
       from = 'douban',
+      rate,
     },
     ref,
   ) => {
@@ -97,11 +96,8 @@ export const VirtualVideoGrid = React.forwardRef<
     useImagePreload(imagesToPreload, totalItemCount > 0);
 
     useEffect(() => {
-      // 使用 requestAnimationFrame 来延迟 setState 调用
-      requestAnimationFrame(() => {
-        setVisibleItemCount(INITIAL_BATCH_SIZE);
-        setIsVirtualLoadingMore(false);
-      });
+      setVisibleItemCount(INITIAL_BATCH_SIZE);
+      setIsVirtualLoadingMore(false);
     }, [videos]);
 
     useEffect(() => {
@@ -114,7 +110,7 @@ export const VirtualVideoGrid = React.forwardRef<
             behavior: 'smooth',
           });
         } catch (error) {
-          logger.debug('Grid scroll error (safe to ignore):', error);
+          console.debug('Grid scroll error (safe to ignore):', error);
         }
       }
     }, [totalItemCount, loading]);
@@ -174,12 +170,15 @@ export const VirtualVideoGrid = React.forwardRef<
                 behavior: 'smooth',
               });
             } catch (error) {
-              logger.debug('Grid scroll to top error (safe to ignore):', error);
+              console.debug(
+                'Grid scroll to top error (safe to ignore):',
+                error,
+              );
             }
           }
         },
       }),
-      [from, VideoCard],
+      [],
     );
 
     const rowCount = Math.ceil(displayItemCount / columnCount);
@@ -229,7 +228,7 @@ export const VirtualVideoGrid = React.forwardRef<
           </div>
         );
       },
-      [from, VideoCard],
+      [],
     );
 
     const skeletonData = Array.from({ length: 25 }, (_, index) => index);
@@ -317,7 +316,7 @@ export const VirtualVideoGrid = React.forwardRef<
                 maxHeight: itemHeight + 32,
               }),
             }}
-            onCellsRendered={(visibleCells) => {
+            onCellsRendered={(visibleCells, allCells) => {
               const { rowStopIndex: visibleRowStopIndex } = visibleCells;
 
               if (visibleRowStopIndex >= rowCount - LOAD_MORE_THRESHOLD) {

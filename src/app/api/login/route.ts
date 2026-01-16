@@ -1,9 +1,8 @@
-/* @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest) {
       try {
         await db.updateUserLoginStats(username, Date.now(), true);
       } catch (error) {
-        logger.error('更新登录统计失败:', error);
+        console.error('更新登录统计失败:', error);
         // 更新失败不影响登录流程
       }
 
@@ -191,7 +190,7 @@ export async function POST(req: NextRequest) {
       try {
         await db.updateUserLoginStats(username, Date.now(), false);
       } catch (error) {
-        logger.error('更新登录统计失败:', error);
+        console.error('更新登录统计失败:', error);
         // 更新失败不影响登录流程
       }
 
@@ -216,19 +215,11 @@ export async function POST(req: NextRequest) {
 
       return response;
     } catch (err) {
-      logger.error('数据库验证失败', err);
-      logger.error('错误详情:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      return NextResponse.json(
-        { error: '数据库错误', details: err instanceof Error ? err.message : 'Unknown error' },
-        { status: 500 },
-      );
+      console.error('数据库验证失败', err);
+      return NextResponse.json({ error: '数据库错误' }, { status: 500 });
     }
   } catch (error) {
-    logger.error('登录接口异常', error);
-    logger.error('错误堆栈:', error instanceof Error ? error.stack : 'No stack trace');
-    return NextResponse.json(
-      { error: '服务器错误', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 },
-    );
+    console.error('登录接口异常', error);
+    return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }
 }

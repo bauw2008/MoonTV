@@ -1,5 +1,3 @@
-import { logger } from '@/lib/logger';
-
 import { ClientCache } from './client-cache';
 
 // 短剧数据缓存配置（秒）
@@ -47,7 +45,7 @@ async function getCache(key: string): Promise<any | null> {
 
     return null;
   } catch (e) {
-    logger.warn('获取短剧缓存失败:', e);
+    console.warn('获取短剧缓存失败:', e);
     return null;
   }
 }
@@ -76,7 +74,7 @@ async function setCache(
       }
     }
   } catch (e) {
-    logger.warn('设置短剧缓存失败:', e);
+    console.warn('设置短剧缓存失败:', e);
   }
 }
 
@@ -108,7 +106,7 @@ async function cleanExpiredCache(): Promise<void> {
       keysToRemove.forEach((key) => localStorage.removeItem(key));
     }
   } catch (e) {
-    logger.warn('清理短剧过期缓存失败:', e);
+    console.warn('清理短剧过期缓存失败:', e);
   }
 }
 
@@ -120,12 +118,12 @@ async function initShortdramaCache(): Promise<void> {
   // 每10分钟清理一次过期缓存
   setInterval(() => cleanExpiredCache(), 10 * 60 * 1000);
 
-  logger.log('短剧缓存系统已初始化');
+  console.log('短剧缓存系统已初始化');
 }
 
 // 在模块加载时初始化缓存系统
 if (typeof window !== 'undefined') {
-  initShortdramaCache().catch(logger.error);
+  initShortdramaCache().catch(console.error);
 }
 
 export {

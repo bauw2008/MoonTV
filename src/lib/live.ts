@@ -1,6 +1,5 @@
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 import { LIVE_PLAYER_USER_AGENTS } from './user-agent';
 
@@ -196,7 +195,6 @@ async function parseEpg(
       }
     }
   } catch (error) {
-    logger.warn('处理直播频道失败:', error);
     // ignore
   }
 
@@ -322,7 +320,6 @@ export function resolveUrl(baseUrl: string, relativePath: string) {
     const resolvedUrl = new URL(relativePath, baseUrlObj);
     return resolvedUrl.href;
   } catch (error) {
-    logger.warn('解析相对路径失败:', error);
     // 降级处理
     return fallbackUrlResolve(baseUrl, relativePath);
   }
@@ -379,7 +376,6 @@ export function getBaseUrl(m3u8Url: string) {
     }
     return url.protocol + '//' + url.host + url.pathname;
   } catch (error) {
-    logger.warn('获取基础URL失败:', error);
     return m3u8Url.endsWith('/') ? m3u8Url : m3u8Url + '/';
   }
 }

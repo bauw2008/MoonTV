@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
+
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    logger.error('更新菜单配置失败:', error);
+    console.error('更新菜单配置失败:', error);
     return NextResponse.json(
       {
         error: '更新菜单配置失败',

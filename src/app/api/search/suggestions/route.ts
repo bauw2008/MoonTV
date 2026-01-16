@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,7 +6,6 @@ import { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { logger } from '@/lib/logger';
 import { getYellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -49,7 +48,7 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (error) {
-    logger.error('获取搜索建议失败', error);
+    console.error('获取搜索建议失败', error);
     return NextResponse.json({ error: '获取搜索建议失败' }, { status: 500 });
   }
 }

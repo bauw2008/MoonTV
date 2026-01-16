@@ -15,7 +15,6 @@ import {
   MovieRecommendation,
   sendAIRecommendMessage,
 } from '@/lib/ai-recommend.client';
-import { logger } from '@/lib/logger';
 
 interface AIRecommendModalProps {
   isOpen: boolean;
@@ -41,6 +40,7 @@ export default function AIRecommendModal({
     details?: string;
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   // 拖动相关状态
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -72,7 +72,7 @@ export default function AIRecommendModal({
           return; // 有缓存就不显示欢迎消息
         } else {
           // 🔥 修复Bug #2: 超过30分钟时真正删除localStorage中的过期数据
-          logger.log('AI聊天记录已超过30分钟，自动清除缓存');
+          console.log('AI聊天记录已超过30分钟，自动清除缓存');
           localStorage.removeItem('ai-recommend-messages');
         }
       }
@@ -86,7 +86,7 @@ export default function AIRecommendModal({
       };
       setMessages([welcomeMessage]);
     } catch (error) {
-      logger.error('Failed to load messages from cache', error);
+      console.error('Failed to load messages from cache', error);
       // 发生错误时也清除可能损坏的缓存
       localStorage.removeItem('ai-recommend-messages');
     }
@@ -115,7 +115,7 @@ export default function AIRecommendModal({
       };
       localStorage.setItem('ai-recommend-messages', JSON.stringify(cache));
     } catch (error) {
-      logger.error('Failed to save messages to cache', error);
+      console.error('Failed to save messages to cache', error);
     }
   }, [messages]);
 
@@ -125,6 +125,22 @@ export default function AIRecommendModal({
     const searchUrl = generateSearchUrl(cleanTitle);
     router.push(searchUrl);
     onClose(); // 关闭对话框
+  };
+
+  // 处理推荐卡片点击
+  const handleMovieSelect = (movie: MovieRecommendation) => {
+    const searchQuery = encodeURIComponent(movie.title);
+    router.push(`/search?q=${searchQuery}`);
+    onClose(); // 关闭对话框
+  };
+
+  // 处理视频链接解析结果
+  const handleVideoLinkPlay = (video: any) => {
+    if (video.playable && video.embedUrl) {
+      setPlayingVideoId(
+        playingVideoId === video.videoId ? null : video.videoId,
+      );
+    }
   };
 
   // 发送消息
@@ -161,7 +177,7 @@ export default function AIRecommendModal({
       // 添加AI回复到完整的消息历史（不是截取的历史）
       setMessages([...updatedMessages, assistantMessage]);
     } catch (error) {
-      logger.error('AI推荐请求失败:', error);
+      console.error('AI推荐请求失败:', error);
 
       if (error instanceof Error) {
         // 尝试解析错误响应中的详细信息
@@ -213,7 +229,7 @@ export default function AIRecommendModal({
     try {
       localStorage.removeItem('ai-recommend-messages');
     } catch (error) {
-      logger.error('Failed to clear messages cache', error);
+      console.error('Failed to clear messages cache', error);
     }
 
     // 重新显示欢迎消息

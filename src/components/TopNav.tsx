@@ -23,7 +23,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -61,8 +60,18 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const router = useRouter();
   const { siteName } = useSite();
   const { settings: userSettings } = useUserSettings();
+  const [configVersion, setConfigVersion] = useState(0);
 
   // 监听配置更新事件
+  useEffect(() => {
+    const handleConfigUpdate = () => {
+      setConfigVersion((v) => v + 1);
+    };
+    window.addEventListener('vidora-config-update', handleConfigUpdate);
+    return () => {
+      window.removeEventListener('vidora-config-update', handleConfigUpdate);
+    };
+  }, []);
 
   // 直接从全局运行时配置读取，避免复杂的 Context 状态管理
   const getMenuSettings = (): MenuSettings => {
@@ -101,15 +110,18 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const menuSettings = getMenuSettings();
   const customCategories = getCustomCategories();
 
+  const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
+    return menuSettings[menuKey];
+  };
+
   // 使用 useMemo 缓存 auth，避免每次渲染都调用 getAuthInfoFromBrowserCookie
   const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
 
+  // 缓存 auth.username，避免引用变化
+  const username = useMemo(() => auth?.username, [auth?.username]);
+
   // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
   const menuItems = useMemo(() => {
-    const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
-      return menuSettings[menuKey];
-    };
-
     const items: MenuItem[] = [];
 
     // 添加首页
@@ -151,7 +163,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     items.push({ icon: Star, label: '收藏', href: '/favorites' });
 
     return items;
-  }, [menuSettings, customCategories]);
+  }, [menuSettings, customCategories, isMenuEnabled]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -161,6 +173,10 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
     pendingUsers: { count: 0 },
     messages: { count: 0, hasUnread: false },
+    episodeUpdates: {
+      count: 0,
+      items: [] as Array<{ title: string; newEpisodes: number }>,
+    },
   });
 
   // 鼠标滚轮隐藏逻辑
@@ -288,8 +304,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             }));
           }
         }
-      } catch (error) {
-        logger.error('获取待审核用户数量失败:', error);
+      } catch (_error) {
+        // 忽略获取待审核用户数量失败
       }
     };
 
@@ -396,8 +412,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             messages: { count: unreadCount, hasUnread: unreadCount > 0 },
           }));
         }
-      } catch (error) {
-        logger.error('获取留言信息失败:', error);
+      } catch (_error) {
+        // 忽略获取留言信息的错误
       }
     };
 
@@ -407,7 +423,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
       const interval = setInterval(checkUnreadMessages, 21600000);
       return () => clearInterval(interval);
     }
-  }, [auth?.username, auth?.role]); // 依赖 username 和 role，避免 auth 对象引用变化
+  }, [auth?.username]); // 只依赖 username，避免 auth 对象引用变化
 
   // 版本检查
   useEffect(() => {
@@ -427,8 +443,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
         // 保存检查时间
         localStorage.setItem('lastVersionCheck', Date.now().toString());
-      } catch (error) {
-        logger.error('版本检查失败:', error);
+      } catch (_error) {
+        // 忽略版本检查错误
       }
     };
 
@@ -458,6 +474,54 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     ); // 12小时
 
     return () => clearInterval(interval);
+  }, []);
+
+  // 监听集数更新事件
+  useEffect(() => {
+    const handleWatchingUpdates = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { hasUpdates, updatedCount } = customEvent.detail;
+
+      if (hasUpdates && updatedCount > 0) {
+        // 获取更新的剧集信息
+        try {
+          const cached = localStorage.getItem('vidora_watching_updates');
+          if (cached) {
+            const data = JSON.parse(cached);
+            const updatedSeries = data.updatedSeries || [];
+
+            // 提取有新集数的剧集
+            const items = updatedSeries
+              .filter((item: any) => item.hasNewEpisode && item.newEpisodes > 0)
+              .map((item: any) => ({
+                title: item.title,
+                newEpisodes: item.newEpisodes,
+              }));
+
+            if (items.length > 0) {
+              setNotifications((prev) => ({
+                ...prev,
+                episodeUpdates: {
+                  count: items.length,
+                  items,
+                },
+              }));
+            }
+          }
+        } catch (_error) {
+          // 忽略解析错误
+        }
+      }
+    };
+
+    window.addEventListener('watchingUpdatesChanged', handleWatchingUpdates);
+
+    return () => {
+      window.removeEventListener(
+        'watchingUpdatesChanged',
+        handleWatchingUpdates,
+      );
+    };
   }, []);
 
   // 页面切换动画效果
@@ -510,9 +574,13 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
   const hasPendingUsers = notifications.pendingUsers.count > 0;
   const hasUnreadMessages = notifications.messages.hasUnread;
+  const hasEpisodeUpdates = notifications.episodeUpdates.count > 0;
   const hasAnyNotifications =
     userSettings.enableNotifications &&
-    (hasVersionUpdate || hasPendingUsers || hasUnreadMessages);
+    (hasVersionUpdate ||
+      hasPendingUsers ||
+      hasUnreadMessages ||
+      hasEpisodeUpdates);
 
   // 提醒弹窗组件
   const NotificationModal = () => {
@@ -665,6 +733,51 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                 </button>
               </div>
             )}
+
+            {/* 集数更新提醒 */}
+            {hasEpisodeUpdates && (
+              <div className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors'>
+                <div className='flex items-center gap-2 flex-1'>
+                  <PlayCircle className='w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0' />
+                  <div className='flex-1 min-w-0'>
+                    <span className='text-sm text-gray-900 dark:text-gray-100'>
+                      {notifications.episodeUpdates.items.length === 1
+                        ? notifications.episodeUpdates.items[0].title
+                        : `${notifications.episodeUpdates.items.length} 部剧集`}
+                    </span>
+                    <span className='text-xs text-green-500 dark:text-green-400 font-medium ml-2'>
+                      +
+                      {notifications.episodeUpdates.items.reduce(
+                        (sum, item) => sum + item.newEpisodes,
+                        0,
+                      )}{' '}
+                      集
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowNotificationModal(false);
+                    router.push('/favorites');
+                  }}
+                  className='text-sm text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300 flex-shrink-0'
+                >
+                  前往
+                </button>
+                <button
+                  onClick={() => {
+                    setNotifications((prev) => ({
+                      ...prev,
+                      episodeUpdates: { count: 0, items: [] },
+                    }));
+                  }}
+                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                  title='关闭'
+                >
+                  <X className='w-4 h-4' />
+                </button>
+              </div>
+            )}
           </div>{' '}
         </div>
       </div>,
@@ -691,7 +804,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           <div className='flex justify-between items-center h-12'>
             {/* Logo骨架 */}
             <div className='flex items-center flex-none'>
-              <Link
+              <a
                 href='/'
                 className='logo-container flex items-center space-x-3 group'
               >
@@ -720,12 +833,12 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                   {/* 名称下方装饰线 */}
                   <div className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 group-hover:w-full transition-all duration-300 rounded-full'></div>
                 </div>
-              </Link>
+              </a>
             </div>
             {/* 桌面导航菜单骨架 */}
             <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
               {/* 菜单项骨架 - 完全匹配客户端结构 */}
-              <Link
+              <a
                 href='/'
                 className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
               >
@@ -738,7 +851,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                 <span className='relative bg-gray-300 dark:bg-gray-600 text-transparent text-xs'>
                   首页
                 </span>
-              </Link>
+              </a>
               <a
                 href='/douban?type=movie'
                 className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
@@ -987,7 +1100,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     const totalCount =
                       notifications.versionUpdate.count +
                       notifications.pendingUsers.count +
-                      notifications.messages.count;
+                      notifications.messages.count +
+                      notifications.episodeUpdates.count;
 
                     if (totalCount > 0) {
                       return (

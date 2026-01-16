@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
+import { useAdminApi } from '@/hooks/admin/useAdminApi';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -183,6 +183,8 @@ function VideoConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
+  const { configApi } = useAdminApi();
+
   const [config, setConfig] = useState<any>(null);
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -229,7 +231,7 @@ function VideoConfigContent() {
         setSelectedSources(new Set());
       }
     } catch (error) {
-      logger.error('加载视频配置失败:', error);
+      console.error('加载视频配置失败:', error);
       showError('加载配置失败');
     }
   };
@@ -251,7 +253,7 @@ function VideoConfigContent() {
       await loadConfig();
       showSuccess('操作成功');
     } catch (err) {
-      logger.error('API调用失败:', err);
+      console.error('API调用失败:', err);
       showError(err instanceof Error ? err.message : '操作失败');
       throw err;
     }
@@ -265,7 +267,7 @@ function VideoConfigContent() {
     withLoading(`toggleSource_${key}`, () =>
       callSourceApi({ action, key }),
     ).catch(() => {
-      logger.error('操作失败', action, key);
+      console.error('操作失败', action, key);
     });
   };
 
@@ -273,7 +275,7 @@ function VideoConfigContent() {
     withLoading(`deleteSource_${key}`, () =>
       callSourceApi({ action: 'delete', key }),
     ).catch((error) => {
-      logger.error('操作失败', 'delete', key, error);
+      console.error('操作失败', 'delete', key, error);
       showError(error?.message || '删除失败');
     });
   };
@@ -302,7 +304,7 @@ function VideoConfigContent() {
       });
       setShowAddForm(false);
     }).catch(() => {
-      logger.error('操作失败', 'add', newSource);
+      console.error('操作失败', 'add', newSource);
     });
   };
 
@@ -382,7 +384,7 @@ function VideoConfigContent() {
 
             switch (data.type) {
               case 'start':
-                logger.log(`开始检测 ${data.totalSources} 个视频源`);
+                console.log(`开始检测 ${data.totalSources} 个视频源`);
                 break;
               case 'source_result':
               case 'source_error':
@@ -431,7 +433,7 @@ function VideoConfigContent() {
                 break;
 
               case 'complete':
-                logger.log(
+                console.log(
                   `检测完成，共检测 ${data.completedSources} 个视频源`,
                 );
                 eventSource.close();
@@ -440,12 +442,12 @@ function VideoConfigContent() {
                 break;
             }
           } catch (error) {
-            logger.error('解析EventSource数据失败:', error);
+            console.error('解析EventSource数据失败:', error);
           }
         };
 
         eventSource.onerror = (error) => {
-          logger.error('EventSource错误:', error);
+          console.error('EventSource错误:', error);
           eventSource.close();
           setIsValidating(false);
           showError('连接错误，请重试');
@@ -516,7 +518,7 @@ function VideoConfigContent() {
       }
       setSelectedSources(new Set());
     }).catch(() => {
-      logger.error('批量删除失败');
+      console.error('批量删除失败');
       // 使用Toast通知
       showError('批量删除失败');
     });

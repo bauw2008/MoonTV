@@ -7,7 +7,6 @@ import {
   notifyConfigUpdated,
   updateCustomCategories,
 } from '@/lib/global-config';
-import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
 
@@ -22,9 +21,11 @@ interface CustomCategory {
 function CategoryConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
-  const { showSuccess } = useToastNotification();
+  const { showError, showSuccess } = useToastNotification();
 
+  const [config, setConfig] = useState<any>(null);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
+  const [expanded, setExpanded] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategory, setNewCategory] = useState<CustomCategory>({
     name: '',
@@ -69,22 +70,6 @@ function CategoryConfigContent() {
     ],
   };
 
-  const loadConfig = async () => {
-    try {
-      const result = await withLoading('loadCategoryConfig', async () => {
-        const response = await fetch('/api/admin/config');
-        const data = await response.json();
-        const categories = data.Config.CustomCategories || [];
-        setCategories(categories);
-        return categories;
-      });
-      return result;
-    } catch (error) {
-      logger.error('加载分类配置失败:', error);
-      return [];
-    }
-  };
-
   useEffect(() => {
     const initializeConfig = async () => {
       const categories = await loadConfig();
@@ -94,7 +79,25 @@ function CategoryConfigContent() {
       }
     };
     initializeConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadConfig = async () => {
+    try {
+      const result = await withLoading('loadCategoryConfig', async () => {
+        const response = await fetch('/api/admin/config');
+        const data = await response.json();
+        setConfig(data.Config);
+        const categories = data.Config.CustomCategories || [];
+        setCategories(categories);
+        return categories;
+      });
+      return result;
+    } catch (error) {
+      console.error('加载分类配置失败:', error);
+      return [];
+    }
+  };
 
   const handleTypeChange = (type: 'movie' | 'tv') => {
     setNewCategory((prev) => ({
@@ -176,7 +179,7 @@ function CategoryConfigContent() {
     withLoading(`toggleCategory_${query}_${type}`, async () => {
       await callCategoryApi({ action, query, type });
     }).catch(() => {
-      logger.error('操作失败', action, query, type);
+      console.error('操作失败', action, query, type);
     });
   };
 
@@ -184,7 +187,7 @@ function CategoryConfigContent() {
     withLoading(`deleteCategory_${query}_${type}`, () =>
       callCategoryApi({ action: 'delete', query, type }),
     ).catch(() => {
-      logger.error('操作失败', 'delete', query, type);
+      console.error('操作失败', 'delete', query, type);
     });
   };
 
@@ -208,7 +211,7 @@ function CategoryConfigContent() {
       setAutoFilledName(false);
       setShowAddForm(false);
     }).catch(() => {
-      logger.error('操作失败', 'add', newCategory);
+      console.error('操作失败', 'add', newCategory);
     });
   };
 

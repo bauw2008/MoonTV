@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 // TMDB API 配置
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
 
 // 缓存时长配置
 const TRENDING_CACHE_DURATION = 30 * 60; // 30分钟缓存（热门内容）
@@ -77,7 +77,7 @@ async function getTMDBPoster(
 
     return posterData;
   } catch (error) {
-    logger.error(`[TMDB海报API] 获取${category}海报失败:`, error);
+    console.error(`[TMDB海报API] 获取${category}海报失败:`, error);
     throw error;
   }
 }
@@ -159,7 +159,7 @@ async function searchTMDBPoster(
 
     return posterData;
   } catch (error) {
-    logger.error(`[TMDB海报API] 搜索${category}海报失败: ${title}`, error);
+    console.error(`[TMDB海报API] 搜索${category}海报失败: ${title}`, error);
     return null;
   }
 }
@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
         : `成功获取${category}海报`,
     });
   } catch (error) {
-    logger.error('[TMDB海报API] 请求处理失败:', error);
+    console.error('[TMDB海报API] 请求处理失败:', error);
     return NextResponse.json(
       {
         error: '获取海报失败',

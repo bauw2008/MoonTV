@@ -13,12 +13,15 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import NextImage from 'next/image';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { logger } from '@/lib/logger';
+import {
+  deleteBackgroundImage,
+  getBackgroundImage,
+  storeBackgroundImage,
+} from '@/lib/indexedDB';
 
 interface ThemeSettings {
   themeOpacity: number; // 主题背景透明度
@@ -325,99 +328,6 @@ export const ThemeSettingsPanel: React.FC<{
   // 移除滚动锁定逻辑，现在由 UserMenu 统一管理
 
   useEffect(() => {
-    const loadSettings = async () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const savedSettings = localStorage.getItem('themeSettings');
-          if (savedSettings) {
-            const parsed = JSON.parse(savedSettings);
-            // 验证解析后的数据结构
-            if (parsed && typeof parsed === 'object') {
-              setSettings({
-                themeOpacity: parsed.themeOpacity || parsed.opacity || 100,
-                globalUIOpacity: parsed.globalUIOpacity || 95,
-                lightGradient: parsed.lightGradient || gradientOptions[0].light,
-                darkGradient: parsed.darkGradient || gradientOptions[0].dark,
-                hue: parsed.hue || gradientOptions[0].hue,
-                saturation: parsed.saturation || gradientOptions[0].saturation,
-                lightness: parsed.lightness || gradientOptions[0].lightness,
-                isCustom: parsed.isCustom || false,
-                backgroundImage: parsed.backgroundImage || undefined,
-                backgroundMode: parsed.backgroundMode || 'gradient',
-                enableDynamicBackground:
-                  parsed.enableDynamicBackground || false,
-                dynamicIntensity: parsed.dynamicIntensity || 50,
-              });
-            }
-          }
-        } catch (error) {
-          logger.error('加载主题设置失败:', error);
-        }
-      }
-    };
-
-    const applyGlassWhiteBackground = () => {
-      if (typeof document !== 'undefined') {
-        const root = document.documentElement;
-        const isDark =
-          document.documentElement.classList.contains('dark') ||
-          (window.matchMedia &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-        const glassGradient = isDark
-          ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)'
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)';
-
-        // 强制移除任何可能干扰的背景色
-        document.body.className = document.body.className
-          .replace(/bg-\w+/g, '')
-          .trim();
-
-        // 移除所有可能的背景色样式
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach((element) => {
-          const htmlElement = element as HTMLElement;
-          if (htmlElement.style.backgroundColor) {
-            // 只移除白色和黑色的背景色，保留其他功能性背景色
-            const bgColor = htmlElement.style.backgroundColor;
-            if (
-              bgColor.includes('white') ||
-              bgColor.includes('black') ||
-              bgColor.includes('rgb(255, 255, 255)') ||
-              bgColor.includes('rgb(0, 0, 0)')
-            ) {
-              htmlElement.style.backgroundColor = 'transparent';
-            }
-          }
-        });
-
-        // 立即应用到CSS变量、body和html元素
-        root.style.setProperty('--bg-gradient', glassGradient);
-        root.style.setProperty('--bg-opacity', '60%');
-
-        // 使用requestAnimationFrame确保在下一帧应用主题，避免与其他渲染冲突
-        requestAnimationFrame(() => {
-          // 同时应用到body和html元素，确保全局生效
-          document.body.style.background = glassGradient;
-          document.body.style.backgroundSize = 'cover';
-          document.body.style.backgroundAttachment = 'scroll';
-          document.body.style.backgroundColor = 'transparent';
-          document.body.style.opacity = '1';
-
-          document.documentElement.style.background = glassGradient;
-          document.documentElement.style.backgroundSize = 'cover';
-          document.documentElement.style.backgroundAttachment = 'scroll';
-          document.documentElement.style.backgroundColor = 'transparent';
-          document.documentElement.style.opacity = '1';
-
-          // 强制触发重绘，确保主题应用生效
-          document.body.style.display = 'none';
-          document.body.offsetHeight; // 触发重排
-          document.body.style.display = '';
-        });
-      }
-    };
-
     const initializeSettings = async () => {
       // 只在面板不打开时应用纯净简约背景，避免影响滚动
       if (!isOpen) {
@@ -430,22 +340,89 @@ export const ThemeSettingsPanel: React.FC<{
     initializeSettings();
   }, []);
 
-  const saveSettings = (newSettings: ThemeSettings) => {
+  useEffect(() => {
+    if (mounted) {
+      // 使用requestAnimationFrame确保在下一帧应用主题，避免与其他渲染冲突
+      requestAnimationFrame(() => {
+        applyThemeSettings();
+      });
+    }
+  }, [
+    mounted,
+    resolvedTheme,
+    settings.hue,
+    settings.saturation,
+    settings.lightness,
+    settings.themeOpacity,
+    settings.backgroundMode,
+    settings.backgroundImage,
+    settings.lightGradient,
+    settings.darkGradient,
+    settings.isCustom,
+  ]);
+
+  // 添加页面加载时的初始化
+  useEffect(() => {
+    const initializeTheme = async () => {
+      if (mounted && settings.backgroundMode === 'image') {
+        // 如果是图片背景模式，尝试从IndexedDB恢复图片
+        try {
+          const storedImage = await getBackgroundImage();
+          if (storedImage && !settings.backgroundImage) {
+            // 如果localStorage中没有图片但IndexedDB中有，恢复它
+            const newSettings = {
+              ...settings,
+              backgroundImage: storedImage,
+            };
+            setSettings(newSettings);
+          }
+        } catch (error) {
+          // 静默失败，背景图片加载失败不影响主要功能
+        }
+      }
+    };
+
+    initializeTheme();
+  }, [mounted]);
+
+  const loadSettings = async () => {
     if (typeof window !== 'undefined') {
       try {
-        // 保存所有设置，包括背景图片
-        const settingsString = JSON.stringify(newSettings);
-        localStorage.setItem('themeSettings', settingsString);
+        const savedSettings = localStorage.getItem('themeSettings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          // 验证解析后的数据结构
+          if (parsed && typeof parsed === 'object') {
+            setSettings({
+              themeOpacity: parsed.themeOpacity || parsed.opacity || 100,
+              globalUIOpacity: parsed.globalUIOpacity || 95,
+              lightGradient: parsed.lightGradient || gradientOptions[0].light,
+              darkGradient: parsed.darkGradient || gradientOptions[0].dark,
+              hue: parsed.hue || gradientOptions[0].hue,
+              saturation: parsed.saturation || gradientOptions[0].saturation,
+              lightness: parsed.lightness || gradientOptions[0].lightness,
+              isCustom: parsed.isCustom || false,
+              backgroundImage: parsed.backgroundImage || undefined,
+              backgroundMode: parsed.backgroundMode || 'gradient',
+              enableDynamicBackground: parsed.enableDynamicBackground || false,
+              dynamicIntensity: parsed.dynamicIntensity || 50,
+            });
+          }
+        }
       } catch (error) {
-        logger.error('保存背景图片失败:', error);
-        // 如果 localStorage 空间不足，只保存其他设置（不包括背景图片）
-        const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
-        localStorage.setItem(
-          'themeSettings',
-          JSON.stringify(settingsWithoutImage),
-        );
-        alert('背景图片太大，无法保存。请选择更小的图片（建议小于 1MB）。');
+        // 如果加载失败，使用默认设置
       }
+    }
+  };
+
+  const saveSettings = (newSettings: ThemeSettings) => {
+    if (typeof window !== 'undefined') {
+      // 不保存图片数据到 localStorage，只保存其他设置
+      const { backgroundImage: _, ...settingsWithoutImage } = newSettings;
+      localStorage.setItem(
+        'themeSettings',
+        JSON.stringify(settingsWithoutImage),
+      );
     }
   };
 
@@ -521,41 +498,7 @@ export const ThemeSettingsPanel: React.FC<{
     return { lightGradient, darkGradient };
   };
 
-  // 为渐变添加透明度的辅助函数
-  const addOpacityToGradient = (gradient: string, opacity: number): string => {
-    // 解析渐变字符串，为每个颜色添加透明度
-    if (gradient.includes('rgba')) {
-      // 如果已经包含rgba，则调整现有的alpha值
-      return gradient.replace(
-        /rgba\((\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*)([\d.]+)\s*\)/g,
-        (match, prefix, currentAlpha) => {
-          const newAlpha = parseFloat(currentAlpha) * opacity;
-          return `rgba(${prefix}${newAlpha})`;
-        },
-      );
-    } else if (gradient.includes('rgb')) {
-      // 如果是rgb，则转换为rgba并添加透明度
-      return gradient.replace(
-        /rgb\((\s*\d+\s*,\s*\d+\s*,\s*\d+\s*)\)/g,
-        (match, colorValues) => {
-          return `rgba(${colorValues} ${opacity})`;
-        },
-      );
-    } else if (gradient.includes('#')) {
-      // 如果是十六进制颜色，则转换为rgba并添加透明度
-      return gradient.replace(/#[0-9a-fA-F]{3,6}/g, (hexColor) => {
-        const r = parseInt(hexColor.slice(1, 3), 16);
-        const g = parseInt(hexColor.slice(3, 5), 16);
-        const b = parseInt(hexColor.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-      });
-    }
-
-    // 如果无法解析，则返回原渐变
-    return gradient;
-  };
-
-  const applyThemeSettings = useCallback(() => {
+  const applyThemeSettings = () => {
     if (!mounted) {
       return;
     }
@@ -897,7 +840,7 @@ export const ThemeSettingsPanel: React.FC<{
             document.body.classList.add(breathingClass);
           }
 
-          logger.log(
+          console.log(
             `Applied custom dynamic effects: intensity=${settings.dynamicIntensity}%, animation=${animationClass}`,
           );
         } else {
@@ -923,7 +866,7 @@ export const ThemeSettingsPanel: React.FC<{
         document.documentElement.style.opacity = '1';
 
         root.style.setProperty('--bg-gradient', gradientWithOpacity);
-        logger.log(
+        console.log(
           'Applied custom gradient with dynamic effects:',
           gradientWithOpacity,
         );
@@ -943,16 +886,104 @@ export const ThemeSettingsPanel: React.FC<{
         document.body.style.display = '';
       });
     }
-  }, [mounted, resolvedTheme, settings]);
+  };
 
-  useEffect(() => {
-    if (mounted) {
-      // 使用requestAnimationFrame确保在下一帧应用主题，避免与其他渲染冲突
-      requestAnimationFrame(() => {
-        applyThemeSettings();
+  // 为渐变添加透明度的辅助函数
+  const addOpacityToGradient = (gradient: string, opacity: number): string => {
+    // 解析渐变字符串，为每个颜色添加透明度
+    if (gradient.includes('rgba')) {
+      // 如果已经包含rgba，则调整现有的alpha值
+      return gradient.replace(
+        /rgba\((\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*)([\d.]+)\s*\)/g,
+        (match, prefix, currentAlpha) => {
+          const newAlpha = parseFloat(currentAlpha) * opacity;
+          return `rgba(${prefix}${newAlpha})`;
+        },
+      );
+    } else if (gradient.includes('rgb')) {
+      // 如果是rgb，则转换为rgba并添加透明度
+      return gradient.replace(
+        /rgb\((\s*\d+\s*,\s*\d+\s*,\s*\d+\s*)\)/g,
+        (match, colorValues) => {
+          return `rgba(${colorValues} ${opacity})`;
+        },
+      );
+    } else if (gradient.includes('#')) {
+      // 如果是十六进制颜色，则转换为rgba并添加透明度
+      return gradient.replace(/#[0-9a-fA-F]{3,6}/g, (hexColor) => {
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
       });
     }
-  }, [mounted, applyThemeSettings]);
+
+    // 如果无法解析，则返回原渐变
+    return gradient;
+  };
+
+  // 立即应用纯净简约背景的函数
+  const applyGlassWhiteBackground = () => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      const isDark =
+        document.documentElement.classList.contains('dark') ||
+        (window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      const glassGradient = isDark
+        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)';
+
+      // 强制移除任何可能干扰的背景色
+      document.body.className = document.body.className
+        .replace(/bg-\w+/g, '')
+        .trim();
+
+      // 移除所有可能的背景色样式
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach((element) => {
+        const htmlElement = element as HTMLElement;
+        if (htmlElement.style.backgroundColor) {
+          // 只移除白色和黑色的背景色，保留其他功能性背景色
+          const bgColor = htmlElement.style.backgroundColor;
+          if (
+            bgColor.includes('white') ||
+            bgColor.includes('black') ||
+            bgColor.includes('rgb(255, 255, 255)') ||
+            bgColor.includes('rgb(0, 0, 0)')
+          ) {
+            htmlElement.style.backgroundColor = 'transparent';
+          }
+        }
+      });
+
+      // 立即应用到CSS变量、body和html元素
+      root.style.setProperty('--bg-gradient', glassGradient);
+      root.style.setProperty('--bg-opacity', '60%');
+
+      // 使用requestAnimationFrame确保在下一帧应用主题，避免与其他渲染冲突
+      requestAnimationFrame(() => {
+        // 同时应用到body和html元素，确保全局生效
+        document.body.style.background = glassGradient;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundAttachment = 'scroll';
+        document.body.style.backgroundColor = 'transparent';
+        document.body.style.opacity = '1';
+
+        document.documentElement.style.background = glassGradient;
+        document.documentElement.style.backgroundSize = 'cover';
+        document.documentElement.style.backgroundAttachment = 'scroll';
+        document.documentElement.style.backgroundColor = 'transparent';
+        document.documentElement.style.opacity = '1';
+
+        // 强制触发重绘，确保主题应用生效
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // 触发重排
+        document.body.style.display = '';
+      });
+    }
+  };
 
   const handleThemeOpacityChange = (value: number) => {
     const newSettings = { ...settings, themeOpacity: value, isCustom: true };
@@ -996,22 +1027,18 @@ export const ThemeSettingsPanel: React.FC<{
     setIsBackgroundModeMenuOpen(false);
   };
 
-  const handleBackgroundImageUpload = (
+  const handleBackgroundImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      // 检查文件大小（限制为 1MB）
-      const maxSize = 1 * 1024 * 1024; // 1MB
-      if (file.size > maxSize) {
-        alert('图片太大，请选择小于 1MB 的图片');
-        return;
-      }
-
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const imageDataUrl = e.target?.result as string;
+
+          // 存储图片到 IndexedDB
+          await storeBackgroundImage(imageDataUrl);
 
           const newSettings = {
             ...settings,
@@ -1022,7 +1049,7 @@ export const ThemeSettingsPanel: React.FC<{
           setSettings(newSettings);
           saveSettings(newSettings);
         } catch (error) {
-          logger.error('Failed to store background image:', error);
+          console.error('Failed to store background image:', error);
           alert('上传背景图片失败，请重试');
         }
       };
@@ -1030,14 +1057,22 @@ export const ThemeSettingsPanel: React.FC<{
     }
   };
 
-  const handleRemoveBackgroundImage = () => {
-    const newSettings = {
-      ...settings,
-      backgroundImage: undefined,
-      backgroundMode: 'gradient' as 'image' | 'gradient',
-    };
-    setSettings(newSettings);
-    saveSettings(newSettings);
+  const handleRemoveBackgroundImage = async () => {
+    try {
+      // 从 IndexedDB 删除图片
+      await deleteBackgroundImage();
+
+      const newSettings = {
+        ...settings,
+        backgroundImage: undefined,
+        backgroundMode: 'gradient' as 'image' | 'gradient',
+      };
+      setSettings(newSettings);
+      saveSettings(newSettings);
+    } catch (error) {
+      console.error('Failed to delete background image:', error);
+      alert('删除背景图片失败，请重试');
+    }
   };
 
   const handleGradientChange = (option: GradientOption) => {
@@ -1075,11 +1110,11 @@ export const ThemeSettingsPanel: React.FC<{
 
         if (isGlassBlue) {
           // 琉璃通透模式：真正的玻璃效果
-          logger.log('Applied glass transparent theme - real glass effect');
+          console.log('Applied glass transparent theme - real glass effect');
 
           // 创建真正的透明玻璃效果
           const createGlassEffect = () => {
-            logger.log('Creating glass effect...');
+            console.log('Creating glass effect...');
 
             // 步骤1：移除所有现有的背景层
             const existingLayers = document.querySelectorAll('[id^="glass-"]');
@@ -1164,7 +1199,7 @@ export const ThemeSettingsPanel: React.FC<{
             const root = document.documentElement;
             root.style.setProperty('--bg-gradient', 'transparent');
 
-            logger.log(
+            console.log(
               'Glass effect created with proper layer structure and animated content',
             );
           };
@@ -1211,7 +1246,8 @@ export const ThemeSettingsPanel: React.FC<{
           document.documentElement.style.opacity = '1';
 
           root.style.setProperty('--bg-gradient', gradientWithOpacity);
-          logger.log('Applied preset gradient:', gradientWithOpacity);
+          console.log('Applied preset gradient:', gradientWithOpacity);
+
           // 移除琉璃通透模式的类
           document.body.classList.remove('glass-transparent-mode');
           document.documentElement.classList.remove('glass-transparent-mode');
@@ -1547,7 +1583,7 @@ export const ThemeSettingsPanel: React.FC<{
             {/* 背景模式设置 */}
             <div className='space-y-3'>
               <div className='flex items-center gap-2'>
-                <Image className='w-4 h-4 text-gray-500' aria-label='背景模式图标' />
+                <Image className='w-4 h-4 text-gray-500' />
                 <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   背景模式
                 </h4>
@@ -1622,12 +1658,10 @@ export const ThemeSettingsPanel: React.FC<{
                   {settings.backgroundImage ? (
                     <div className='space-y-3'>
                       <div className='relative h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600'>
-                        <NextImage
+                        <img
                           src={settings.backgroundImage}
                           alt='背景预览'
-                          fill
                           className='w-full h-full object-cover'
-                          unoptimized
                         />
                         <button
                           onClick={handleRemoveBackgroundImage}

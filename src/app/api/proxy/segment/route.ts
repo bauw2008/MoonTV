@@ -3,7 +3,6 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { logger } from '@/lib/logger';
 import { LIVE_PLAYER_USER_AGENTS } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
@@ -104,7 +103,6 @@ export async function GET(request: Request) {
             try {
               reader.releaseLock();
             } catch (e) {
-              logger.error('释放 reader 失败:', e);
               // reader 可能已经被释放，忽略错误
             }
             reader = null;
@@ -119,7 +117,6 @@ export async function GET(request: Request) {
           try {
             reader.releaseLock();
           } catch (e) {
-            logger.error('释放 reader 失败:', e);
             // reader 可能已经被释放，忽略错误
           }
           reader = null;
@@ -129,7 +126,6 @@ export async function GET(request: Request) {
           try {
             response.body.cancel();
           } catch (e) {
-            logger.error('取消 response 失败:', e);
             // 忽略取消时的错误
           }
         }
@@ -138,13 +134,11 @@ export async function GET(request: Request) {
 
     return new Response(stream, { headers });
   } catch (error) {
-    logger.error('处理 segment 请求失败:', error);
     // 确保在错误情况下也释放资源
     if (reader) {
       try {
         (reader as ReadableStreamDefaultReader<Uint8Array>).releaseLock();
       } catch (e) {
-        logger.error('释放 reader 失败:', e);
         // 忽略错误
       }
     }
@@ -153,7 +147,6 @@ export async function GET(request: Request) {
       try {
         response.body.cancel();
       } catch (e) {
-        logger.error('取消 response 失败:', e);
         // 忽略错误
       }
     }

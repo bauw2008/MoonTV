@@ -1,5 +1,3 @@
-import { logger } from '@/lib/logger';
-
 export class ClientCache {
   static async get(key: string): Promise<any | null> {
     try {
@@ -10,7 +8,7 @@ export class ClientCache {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      logger.error('获取缓存失败:', error);
+      console.error('获取缓存失败:', error);
       return null;
     }
   }
@@ -32,7 +30,7 @@ export class ClientCache {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      logger.error('设置缓存失败:', error);
+      console.error('设置缓存失败:', error);
       throw error;
     }
   }
@@ -49,7 +47,7 @@ export class ClientCache {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      logger.error('删除缓存失败:', error);
+      console.error('删除缓存失败:', error);
       throw error;
     }
   }
@@ -66,7 +64,7 @@ export class ClientCache {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      logger.error('清理过期缓存失败:', error);
+      console.error('清理过期缓存失败:', error);
       throw error;
     }
   }

@@ -6,8 +6,6 @@
  */
 import crypto from 'crypto';
 
-import { logger } from '@/lib/logger';
-
 import { getMobileUserAgent } from './user-agent';
 
 // Remote jar candidates (order by stability and SSL compatibility)
@@ -103,7 +101,7 @@ async function fetchRemote(
         continue;
       }
 
-      logger.log(
+      console.log(
         `[SpiderJar] Successfully fetched ${url}: ${ab.byteLength} bytes`,
       );
       return Buffer.from(ab);
@@ -120,7 +118,7 @@ async function fetchRemote(
   }
 
   // 记录最终失败
-  logger.warn(
+  console.warn(
     `[SpiderJar] Failed to fetch ${url} after ${
       retryCount + 1
     } attempts: ${_lastError}`,

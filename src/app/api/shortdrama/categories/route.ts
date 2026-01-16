@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 // 强制动态路由，禁用所有缓存
@@ -64,7 +63,7 @@ export async function GET() {
 
     return response;
   } catch (error) {
-    logger.error('获取短剧分类失败:', error);
+    console.error('获取短剧分类失败:', error);
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
 }

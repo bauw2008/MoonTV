@@ -6,7 +6,6 @@ import {
   getConfig,
   hasSpecialFeaturePermission,
 } from '@/lib/config';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    logger.error('Failed to check permission:', error);
+    console.error('Failed to check permission:', error);
     return NextResponse.json({ hasPermission: false }, { status: 200 });
   }
 }

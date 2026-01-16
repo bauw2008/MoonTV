@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, refineConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -51,7 +52,6 @@ export async function POST(request: NextRequest) {
     try {
       JSON.parse(configFile);
     } catch (e) {
-      logger.error('配置文件格式错误:', e);
       return NextResponse.json(
         { error: '配置文件格式错误，请检查 JSON 语法' },
         { status: 400 },
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       message: '配置文件更新成功',
     });
   } catch (error) {
-    logger.error('更新配置文件失败:', error);
+    console.error('更新配置文件失败:', error);
     return NextResponse.json(
       {
         error: '更新配置文件失败',

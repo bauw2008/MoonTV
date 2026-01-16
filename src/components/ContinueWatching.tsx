@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use client';
 
 import { Clock } from 'lucide-react';
@@ -9,7 +10,6 @@ import {
   getAllPlayRecords,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { logger } from '@/lib/logger';
 
 import ScrollableRow from '@/components/ScrollableRow';
 import SectionTitle from '@/components/SectionTitle';
@@ -50,7 +50,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
         const allRecords = await getAllPlayRecords();
         updatePlayRecords(allRecords);
       } catch (error) {
-        logger.error('获取播放记录失败:', error);
+        console.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {
         setLoading(false);

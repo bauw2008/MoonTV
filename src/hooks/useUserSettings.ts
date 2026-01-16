@@ -179,11 +179,8 @@ export const useUserSettings = () => {
         runtimeDefaults.enableNotifications,
     };
 
-    // 使用 requestAnimationFrame 来延迟 setState 调用
-    requestAnimationFrame(() => {
-      setSettings(mergedSettings);
-      setIsInitialized(true);
-    });
+    setSettings(mergedSettings);
+    setIsInitialized(true);
   }, [isInitialized]);
 
   // 更新单个设置的函数

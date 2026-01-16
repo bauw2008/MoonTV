@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getAvailableApiSites, getCacheTime } from '@/lib/config';
+import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { logger } from '@/lib/logger';
 import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // 获取配置并应用分离逻辑
+    const config = await getConfig();
+    // 直接使用配置，无需额外处理
+
     // 使用高性能索引查询
     const apiSites = await getAvailableApiSites(authInfo?.username || '');
 
@@ -52,7 +57,7 @@ export async function GET(request: NextRequest) {
         const results = await searchFromApi(site, query);
         allResults = allResults.concat(results);
       } catch (error) {
-        logger.error(`搜索源 ${site.key} 失败:`, error);
+        console.error(`搜索源 ${site.key} 失败:`, error);
       }
     }
 
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
       total: resultsWithTypes.length,
     });
   } catch (error) {
-    logger.error('搜索失败:', error);
+    console.error('搜索失败:', error);
     return NextResponse.json(
       { error: '搜索失败' },
       {
