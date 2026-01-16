@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
     fileSystem: {
       canAccessFs: false,
       error: '',
+      currentDir: '' as string,
+      fileCount: 0 as number,
     },
     
     // 测试7：检查数据库连接
@@ -77,10 +79,10 @@ export async function GET(request: NextRequest) {
       tests.fileSystem.currentDir = cwd;
       tests.fileSystem.fileCount = files.length;
     } catch (fsError) {
-      tests.fileSystem.error = fsError.message;
+      tests.fileSystem.error = fsError instanceof Error ? fsError.message : String(fsError);
     }
   } catch (importError) {
-    tests.fileSystem.error = `Cannot import fs/path: ${importError.message}`;
+    tests.fileSystem.error = `Cannot import fs/path: ${importError instanceof Error ? importError.message : String(importError)}`;
   }
 
   try {
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
     const { db } = await import('@/lib/db');
     tests.database.canImportDb = true;
   } catch (dbError) {
-    tests.database.error = dbError.message;
+    tests.database.error = dbError instanceof Error ? dbError.message : String(dbError);
   }
 
   return NextResponse.json({

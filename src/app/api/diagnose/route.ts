@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       const { db } = await import('@/lib/db');
       dbConnection = 'db import successful';
     } catch (dbError) {
-      dbConnection = `db error: ${dbError.message}`;
+      dbConnection = `db error: ${dbError instanceof Error ? dbError.message : String(dbError)}`;
     }
 
     // 测试文件系统访问（Node.js特定）
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       const path = await import('path');
       fsAccess = 'fs and path modules available';
     } catch (fsError) {
-      fsAccess = `fs error: ${fsError.message}`;
+      fsAccess = `fs error: ${fsError instanceof Error ? fsError.message : String(fsError)}`;
     }
 
     // 测试crypto API
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       const hash = await crypto.subtle.digest('SHA-256', data);
       cryptoTest = 'crypto API available';
     } catch (cryptoError) {
-      cryptoTest = `crypto error: ${cryptoError.message}`;
+      cryptoTest = `crypto error: ${cryptoError instanceof Error ? cryptoError.message : String(cryptoError)}`;
     }
 
     return NextResponse.json({
@@ -73,8 +73,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: false,
       timestamp: new Date().toISOString(),
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       environment: {
         NODE_ENV: process.env.NODE_ENV,
         NEXT_RUNTIME: process.env.NEXT_RUNTIME,

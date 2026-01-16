@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       { 
         error: '服务器错误',
         details: error instanceof Error ? error.message : 'Unknown error',
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
       },
       { status: 500 },
     );
