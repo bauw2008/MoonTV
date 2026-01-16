@@ -1,8 +1,7 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -92,7 +91,7 @@ async function verifySignature(
       messageData,
     );
   } catch (error) {
-    console.error('签名验证失败:', error);
+    logger.error('签名验证失败:', error);
     return false;
   }
 }
