@@ -1547,7 +1547,10 @@ export const ThemeSettingsPanel: React.FC<{
             {/* 背景模式设置 */}
             <div className='space-y-3'>
               <div className='flex items-center gap-2'>
-                <Image className='w-4 h-4 text-gray-500' aria-label='背景模式图标' />
+                <Image
+                  className='w-4 h-4 text-gray-500'
+                  aria-label='背景模式图标'
+                />
                 <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   背景模式
                 </h4>

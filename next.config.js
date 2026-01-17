@@ -2,11 +2,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  output: 'standalone',
-  
+  ...(process.env.VERCEL || process.env.DOCKER_BUILD ? { output: 'standalone' } : {}),
+
   reactStrictMode: false,
 
-  // Next.js 16 优化配置
+  // Next.js 16 使用 Turbopack，配置 SVG 加载
   turbopack: {
     root: __dirname,
     rules: {
@@ -17,11 +17,18 @@ const nextConfig = {
     },
   },
 
+  // Uncoment to add domain whitelist
   images: {
     unoptimized: true,
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
     ],
   },
 };

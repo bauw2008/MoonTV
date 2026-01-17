@@ -3,6 +3,7 @@
  * Supports different log levels and can be controlled via environment variables
  */
 
+/* eslint-disable no-console */
 type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
 interface LoggerConfig {

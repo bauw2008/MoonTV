@@ -54,7 +54,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, type: 'm3u8' }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch', message: error },
+      {
+        error: 'Failed to fetch',
+        message: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }

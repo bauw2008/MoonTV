@@ -179,8 +179,6 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     }
   }, []);
 
-   
-   
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {

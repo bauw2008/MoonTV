@@ -217,17 +217,29 @@ export async function POST(req: NextRequest) {
       return response;
     } catch (err) {
       logger.error('数据库验证失败', err);
-      logger.error('错误详情:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      logger.error(
+        '错误详情:',
+        JSON.stringify(err, Object.getOwnPropertyNames(err)),
+      );
       return NextResponse.json(
-        { error: '数据库错误', details: err instanceof Error ? err.message : 'Unknown error' },
+        {
+          error: '数据库错误',
+          details: err instanceof Error ? err.message : 'Unknown error',
+        },
         { status: 500 },
       );
     }
   } catch (error) {
     logger.error('登录接口异常', error);
-    logger.error('错误堆栈:', error instanceof Error ? error.stack : 'No stack trace');
+    logger.error(
+      '错误堆栈:',
+      error instanceof Error ? error.stack : 'No stack trace',
+    );
     return NextResponse.json(
-      { error: '服务器错误', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: '服务器错误',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 },
     );
   }

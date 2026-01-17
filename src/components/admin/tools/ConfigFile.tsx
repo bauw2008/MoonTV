@@ -21,7 +21,7 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 // 使用统一方案中的 hooks
@@ -33,21 +33,23 @@ function ConfigFile() {
   // 权限已经在父组件检查，这里直接使用
   const { isLoading } = useAdminLoading(); // 加载状态
   const { showError, showSuccess } = useToastNotification(); // 通知系统
+  const { configApi } = useAdminApi(); // API 调用
 
   const [configContent, setConfigContent] = useState('');
   const [subscriptionUrl, setSubscriptionUrl] = useState('');
   const [autoUpdate, setAutoUpdate] = useState(false);
   const [lastCheckTime, setLastCheckTime] = useState<string>('');
   const [isValidJson, setIsValidJson] = useState(true);
-  const [config, setConfig] = useState<any>(null);
 
-  const { configApi } = useAdminApi(); // API 调用
+  const isLoadingRef = useRef(false);
 
   const loadConfig = useCallback(async () => {
     // 防止重复加载
-    if (isLoading('api_/api/admin/config')) {
+    if (isLoadingRef.current) {
       return;
     }
+
+    isLoadingRef.current = true;
 
     try {
       const data = await configApi.getConfig();
@@ -67,25 +69,16 @@ function ConfigFile() {
         setAutoUpdate(configSub.AutoUpdate || false);
         setLastCheckTime(configSub.LastCheck || '');
       }
-
-      setConfig(data);
     } catch (error) {
       logger.error('加载配置失败:', error);
+    } finally {
+      isLoadingRef.current = false;
     }
-  }, [
-    setConfigContent,
-    setSubscriptionUrl,
-    setAutoUpdate,
-    setLastCheckTime,
-    setConfig,
-  ]);
+  }, [configApi]);
 
-   
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const validateJson = () => {

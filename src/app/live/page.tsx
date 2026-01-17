@@ -51,6 +51,51 @@ interface LiveSource {
   disabled?: boolean;
 }
 
+// 自定义 HLS 加载器，用于过滤广告
+let _liveGetSourceKey: (() => string | undefined) | null = null;
+
+class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
+  constructor(config: any) {
+    super(config);
+    const load = this.load.bind(this);
+    this.load = function (context: any, config: any, callbacks: any) {
+      // 所有的请求都带一个 source 参数
+      try {
+        const url = new URL(context.url);
+        url.searchParams.set('vidora-source', _liveGetSourceKey?.() || '');
+        context.url = url.toString();
+      } catch (error) {
+        // ignore
+        logger.error('设置 source 参数失败:', error);
+      }
+      // 拦截manifest和level请求
+      if (
+        (context as any).type === 'manifest' ||
+        (context as any).type === 'level'
+      ) {
+        // 判断是否浏览器直连
+        const isLiveDirectConnectStr =
+          localStorage.getItem('liveDirectConnect');
+        const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
+        if (isLiveDirectConnect) {
+          // 浏览器直连，使用 URL 对象处理参数
+          try {
+            const url = new URL(context.url);
+            url.searchParams.set('allowCORS', 'true');
+            context.url = url.toString();
+          } catch (error) {
+            // 如果 URL 解析失败，回退到字符串拼接
+            context.url = context.url + '&allowCORS=true';
+            logger.error('解析 URL 失败:', error);
+          }
+        }
+      }
+      // 执行原始load方法
+      load(context, config, callbacks);
+    };
+  }
+}
+
 // 权限检查组件
 function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -847,51 +892,6 @@ function LivePageClient() {
     }
   }, [selectedGroup, groupedChannels]);
 
-  class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
-    constructor(config: any) {
-      super(config);
-      const load = this.load.bind(this);
-      this.load = function (context: any, config: any, callbacks: any) {
-        // 所有的请求都带一个 source 参数
-        try {
-          const url = new URL(context.url);
-          url.searchParams.set(
-            'vidora-source',
-            currentSourceRef.current?.key || '',
-          );
-          context.url = url.toString();
-        } catch (error) {
-          // ignore
-          logger.error('设置 source 参数失败:', error);
-        }
-        // 拦截manifest和level请求
-        if (
-          (context as any).type === 'manifest' ||
-          (context as any).type === 'level'
-        ) {
-          // 判断是否浏览器直连
-          const isLiveDirectConnectStr =
-            localStorage.getItem('liveDirectConnect');
-          const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
-          if (isLiveDirectConnect) {
-            // 浏览器直连，使用 URL 对象处理参数
-            try {
-              const url = new URL(context.url);
-              url.searchParams.set('allowCORS', 'true');
-              context.url = url.toString();
-            } catch (error) {
-              // 如果 URL 解析失败，回退到字符串拼接
-              context.url = context.url + '&allowCORS=true';
-              logger.error('解析 URL 失败:', error);
-            }
-          }
-        }
-        // 执行原始load方法
-        load(context, config, callbacks);
-      };
-    }
-  }
-
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) {
       logger.error('HLS.js 未加载');
@@ -917,6 +917,7 @@ function LivePageClient() {
       maxBufferSize: 60 * 1000 * 1000,
       loader: CustomHlsJsLoader,
     });
+    _liveGetSourceKey = () => currentSourceRef.current?.key;
 
     hls.loadSource(url);
     hls.attachMedia(video);
@@ -963,10 +964,19 @@ function LivePageClient() {
 
       // precheck type
       let type = 'm3u8';
-      const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(videoUrl)}&vidora-source=${currentSourceRef.current?.key || ''}`;
+      const sourceKey = currentSourceRef.current?.key;
+      if (!sourceKey) {
+        logger.error('预检查失败: 缺少直播源');
+        return;
+      }
+      const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(videoUrl)}&vidora-source=${sourceKey}`;
       const precheckResponse = await fetch(precheckUrl);
       if (!precheckResponse.ok) {
-        logger.error('预检查失败:', precheckResponse.statusText);
+        const errorData = await precheckResponse.json().catch(() => ({}));
+        logger.error(
+          '预检查失败:',
+          errorData.message || precheckResponse.statusText,
+        );
         return;
       }
       const precheckResult = await precheckResponse.json();

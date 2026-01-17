@@ -81,6 +81,93 @@ interface WakeLockSentinel {
 }
 
 /**
+ * 从M3U8内容中过滤广告分段
+ * @param m3u8Content M3U8文件内容
+ * @returns 过滤后的M3U8内容
+ */
+function filterAdsFromM3U8(m3u8Content: string): string {
+  if (!m3u8Content) {
+    return '';
+  }
+
+  // 按行分割M3U8内容
+  const lines = m3u8Content.split('\n');
+  const filteredLines = [];
+  let inAdBlock = false; // 是否在广告区块内
+  let _adSegmentCount = 0; // 统计移除的广告片段数量
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // 🎯 增强功能1: 检测行业标准广告标记（SCTE-35系列）
+    // 使用 line.includes() 保持与原逻辑一致，兼容各种格式
+    if (
+      line.includes('#EXT-X-CUE-OUT') ||
+      (line.includes('#EXT-X-DATERANGE') && line.includes('SCTE35')) ||
+      line.includes('#EXT-X-SCTE35') ||
+      line.includes('#EXT-OATCLS-SCTE35')
+    ) {
+      inAdBlock = true;
+      _adSegmentCount++;
+      continue; // 跳过广告开始标记
+    }
+
+    // 🎯 增强功能2: 检测广告结束标记
+    if (line.includes('#EXT-X-CUE-IN')) {
+      inAdBlock = false;
+      continue; // 跳过广告结束标记
+    }
+
+    // 🎯 增强功能3: 如果在广告区块内，跳过所有内容
+    if (inAdBlock) {
+      continue;
+    }
+
+    // ✅ 原始逻辑保留: 过滤#EXT-X-DISCONTINUITY标识
+    if (!line.includes('#EXT-X-DISCONTINUITY')) {
+      filteredLines.push(line);
+    }
+  }
+
+  return filteredLines.join('\n');
+}
+
+/**
+ * 自定义HLS加载器，用于过滤广告
+ */
+let _playFilterContent: ((content: string) => string) | null = null;
+
+class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
+  constructor(config: any) {
+    super(config);
+    const load = this.load.bind(this);
+    this.load = function (context: any, config: any, callbacks: any) {
+      // 拦截manifest和level请求
+      if (
+        (context as any).type === 'manifest' ||
+        (context as any).type === 'level'
+      ) {
+        const onSuccess = callbacks.onSuccess;
+        callbacks.onSuccess = function (
+          response: any,
+          stats: any,
+          context: any,
+        ) {
+          // 如果是m3u8文件，处理内容以移除广告分段
+          if (response.data && typeof response.data === 'string') {
+            response.data =
+              _playFilterContent?.(response.data) ?? response.data;
+          }
+          return onSuccess(response, stats, context, null);
+        };
+      }
+      // 执行原始load方法
+      load(context, config, callbacks);
+    };
+  }
+}
+
+/**
  * 视频播放器页面组件
  * 提供视频播放、弹幕、选集、换源等功能
  */
@@ -1392,111 +1479,6 @@ function PlayPageClient() {
   };
 
   /**
-   * 内置去广告函数：从M3U8内容中过滤广告分段
-   * @param m3u8Content M3U8内容
-   * @returns 过滤后的M3U8内容
-   */
-  function filterAdsFromM3U8(m3u8Content: string): string {
-    if (!m3u8Content) {
-      return '';
-    }
-
-    // 按行分割M3U8内容
-    const lines = m3u8Content.split('\n');
-    const filteredLines = [];
-    let inAdBlock = false; // 是否在广告区块内
-    let _adSegmentCount = 0; // 统计移除的广告片段数量
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      // 🎯 增强功能1: 检测行业标准广告标记（SCTE-35系列）
-      // 使用 line.includes() 保持与原逻辑一致，兼容各种格式
-      if (
-        line.includes('#EXT-X-CUE-OUT') ||
-        (line.includes('#EXT-X-DATERANGE') && line.includes('SCTE35')) ||
-        line.includes('#EXT-X-SCTE35') ||
-        line.includes('#EXT-OATCLS-SCTE35')
-      ) {
-        inAdBlock = true;
-        _adSegmentCount++;
-        continue; // 跳过广告开始标记
-      }
-
-      // 🎯 增强功能2: 检测广告结束标记
-      if (line.includes('#EXT-X-CUE-IN')) {
-        inAdBlock = false;
-        continue; // 跳过广告结束标记
-      }
-
-      // 🎯 增强功能3: 如果在广告区块内，跳过所有内容
-      if (inAdBlock) {
-        continue;
-      }
-
-      // ✅ 原始逻辑保留: 过滤#EXT-X-DISCONTINUITY标识
-      if (!line.includes('#EXT-X-DISCONTINUITY')) {
-        filteredLines.push(line);
-      }
-    }
-
-    return filteredLines.join('\n');
-  }
-
-  /**
-   * 组合去广告函数：先执行内置过滤，再执行自定义过滤
-   * @param m3u8Content M3U8内容
-   * @returns 过滤后的M3U8内容
-   */
-  function filterAdsWithCustom(m3u8Content: string): string {
-    // 先执行内置过滤
-    let filteredContent = filterAdsFromM3U8(m3u8Content);
-
-    // 如果启用了自定义过滤，则执行自定义代码
-    if (customAdFilterEnabledRef.current && customAdFilterCodeRef.current) {
-      try {
-        // 移除 TypeScript 类型注解，转换为纯 JavaScript
-        const jsCode = customAdFilterCodeRef.current
-          .replace(
-            /(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*([,)])/g,
-            '$1$3',
-          )
-          .replace(
-            /\)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*\{/g,
-            ') {',
-          )
-          .replace(
-            /(const|let|var)\s+(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*=/g,
-            '$1 $2 =',
-          );
-
-        // 创建安全的执行环境
-        const customFilterFunction = new Function(
-          'type',
-          'm3u8Content',
-          jsCode + '\nreturn filterAdsFromM3U8(type, m3u8Content);',
-        );
-
-        // 执行自定义过滤函数
-        const customResult = customFilterFunction(
-          currentSourceRef.current,
-          filteredContent,
-        );
-
-        // 检查返回值是否有效
-        if (typeof customResult === 'string' && customResult) {
-          filteredContent = customResult;
-        }
-      } catch (error) {
-        logger.error('自定义广告过滤代码执行失败:', error);
-        // 出错时只使用内置过滤的结果
-      }
-    }
-
-    return filteredContent;
-  }
-
-  /**
    * 工具函数：格式化时间显示
    * @param seconds 秒数
    * @returns 格式化后的时间字符串
@@ -1522,39 +1504,6 @@ function PlayPageClient() {
         .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
   };
-
-  /**
-   * 自定义HLS加载器，用于过滤广告
-   */
-  class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
-    constructor(config: any) {
-      super(config);
-      const load = this.load.bind(this);
-      this.load = function (context: any, config: any, callbacks: any) {
-        // 拦截manifest和level请求
-        if (
-          (context as any).type === 'manifest' ||
-          (context as any).type === 'level'
-        ) {
-          const onSuccess = callbacks.onSuccess;
-          callbacks.onSuccess = function (
-            response: any,
-            stats: any,
-            context: any,
-          ) {
-            // 如果是m3u8文件，处理内容以移除广告分段
-            if (response.data && typeof response.data === 'string') {
-              // 过滤掉广告段 - 先执行内置过滤，再执行自定义过滤（如果启用）
-              response.data = filterAdsWithCustom(response.data);
-            }
-            return onSuccess(response, stats, context, null);
-          };
-        }
-        // 执行原始load方法
-        load(context, config, callbacks);
-      };
-    }
-  }
 
   /**
    * 优化的弹幕操作处理函数（防抖 + 性能优化）
@@ -3019,6 +2968,61 @@ function PlayPageClient() {
                   ? CustomHlsJsLoader
                   : Hls.DefaultConfig.loader,
               });
+
+              // 设置全局过滤函数
+              if (blockAdEnabledRef.current) {
+                _playFilterContent = (content: string) => {
+                  // 先执行内置过滤
+                  let filteredContent = filterAdsFromM3U8(content);
+
+                  // 如果启用了自定义过滤，则执行自定义代码
+                  if (
+                    customAdFilterEnabledRef.current &&
+                    customAdFilterCodeRef.current
+                  ) {
+                    try {
+                      // 移除 TypeScript 类型注解，转换为纯 JavaScript
+                      const jsCode = customAdFilterCodeRef.current
+                        .replace(
+                          /(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*([,)])/g,
+                          '$1$3',
+                        )
+                        .replace(
+                          /\)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*\{/g,
+                          ') {',
+                        )
+                        .replace(
+                          /(const|let|var)\s+(\w+)\s*:\s*(string|number|boolean|any|void|never|unknown|object)\s*=/g,
+                          '$1 $2 =',
+                        );
+
+                      // 创建安全的执行环境
+                      const customFilterFunction = new Function(
+                        'type',
+                        'm3u8Content',
+                        jsCode +
+                          '\nreturn filterAdsFromM3U8(type, m3u8Content);',
+                      );
+
+                      // 执行自定义过滤函数
+                      const customResult = customFilterFunction(
+                        currentSourceRef.current,
+                        filteredContent,
+                      );
+
+                      // 检查返回值是否有效
+                      if (typeof customResult === 'string' && customResult) {
+                        filteredContent = customResult;
+                      }
+                    } catch (error) {
+                      logger.error('自定义广告过滤代码执行失败:', error);
+                      // 出错时只使用内置过滤的结果
+                    }
+                  }
+
+                  return filteredContent;
+                };
+              }
 
               hls.loadSource(url);
               hls.attachMedia(video);

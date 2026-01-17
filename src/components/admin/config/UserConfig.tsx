@@ -1190,17 +1190,13 @@ function UserConfigContent() {
                   </div>
                   <div className='flex gap-2'>
                     <button
-                      onClick={() =>
-                        handleApproveUser(pendingUser.username)
-                      }
+                      onClick={() => handleApproveUser(pendingUser.username)}
                       className='px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700'
                     >
                       批准
                     </button>
                     <button
-                      onClick={() =>
-                        handleRejectUser(pendingUser.username)
-                      }
+                      onClick={() => handleRejectUser(pendingUser.username)}
                       className='px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700'
                     >
                       拒绝

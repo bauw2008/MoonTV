@@ -133,11 +133,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       setDynamicDoubanId(douban_id);
     }, [douban_id]);
 
-    useImperativeHandle(ref, () => ({
-      setEpisodes: (eps?: number) => setDynamicEpisodes(eps),
-      setSourceNames: (names?: string[]) => setDynamicSourceNames(names),
-      setDoubanId: (id?: number) => setDynamicDoubanId(id),
-    }), []);
+    useImperativeHandle(
+      ref,
+      () => ({
+        setEpisodes: (eps?: number) => setDynamicEpisodes(eps),
+        setSourceNames: (names?: string[]) => setDynamicSourceNames(names),
+        setDoubanId: (id?: number) => setDynamicDoubanId(id),
+      }),
+      [],
+    );
 
     // 使用 useMemo 缓存计算值，避免每次渲染重新计算
     const actualTitle = title;
