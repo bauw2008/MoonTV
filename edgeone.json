@@ -18,8 +18,12 @@
   ],
   "name": "vidora",
   "framework": "nextjs",
-  "buildCommand": "pnpm run build",
-  "outputDirectory": ".next",
+  "buildCommand": "cp next.config.edgeone.js next.config.js && pnpm build",
+  "outputDirectory": "out",
   "devCommand": "pnpm run dev --port 3000",
-  "nodeVersion": "24.5.0"
+  "nodeVersion": "20.18.0",
+  "functions": {
+    "runtime": "nodejs",
+    "include": ["node-functions/**/*"]
+  }
 }
