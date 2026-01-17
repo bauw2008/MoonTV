@@ -1,4 +1,9 @@
 {
+  "name": "vidora",
+  "framework": "nextjs",
+  "buildCommand": "pnpm run build", 
+  "outputDirectory": "", 
+  "nodeVersion": "20.18.0",
   "headers": [
     {
       "source": "/fonts/inter-var-latin.woff2",
@@ -15,15 +20,5 @@
       "path": "/api/cron",
       "schedule": "0 1 * * *"
     }
-  ],
-  "name": "vidora",
-  "framework": "nextjs",
-  "buildCommand": "cp next.config.edgeone.js next.config.js && pnpm build",
-  "outputDirectory": "out",
-  "devCommand": "pnpm run dev --port 3000",
-  "nodeVersion": "20.18.0",
-  "functions": {
-    "runtime": "nodejs",
-    "include": ["node-functions/**/*"]
-  }
+  ]
 }
