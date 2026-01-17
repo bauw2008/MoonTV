@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  // 根据环境自动选择输出模式：Vercel自动处理，Docker使用standalone
-  // 本地开发时不使用 standalone 避免 Windows 符号链接权限问题
-  ...(process.env.VERCEL || process.env.DOCKER_BUILD ? { output: 'standalone' } : {}),
+  ...( (process.env.VERCEL || process.env.DOCKER_BUILD || process.env.EDGEONE_PAGES === '1') 
+       ? { output: 'standalone' } 
+       : {} 
+  ),
 
   reactStrictMode: false,
 
@@ -19,18 +20,11 @@ const nextConfig = {
     },
   },
 
-  // Uncoment to add domain whitelist
   images: {
     unoptimized: true,
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
     ],
   },
 };
