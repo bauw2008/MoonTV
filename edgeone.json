@@ -2,13 +2,17 @@
   "name": "vidora",
   "framework": "nextjs",
   "buildCommand": "pnpm run build",
-  "outputDirectory": ".next/standalone", 
-  "nodeVersion": "20.18.0",
-  "functions": {
-	  "runtime": "nodejs",
-	  "entry": "server.js"
+  "installCommand": "pnpm install",
+  "serverConfig": {
+    "runtime": "nodejs20"
   },
-  
+  "env": [
+    {
+      "key": "EDGEONE_PAGES",
+      "value": "1",
+      "type": "all"
+    }
+  ],
   "headers": [
     {
       "source": "/fonts/inter-var-latin.woff2",
@@ -18,12 +22,6 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "0 1 * * *"
     }
   ]
 }
