@@ -556,11 +556,11 @@ export class DbManager {
       }
       // 使用文件存储作为fallback
       return this.getCommentsFromFile();
-    } catch (error) {
+    } catch {
       // 尝试从文件获取
       try {
         return this.getCommentsFromFile();
-      } catch (fileError) {
+      } catch {
         return [];
       }
     }
@@ -575,7 +575,7 @@ export class DbManager {
     try {
       const data = await fs.readFile(filePath, 'utf8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch {
       // 文件不存在，返回空数组
       return [];
     }
@@ -610,13 +610,13 @@ export class DbManager {
       }
       // 使用文件存储作为fallback
       return this.saveCommentsToFile(comments);
-    } catch (error) {
+    } catch {
       // 尝试保存到文件
       try {
         const comments = await this.getComments();
         comments.push(comment);
         return this.saveCommentsToFile(comments);
-      } catch (fileError) {
+      } catch {
         return false;
       }
     }
@@ -658,7 +658,7 @@ export class DbManager {
 
       // 使用文件存储作为fallback
       return this.saveCommentsToFile([]);
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -682,7 +682,7 @@ export class DbManager {
       } else {
         return false;
       }
-    } catch (error) {
+    } catch {
       return false;
     }
   }

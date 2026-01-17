@@ -1,7 +1,7 @@
 // artplayer-plugin-liquid-glass
 // 毛玻璃效果控制栏插件
 
-export default function artplayerPluginLiquidGlass(option = {}) {
+export default function artplayerPluginLiquidGlass() {
   return (art) => {
     const { constructor } = art;
     const { addClass, append, createElement } = constructor.utils;

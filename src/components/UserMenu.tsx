@@ -39,10 +39,6 @@ export const UserMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // 提取复杂表达式到单独变量
-  const visibilityState =
-    typeof document !== 'undefined' ? document.visibilityState : null;
-
   const user = useMemo(() => getAuthInfoFromBrowserCookie(), []);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

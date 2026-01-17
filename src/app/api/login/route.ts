@@ -68,6 +68,28 @@ async function generateAuthCookie(
   return encodeURIComponent(JSON.stringify(authData));
 }
 
+// 获取客户端 IP 地址
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  const cfConnectingIp = req.headers.get('cf-connecting-ip');
+
+  // x-forwarded-for 可能包含多个 IP，取第一个
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  if (realIp) {
+    return realIp;
+  }
+
+  if (cfConnectingIp) {
+    return cfConnectingIp;
+  }
+
+  return '未知IP';
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 本地 / localStorage 模式——仅校验固定密码
@@ -139,12 +161,23 @@ export async function POST(req: NextRequest) {
       username === process.env.USERNAME &&
       password === process.env.PASSWORD
     ) {
+      // 获取客户端 IP
+      const clientIp = getClientIp(req);
+
       // 更新用户登录统计
       try {
         await db.updateUserLoginStats(username, Date.now(), true);
       } catch (error) {
         logger.error('更新登录统计失败:', error);
         // 更新失败不影响登录流程
+      }
+
+      // 记录登录 IP
+      try {
+        await db.setUserLoginIp(username, clientIp);
+      } catch (error) {
+        logger.error('记录登录IP失败:', error);
+        // 记录失败不影响登录流程
       }
 
       // 验证成功，设置认证cookie
@@ -187,12 +220,23 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // 获取客户端 IP
+      const clientIp = getClientIp(req);
+
       // 更新用户登录统计
       try {
         await db.updateUserLoginStats(username, Date.now(), false);
       } catch (error) {
         logger.error('更新登录统计失败:', error);
         // 更新失败不影响登录流程
+      }
+
+      // 记录登录 IP
+      try {
+        await db.setUserLoginIp(username, clientIp);
+      } catch (error) {
+        logger.error('记录登录IP失败:', error);
+        // 记录失败不影响登录流程
       }
 
       // 验证成功，设置认证cookie

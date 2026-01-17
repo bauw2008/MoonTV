@@ -16,26 +16,6 @@ interface UserSettings {
 }
 
 /**
- * 默认配置值
- */
-const getDefaultSettings = (): Partial<UserSettings> => {
-  if (typeof window === 'undefined') return {};
-
-  const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
-
-  return {
-    defaultAggregateSearch: true,
-    doubanProxyUrl: runtimeConfig.DOUBAN_PROXY || '',
-    enableOptimization: false,
-    fluidSearch: runtimeConfig.FLUID_SEARCH !== false,
-    liveDirectConnect: false,
-    doubanDataSource: runtimeConfig.DOUBAN_PROXY_TYPE || 'direct',
-    doubanImageProxyType: runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE || 'direct',
-    doubanImageProxyUrl: runtimeConfig.DOUBAN_IMAGE_PROXY || '',
-  };
-};
-
-/**
  * 从 localStorage 读取用户设置
  */
 const loadSettingsFromStorage = (): Partial<UserSettings> => {

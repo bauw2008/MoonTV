@@ -553,7 +553,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         adminConfig.SiteConfig.MaxUsers = ownerConfig.MaxUsers;
       }
     }
-  } catch (e) {
+  } catch {
     // 读取失败，使用默认值
   }
 
@@ -1072,7 +1072,7 @@ export async function hasSpecialFeaturePermission(
 
     // 默认情况下，普通用户无权使用特殊功能
     return false;
-  } catch (error) {
+  } catch {
     // 出错时，如果是站长则返回true，否则返回false
     return username === process.env.USERNAME;
   }

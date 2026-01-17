@@ -29,30 +29,6 @@ const DEFAULT_CONFIG: SkipSettingsConfig = {
   autoNextEpisode: true,
 };
 
-// 定义多套配置方案
-const SKIP_PROFILES: Record<string, SkipSettingsConfig> = {
-  default: {
-    openingStart: 0,
-    openingEnd: 90,
-    endingRemaining: 120,
-    endingStart: 0,
-    endingEnd: 0,
-    endingMode: 'remaining',
-    autoSkip: true,
-    autoNextEpisode: true,
-  },
-  shortdrama: {
-    openingStart: 0,
-    openingEnd: 0, // 短剧不跳过片头
-    endingRemaining: 0, // 短剧不跳过片尾
-    endingStart: 0,
-    endingEnd: 0,
-    endingMode: 'remaining',
-    autoSkip: true, // 保持开关状态
-    autoNextEpisode: true,
-  },
-};
-
 export default function artplayerPluginSkipSettings(
   initialConfig?: Partial<SkipSettingsConfig>,
 ) {
@@ -115,21 +91,6 @@ export default function artplayerPluginSkipSettings(
             shortDramaNotice.style.display = 'none';
           }, 5000);
         }
-      }
-    };
-
-    // 时间格式转换函数
-    const timeToSeconds = (timeStr: string): number => {
-      if (!timeStr || timeStr.trim() === '') {
-        return 0;
-      }
-      if (timeStr.includes(':')) {
-        const parts = timeStr.split(':');
-        const minutes = parseInt(parts[0]) || 0;
-        const seconds = parseFloat(parts[1]) || 0;
-        return minutes * 60 + seconds;
-      } else {
-        return parseFloat(timeStr) || 0;
       }
     };
 
@@ -925,76 +886,6 @@ export default function artplayerPluginSkipSettings(
 
         currentTimeEl.textContent = formatTime(current);
         remainingTimeEl.textContent = formatTime(remaining);
-      }
-    };
-
-    // 获取时间值
-    const getTimeValues = () => {
-      try {
-        if (!panelElement) {
-          return {
-            openingStart: 0,
-            openingEnd: 90,
-            endingFirst: 120,
-            endingEnd: 0,
-            endingMode: 'remaining',
-          };
-        }
-
-        const timeToSeconds = (timeStr: string): number => {
-          if (!timeStr || timeStr.trim() === '') {
-            return 0;
-          }
-          if (timeStr.includes(':')) {
-            const parts = timeStr.split(':');
-            const minutes = parseInt(parts[0]) || 0;
-            const seconds = parseFloat(parts[1]) || 0;
-            return minutes * 60 + seconds;
-          } else {
-            return parseFloat(timeStr) || 0;
-          }
-        };
-
-        const openingStart = timeToSeconds(
-          (panelElement.querySelector('#openingStart') as HTMLInputElement)
-            ?.value || '0',
-        );
-        const openingEnd = timeToSeconds(
-          (panelElement.querySelector('#openingEnd') as HTMLInputElement)
-            ?.value || '0',
-        );
-        const endingFirst = timeToSeconds(
-          (panelElement.querySelector('#endingFirst') as HTMLInputElement)
-            ?.value || '0',
-        );
-        const endingEnd = timeToSeconds(
-          (panelElement.querySelector('#endingEnd') as HTMLInputElement)
-            ?.value || '0',
-        );
-
-        const endingMode =
-          (
-            panelElement.querySelector(
-              'input[name="endingMode"]:checked',
-            ) as HTMLInputElement
-          )?.value || 'remaining';
-
-        return {
-          openingStart,
-          openingEnd,
-          endingFirst,
-          endingEnd,
-          endingMode,
-        };
-      } catch (e) {
-        logger.error('SkipSettings: 获取时间值失败', e);
-        return {
-          openingStart: 0,
-          openingEnd: 90,
-          endingFirst: 120,
-          endingEnd: 0,
-          endingMode: 'remaining',
-        };
       }
     };
 

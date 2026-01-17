@@ -17,9 +17,7 @@ function YellowConfigContent() {
   const { showError, showSuccess } = useToastNotification();
 
   // 所有状态定义必须在任何条件渲染之前
-  const [config, setConfig] = useState<any>(null);
   const [yellowWords, setYellowWords] = useState<string[]>([]);
-  const [expanded, setExpanded] = useState(false);
   const [filterEnabled, setFilterEnabled] = useState(true);
   const [newWord, setNewWord] = useState('');
 
@@ -29,7 +27,6 @@ function YellowConfigContent() {
       try {
         const response = await fetch('/api/admin/config');
         const data = await response.json();
-        setConfig(data.Config);
         setYellowWords(data.Config.YellowWords || []);
         // 加载过滤开关状态，默认为true
         setFilterEnabled(

@@ -536,7 +536,6 @@ async function parseWithAlternativeApi(
   } catch (error) {
     logger.error('备用API解析失败:', error);
     // 返回更详细的错误信息
-    const errorMsg = error instanceof Error ? error.message : '备用API请求失败';
     return {
       code: -1,
       msg: `视频源暂时不可用，请稍后再试`,
@@ -563,7 +562,7 @@ export async function parseShortDramaEpisode(
       if (alternativeResult.code === 0) {
         return alternativeResult;
       }
-    } catch (altError) {
+    } catch {
       // 备用API失败，继续尝试主API
     }
   }

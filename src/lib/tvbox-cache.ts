@@ -96,16 +96,6 @@ export async function generateTVBoxCacheKey(
 }
 
 /**
- * 返回原始视频数据
- */
-function getDirectVideoData(videos: VideoItem[]): VideoItem[] {
-  if (!Array.isArray(videos)) {
-    return [];
-  }
-  return videos;
-}
-
-/**
  * 获取TVBox视频列表缓存数据
  */
 export async function getTVBoxVideoCache(
@@ -236,13 +226,6 @@ export async function getTVBoxCache(
 /**
  * 返回原始视频数据
  */
-function getDirectVideoDataForCache(videos: VideoItem[]): VideoItem[] {
-  if (!Array.isArray(videos) || videos.length === 0) {
-    return [];
-  }
-  return videos;
-}
-
 /**
  * 设置TVBox视频列表缓存数据
  */

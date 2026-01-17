@@ -15,9 +15,6 @@ const LAST_CHECK_TIME_KEY = 'vidora_last_update_check';
 const ORIGINAL_EPISODES_CACHE_KEY = 'vidora_original_episodes'; // 新增：记录观看时的总集数
 const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
-// 防重复修复标记
-const fixingRecords = new Set<string>();
-
 // 全局锁，防止同时多个检查
 let isCheckingUpdates = false;
 let lastCheckTime = 0;
@@ -62,17 +59,8 @@ interface WatchingUpdatesCache {
   updatedSeries: WatchingUpdate['updatedSeries'];
 }
 
-interface ExtendedPlayRecord extends PlayRecord {
-  id: string;
-  hasUpdate?: boolean;
-  newEpisodes?: number;
-}
-
 // 全局事件监听器
 const updateListeners = new Set<(hasUpdates: boolean) => void>();
-
-// 防抖机制，避免短时间内多次调用
-const CHECK_DEBOUNCE_TIME = 2000; // 2秒内只允许一次检查
 
 /**
  * 检查追番更新
@@ -323,7 +311,7 @@ async function checkSingleRecordUpdate(
           sourceKey = matchedSource.key;
         }
       }
-    } catch (mappingError) {
+    } catch {
       // 数据源映射失败，使用原始名称
     }
 

@@ -106,7 +106,6 @@ function TVBoxConfigContent() {
   const { showError, showSuccess, showWarning } = useToastNotification();
 
   // 所有状态定义必须在任何条件渲染之前
-  const [config, setConfig] = useState<any>(null);
   const [showToken, setShowToken] = useState(false);
   const [diagnoseResult, setDiagnoseResult] = useState<any>(null);
   const [showDiagnoseResult, setShowDiagnoseResult] = useState(false);
@@ -147,7 +146,6 @@ function TVBoxConfigContent() {
       try {
         const response = await fetch('/api/tvbox-config');
         const data = await response.json();
-        setConfig(data);
         if (data?.securityConfig) {
           setSecuritySettings({
             enableRateLimit: data.securityConfig.enableRateLimit ?? false,

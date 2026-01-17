@@ -113,21 +113,18 @@ const CACHE_TYPES: CacheType[] = [
 
 function CacheManager() {
   // 使用统一的权限管理
-  const { loading, error, isOwner, hasPermission } = useAdminAuth();
+  const { error, isOwner } = useAdminAuth();
   // 使用统一的加载状态管理
   const { withLoading, isLoading } = useAdminLoading();
   // 使用统一的 Toast 通知
   const { showError, showSuccess } = useToastNotification();
 
   const [stats, setStats] = useState<CacheStats | null>(null);
-  const [clearing, setClearing] = useState<string | null>(null);
-  const [cacheError, setCacheError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const fetchStats = useCallback(async () => {
     await withLoading('fetchStats', async () => {
       try {
-        setCacheError(null);
         const resp = await fetch('/api/admin/cache');
         if (!resp.ok) {
           if (resp.status === 401) {
@@ -146,7 +143,6 @@ function CacheManager() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : '获取缓存统计失败';
-        setCacheError(errorMessage);
         showError('获取缓存统计失败: ' + errorMessage);
       }
     });
@@ -167,9 +163,6 @@ function CacheManager() {
 
     await withLoading(`clearCache_${type}`, async () => {
       try {
-        setClearing(type);
-        setCacheError(null);
-
         const resp = await fetch(`/api/admin/cache?type=${type}`, {
           method: 'DELETE',
         });
@@ -190,10 +183,7 @@ function CacheManager() {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : '清理缓存失败';
-        setCacheError(errorMessage);
         showError('清理缓存失败: ' + errorMessage);
-      } finally {
-        setClearing(null);
       }
     });
   };

@@ -70,7 +70,7 @@ async function setCache(
           created: Date.now(),
         };
         localStorage.setItem(key, JSON.stringify(cacheData));
-      } catch (e) {
+      } catch {
         // localStorage可能满了，忽略错误
       }
     }
@@ -103,7 +103,7 @@ async function cleanExpiredCache(): Promise<void> {
               cleanedCount++;
             }
           }
-        } catch (e) {
+        } catch {
           // 清理损坏的缓存数据
           localStorage.removeItem(key);
           cleanedCount++;

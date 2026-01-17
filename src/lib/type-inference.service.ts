@@ -38,7 +38,6 @@ export class TypeInferenceService {
     episodes?: number | string[];
     type?: string;
   }): TypeInferenceResult {
-    const sources = ['tvbox', 'douban', 'search', 'live'];
     const lowerTitle = item.title.toLowerCase();
     const lowerTypeName = item.type_name?.toLowerCase() || '';
     const lowerSource = item.source?.toLowerCase() || '';

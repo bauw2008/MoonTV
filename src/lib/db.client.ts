@@ -22,21 +22,6 @@ import type { Favorite, PlayRecord } from './types';
 import { UserPlayStat } from './types';
 import { clearWatchingUpdates } from './watching-updates';
 
-// 获取当前用户信息的替代函数
-function getCurrentUsername(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const stored = localStorage.getItem('vidora_auth');
-    if (!stored) return null;
-
-    const authData = JSON.parse(stored);
-    return authData.user?.username || null;
-  } catch {
-    return null;
-  }
-}
-
 // 重新导出类型以保持API兼容性
 export type {
   EpisodeSkipConfig,

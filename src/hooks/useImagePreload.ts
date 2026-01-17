@@ -23,12 +23,6 @@ interface EventListenerOptions {
   signal?: AbortSignal;
 }
 
-interface NodeListOf<TNode extends Node> {
-  length: number;
-  item(index: number): TNode | null;
-  [index: number]: TNode;
-}
-
 // Type declarations for DOM APIs
 declare global {
   interface HTMLLinkElement {

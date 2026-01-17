@@ -183,7 +183,6 @@ function VideoConfigContent() {
   // 使用统一接口
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
-  const [config, setConfig] = useState<any>(null);
   const [sources, setSources] = useState<DataSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -203,15 +202,6 @@ function VideoConfigContent() {
     from: 'custom',
   });
 
-  const [importExportModal, setImportExportModal] = useState<{
-    isOpen: boolean;
-    mode: 'import' | 'export' | 'result';
-    result?: any;
-  }>({
-    isOpen: false,
-    mode: 'export',
-  });
-
   const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config');
@@ -219,7 +209,6 @@ function VideoConfigContent() {
         throw new Error('获取配置失败');
       }
       const data = await response.json();
-      setConfig(data.Config);
       if (data.Config?.SourceConfig) {
         setSources(data.Config.SourceConfig);
         setSelectedSources(new Set());
@@ -304,49 +293,6 @@ function VideoConfigContent() {
     }).catch(() => {
       logger.error('操作失败', 'add', newSource);
     });
-  };
-
-  // 获取有效性状态显示
-  const getValidationStatus = (sourceKey: string) => {
-    const result = validationResults.find((r) => r.key === sourceKey);
-    if (!result) return null;
-
-    switch (result.status) {
-      case 'validating':
-        return {
-          text: '检测中',
-          className:
-            'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
-          icon: '⟳',
-          message: result.message,
-        };
-      case 'valid':
-        return {
-          text: '有效',
-          className:
-            'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-          icon: '✓',
-          message: result.message,
-        };
-      case 'no_results':
-        return {
-          text: '无法搜索',
-          className:
-            'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-          icon: '⚠',
-          message: result.message,
-        };
-      case 'invalid':
-        return {
-          text: '无效',
-          className:
-            'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
-          icon: '✗',
-          message: result.message,
-        };
-      default:
-        return null;
-    }
   };
 
   // 有效性检测处理
@@ -469,7 +415,7 @@ function VideoConfigContent() {
 
   // 虚拟滚动状态
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-  const [containerHeight, setContainerHeight] = useState(600);
+  const containerHeight = 600;
   const itemHeight =
     typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 80; // 移动端增加高度
 
@@ -827,7 +773,7 @@ function VideoConfigContent() {
                     }}
                   >
                     <div className='px-0.5'>
-                      {visibleSources.map((source, index) => (
+                      {visibleSources.map((source) => (
                         <div
                           key={source.key}
                           className='border-b border-gray-100 dark:border-gray-700 last:border-b-0 py-1 sm:py-0'

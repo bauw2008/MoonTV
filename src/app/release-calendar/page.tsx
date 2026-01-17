@@ -710,11 +710,6 @@ export default function ReleaseCalendarPage() {
                             currentMonth,
                             1,
                           );
-                          const lastDay = new Date(
-                            currentYear,
-                            currentMonth + 1,
-                            0,
-                          );
                           const startDate = new Date(firstDay);
                           startDate.setDate(
                             startDate.getDate() - firstDay.getDay(),
@@ -1028,7 +1023,7 @@ export default function ReleaseCalendarPage() {
                       ),
                     )
                       .sort(([a], [b]) => a.localeCompare(b))
-                      .map(([date, items], index) => {
+                      .map(([date, items]) => {
                         const today = new Date();
                         const currentDate = new Date(date);
                         const todayStr = `${today.getFullYear()}-${String(

@@ -140,8 +140,7 @@ const UserAvatar = ({ username, size = 'sm' }: UserAvatarProps) => {
 
 function UserConfigContent() {
   // 使用新的hooks
-  const { loading, error, username, role, isAdminOrOwner, canManageUser } =
-    useAdminAuth();
+  const { loading, error, isAdminOrOwner, canManageUser } = useAdminAuth();
   const { userApi } = useAdminApi();
   const { isLoading, withLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
@@ -799,9 +798,6 @@ function UserConfigContent() {
     }
   };
 
-  // 保持向后兼容的saveConfig函数
-  const saveConfig = () => saveUnifiedConfig(undefined, { showMessage: true });
-
   // 保持向后兼容的saveConfigWithSettings函数
   const handleToggleSwitch = async (key: keyof UserSettings, value: any) => {
     try {
@@ -1175,7 +1171,7 @@ function UserConfigContent() {
               待审批用户
             </h3>
             <div className='space-y-2'>
-              {userSettings.PendingUsers.map((pendingUser, index) => (
+              {userSettings.PendingUsers.map((pendingUser) => (
                 <div
                   key={`${pendingUser.username}-${pendingUser.createdAt}`}
                   className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'

@@ -18,14 +18,6 @@ interface ApiSearchItem {
   type_name?: string;
 }
 
-// 定义API响应数据的类型
-interface ApiResponseData {
-  list?: ApiSearchItem[];
-  pagecount?: number;
-  total?: number;
-  totalPages?: number;
-}
-
 /**
  * 按分类获取视频列表（专用于分类筛选）
  */
