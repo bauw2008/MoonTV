@@ -2,11 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  // Vercel/Docker/EdgeOne 环境启用 standalone 模式
-  // 本地开发时不使用 standalone
-  ...(process.env.VERCEL || process.env.DOCKER_BUILD || process.env.EDGEONE || process.env.CF_PAGES
-    ? { output: 'standalone' }
-    : {}),
+  output: 'standalone',
 
   reactStrictMode: false,
 
