@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 'use client';
 
@@ -39,18 +39,24 @@ export const UserMenu: React.FC = () => {
   const router = useRouter();
   const { error: showError, success: showSuccess } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const authInfo = useMemo(
+const [mounted, setMounted] = useState(false);
+
+  // 提取复杂表达式到单独变量
+  const visibilityState =
+    typeof document !== 'undefined' ? document.visibilityState : null;
+
+  const user = useMemo(
     () => getAuthInfoFromBrowserCookie(),
-    [
-      // 当页面可见性变化时重新读取
-      typeof document !== 'undefined' ? document.visibilityState : null,
-    ],
+    [],
   );
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
   const [isChangeAvatarOpen, setIsChangeAvatarOpen] = useState(false);
   const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState(false);
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [storageType] = useState<string>(() => {
     // 🔧 优化：直接从 RUNTIME_CONFIG 读取初始值，避免默认值导致的多次渲染
     if (typeof window !== 'undefined') {
@@ -58,9 +64,6 @@ export const UserMenu: React.FC = () => {
     }
     return 'localstorage';
   });
-  const [mounted, setMounted] = useState(false);
-
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 裁剪相关状态
@@ -285,7 +288,7 @@ export const UserMenu: React.FC = () => {
     }
 
     // 根据用户角色设置不同的文件大小限制
-    const userRole = authInfo?.role || 'user';
+    const userRole = user?.role || 'user';
     const isOwner = userRole === 'owner';
 
     // 站长无限制，普通用户和管理员限制150KB
@@ -530,14 +533,14 @@ export const UserMenu: React.FC = () => {
 
   // 检查是否显示管理面板按钮
   const showAdminPanel =
-    authInfo?.role === 'owner' || authInfo?.role === 'admin';
+    user?.role === 'owner' || user?.role === 'admin';
 
   // 检查是否显示修改密码按钮
   const showChangePassword =
-    authInfo?.role !== 'owner' && storageType !== 'localstorage';
+    user?.role !== 'owner' && storageType !== 'localstorage';
 
   // 检查是否显示播放统计按钮（所有登录用户，且非localstorage存储）
-  const showPlayStats = authInfo?.username && storageType !== 'localstorage';
+  const showPlayStats = user?.username && storageType !== 'localstorage';
 
   // 角色中文映射
   const getRoleText = (role?: string) => {
@@ -571,7 +574,7 @@ export const UserMenu: React.FC = () => {
             <OptimizedAvatar
               onClick={() => setIsOpen(!isOpen)}
               size='menu'
-              username={authInfo?.username}
+              username={user?.username}
             />
 
             {/* 用户信息 - 垂直布局 */}
@@ -581,13 +584,13 @@ export const UserMenu: React.FC = () => {
                 <div className='flex-1 min-w-0'>
                   <div
                     className={`font-bold bg-clip-text text-transparent text-base truncate flex items-center gap-1.5 ${
-                      (authInfo?.role || 'user') === 'owner'
+                      (user?.role || 'user') === 'owner'
                         ? 'bg-gradient-to-r from-red-600 to-pink-600'
                         : 'bg-gradient-to-r from-blue-600 to-purple-600'
                     }`}
                   >
                     {/* 用户名前的小图标 */}
-                    {(authInfo?.role || 'user') === 'owner' && (
+                    {(user?.role || 'user') === 'owner' && (
                       <svg
                         className='w-4 h-4 text-red-500 flex-shrink-0'
                         fill='currentColor'
@@ -597,7 +600,7 @@ export const UserMenu: React.FC = () => {
                         <path d='M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 2c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z' />
                       </svg>
                     )}
-                    {(authInfo?.role || 'user') === 'admin' && (
+                    {(user?.role || 'user') === 'admin' && (
                       <svg
                         className='w-4 h-4 text-blue-500 flex-shrink-0'
                         fill='currentColor'
@@ -611,7 +614,7 @@ export const UserMenu: React.FC = () => {
                         />
                       </svg>
                     )}
-                    {(authInfo?.role || 'user') === 'user' && (
+                    {(user?.role || 'user') === 'user' && (
                       <svg
                         className='w-4 h-4 text-green-500 flex-shrink-0'
                         fill='currentColor'
@@ -621,19 +624,19 @@ export const UserMenu: React.FC = () => {
                         <path d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' />
                       </svg>
                     )}
-                    {authInfo?.username || 'default'}
+                    {user?.username || 'default'}
                   </div>
                 </div>
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm flex-shrink-0 transition-all duration-300 hover:shadow-lg hover:scale-105 animate-pulse ${
-                    (authInfo?.role || 'user') === 'owner'
+                    (user?.role || 'user') === 'owner'
                       ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/40 dark:to-yellow-900/60 dark:text-yellow-300 hover:from-yellow-200 hover:to-yellow-300 dark:hover:from-yellow-800/60 dark:hover:to-yellow-800/80'
-                      : (authInfo?.role || 'user') === 'admin'
+                      : (user?.role || 'user') === 'admin'
                         ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900/40 dark:to-blue-900/60 dark:text-blue-300 hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800/60 dark:hover:to-blue-800/80'
                         : 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/40 dark:to-green-900/60 dark:text-green-300 hover:from-green-200 hover:to-green-300 dark:hover:from-green-800/60 dark:hover:to-green-800/80'
                   }`}
                 >
-                  {getRoleText(authInfo?.role || 'user')}
+                  {getRoleText(user?.role || 'user')}
                 </span>
               </div>
 
@@ -733,7 +736,7 @@ export const UserMenu: React.FC = () => {
             >
               <BarChart3 className='w-4 h-4 text-gray-500 dark:text-gray-400' />
               <span className='font-medium'>
-                {authInfo?.role === 'owner' || authInfo?.role === 'admin'
+                {user?.role === 'owner' || user?.role === 'admin'
                   ? '播放统计'
                   : '个人统计'}
               </span>
@@ -1310,7 +1313,7 @@ export const UserMenu: React.FC = () => {
         <OptimizedAvatar
           onClick={() => setIsOpen(!isOpen)}
           size='nav'
-          username={authInfo?.username}
+          username={user?.username}
           className='transition-transform duration-1000 group-hover:rotate-360'
         />
       </div>
@@ -1364,7 +1367,7 @@ export const UserMenu: React.FC = () => {
                       <OptimizedAvatar
                         size='large'
                         selectedImage={selectedImage}
-                        username={authInfo?.username}
+                        username={user?.username}
                       />
 
                       {/* 上传按钮 */}

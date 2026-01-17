@@ -4,7 +4,7 @@
 
 import { Brain, Send, Sparkles, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AI_RECOMMEND_PRESETS,
@@ -243,7 +243,7 @@ export default function AIRecommendModal({
     });
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || isMobile) return;
 
     e.preventDefault();
@@ -251,11 +251,11 @@ export default function AIRecommendModal({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
     });
-  };
+  }, [isDragging, dragStart, isMobile]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   // 添加全局鼠标事件监听
   useEffect(() => {
@@ -268,7 +268,7 @@ export default function AIRecommendModal({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart, isMobile]);
+  }, [isDragging, dragStart, isMobile, handleMouseMove, handleMouseUp]);
 
   if (!isOpen) {
     return null;

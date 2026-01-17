@@ -14,7 +14,7 @@ import {
   Smartphone,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
@@ -142,7 +142,7 @@ function TVBoxConfigContent() {
   });
 
   // 加载配置
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     await withLoading('loadTVBoxConfig', async () => {
       try {
         const response = await fetch('/api/tvbox-config');
@@ -183,12 +183,12 @@ function TVBoxConfigContent() {
         showError('加载配置失败');
       }
     });
-  };
+  }, [withLoading, showSuccess, showError]);
 
   // 初始化加载
   useEffect(() => {
     loadConfig();
-  }, []);
+  }, [loadConfig]);
 
   // 加载状态
   if (loading) {

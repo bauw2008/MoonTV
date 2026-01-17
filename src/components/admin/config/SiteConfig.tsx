@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
@@ -92,11 +92,7 @@ function SiteConfigContent() {
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
     useState(false);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async (forceRefresh = false) => {
+  const loadConfig = useCallback(async (forceRefresh = false) => {
     try {
       // 添加时间戳参数，强制刷新缓存
       const url = forceRefresh
@@ -150,7 +146,11 @@ function SiteConfigContent() {
       logger.error('加载站点配置失败:', error);
       showError('加载站点配置失败');
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const saveConfig = async () => {
     try {

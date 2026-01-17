@@ -12,7 +12,7 @@ import {
   Trash2,
   Video,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   useAdminAuth,
@@ -124,7 +124,7 @@ function CacheManager() {
   const [cacheError, setCacheError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     await withLoading('fetchStats', async () => {
       try {
         setCacheError(null);
@@ -150,14 +150,14 @@ function CacheManager() {
         showError('获取缓存统计失败: ' + errorMessage);
       }
     });
-  };
+  }, [withLoading, showError]);
 
   // 组件挂载时获取统计数据
   useEffect(() => {
     if (isOwner) {
       fetchStats();
     }
-  }, [isOwner]);
+  }, [isOwner, fetchStats]);
 
   const clearCache = async (type: string) => {
     const typeName = CACHE_TYPES.find((t) => t.key === type)?.name || type;

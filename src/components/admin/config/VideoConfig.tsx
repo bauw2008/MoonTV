@@ -212,11 +212,7 @@ function VideoConfigContent() {
     mode: 'export',
   });
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config');
       if (!response.ok) {
@@ -232,7 +228,11 @@ function VideoConfigContent() {
       logger.error('加载视频配置失败:', error);
       showError('加载配置失败');
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const callSourceApi = async (body: any) => {
     try {

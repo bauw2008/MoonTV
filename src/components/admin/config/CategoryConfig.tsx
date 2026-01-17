@@ -1,7 +1,7 @@
 'use client';
 
 import { ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   notifyConfigUpdated,
@@ -69,7 +69,7 @@ function CategoryConfigContent() {
     ],
   };
 
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       const result = await withLoading('loadCategoryConfig', async () => {
         const response = await fetch('/api/admin/config');
@@ -83,7 +83,7 @@ function CategoryConfigContent() {
       logger.error('加载分类配置失败:', error);
       return [];
     }
-  };
+  }, [withLoading]);
 
   useEffect(() => {
     const initializeConfig = async () => {
@@ -94,7 +94,7 @@ function CategoryConfigContent() {
       }
     };
     initializeConfig();
-  }, []);
+  }, [loadConfig]);
 
   const handleTypeChange = (type: 'movie' | 'tv') => {
     setNewCategory((prev) => ({

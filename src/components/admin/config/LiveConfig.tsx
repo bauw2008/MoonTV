@@ -11,7 +11,7 @@ import {
   Tv,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
@@ -267,11 +267,7 @@ function LiveConfigContent() {
     from: 'custom',
   });
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config');
       if (!response.ok) {
@@ -285,7 +281,11 @@ function LiveConfigContent() {
       logger.error('加载直播配置失败:', error);
       showError('加载配置失败');
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const callLiveSourceApi = async (body: any) => {
     try {

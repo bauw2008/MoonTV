@@ -779,6 +779,7 @@ function DoubanPageClient() {
     customCategories,
     multiLevelValues,
     selectedWeekday,
+    getRequestParams,
   ]);
 
   // 设置滚动监听（只在非虚拟化模式下启用）

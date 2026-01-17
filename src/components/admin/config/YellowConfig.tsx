@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Save, Shield, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import {
@@ -24,7 +24,7 @@ function YellowConfigContent() {
   const [newWord, setNewWord] = useState('');
 
   // 加载配置
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     await withLoading('loadYellowConfig', async () => {
       try {
         const response = await fetch('/api/admin/config');
@@ -41,12 +41,12 @@ function YellowConfigContent() {
         logger.error('加载18+配置失败:', error);
       }
     });
-  };
+  }, [withLoading]);
 
   // 初始化加载
   useEffect(() => {
     loadConfig();
-  }, []);
+  }, [loadConfig]);
 
   // 加载状态
   if (loading) {

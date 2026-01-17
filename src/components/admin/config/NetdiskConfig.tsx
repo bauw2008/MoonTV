@@ -54,12 +54,12 @@ function NetdiskConfigContent() {
       logger.error('加载网盘配置失败:', error);
       showError('加载网盘配置失败');
     }
-  }, []);
+  }, [showError]);
 
   // 初始化加载
   useEffect(() => {
     withLoading('loadNetdiskConfig', loadConfig);
-  }, [loadConfig]);
+  }, [loadConfig, withLoading]);
 
   // 加载状态
   if (loading) {

@@ -102,7 +102,7 @@ function AIConfigContent() {
   // 初始化加载
   useEffect(() => {
     withLoading('loadAIConfig', loadConfig);
-  }, [loadConfig]); // 添加 loadConfig 依赖
+  }, [loadConfig, withLoading]); // 添加 withLoading 依赖
 
   // 加载状态
   if (loading) {

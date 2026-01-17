@@ -45,7 +45,7 @@ export default function AcgSearch({
   const isLoadingMoreRef = useRef(false);
 
   // 执行搜索
-  const performSearch = async (page: number, isLoadMore = false) => {
+  const performSearch = useCallback(async (page: number, isLoadMore = false) => {
     if (isLoadingMoreRef.current) return;
 
     isLoadingMoreRef.current = true;
@@ -90,7 +90,7 @@ export default function AcgSearch({
       setLoading(false);
       isLoadingMoreRef.current = false;
     }
-  };
+  }, [keyword, onError]);
 
   useEffect(() => {
     if (triggerSearch === undefined) {
@@ -107,14 +107,14 @@ export default function AcgSearch({
     setCurrentPage(1);
     setHasMore(true);
     performSearch(1, false);
-  }, [triggerSearch]);
+  }, [triggerSearch, keyword, performSearch]);
 
   // 加载更多数据
   const loadMore = useCallback(() => {
     if (!loading && hasMore && !isLoadingMoreRef.current) {
       performSearch(currentPage + 1, true);
     }
-  }, [loading, hasMore, currentPage]);
+  }, [loading, hasMore, currentPage, performSearch]);
 
   // 使用 Intersection Observer 监听滚动到底部
   useEffect(() => {

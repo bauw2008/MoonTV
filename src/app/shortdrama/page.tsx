@@ -522,7 +522,7 @@ function ShortDramaPageClient() {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [loadInitialData]);
 
   // 处理搜索框输入
   const handleSearchInputChange = useCallback(

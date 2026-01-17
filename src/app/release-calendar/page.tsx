@@ -10,7 +10,7 @@ import {
   Tag,
   Tv,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { ReleaseCalendarItem, ReleaseCalendarResult } from '@/lib/types';
@@ -80,41 +80,48 @@ export default function ReleaseCalendarPage() {
     });
   };
 
+  // 使用 ref 存储函数引用，避免循环依赖
+  const applyClientSideFiltersRef =
+    useRef<(data: ReleaseCalendarResult) => ReleaseCalendarResult | null>(null);
+
   // 获取数据（依赖API数据库缓存）
-  const fetchData = async (reset = false) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchData = useCallback(
+    async (reset = false) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      // 🌐 直接从API获取数据（API有数据库缓存，全局共享，24小时有效）
-      logger.log('🌐 正在从API获取发布日历数据...');
-      const apiUrl = reset
-        ? '/api/release-calendar?refresh=true'
-        : '/api/release-calendar';
-      const response = await fetchWithAuth(apiUrl);
+        // 🌐 直接从API获取数据（API有数据库缓存，全局共享，24小时有效）
+        logger.log('🌐 正在从API获取发布日历数据...');
+        const apiUrl = reset
+          ? '/api/release-calendar?refresh=true'
+          : '/api/release-calendar';
+        const response = await fetchWithAuth(apiUrl);
 
-      if (!response) {
-        // 401 错误已由 fetchWithAuth 处理
-        return;
+        if (!response) {
+          // 401 错误已由 fetchWithAuth 处理
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('获取数据失败');
+        }
+
+        const result: ReleaseCalendarResult = await response.json();
+        logger.log(`📊 获取到 ${result.items.length} 条上映数据`);
+
+        // 前端过滤（无需缓存，API数据库缓存已处理）
+        const filteredData = applyClientSideFiltersRef.current!(result);
+        setData(filteredData);
+        setCurrentPage(1);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '未知错误');
+      } finally {
+        setLoading(false);
       }
-
-      if (!response.ok) {
-        throw new Error('获取数据失败');
-      }
-
-      const result: ReleaseCalendarResult = await response.json();
-      logger.log(`📊 获取到 ${result.items.length} 条上映数据`);
-
-      // 前端过滤（无需缓存，API数据库缓存已处理）
-      const filteredData = applyClientSideFilters(result);
-      setData(filteredData);
-      setCurrentPage(1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '未知错误');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [fetchWithAuth],
+  );
 
   // 前端过滤逻辑
   const applyClientSideFilters = (
@@ -122,6 +129,9 @@ export default function ReleaseCalendarPage() {
   ): ReleaseCalendarResult => {
     return applyClientSideFiltersWithParams(data, filters);
   };
+
+  // 更新 ref 引用
+  applyClientSideFiltersRef.current = applyClientSideFilters;
 
   // 前端过滤逻辑（可以指定过滤参数）
   const applyClientSideFiltersWithParams = (
@@ -264,7 +274,7 @@ export default function ReleaseCalendarPage() {
     if (isAuthenticated) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchData]);
 
   return (
     <PageLayout activePath='/release-calendar'>

@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { useAdminApi } from '@/hooks/admin/useAdminApi';
@@ -29,11 +29,7 @@ function ShortDramaConfigContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   // 加载配置
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/config', {
         headers: {
@@ -59,7 +55,11 @@ function ShortDramaConfigContent() {
       logger.error('加载短剧配置失败:', error);
       showError('加载配置失败');
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   // 显示消息
   const showMessage = (type: 'success' | 'error', text: string) => {

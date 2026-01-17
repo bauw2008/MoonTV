@@ -428,7 +428,7 @@ export const ThemeSettingsPanel: React.FC<{
       await loadSettings();
     };
     initializeSettings();
-  }, []);
+  }, [isOpen]);
 
   const saveSettings = (newSettings: ThemeSettings) => {
     if (typeof window !== 'undefined') {

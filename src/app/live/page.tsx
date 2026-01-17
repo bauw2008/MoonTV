@@ -1082,7 +1082,7 @@ function LivePageClient() {
       }
     };
     preload();
-  }, [Artplayer, Hls, videoUrl, currentChannel, loading]);
+  }, [videoUrl, currentChannel, loading]);
 
   // 清理播放器资源
   useEffect(() => {
