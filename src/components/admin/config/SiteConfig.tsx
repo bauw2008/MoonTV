@@ -92,61 +92,68 @@ function SiteConfigContent() {
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
     useState(false);
 
-  const loadConfig = useCallback(async (forceRefresh = false) => {
-    try {
-      // 添加时间戳参数，强制刷新缓存
-      const url = forceRefresh
-        ? '/api/admin/config?t=' + Date.now()
-        : '/api/admin/config';
-      const response = await fetch(url, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
-        cache: 'no-store',
-      });
-      const data = await response.json();
-      setConfig(data.Config);
-
-      if (data.Config?.SiteConfig) {
-        // 使用从服务器返回的数据，避免闭包陷阱
-        const siteConfigData = data.Config.SiteConfig;
-
-        setSiteSettings({
-          SiteName: siteConfigData.SiteName || '',
-          Announcement: siteConfigData.Announcement ?? '', // 使用 ?? 而不是 ||，允许空字符串
-          SearchDownstreamMaxPage: siteConfigData.SearchDownstreamMaxPage || 1,
-          SiteInterfaceCacheTime: siteConfigData.SiteInterfaceCacheTime || 7200,
-          DoubanProxyType: siteConfigData.DoubanProxyType || 'direct',
-          DoubanProxy: siteConfigData.DoubanProxy || '',
-          DoubanImageProxyType: siteConfigData.DoubanImageProxyType || 'direct',
-          DoubanImageProxy: siteConfigData.DoubanImageProxy || '',
-          DisableYellowFilter: siteConfigData.DisableYellowFilter || false,
-          FluidSearch:
-            siteConfigData.FluidSearch !== undefined
-              ? siteConfigData.FluidSearch
-              : true,
-          TMDBApiKey: siteConfigData.TMDBApiKey || '',
-          TMDBLanguage: siteConfigData.TMDBLanguage || 'zh-CN',
-          EnableTMDBActorSearch: siteConfigData.EnableTMDBActorSearch || false,
-          EnableTMDBPosters: siteConfigData.EnableTMDBPosters || true,
-          MenuSettings: {
-            showMovies: siteConfigData.MenuSettings?.showMovies ?? true,
-            showTVShows: siteConfigData.MenuSettings?.showTVShows ?? true,
-            showAnime: siteConfigData.MenuSettings?.showAnime ?? true,
-            showVariety: siteConfigData.MenuSettings?.showVariety ?? true,
-            showLive: siteConfigData.MenuSettings?.showLive ?? false,
-            showTvbox: siteConfigData.MenuSettings?.showTvbox ?? false,
-            showShortDrama:
-              siteConfigData.MenuSettings?.showShortDrama ?? false,
+  const loadConfig = useCallback(
+    async (forceRefresh = false) => {
+      try {
+        // 添加时间戳参数，强制刷新缓存
+        const url = forceRefresh
+          ? '/api/admin/config?t=' + Date.now()
+          : '/api/admin/config';
+        const response = await fetch(url, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
           },
+          cache: 'no-store',
         });
+        const data = await response.json();
+        setConfig(data.Config);
+
+        if (data.Config?.SiteConfig) {
+          // 使用从服务器返回的数据，避免闭包陷阱
+          const siteConfigData = data.Config.SiteConfig;
+
+          setSiteSettings({
+            SiteName: siteConfigData.SiteName || '',
+            Announcement: siteConfigData.Announcement ?? '', // 使用 ?? 而不是 ||，允许空字符串
+            SearchDownstreamMaxPage:
+              siteConfigData.SearchDownstreamMaxPage || 1,
+            SiteInterfaceCacheTime:
+              siteConfigData.SiteInterfaceCacheTime || 7200,
+            DoubanProxyType: siteConfigData.DoubanProxyType || 'direct',
+            DoubanProxy: siteConfigData.DoubanProxy || '',
+            DoubanImageProxyType:
+              siteConfigData.DoubanImageProxyType || 'direct',
+            DoubanImageProxy: siteConfigData.DoubanImageProxy || '',
+            DisableYellowFilter: siteConfigData.DisableYellowFilter || false,
+            FluidSearch:
+              siteConfigData.FluidSearch !== undefined
+                ? siteConfigData.FluidSearch
+                : true,
+            TMDBApiKey: siteConfigData.TMDBApiKey || '',
+            TMDBLanguage: siteConfigData.TMDBLanguage || 'zh-CN',
+            EnableTMDBActorSearch:
+              siteConfigData.EnableTMDBActorSearch || false,
+            EnableTMDBPosters: siteConfigData.EnableTMDBPosters || true,
+            MenuSettings: {
+              showMovies: siteConfigData.MenuSettings?.showMovies ?? true,
+              showTVShows: siteConfigData.MenuSettings?.showTVShows ?? true,
+              showAnime: siteConfigData.MenuSettings?.showAnime ?? true,
+              showVariety: siteConfigData.MenuSettings?.showVariety ?? true,
+              showLive: siteConfigData.MenuSettings?.showLive ?? false,
+              showTvbox: siteConfigData.MenuSettings?.showTvbox ?? false,
+              showShortDrama:
+                siteConfigData.MenuSettings?.showShortDrama ?? false,
+            },
+          });
+        }
+      } catch (error) {
+        logger.error('加载站点配置失败:', error);
+        showError('加载站点配置失败');
       }
-    } catch (error) {
-      logger.error('加载站点配置失败:', error);
-      showError('加载站点配置失败');
-    }
-  }, [showError]);
+    },
+    [showError],
+  );
 
   useEffect(() => {
     loadConfig();

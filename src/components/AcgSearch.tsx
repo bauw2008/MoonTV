@@ -45,52 +45,55 @@ export default function AcgSearch({
   const isLoadingMoreRef = useRef(false);
 
   // 执行搜索
-  const performSearch = useCallback(async (page: number, isLoadMore = false) => {
-    if (isLoadingMoreRef.current) return;
+  const performSearch = useCallback(
+    async (page: number, isLoadMore = false) => {
+      if (isLoadingMoreRef.current) return;
 
-    isLoadingMoreRef.current = true;
-    setLoading(true);
-    setError(null);
+      isLoadingMoreRef.current = true;
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch('/api/acg/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          keyword: keyword.trim(),
-          page,
-        }),
-      });
+      try {
+        const response = await fetch('/api/acg/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            keyword: keyword.trim(),
+            page,
+          }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '搜索失败');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '搜索失败');
+        }
+
+        const data: AcgSearchResult = await response.json();
+
+        if (isLoadMore) {
+          // 追加新数据
+          setAllItems((prev) => [...prev, ...data.items]);
+          setHasMore(data.items.length > 0);
+        } else {
+          // 新搜索，重置数据
+          setAllItems(data.items);
+          setHasMore(data.items.length > 0);
+        }
+
+        setCurrentPage(page);
+      } catch (err: any) {
+        const errorMsg = err.message || '搜索失败，请稍后重试';
+        setError(errorMsg);
+        onError?.(errorMsg);
+      } finally {
+        setLoading(false);
+        isLoadingMoreRef.current = false;
       }
-
-      const data: AcgSearchResult = await response.json();
-
-      if (isLoadMore) {
-        // 追加新数据
-        setAllItems((prev) => [...prev, ...data.items]);
-        setHasMore(data.items.length > 0);
-      } else {
-        // 新搜索，重置数据
-        setAllItems(data.items);
-        setHasMore(data.items.length > 0);
-      }
-
-      setCurrentPage(page);
-    } catch (err: any) {
-      const errorMsg = err.message || '搜索失败，请稍后重试';
-      setError(errorMsg);
-      onError?.(errorMsg);
-    } finally {
-      setLoading(false);
-      isLoadingMoreRef.current = false;
-    }
-  }, [keyword, onError]);
+    },
+    [keyword, onError],
+  );
 
   useEffect(() => {
     if (triggerSearch === undefined) {

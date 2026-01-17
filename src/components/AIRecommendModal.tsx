@@ -243,15 +243,18 @@ export default function AIRecommendModal({
     });
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || isMobile) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || isMobile) return;
 
-    e.preventDefault();
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
-  }, [isDragging, dragStart, isMobile]);
+      e.preventDefault();
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    },
+    [isDragging, dragStart, isMobile],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);

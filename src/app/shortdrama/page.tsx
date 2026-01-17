@@ -475,54 +475,57 @@ function ShortDramaPageClient() {
   );
 
   // 处理搜索
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      // 如果搜索框为空，恢复正常显示
-      setShowSearch(false);
-      setSearchQuery('');
-      loadInitialData();
-      return;
-    }
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        // 如果搜索框为空，恢复正常显示
+        setShowSearch(false);
+        setSearchQuery('');
+        loadInitialData();
+        return;
+      }
 
-    try {
-      setIsSearching(true);
-      setLoading(true);
-      setCurrentPage(0);
-      setDoubanData([]);
-      setHasMore(true);
-      setIsLoadingMore(false);
+      try {
+        setIsSearching(true);
+        setLoading(true);
+        setCurrentPage(0);
+        setDoubanData([]);
+        setHasMore(true);
+        setIsLoadingMore(false);
 
-      const result = await searchShortDramas(query, 1, 25);
+        const result = await searchShortDramas(query, 1, 25);
 
-      const data: DoubanResult = {
-        code: 200,
-        message: 'success',
-        list:
-          result.list?.map((item) => ({
-            id: item.id?.toString() || '',
-            title: item.name || '',
-            poster: item.cover || '',
-            rate: '',
-            year:
-              item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
-            type: 'shortdrama',
-            source: 'shortdrama',
-            videoId: item.id?.toString() || '',
-            source_name: '',
-          })) || [],
-      };
+        const data: DoubanResult = {
+          code: 200,
+          message: 'success',
+          list:
+            result.list?.map((item) => ({
+              id: item.id?.toString() || '',
+              title: item.name || '',
+              poster: item.cover || '',
+              rate: '',
+              year:
+                item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
+              type: 'shortdrama',
+              source: 'shortdrama',
+              videoId: item.id?.toString() || '',
+              source_name: '',
+            })) || [],
+        };
 
-      setDoubanData(data.list);
-      setHasMore(result.hasMore);
-      setLoading(false);
-    } catch (err) {
-      logger.error('搜索失败:', err);
-      setError(err instanceof Error ? err.message : '搜索失败');
-      setLoading(false);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [loadInitialData]);
+        setDoubanData(data.list);
+        setHasMore(result.hasMore);
+        setLoading(false);
+      } catch (err) {
+        logger.error('搜索失败:', err);
+        setError(err instanceof Error ? err.message : '搜索失败');
+        setLoading(false);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [loadInitialData],
+  );
 
   // 处理搜索框输入
   const handleSearchInputChange = useCallback(

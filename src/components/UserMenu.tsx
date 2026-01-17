@@ -1,5 +1,3 @@
- 
-
 'use client';
 
 import {
@@ -39,16 +37,13 @@ export const UserMenu: React.FC = () => {
   const router = useRouter();
   const { error: showError, success: showSuccess } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // 提取复杂表达式到单独变量
   const visibilityState =
     typeof document !== 'undefined' ? document.visibilityState : null;
 
-  const user = useMemo(
-    () => getAuthInfoFromBrowserCookie(),
-    [],
-  );
+  const user = useMemo(() => getAuthInfoFromBrowserCookie(), []);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -532,8 +527,7 @@ const [mounted, setMounted] = useState(false);
   };
 
   // 检查是否显示管理面板按钮
-  const showAdminPanel =
-    user?.role === 'owner' || user?.role === 'admin';
+  const showAdminPanel = user?.role === 'owner' || user?.role === 'admin';
 
   // 检查是否显示修改密码按钮
   const showChangePassword =
