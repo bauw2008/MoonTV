@@ -100,7 +100,7 @@ export default function artplayerPluginSkipSettings(
           settingsToSave = { ...parsed, isShortDrama: isShort };
         }
         localStorage.setItem('skipSettings', JSON.stringify(settingsToSave));
-      } catch (e) {
+      } catch {
         // 静默处理错误
       }
 

@@ -484,7 +484,7 @@ async function parseWithAlternativeApi(
         directData = data;
         actualEpisodeIndex = currentIndex;
         break;
-      } catch (error) {
+      } catch {
         continue;
       }
     }
@@ -650,7 +650,7 @@ export async function parseShortDramaEpisode(
         episode: data.episode || null, // 保留原始episode对象
       },
     };
-  } catch (error) {
+  } catch {
     // 如果主API网络请求失败且提供了剧名和备用API地址，尝试使用备用API
     if (dramaName && alternativeApiUrl) {
       return await parseWithAlternativeApi(

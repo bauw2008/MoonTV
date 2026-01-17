@@ -43,7 +43,7 @@ async function getCache(key: string): Promise<any | null> {
             return data;
           }
           localStorage.removeItem(key);
-        } catch (e) {
+        } catch {
           localStorage.removeItem(key);
         }
       }
@@ -109,7 +109,7 @@ async function cleanExpiredCache(): Promise<void> {
                 keysToRemove.push(key);
               }
             }
-          } catch (e) {
+          } catch {
             keysToRemove.push(key);
           }
         }

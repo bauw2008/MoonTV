@@ -90,7 +90,7 @@ function ConfigFile() {
       try {
         JSON.parse(configContent);
         setIsValidJson(true);
-      } catch (error) {
+      } catch {
         setIsValidJson(false);
       }
     };
@@ -162,7 +162,7 @@ function ConfigFile() {
         const content = e.target?.result as string;
         setConfigContent(content);
         showSuccess('配置管理导入成功');
-      } catch (error) {
+      } catch {
         showError('导入失败：文件格式错误');
       }
     };

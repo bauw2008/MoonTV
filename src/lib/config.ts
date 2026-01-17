@@ -68,7 +68,7 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
   let fileConfig: ConfigFileStruct;
   try {
     fileConfig = JSON.parse(adminConfig.ConfigFile) as ConfigFileStruct;
-  } catch (e) {
+  } catch {
     fileConfig = {} as ConfigFileStruct;
   }
 
@@ -205,7 +205,7 @@ async function getInitConfig(
   let cfgFile: ConfigFileStruct;
   try {
     cfgFile = JSON.parse(configFile) as ConfigFileStruct;
-  } catch (e) {
+  } catch {
     cfgFile = {} as ConfigFileStruct;
   }
 
@@ -223,7 +223,7 @@ async function getInitConfig(
       const ownerConfigContent = fs.readFileSync(ownerConfigPath, 'utf-8');
       ownerConfig = JSON.parse(ownerConfigContent);
     }
-  } catch (e) {
+  } catch {
     // 读取站长配置失败，使用默认值
   }
 
@@ -312,7 +312,7 @@ async function getInitConfig(
   let userNames: string[] = [];
   try {
     userNames = await db.getAllUsers();
-  } catch (e) {
+  } catch {
     // 获取用户列表失败，使用空数组
   }
   const allUsers = userNames
@@ -398,7 +398,7 @@ export async function getConfig(): Promise<AdminConfig> {
     try {
       await db.saveAdminConfig(cachedConfig);
       // 初始化配置已保存到数据库
-    } catch (error) {
+    } catch {
       // 保存初始化配置到数据库失败
     }
   } else {

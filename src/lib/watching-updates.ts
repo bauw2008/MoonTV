@@ -417,7 +417,7 @@ async function getOriginalEpisodes(
         return freshRecord.original_episodes;
       }
     }
-  } catch (error) {
+  } catch {
     // 从数据库读取失败，继续使用 fallback
   }
 
@@ -435,7 +435,7 @@ async function getOriginalEpisodes(
         return data[recordKey];
       }
     }
-  } catch (error) {
+  } catch {
     // 从localStorage读取失败
   }
 
@@ -695,7 +695,7 @@ export async function checkVideoUpdate(
       // 如果发现这个视频有更新，重新检查所有收藏的更新状态
       await checkWatchingUpdates();
     }
-  } catch (error) {
+  } catch {
     // 检查视频更新失败
   }
 }
