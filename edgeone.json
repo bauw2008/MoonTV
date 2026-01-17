@@ -2,7 +2,7 @@
   "name": "vidora",
   "framework": "nextjs",
   "buildCommand": "pnpm run build",
-  "outputDirectory": "", 
+  "outputDirectory": ".next/standalone", 
   "nodeVersion": "20.18.0",
   "functions": {
 	  "runtime": "nodejs",
