@@ -2,14 +2,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  ...( (process.env.VERCEL || process.env.DOCKER_BUILD || process.env.EDGEONE_PAGES === '1') 
-       ? { output: 'standalone' } 
-       : {} 
-  ),
-
+  output: 'standalone',
+  
   reactStrictMode: false,
 
-  // Next.js 16 使用 Turbopack，配置 SVG 加载
+  // Next.js 16 优化配置
   turbopack: {
     root: __dirname,
     rules: {
