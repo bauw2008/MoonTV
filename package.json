@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm gen:manifest && next dev -H 0.0.0.0",
-    "build": "pnpm gen:manifest && next build",
+	"build": "pnpm gen:manifest && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cp -r .next/standalone/* ./ && cp -r .next/standalone/.* ./ 2>/dev/null || true",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && pnpm format",

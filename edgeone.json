@@ -1,8 +1,8 @@
 {
   "name": "vidora",
   "framework": "nextjs",
-  "buildCommand": "pnpm run build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public", 
-  "outputDirectory": ".next/standalone", 
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "", 
   "nodeVersion": "20.18.0",
   "functions": {
 	  "runtime": "nodejs",
