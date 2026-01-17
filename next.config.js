@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  // 根据环境自动选择输出模式：Vercel自动处理，Docker使用standalone
-  // 本地开发时不使用 standalone 避免 Windows 符号链接权限问题
-  ...(process.env.VERCEL || process.env.DOCKER_BUILD
+  // Vercel/Docker/EdgeOne 环境启用 standalone 模式
+  // 本地开发时不使用 standalone
+  ...(process.env.VERCEL || process.env.DOCKER_BUILD || process.env.EDGEONE || process.env.CF_PAGES
     ? { output: 'standalone' }
     : {}),
 
