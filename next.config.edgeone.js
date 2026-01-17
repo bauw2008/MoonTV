@@ -2,19 +2,26 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  eslint: {
-    dirs: ['src'],
-  },
-
-  reactStrictMode: true,
-  swcMinify: true,
-
-  // 配置静态导出
+  // EdgeOne 使用静态导出模式，API通过Pages Functions实现
   output: 'export',
   trailingSlash: true,
 
-  // Add domain whitelist for images
+  reactStrictMode: false,
+
+  // Next.js 16 使用 Turbopack，配置 SVG 加载
+  turbopack: {
+    root: __dirname,
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+
+  // 图片配置
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,44 +32,7 @@ const nextConfig = {
         hostname: '**',
       },
     ],
-    unoptimized: true,
-  },
-
-  webpack(config) {
-    // 禁用webpack缓存以减少文件大小
-    config.cache = false;
-
-    // Grab the existing rule that handles SVG imports
-    const fileLoaderRule = config.module.rules.find((rule) =>
-      rule.test?.test?.('.svg')
-    );
-
-    config.module.rules.push(
-      // Reapply the existing rule, but only for svg imports ending in ?url
-      {
-        ...fileLoaderRule,
-        test: /\.svg$/i,
-        resourceQuery: /url/, // *.svg?url
-      },
-      // Convert all other *.svg imports to React components
-      {
-        test: /\.svg$/i,
-        issuer: { not: /\.(css|scss|sass)$/ },
-        resourceQuery: { not: /url/ }, // exclude if *.svg?url
-        loader: '@svgr/webpack',
-        options: {
-          dimensions: false,
-          titleProp: true,
-        },
-      }
-    );
-
-    // Modify the file loader rule to ignore *.svg, since we have it handled now.
-    fileLoaderRule.exclude = /\.svg$/i;
-
-    return config;
   },
 };
 
-// 为EdgeOne.ai配置静态导出，API功能通过Pages Functions实现
 module.exports = nextConfig;
