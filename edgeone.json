@@ -4,6 +4,11 @@
   "buildCommand": "pnpm run build", 
   "outputDirectory": "", 
   "nodeVersion": "20.18.0",
+  "functions": {
+	  "runtime": "nodejs",
+	  "entry": ".next/standalone/server.js"
+  }
+  
   "headers": [
     {
       "source": "/fonts/inter-var-latin.woff2",
