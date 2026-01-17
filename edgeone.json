@@ -7,7 +7,7 @@
   "functions": {
 	  "runtime": "nodejs",
 	  "entry": ".next/standalone/server.js"
-  }
+  },
   
   "headers": [
     {
