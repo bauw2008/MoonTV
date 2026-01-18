@@ -8,31 +8,82 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-// 服务端专用函数，直接调用外部API
-async function getShortDramaCategoriesInternal() {
-  const response = await fetch(
-    'https://api.r2afosne.dpdns.org/vod/categories',
-    {
-      headers: {
-        'User-Agent': getRandomUserAgent(),
-        Accept: 'application/json',
-      },
-    },
-  );
+// 带超时控制的 fetch 函数
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout = 10000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
+// 带重试机制的获取函数
+async function getShortDramaCategoriesInternal(
+  maxRetries = 2,
+): Promise<Array<{ type_id: number; type_name: string }>> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetchWithTimeout(
+        'https://api.r2afosne.dpdns.org/vod/categories',
+        {
+          headers: {
+            'User-Agent': getRandomUserAgent(),
+            Accept: 'application/json',
+          },
+        },
+        10000, // 10秒超时
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP error! status: ${response.status}, statusText: ${response.statusText}`,
+        );
+      }
+
+      const data = await response.json();
+      const categories = data.categories || [];
+      return categories.map((item: any) => ({
+        type_id: item.type_id,
+        type_name: item.type_name,
+      }));
+    } catch (error) {
+      lastError = error as Error;
+      logger.error(
+        `获取短剧分类失败 (尝试 ${attempt + 1}/${maxRetries + 1}):`,
+        error,
+      );
+
+      // 如果不是最后一次尝试，等待后重试
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); // 指数退避
+      }
+    }
   }
 
-  const data = await response.json();
-  const categories = data.categories || [];
-  return categories.map((item: any) => ({
-    type_id: item.type_id,
-    type_name: item.type_name,
-  }));
+  throw lastError || new Error('获取短剧分类失败');
 }
 
 export async function GET() {
+  const startTime = Date.now();
+
   try {
     const categories = await getShortDramaCategoriesInternal();
 
@@ -58,13 +109,33 @@ export async function GET() {
       new Date(Date.now() + cacheTime * 1000).toISOString(),
     );
     response.headers.set('X-Debug-Timestamp', new Date().toISOString());
+    response.headers.set(
+      'X-Response-Time',
+      `${Date.now() - startTime}ms`,
+    );
 
     // Vary头确保不同设备有不同缓存
     response.headers.set('Vary', 'Accept-Encoding, User-Agent');
 
     return response;
   } catch (error) {
-    logger.error('获取短剧分类失败:', error);
-    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
+    const responseTime = Date.now() - startTime;
+    logger.error(
+      `[短剧分类API] 获取失败 (耗时: ${responseTime}ms):`,
+      error,
+    );
+
+    // 返回更详细的错误信息
+    const errorMessage =
+      error instanceof Error ? error.message : '服务器内部错误';
+
+    return NextResponse.json(
+      {
+        error: '获取短剧分类失败',
+        details: errorMessage,
+        responseTime: `${responseTime}ms`,
+      },
+      { status: 500 },
+    );
   }
 }
