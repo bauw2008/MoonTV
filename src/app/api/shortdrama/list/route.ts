@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
-import { getHeadersWithUserAgent } from '@/lib/user-agent';
+import { getRandomUserAgent } from '@/lib/user-agent';
 
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
@@ -15,23 +15,13 @@ async function getShortDramaListInternal(
   size = 20,
   retryCount = 0,
 ) {
-  const headers = getHeadersWithUserAgent({
-    browserType: 'desktop',
-    includeMobile: false,
-    includeSecChUa: true,
-  });
-
-  // 添加 Referer 和 Origin
-  const fetchHeaders = {
-    ...headers,
-    Referer: 'https://api.r2afosne.dpdns.org/',
-    Origin: 'https://api.r2afosne.dpdns.org',
-  };
-
   const response = await fetch(
     `https://api.r2afosne.dpdns.org/vod/list?categoryId=${category}&page=${page}&size=${size}`,
     {
-      headers: fetchHeaders,
+      headers: {
+        'User-Agent': getRandomUserAgent(),
+        Accept: 'application/json',
+      },
       signal: AbortSignal.timeout(30000), // 30秒超时
     },
   );
