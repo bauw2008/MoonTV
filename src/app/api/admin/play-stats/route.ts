@@ -255,11 +255,10 @@ export async function GET(request: NextRequest) {
 
         // 获取用户最后活动时间
         const lastActivityTime = await getUserLastActivity(user.username);
-        // 如果没有最后活动时间（刚登录的用户），视为在线
+        // 只有当有活动记录且在超时时间内才视为在线
         const isOnline =
-          lastActivityTime === 0 ||
-          (lastActivityTime > 0 &&
-            Date.now() - lastActivityTime < ONLINE_TIMEOUT);
+          lastActivityTime > 0 &&
+          Date.now() - lastActivityTime < ONLINE_TIMEOUT;
 
         // 添加调试日志
         if (user.username === process.env.USERNAME) {
@@ -347,8 +346,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 按观看时间降序排序
-    userStats.sort((a, b) => b.totalWatchTime - a.totalWatchTime);
+    // 按角色和观看时间排序：站长第一，管理员第二，其他按观看时间降序
+    userStats.sort((a, b) => {
+      const ownerUsername = process.env.USERNAME;
+
+      // 站长排在最前面
+      if (a.username === ownerUsername) return -1;
+      if (b.username === ownerUsername) return 1;
+
+      // 获取用户角色
+      const userA = allUsers.find((u) => u.username === a.username);
+      const userB = allUsers.find((u) => u.username === b.username);
+      const roleA = userA?.role || 'user';
+      const roleB = userB?.role || 'user';
+
+      // 管理员排在普通用户前面
+      if (roleA === 'admin' && roleB !== 'admin') return -1;
+      if (roleB === 'admin' && roleA !== 'admin') return 1;
+
+      // 其他情况按观看时间降序排序
+      return b.totalWatchTime - a.totalWatchTime;
+    });
 
     // 整理热门来源数据（取前5个）
     const topSources = Object.entries(sourceCount)
