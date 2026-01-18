@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       alternativeApiUrl,
     );
 
-    if (result.code !== 0) {
+    if (result.code !== 0 || !result.data) {
       return NextResponse.json(
         { error: result.msg || '解析失败' },
         { status: 400 },
@@ -59,17 +59,17 @@ export async function GET(request: NextRequest) {
     }
 
     // 返回视频URL，优先使用代理URL避免CORS问题
-    const episodeData = result.data?.episode;
-    const parsedUrl = episodeData?.parsedUrl || result.data!.parsedUrl || '';
-    const proxyUrl = result.data!.proxyUrl || '';
+    const episodeData = result.data.episode;
+    const parsedUrl = episodeData?.parsedUrl || result.data.parsedUrl || '';
+    const proxyUrl = result.data.proxyUrl || '';
 
     const response = {
       url: proxyUrl || parsedUrl, // 优先使用代理URL
       originalUrl: parsedUrl,
       proxyUrl: proxyUrl,
-      title: result.data!.videoName || '',
-      episode: result.data!.currentEpisode || episodeNum,
-      totalEpisodes: result.data!.totalEpisodes || 1,
+      title: result.data.videoName || '',
+      episode: result.data.currentEpisode || episodeNum,
+      totalEpisodes: result.data.totalEpisodes || 1,
     };
 
     // 设置与豆瓣一致的缓存策略

@@ -931,25 +931,25 @@ export async function getReleaseCalendar(
 
     if (options.region && options.region !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.region.includes(options.region!),
+        item.region.includes(options.region),
       );
     }
 
     if (options.genre && options.genre !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.genre.includes(options.genre!),
+        item.genre.includes(options.genre),
       );
     }
 
     if (options.dateFrom) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate >= options.dateFrom!,
+        (item) => item.releaseDate >= options.dateFrom,
       );
     }
 
     if (options.dateTo) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate <= options.dateTo!,
+        (item) => item.releaseDate <= options.dateTo,
       );
     }
 

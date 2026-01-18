@@ -323,7 +323,7 @@ async function getInitConfig(
       banned: false,
     }));
   allUsers.unshift({
-    username: process.env.USERNAME!,
+    username: process.env.USERNAME || 'admin',
     role: 'owner',
     banned: false,
   });
@@ -586,6 +586,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     seenUsernames.add(user.username);
     return true;
   });
+
   // 过滤站长
   const originOwnerCfg = adminConfig.UserConfig.Users.find(
     (u) => u.username === ownerUser,
@@ -600,13 +601,15 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     }
   });
   // 重新添加回站长
-  adminConfig.UserConfig.Users.unshift({
-    username: ownerUser!,
-    role: 'owner',
-    banned: false,
-    videoSources: originOwnerCfg?.videoSources || undefined,
-    tags: originOwnerCfg?.tags || undefined,
-  });
+  if (ownerUser) {
+    adminConfig.UserConfig.Users.unshift({
+      username: ownerUser,
+      role: 'owner',
+      banned: false,
+      videoSources: originOwnerCfg?.videoSources || undefined,
+      tags: originOwnerCfg?.tags || undefined,
+    });
+  }
 
   // 采集源去重
   const seenSourceKeys = new Set<string>();
@@ -688,7 +691,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         enabled: true,
         devices: [],
       };
-      adminConfig.TVBoxSecurityConfig!.userTokens!.push(newToken);
+      adminConfig.TVBoxSecurityConfig.userTokens.push(newToken);
     } else {
       // 如果用户已存在，保持其现有Token不变
       // 只更新禁用状态和用户信息，不重新生成Token

@@ -50,7 +50,10 @@ export async function GET(request: NextRequest) {
     const categoryNum = category ? parseInt(category) : undefined;
     const pageSize = size ? parseInt(size) : 10;
 
-    if ((category && isNaN(categoryNum!)) || isNaN(pageSize)) {
+    if (
+      (category && (categoryNum === undefined || isNaN(categoryNum))) ||
+      isNaN(pageSize)
+    ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 

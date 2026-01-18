@@ -1629,7 +1629,7 @@ function TVBoxConfigContent() {
                 className={smartHealthLoading ? 'animate-pulse' : ''}
                 size={16}
               />
-              <span>{smartHealthLoading ? '检查中...' : '智能健康检查'}</span>
+              <span>{smartHealthLoading ? '检查中...' : '健康检查'}</span>
             </button>
 
             <button

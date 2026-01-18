@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const keyword = searchParams.get('keyword');
     const page = searchParams.get('page') || '1';
     const pagesize = searchParams.get('pagesize')
-      ? parseInt(searchParams.get('pagesize')!)
+      ? parseInt(searchParams.get('pagesize') || '0')
       : undefined;
 
     if (!source || !keyword) {

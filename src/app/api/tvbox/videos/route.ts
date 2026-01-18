@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
     const page = parseInt(url.searchParams.get('page') || '1');
     const pagesize = url.searchParams.get('pagesize')
-      ? parseInt(url.searchParams.get('pagesize')!)
+      ? parseInt(url.searchParams.get('pagesize') || '0')
       : undefined;
     const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
 

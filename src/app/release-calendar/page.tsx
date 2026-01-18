@@ -111,7 +111,7 @@ export default function ReleaseCalendarPage() {
         logger.log(`📊 获取到 ${result.items.length} 条上映数据`);
 
         // 前端过滤（无需缓存，API数据库缓存已处理）
-        const filteredData = applyClientSideFiltersRef.current!(result);
+        const filteredData = applyClientSideFiltersRef.current?.(result);
         setData(filteredData);
         setCurrentPage(1);
       } catch (err) {
@@ -148,25 +148,25 @@ export default function ReleaseCalendarPage() {
 
     if (filterParams.region && filterParams.region !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.region.includes(filterParams.region!),
+        item.region.includes(filterParams.region),
       );
     }
 
     if (filterParams.genre && filterParams.genre !== '全部') {
       filteredItems = filteredItems.filter((item) =>
-        item.genre.includes(filterParams.genre!),
+        item.genre.includes(filterParams.genre),
       );
     }
 
     if (filterParams.dateFrom) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate >= filterParams.dateFrom!,
+        (item) => item.releaseDate >= filterParams.dateFrom,
       );
     }
 
     if (filterParams.dateTo) {
       filteredItems = filteredItems.filter(
-        (item) => item.releaseDate <= filterParams.dateTo!,
+        (item) => item.releaseDate <= filterParams.dateTo,
       );
     }
 

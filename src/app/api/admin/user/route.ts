@@ -146,14 +146,14 @@ export async function POST(request: NextRequest) {
             { status: 400 },
           );
         }
-        await db.registerUser(targetUsername!, targetPassword);
+        await db.registerUser(targetUsername, targetPassword);
 
         // 获取用户组信息
         const { userGroup } = body as { userGroup?: string };
 
         // 更新配置
         const newUser: any = {
-          username: targetUsername!,
+          username: targetUsername,
           role: 'user',
           createdAt: Date.now(), // 设置创建时间戳
         };
@@ -194,9 +194,9 @@ export async function POST(request: NextRequest) {
           secret,
         );
 
-        await db.registerUser(targetUsername!, decryptedPwd);
+        await db.registerUser(targetUsername, decryptedPwd);
         adminConfig.UserConfig.Users.push({
-          username: targetUsername!,
+          username: targetUsername,
           role: 'user',
           createdAt: Date.now(),
           tags: ['默认'], // 为审核通过的用户分配默认用户组
@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        await db.changePassword(targetUsername!, targetPassword);
+        await db.changePassword(targetUsername, targetPassword);
         break;
       }
       case 'deleteUser': {
@@ -363,7 +363,7 @@ export async function POST(request: NextRequest) {
 
         // 尝试从数据库删除用户（如果存在）
         try {
-          await db.deleteUser(targetUsername!);
+          await db.deleteUser(targetUsername);
         } catch (error) {
           // 用户可能不存在于数据库中（例如重置后），只从配置中删除
           logger.error(`删除用户 ${targetUsername} 失败:`, error);
@@ -602,7 +602,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 获取用户密码
-        const password = await db.getUserPassword(targetUsername!);
+        const password = await db.getUserPassword(targetUsername);
 
         return NextResponse.json({
           password: password || '无密码',

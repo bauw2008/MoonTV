@@ -149,7 +149,7 @@ export function createRedisClient(
     // 初始连接，带重试机制
     const connectWithRetry = async () => {
       try {
-        await client!.connect();
+        await client.connect();
         logger.log(`${config.clientName} connected successfully`);
       } catch (err) {
         logger.error(`${config.clientName} initial connection failed:`, err);
@@ -1050,10 +1050,12 @@ export abstract class BaseRedisStorage implements IStorage {
             });
           }
 
-          const content = contentMap.get(contentKey)!;
-          content.playCount++;
-          content.totalWatchTime += record.play_time;
-          content.users.add(username);
+          const content = contentMap.get(contentKey);
+          if (content) {
+            content.playCount++;
+            content.totalWatchTime += record.play_time;
+            content.users.add(username);
+          }
         });
       }
 

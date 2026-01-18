@@ -1129,7 +1129,7 @@ export default function artplayerPluginSkipSettings(
       }
 
       const target = e.target as Node;
-      const isInPanel = panelElement!.contains(target);
+      const isInPanel = panelElement.contains(target);
 
       const controls = art.template.$controls;
       const buttons = controls.querySelectorAll('.art-control');

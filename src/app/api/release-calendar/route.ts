@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
     const limit = searchParams.get('limit')
-      ? parseInt(searchParams.get('limit')!)
+      ? parseInt(searchParams.get('limit') || '0')
       : undefined;
     const offset = parseInt(searchParams.get('offset') || '0');
     const refresh =

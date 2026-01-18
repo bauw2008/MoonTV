@@ -357,7 +357,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const readableStream = openaiResponse.body!.pipeThrough(transformStream);
+      const readableStream = openaiResponse.body?.pipeThrough(transformStream);
 
       return new NextResponse(readableStream, {
         headers: {

@@ -75,8 +75,8 @@ export async function GET(request: NextRequest) {
     // 注意：始终使用请求的原始ID（主API的ID），不使用result.data.videoId（可能是备用API的ID）
     const response: any = {
       id: id, // 使用原始请求ID，保持一致性
-      title: result.data!.videoName,
-      poster: result.data!.cover,
+      title: result.data.videoName,
+      poster: result.data.cover,
       episodes: Array.from(
         { length: totalEpisodes },
         (_, i) => `shortdrama:${id}:${i}`, // 使用原始请求ID
@@ -88,9 +88,9 @@ export async function GET(request: NextRequest) {
       source: 'shortdrama',
       source_name: '短剧',
       year: new Date().getFullYear().toString(),
-      desc: result.data!.description,
+      desc: result.data.description,
       type_name: '短剧',
-      drama_name: result.data!.videoName, // 添加剧名，用于备用API fallback
+      drama_name: result.data.videoName, // 添加剧名，用于备用API fallback
     };
 
     // 如果备用API返回了元数据，添加到响应中
