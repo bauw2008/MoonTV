@@ -543,31 +543,6 @@ async function parseWithAlternativeApi(
   }
 }
 
-// 带超时控制的 fetch 函数
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit = {},
-  timeout = 10000,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`);
-    }
-    throw error;
-  }
-}
-
 // 解析单集视频（支持跨域代理，自动fallback到备用API）
 export async function parseShortDramaEpisode(
   id: number,
@@ -592,122 +567,102 @@ export async function parseShortDramaEpisode(
     }
   }
 
-  // 带重试机制的主API调用
-  let lastError: Error | null = null;
-  const maxRetries = 2;
+  try {
+    const params = new URLSearchParams({
+      id: id.toString(), // API需要string类型的id
+      episode: episode.toString(), // episode从1开始
+    });
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const params = new URLSearchParams({
-        id: id.toString(), // API需要string类型的id
-        episode: episode.toString(), // episode从1开始
-      });
+    if (useProxy) {
+      params.append('proxy', 'true');
+    }
 
-      if (useProxy) {
-        params.append('proxy', 'true');
-      }
+    const timestamp = Date.now();
+    const apiUrl = isMobile()
+      ? `/api/shortdrama/parse?${params.toString()}&_t=${timestamp}`
+      : `${SHORTDRAMA_API_BASE}/vod/parse/single?${params.toString()}`;
 
-      const timestamp = Date.now();
-      const apiUrl = isMobile()
-        ? `/api/shortdrama/parse?${params.toString()}&_t=${timestamp}`
-        : `${SHORTDRAMA_API_BASE}/vod/parse/single?${params.toString()}`;
-
-      const fetchOptions: RequestInit = isMobile()
-        ? {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              Pragma: 'no-cache',
-              Expires: '0',
-            },
-          }
-        : {
-            headers: {
-              'User-Agent': getRandomUserAgent(),
-              Accept: 'application/json',
-            },
-          };
-
-      const response = await fetchWithTimeout(apiUrl, fetchOptions, 10000); // 10秒超时
-
-      if (!response.ok) {
-        throw new Error(
-          `HTTP error! status: ${response.status}, statusText: ${response.statusText}`,
-        );
-      }
-
-      const data = await response.json();
-
-      // API可能返回错误信息
-      if (data.code === 1) {
-        // 如果主API失败且提供了剧名和备用API地址，尝试使用备用API
-        if (dramaName && alternativeApiUrl) {
-          return await parseWithAlternativeApi(
-            dramaName,
-            episode,
-            alternativeApiUrl,
-          );
+    const fetchOptions: RequestInit = isMobile()
+      ? {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
+          },
         }
-        return {
-          code: data.code,
-          msg: data.msg || '该集暂时无法播放，请稍后再试',
+      : {
+          headers: {
+            'User-Agent': getRandomUserAgent(),
+            Accept: 'application/json',
+          },
         };
-      }
 
-      // API成功时，检查是否有有效的视频链接
-      const parsedUrl = data.episode?.parsedUrl || data.parsedUrl || '';
+    const response = await fetch(apiUrl, fetchOptions);
 
-      // 如果主API返回成功但没有有效链接，尝试备用API
-      if (!parsedUrl && dramaName && alternativeApiUrl) {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // API可能返回错误信息
+    if (data.code === 1) {
+      // 如果主API失败且提供了剧名和备用API地址，尝试使用备用API
+      if (dramaName && alternativeApiUrl) {
         return await parseWithAlternativeApi(
           dramaName,
           episode,
           alternativeApiUrl,
         );
       }
-
-      // API成功时直接返回数据对象，根据实际结构解析
       return {
-        code: 0,
-        data: {
-          videoId: data.videoId || id,
-          videoName: data.videoName || '',
-          currentEpisode: data.episode?.index || episode,
-          totalEpisodes: data.totalEpisodes || 1,
-          parsedUrl: parsedUrl,
-          proxyUrl: data.episode?.proxyUrl || '', // proxyUrl在episode对象内
-          cover: data.cover || '',
-          description: data.description || '',
-          episode: data.episode || null, // 保留原始episode对象
-        },
+        code: data.code,
+        msg: data.msg || '该集暂时无法播放，请稍后再试',
       };
-    } catch (error) {
-      lastError = error as Error;
-      logger.error(
-        `解析短剧失败 (尝试 ${attempt + 1}/${maxRetries + 1}):`,
-        error,
-      );
-
-      // 如果不是最后一次尝试，等待后重试
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); // 指数退避
-      }
     }
-  }
 
-  // 所有重试都失败后，尝试备用API
-  if (dramaName && alternativeApiUrl) {
-    return await parseWithAlternativeApi(
-      dramaName,
-      episode,
-      alternativeApiUrl,
-    );
-  }
+    // API成功时，检查是否有有效的视频链接
+    const parsedUrl = data.episode?.parsedUrl || data.parsedUrl || '';
 
-  return {
-    code: -1,
-    msg: lastError?.message || '网络连接失败，请检查网络后重试',
-  };
+    // 如果主API返回成功但没有有效链接，尝试备用API
+    if (!parsedUrl && dramaName && alternativeApiUrl) {
+      return await parseWithAlternativeApi(
+        dramaName,
+        episode,
+        alternativeApiUrl,
+      );
+    }
+
+    // API成功时直接返回数据对象，根据实际结构解析
+    return {
+      code: 0,
+      data: {
+        videoId: data.videoId || id,
+        videoName: data.videoName || '',
+        currentEpisode: data.episode?.index || episode,
+        totalEpisodes: data.totalEpisodes || 1,
+        parsedUrl: parsedUrl,
+        proxyUrl: data.episode?.proxyUrl || '', // proxyUrl在episode对象内
+        cover: data.cover || '',
+        description: data.description || '',
+        episode: data.episode || null, // 保留原始episode对象
+      },
+    };
+  } catch {
+    // 如果主API网络请求失败且提供了剧名和备用API地址，尝试使用备用API
+    if (dramaName && alternativeApiUrl) {
+      return await parseWithAlternativeApi(
+        dramaName,
+        episode,
+        alternativeApiUrl,
+      );
+    }
+    return {
+      code: -1,
+      msg: '网络连接失败，请检查网络后重试',
+    };
+  }
 }
 
 // 批量解析多集视频
