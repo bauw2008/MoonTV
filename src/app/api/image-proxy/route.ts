@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
+type HeadersInit = Headers | string[][] | Record<string, string>;
+
 export const runtime = 'nodejs';
 
 // 图片代理接口 - 解决防盗链和 Mixed Content 问题
@@ -32,13 +34,14 @@ export async function GET(request: Request) {
 
     // 构建请求头
     const fetchHeaders: HeadersInit = {
-      'Referer': sourceOrigin + '/',
-      'Origin': sourceOrigin,
+      Referer: sourceOrigin + '/',
+      Origin: sourceOrigin,
       'User-Agent': getRandomUserAgent(),
-      'Accept': 'image/avif,image/webp,image/jxl,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      Accept:
+        'image/avif,image/webp,image/jxl,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
       'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
     };
 
     const imageResponse = await fetch(imageUrl, {
@@ -58,7 +61,10 @@ export async function GET(request: Request) {
         { status: imageResponse.status },
       );
       // 错误响应不缓存，避免缓存失效的图片链接
-      errorResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      errorResponse.headers.set(
+        'Cache-Control',
+        'no-cache, no-store, must-revalidate',
+      );
       return errorResponse;
     }
 
@@ -84,7 +90,10 @@ export async function GET(request: Request) {
     }
 
     // 设置缓存头 - 缓存7天（604800秒），允许重新验证
-    headers.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    headers.set(
+      'Cache-Control',
+      'public, max-age=604800, stale-while-revalidate=86400',
+    );
     headers.set('CDN-Cache-Control', 'public, s-maxage=604800');
     headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=604800');
     headers.set('Netlify-Vary', 'query');
@@ -98,20 +107,28 @@ export async function GET(request: Request) {
       status: 200,
       headers,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId);
 
     // 错误类型判断
-    if (error.name === 'AbortError') {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        return NextResponse.json(
+          { error: 'Image fetch timeout (15s)' },
+          { status: 504 },
+        );
+      }
+
+      logger.error('[Image Proxy] Error fetching image:', error.message);
       return NextResponse.json(
-        { error: 'Image fetch timeout (15s)' },
-        { status: 504 },
+        { error: 'Error fetching image', details: error.message },
+        { status: 500 },
       );
     }
 
-    logger.error('[Image Proxy] Error fetching image:', error.message);
+    logger.error('[Image Proxy] Unknown error fetching image');
     return NextResponse.json(
-      { error: 'Error fetching image', details: error.message },
+      { error: 'Error fetching image' },
       { status: 500 },
     );
   }
