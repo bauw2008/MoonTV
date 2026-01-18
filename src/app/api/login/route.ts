@@ -26,26 +26,8 @@ async function updateLastActivity(username: string): Promise<void> {
       return;
     }
 
-    // 动态导入 Redis 客户端
-    const { createClient } = await import('redis');
-
-    // 创建 Redis 客户端（单例）
-    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
-    let redisClient = (global as any)[redisKey];
-
-    if (!redisClient) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      redisClient = createClient({ url: redisUrl });
-      redisClient.on('error', (err: Error) =>
-        console.error('Redis Client Error:', err),
-      );
-      await redisClient.connect();
-      (global as any)[redisKey] = redisClient;
-    }
-
-    // 更新最后活动时间，设置过期时间为 35 分钟
-    const key = `user:last_activity:${username}`;
-    await redisClient.set(key, Date.now(), { EX: 35 * 60 });
+    // 使用统一的存储接口
+    await db.updateLastActivity(username);
   } catch (error) {
     console.error('更新用户活动时间失败:', error);
     // 不影响主流程，静默失败

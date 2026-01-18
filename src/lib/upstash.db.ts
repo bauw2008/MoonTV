@@ -1028,6 +1028,30 @@ export class UpstashRedisStorage implements IStorage {
       throw error;
     }
   }
+
+  // 在线状态管理 - 更新用户最后活动时间
+  async updateLastActivity(userName: string): Promise<void> {
+    try {
+      const key = `user:last_activity:${userName}`;
+      // 设置过期时间为 35 分钟（比超时时间长 5 分钟）
+      await withRetry(() => this.client.set(key, Date.now(), { ex: 35 * 60 }));
+    } catch (error) {
+      logger.error(`更新用户 ${userName} 活动时间失败:`, error);
+      // 不影响主流程，静默失败
+    }
+  }
+
+  // 在线状态管理 - 获取用户最后活动时间
+  async getUserLastActivity(userName: string): Promise<number> {
+    try {
+      const key = `user:last_activity:${userName}`;
+      const lastActivity = await withRetry(() => this.client.get(key));
+      return lastActivity ? parseInt(String(lastActivity), 10) : 0;
+    } catch (error) {
+      logger.error(`获取用户 ${userName} 活动时间失败:`, error);
+      return 0;
+    }
+  }
 }
 
 // 单例 Upstash Redis 客户端

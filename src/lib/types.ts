@@ -106,6 +106,10 @@ export interface IStorage {
     loginTime: number,
     isFirstLogin?: boolean,
   ): Promise<void>;
+
+  // 在线状态管理相关
+  updateLastActivity(userName: string): Promise<void>;
+  getUserLastActivity(userName: string): Promise<number>;
 }
 
 // 搜索结果数据结构
@@ -258,6 +262,9 @@ export interface PlayStatsResult {
     createdAt: number; // 用户创建时间
     loginIp?: string; // 用户登录IP（仅管理员可见）
     avatar?: string; // 用户头像（仅管理员可见）
+    lastActivityTime?: number; // 最后活动时间戳
+    isOnline?: boolean; // 是否在线
+    activityTimeDiff?: number; // 距离上次活动时间
   }>; // 每个用户的统计
   topSources: Array<{
     // 热门来源统计（前5名）

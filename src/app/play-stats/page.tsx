@@ -864,12 +864,11 @@ const PlayStatsPage: React.FC = () => {
                                 {/* 用户状态指示器 */}
                                 <div
                                   className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${
-                                    userStat.lastLoginTime &&
-                                    Date.now() - userStat.lastLoginTime <
-                                      1800000
+                                    userStat.isOnline
                                       ? 'bg-green-500'
                                       : 'bg-gray-400'
                                   }`}
+                                  title={userStat.isOnline ? '在线' : '离线'}
                                 ></div>
                               </div>
                               <div className='min-w-0 flex-1'>

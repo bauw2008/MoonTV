@@ -29,26 +29,9 @@ async function updateLastActivity(username: string): Promise<void> {
       return;
     }
 
-    // 动态导入 Redis 客户端
-    const { createClient } = await import('redis');
-
-    // 创建 Redis 客户端（单例）
-    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
-    let redisClient = (global as any)[redisKey];
-
-    if (!redisClient) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      redisClient = createClient({ url: redisUrl });
-      redisClient.on('error', (err: Error) =>
-        console.error('Redis Client Error:', err),
-      );
-      await redisClient.connect();
-      (global as any)[redisKey] = redisClient;
-    }
-
-    // 更新最后活动时间，设置过期时间为 35 分钟（比超时时间长 5 分钟）
-    const key = `user:last_activity:${username}`;
-    await redisClient.set(key, Date.now(), { EX: 35 * 60 });
+    // 使用统一的存储接口
+    const { db } = await import('./lib/db');
+    await db.updateLastActivity(username);
   } catch (error) {
     console.error('更新用户活动时间失败:', error);
     // 不影响主流程，静默失败
@@ -65,34 +48,16 @@ async function isUserOnline(username: string): Promise<boolean> {
       return true;
     }
 
-    // 动态导入 Redis 客户端
-    const { createClient } = await import('redis');
-
-    // 创建 Redis 客户端（单例）
-    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
-    let redisClient = (global as any)[redisKey];
-
-    if (!redisClient) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      redisClient = createClient({ url: redisUrl });
-      redisClient.on('error', (err: Error) =>
-        console.error('Redis Client Error:', err),
-      );
-      await redisClient.connect();
-      (global as any)[redisKey] = redisClient;
-    }
-
-    // 获取最后活动时间
-    const key = `user:last_activity:${username}`;
-    const lastActivity = await redisClient.get(key);
+    // 使用统一的存储接口
+    const { db } = await import('./lib/db');
+    const lastActivityTime = await db.getUserLastActivity(username);
 
     // 如果没有最后活动时间，视为在线（刚登录的用户）
-    if (!lastActivity) {
+    if (lastActivityTime === 0) {
       return true;
     }
 
     // 检查是否超时
-    const lastActivityTime = parseInt(lastActivity, 10);
     return Date.now() - lastActivityTime < ONLINE_TIMEOUT;
   } catch (error) {
     console.error('检查用户在线状态失败:', error);

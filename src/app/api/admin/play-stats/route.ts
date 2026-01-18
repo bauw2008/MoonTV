@@ -23,28 +23,8 @@ async function getUserLastActivity(username: string): Promise<number> {
       return 0;
     }
 
-    // 动态导入 Redis 客户端
-    const { createClient } = await import('redis');
-
-    // 创建 Redis 客户端（单例）
-    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
-    let redisClient = (global as any)[redisKey];
-
-    if (!redisClient) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      redisClient = createClient({ url: redisUrl });
-      redisClient.on('error', (err: Error) =>
-        console.error('Redis Client Error:', err),
-      );
-      await redisClient.connect();
-      (global as any)[redisKey] = redisClient;
-    }
-
-    // 获取最后活动时间
-    const key = `user:last_activity:${username}`;
-    const lastActivity = await redisClient.get(key);
-
-    return lastActivity ? parseInt(lastActivity, 10) : 0;
+    // 使用统一的存储接口
+    return await db.getUserLastActivity(username);
   } catch (error) {
     console.error('获取用户最后活动时间失败:', error);
     return 0;
