@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
-import { getRandomUserAgent } from '@/lib/user-agent';
+import { getHeadersWithUserAgent } from '@/lib/user-agent';
 
 // 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
@@ -9,16 +9,41 @@ export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
 // 服务端专用函数，直接调用外部API
-async function searchShortDramasInternal(query: string, page = 1, size = 20) {
+async function searchShortDramasInternal(
+  query: string,
+  page = 1,
+  size = 20,
+  retryCount = 0,
+) {
+  const headers = getHeadersWithUserAgent({
+    browserType: 'desktop',
+    includeMobile: false,
+    includeSecChUa: true,
+  });
+
+  // 添加 Referer 和 Origin
+  const fetchHeaders = {
+    ...headers,
+    Referer: 'https://api.r2afosne.dpdns.org/',
+    Origin: 'https://api.r2afosne.dpdns.org',
+  };
+
   const response = await fetch(
     `https://api.r2afosne.dpdns.org/vod/search?name=${encodeURIComponent(query)}&page=${page}&size=${size}`,
     {
-      headers: {
-        'User-Agent': getRandomUserAgent(),
-        Accept: 'application/json',
-      },
+      headers: fetchHeaders,
+      signal: AbortSignal.timeout(30000), // 30秒超时
     },
   );
+
+  // 如果遇到 403 错误，尝试重试一次（更换 User-Agent）
+  if (response.status === 403 && retryCount < 2) {
+    logger.warn(`搜索短剧遇到 403 错误，尝试重试 (${retryCount + 1}/2)`);
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000 * (retryCount + 1)),
+    ); // 延迟重试
+    return searchShortDramasInternal(query, page, size, retryCount + 1);
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -34,6 +59,10 @@ async function searchShortDramasInternal(query: string, page = 1, size = 20) {
     score: item.score || 0,
     episode_count: 1, // 搜索API没有集数信息，ShortDramaCard会自动获取
     description: item.description || '',
+    author: item.author || '',
+    backdrop: item.backdrop || item.cover,
+    vote_average: item.vote_average || item.score || 0,
+    tmdb_id: item.tmdb_id || undefined,
   }));
 
   return {
