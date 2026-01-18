@@ -10,6 +10,9 @@ declare global {
 }
 
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CheckCircle,
   Download,
   Play,
@@ -106,9 +109,11 @@ const SourceItem = ({
                 </span>
               )}
 
-              <span className='text-xs text-gray-400 dark:text-gray-500'>
-                {source.from || 'custom'}
-              </span>
+              {source.from === 'custom' && (
+                <span className='text-xs text-gray-400 dark:text-gray-500'>
+                  自定义
+                </span>
+              )}
 
               {/* 有效性检测结果 */}
               {validationResult && (
@@ -419,6 +424,11 @@ function VideoConfigContent() {
   const itemHeight =
     typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 80; // 移动端增加高度
 
+  // 排序状态
+  const [sortByValidation, setSortByValidation] = useState<
+    'none' | 'valid-first' | 'invalid-first'
+  >('none');
+
   // 计算可见范围
   const updateVisibleRange = useCallback(
     (scrollTop: number) => {
@@ -440,7 +450,45 @@ function VideoConfigContent() {
   );
 
   // 获取当前可见的视频源
-  const visibleSources = sources.slice(visibleRange.start, visibleRange.end);
+  const getSortedSources = () => {
+    if (sortByValidation === 'none') {
+      return sources;
+    }
+
+    return [...sources].sort((a, b) => {
+      const resultA = validationResults.find((r) => r.key === a.key);
+      const resultB = validationResults.find((r) => r.key === b.key);
+
+      // 如果没有检测结果，排在最后
+      if (!resultA && !resultB) return 0;
+      if (!resultA) return 1;
+      if (!resultB) return -1;
+
+      // 状态优先级: valid > no_results > invalid > validating
+      const priority = {
+        valid: 3,
+        no_results: 2,
+        invalid: 1,
+        validating: 0,
+      };
+
+      const priorityA = priority[resultA.status as keyof typeof priority] || 0;
+      const priorityB = priority[resultB.status as keyof typeof priority] || 0;
+
+      if (sortByValidation === 'valid-first') {
+        return priorityB - priorityA;
+      } else {
+        // invalid-first
+        return priorityA - priorityB;
+      }
+    });
+  };
+
+  const sortedSources = getSortedSources();
+  const visibleSources = sortedSources.slice(
+    visibleRange.start,
+    visibleRange.end,
+  );
 
   const handleSelectAll = () => {
     if (selectedSources.size === sources.length) {
@@ -739,6 +787,36 @@ function VideoConfigContent() {
             <h3 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100'>
               视频源列表
             </h3>
+            <button
+              onClick={() => {
+                if (sortByValidation === 'none') {
+                  setSortByValidation('valid-first');
+                } else if (sortByValidation === 'valid-first') {
+                  setSortByValidation('invalid-first');
+                } else {
+                  setSortByValidation('none');
+                }
+              }}
+              className='flex items-center space-x-1 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all text-sm text-gray-700 dark:text-gray-200'
+              title={
+                sortByValidation === 'none'
+                  ? '按有效性排序'
+                  : sortByValidation === 'valid-first'
+                    ? '有效在前'
+                    : '无效在前'
+              }
+            >
+              {sortByValidation === 'none' && <ArrowUpDown size={14} />}
+              {sortByValidation === 'valid-first' && <ArrowUp size={14} />}
+              {sortByValidation === 'invalid-first' && <ArrowDown size={14} />}
+              <span className='text-xs'>
+                {sortByValidation === 'none'
+                  ? '排序'
+                  : sortByValidation === 'valid-first'
+                    ? '有效优先'
+                    : '无效优先'}
+              </span>
+            </button>
           </div>
 
           {sources.length === 0 ? (
@@ -763,7 +841,9 @@ function VideoConfigContent() {
                   onScroll={handleScroll}
                 >
                   {/* 总高度占位符 */}
-                  <div style={{ height: `${sources.length * itemHeight}px` }} />
+                  <div
+                    style={{ height: `${sortedSources.length * itemHeight}px` }}
+                  />
 
                   {/* 可见项目容器 */}
                   <div
