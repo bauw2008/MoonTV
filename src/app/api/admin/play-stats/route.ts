@@ -10,6 +10,47 @@ import { PlayRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
+// 在线状态配置
+const ONLINE_TIMEOUT = 30 * 60 * 1000; // 30分钟超时（毫秒）
+
+// 获取用户最后活动时间
+async function getUserLastActivity(username: string): Promise<number> {
+  try {
+    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+
+    // localstorage 模式返回 0
+    if (storageType === 'localstorage') {
+      return 0;
+    }
+
+    // 动态导入 Redis 客户端
+    const { createClient } = await import('redis');
+
+    // 创建 Redis 客户端（单例）
+    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
+    let redisClient = (global as any)[redisKey];
+
+    if (!redisClient) {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      redisClient = createClient({ url: redisUrl });
+      redisClient.on('error', (err: Error) =>
+        console.error('Redis Client Error:', err),
+      );
+      await redisClient.connect();
+      (global as any)[redisKey] = redisClient;
+    }
+
+    // 获取最后活动时间
+    const key = `user:last_activity:${username}`;
+    const lastActivity = await redisClient.get(key);
+
+    return lastActivity ? parseInt(lastActivity, 10) : 0;
+  } catch (error) {
+    console.error('获取用户最后活动时间失败:', error);
+    return 0;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
@@ -232,6 +273,14 @@ export async function GET(request: NextRequest) {
           }
         }
 
+        // 获取用户最后活动时间
+        const lastActivityTime = await getUserLastActivity(user.username);
+        // 如果没有最后活动时间（刚登录的用户），视为在线
+        const isOnline =
+          lastActivityTime === 0 ||
+          (lastActivityTime > 0 &&
+            Date.now() - lastActivityTime < ONLINE_TIMEOUT);
+
         // 添加调试日志
         if (user.username === process.env.USERNAME) {
           logger.log(`站长 ${user.username} 的播放数据:`, {
@@ -241,8 +290,14 @@ export async function GET(request: NextRequest) {
               : null,
             timeDiff: userLastPlayTime ? Date.now() - userLastPlayTime : null,
             recordsCount: records.length,
-            isOnline:
-              userLastPlayTime && Date.now() - userLastPlayTime < 86400000,
+            lastActivityTime,
+            lastActivityTimeDate: lastActivityTime
+              ? new Date(lastActivityTime)
+              : null,
+            activityTimeDiff: lastActivityTime
+              ? Date.now() - lastActivityTime
+              : null,
+            isOnline,
           });
         }
 
@@ -251,6 +306,8 @@ export async function GET(request: NextRequest) {
           totalWatchTime: userWatchTime,
           totalPlays: records.length,
           lastPlayTime: userLastPlayTime,
+          lastActivityTime,
+          isOnline,
           recentRecords,
           avgWatchTime: records.length > 0 ? userWatchTime / records.length : 0,
           mostWatchedSource,

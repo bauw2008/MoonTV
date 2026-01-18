@@ -16,6 +16,42 @@ const STORAGE_TYPE =
     | 'kvrocks'
     | undefined) || 'localstorage';
 
+// 更新用户最后活动时间
+async function updateLastActivity(username: string): Promise<void> {
+  try {
+    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+
+    // 只有非 localstorage 模式才更新在线状态
+    if (storageType === 'localstorage') {
+      return;
+    }
+
+    // 动态导入 Redis 客户端
+    const { createClient } = await import('redis');
+
+    // 创建 Redis 客户端（单例）
+    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
+    let redisClient = (global as any)[redisKey];
+
+    if (!redisClient) {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      redisClient = createClient({ url: redisUrl });
+      redisClient.on('error', (err: Error) =>
+        console.error('Redis Client Error:', err),
+      );
+      await redisClient.connect();
+      (global as any)[redisKey] = redisClient;
+    }
+
+    // 更新最后活动时间，设置过期时间为 35 分钟
+    const key = `user:last_activity:${username}`;
+    await redisClient.set(key, Date.now(), { EX: 35 * 60 });
+  } catch (error) {
+    console.error('更新用户活动时间失败:', error);
+    // 不影响主流程，静默失败
+  }
+}
+
 // 生成签名
 async function generateSignature(
   data: string,
@@ -180,6 +216,9 @@ export async function POST(req: NextRequest) {
         // 记录失败不影响登录流程
       }
 
+      // 更新最后活动时间
+      await updateLastActivity(username);
+
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
       const cookieValue = await generateAuthCookie(
@@ -238,6 +277,9 @@ export async function POST(req: NextRequest) {
         logger.error('记录登录IP失败:', error);
         // 记录失败不影响登录流程
       }
+
+      // 更新最后活动时间
+      await updateLastActivity(username);
 
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });

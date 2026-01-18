@@ -4,6 +4,103 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 
+// 在线状态配置
+const ONLINE_TIMEOUT = 30 * 60 * 1000; // 30分钟超时（毫秒）
+
+// 不更新在线状态的 API 路径（自动调用的系统接口）
+const EXCLUDE_ONLINE_UPDATE_PATHS = [
+  '/api/cron', // 定时任务
+  '/api/tvbox', // TVBox 设备自动调用
+  '/api/live/merged', // 聚合直播源
+];
+
+// 判断是否应该排除在线状态更新
+function shouldExcludeOnlineUpdate(pathname: string): boolean {
+  return EXCLUDE_ONLINE_UPDATE_PATHS.some((path) => pathname.startsWith(path));
+}
+
+// 更新用户最后活动时间
+async function updateLastActivity(username: string): Promise<void> {
+  try {
+    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+
+    // 只有非 localstorage 模式才更新在线状态
+    if (storageType === 'localstorage') {
+      return;
+    }
+
+    // 动态导入 Redis 客户端
+    const { createClient } = await import('redis');
+
+    // 创建 Redis 客户端（单例）
+    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
+    let redisClient = (global as any)[redisKey];
+
+    if (!redisClient) {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      redisClient = createClient({ url: redisUrl });
+      redisClient.on('error', (err: Error) =>
+        console.error('Redis Client Error:', err),
+      );
+      await redisClient.connect();
+      (global as any)[redisKey] = redisClient;
+    }
+
+    // 更新最后活动时间，设置过期时间为 35 分钟（比超时时间长 5 分钟）
+    const key = `user:last_activity:${username}`;
+    await redisClient.set(key, Date.now(), { EX: 35 * 60 });
+  } catch (error) {
+    console.error('更新用户活动时间失败:', error);
+    // 不影响主流程，静默失败
+  }
+}
+
+// 检查用户是否在线
+async function isUserOnline(username: string): Promise<boolean> {
+  try {
+    const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+
+    // localstorage 模式默认在线
+    if (storageType === 'localstorage') {
+      return true;
+    }
+
+    // 动态导入 Redis 客户端
+    const { createClient } = await import('redis');
+
+    // 创建 Redis 客户端（单例）
+    const redisKey = Symbol.for('__VIDORA_ONLINE_STATUS_REDIS__');
+    let redisClient = (global as any)[redisKey];
+
+    if (!redisClient) {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      redisClient = createClient({ url: redisUrl });
+      redisClient.on('error', (err: Error) =>
+        console.error('Redis Client Error:', err),
+      );
+      await redisClient.connect();
+      (global as any)[redisKey] = redisClient;
+    }
+
+    // 获取最后活动时间
+    const key = `user:last_activity:${username}`;
+    const lastActivity = await redisClient.get(key);
+
+    // 如果没有最后活动时间，视为在线（刚登录的用户）
+    if (!lastActivity) {
+      return true;
+    }
+
+    // 检查是否超时
+    const lastActivityTime = parseInt(lastActivity, 10);
+    return Date.now() - lastActivityTime < ONLINE_TIMEOUT;
+  } catch (error) {
+    console.error('检查用户在线状态失败:', error);
+    // 出错时默认在线，避免误判
+    return true;
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -49,8 +146,20 @@ export async function proxy(request: NextRequest) {
       process.env.PASSWORD || '',
     );
 
-    // 签名验证通过即可
     if (isValidSignature) {
+      // 检查用户是否在线
+      const isOnline = await isUserOnline(authInfo.username);
+
+      if (!isOnline) {
+        console.log(`用户 ${authInfo.username} 已离线，需要重新登录`);
+        return handleAuthFailure(request, pathname);
+      }
+
+      // 更新最后活动时间（排除自动调用的 API）
+      if (!shouldExcludeOnlineUpdate(pathname)) {
+        await updateLastActivity(authInfo.username);
+      }
+
       return NextResponse.next();
     }
   }
