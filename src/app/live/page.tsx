@@ -7,7 +7,7 @@ import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 import {
   deleteFavorite,
@@ -333,7 +333,7 @@ function LivePageClient() {
   // -----------------------------------------------------------------------------
 
   // 获取频道列表
-  const fetchChannels = useCallback(async (source: LiveSource) => {
+  const fetchChannels = async (source: LiveSource) => {
     try {
       setIsVideoLoading(true);
 
@@ -470,7 +470,7 @@ function LivePageClient() {
 
       setIsVideoLoading(false);
     }
-  }, []);
+  };
 
   // 切换直播源
   const handleSourceChange = async (source: LiveSource) => {

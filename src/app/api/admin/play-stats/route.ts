@@ -26,7 +26,7 @@ async function getUserLastActivity(username: string): Promise<number> {
     // 使用统一的存储接口
     return await db.getUserLastActivity(username);
   } catch (error) {
-    console.error('获取用户最后活动时间失败:', error);
+    logger.error('获取用户最后活动时间失败:', error);
     return 0;
   }
 }

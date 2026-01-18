@@ -29,7 +29,7 @@ async function updateLastActivity(username: string): Promise<void> {
     // 使用统一的存储接口
     await db.updateLastActivity(username);
   } catch (error) {
-    console.error('更新用户活动时间失败:', error);
+    logger.error('更新用户活动时间失败:', error);
     // 不影响主流程，静默失败
   }
 }
