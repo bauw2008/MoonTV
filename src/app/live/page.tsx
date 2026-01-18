@@ -7,7 +7,7 @@ import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   deleteFavorite,
@@ -131,6 +131,14 @@ function LivePageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // 使用 ref 存储 router 和 searchParams 以避免依赖问题
+  const routerRef = useRef(router);
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    routerRef.current = router;
+    searchParamsRef.current = searchParams;
+  }, [router, searchParams]);
+
   // 直播源相关
   const [liveSources, setLiveSources] = useState<LiveSource[]>([]);
   const [currentSource, setCurrentSource] = useState<LiveSource | null>(null);
@@ -148,8 +156,8 @@ function LivePageClient() {
     currentChannelRef.current = currentChannel;
   }, [currentChannel]);
 
-  const [needLoadSource] = useState(searchParams.get('source'));
-  const [needLoadChannel] = useState(searchParams.get('id'));
+  const needLoadSourceRef = useRef(searchParams.get('source'));
+  const needLoadChannelRef = useRef(searchParams.get('id'));
 
   // 播放器相关
   const [videoUrl, setVideoUrl] = useState('');
@@ -324,73 +332,8 @@ function LivePageClient() {
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
 
-  // 获取直播源列表
-  const fetchLiveSources = async () => {
-    try {
-      setLoadingStage('fetching');
-      setLoadingMessage('正在获取直播源...');
-
-      // 获取 AdminConfig 中的直播源信息
-      const response = await fetch('/api/live/sources');
-      if (!response.ok) {
-        throw new Error('获取直播源失败');
-      }
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || '获取直播源失败');
-      }
-
-      const sources = result.data;
-      setLiveSources(sources);
-
-      if (sources.length > 0) {
-        // 默认选中第一个源
-        const firstSource = sources[0];
-        if (needLoadSource) {
-          const foundSource = sources.find(
-            (s: LiveSource) => s.key === needLoadSource,
-          );
-          if (foundSource) {
-            setCurrentSource(foundSource);
-            await fetchChannels(foundSource);
-          } else {
-            setCurrentSource(firstSource);
-            await fetchChannels(firstSource);
-          }
-        } else {
-          setCurrentSource(firstSource);
-          await fetchChannels(firstSource);
-        }
-      }
-
-      setLoadingStage('ready');
-      setLoadingMessage('✨ 准备就绪...');
-
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
-      logger.error('获取直播源失败:', err);
-      // 不设置错误，而是显示空状态
-      setLiveSources([]);
-      setLoading(false);
-    } finally {
-      // 移除 URL 搜索参数中的 source 和 id
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete('source');
-      newSearchParams.delete('id');
-
-      const newUrl = newSearchParams.toString()
-        ? `?${newSearchParams.toString()}`
-        : window.location.pathname;
-
-      router.replace(newUrl);
-    }
-  };
-
   // 获取频道列表
-  const fetchChannels = async (source: LiveSource) => {
+  const fetchChannels = useCallback(async (source: LiveSource) => {
     try {
       setIsVideoLoading(true);
 
@@ -444,9 +387,9 @@ function LivePageClient() {
 
       // 默认选中第一个频道
       if (channels.length > 0) {
-        if (needLoadChannel) {
+        if (needLoadChannelRef.current) {
           const foundChannel = channels.find(
-            (c: LiveChannel) => c.id === needLoadChannel,
+            (c: LiveChannel) => c.id === needLoadChannelRef.current,
           );
           if (foundChannel) {
             setCurrentChannel(foundChannel);
@@ -482,9 +425,9 @@ function LivePageClient() {
 
       // 默认选中当前加载的channel所在的分组，如果没有则选中第一个分组
       let targetGroup = '';
-      if (needLoadChannel) {
+      if (needLoadChannelRef.current) {
         const foundChannel = channels.find(
-          (c: LiveChannel) => c.id === needLoadChannel,
+          (c: LiveChannel) => c.id === needLoadChannelRef.current,
         );
         if (foundChannel) {
           targetGroup = foundChannel.group || '其他';
@@ -527,7 +470,7 @@ function LivePageClient() {
 
       setIsVideoLoading(false);
     }
-  };
+  }, []);
 
   // 切换直播源
   const handleSourceChange = async (source: LiveSource) => {
@@ -820,6 +763,72 @@ function LivePageClient() {
 
   // 初始化
   useEffect(() => {
+    const fetchLiveSources = async () => {
+      try {
+        setLoadingStage('fetching');
+        setLoadingMessage('正在获取直播源...');
+
+        // 获取 AdminConfig 中的直播源信息
+        const response = await fetch('/api/live/sources');
+        if (!response.ok) {
+          throw new Error('获取直播源失败');
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || '获取直播源失败');
+        }
+
+        const sources = result.data;
+        setLiveSources(sources);
+
+        if (sources.length > 0) {
+          // 默认选中第一个源
+          const firstSource = sources[0];
+          if (needLoadSourceRef.current) {
+            const foundSource = sources.find(
+              (s: LiveSource) => s.key === needLoadSourceRef.current,
+            );
+            if (foundSource) {
+              setCurrentSource(foundSource);
+              await fetchChannels(foundSource);
+            } else {
+              setCurrentSource(firstSource);
+              await fetchChannels(firstSource);
+            }
+          } else {
+            setCurrentSource(firstSource);
+            await fetchChannels(firstSource);
+          }
+        }
+
+        setLoadingStage('ready');
+        setLoadingMessage('✨ 准备就绪...');
+
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      } catch (err) {
+        logger.error('获取直播源失败:', err);
+        // 不设置错误，而是显示空状态
+        setLiveSources([]);
+        setLoading(false);
+      } finally {
+        // 移除 URL 搜索参数中的 source 和 id
+        const newSearchParams = new URLSearchParams(
+          searchParamsRef.current.toString(),
+        );
+        newSearchParams.delete('source');
+        newSearchParams.delete('id');
+
+        const newUrl = newSearchParams.toString()
+          ? `?${newSearchParams.toString()}`
+          : window.location.pathname;
+
+        routerRef.current.replace(newUrl);
+      }
+    };
+
     fetchLiveSources();
   }, []);
 

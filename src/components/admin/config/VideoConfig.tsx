@@ -438,7 +438,7 @@ function VideoConfigContent() {
 
       setVisibleRange({ start: Math.max(0, start - 2), end }); // -2 预渲染
     },
-    [containerHeight, sources.length],
+    [containerHeight, sources.length, itemHeight],
   );
 
   // 滚动处理

@@ -148,7 +148,7 @@ function ShortDramaPageClient() {
     }, 50);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [shortDramaCategory, shortDramaType]);
 
   // 当前参数变化时重置选择器状态
   useEffect(() => {
