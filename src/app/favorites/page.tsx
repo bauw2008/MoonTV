@@ -87,7 +87,7 @@ export default function FavoritesPage() {
           source,
           title: fav.title,
           year: fav.year,
-          poster: fav.cover,
+          poster: fav.cover || '', // 确保不为 undefined/null
           episodes: fav.total_episodes,
           source_name: fav.source_name,
           currentEpisode,
@@ -402,45 +402,62 @@ export default function FavoritesPage() {
                 // 'recent' 排序已经是默认的（按 save_time 降序）
 
                 // 渲染
-                return filtered.map((item) => {
-                  const newEpisodesCount = getNewEpisodesCount(item);
-                  const latestTotalEpisodes = getLatestTotalEpisodes(item);
+                return (
+                  <>
+                    {filtered.map((item) => {
+                      const newEpisodesCount = getNewEpisodesCount(item);
+                      const latestTotalEpisodes = getLatestTotalEpisodes(item);
 
-                  return (
-                    <div
-                      key={`${item.source}+${item.id}`}
-                      className='relative group/card'
-                    >
-                      <VideoCard
-                        from='favorite'
-                        source={item.source}
-                        id={item.id}
-                        title={item.title}
-                        poster={item.poster}
-                        year={item.year}
-                        episodes={latestTotalEpisodes}
-                        source_name={item.source_name}
-                        currentEpisode={item.currentEpisode}
-                        origin={item.origin}
-                        onDelete={async () => {
-                          // 重新加载收藏数据
-                          try {
-                            const allFavorites = await getAllFavorites();
-                            await updateFavoriteItems(allFavorites);
-                          } catch (error) {
-                            logger.error('重新加载收藏失败:', error);
-                          }
-                        }}
-                      />
-                      {/* 新集数徽章 */}
-                      {enableWatchingUpdates && newEpisodesCount > 0 && (
-                        <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50'>
-                          +{newEpisodesCount}集
+                      return (
+                        <div
+                          key={`${item.source}+${item.id}`}
+                          className='relative group/card'
+                        >
+                          <VideoCard
+                            from='favorite'
+                            source={item.source}
+                            id={item.id}
+                            title={item.title}
+                            poster={item.poster}
+                            year={item.year}
+                            episodes={latestTotalEpisodes}
+                            source_name={item.source_name}
+                            currentEpisode={item.currentEpisode}
+                            origin={item.origin}
+                            onDelete={async () => {
+                              // 重新加载收藏数据
+                              try {
+                                const allFavorites = await getAllFavorites();
+                                await updateFavoriteItems(allFavorites);
+                              } catch (error) {
+                                logger.error('重新加载收藏失败:', error);
+                              }
+                            }}
+                          />
+                          {/* 新集数徽章 */}
+                          {enableWatchingUpdates && newEpisodesCount > 0 && (
+                            <div className='absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-50'>
+                              +{newEpisodesCount}集
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                });
+                      );
+                    })}
+
+                    {/* 空状态提示 */}
+                    {!loading && filtered.length === 0 && (
+                      <div className='flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400'>
+                        <div className='text-6xl mb-4'>📭</div>
+                        <p className='text-lg'>暂无收藏内容</p>
+                        {favoriteFilter !== 'all' && (
+                          <p className='text-sm mt-2'>
+                            尝试切换到"全部"分类查看
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
               })()}
             </div>
           </section>
