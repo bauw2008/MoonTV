@@ -2,8 +2,7 @@
 
 import { logger } from '@/lib/logger';
 
-import { GetBangumiCalendarData } from './bangumi.client';
-import { getDoubanDetails } from './douban.client';
+import { getDoubanDetails, getDoubanRecommends } from './douban.client';
 
 export interface PosterItem {
   id: string;
@@ -274,16 +273,14 @@ export async function getPosterCarouselData(): Promise<{
     const enableTMDBPosters = await checkTMDBStatus();
 
     // 并行获取所有数据
-    const [moviesResponse, tvShowsResponse, bangumiData] =
-      await Promise.allSettled([
-        fetch(
-          '/api/douban/categories?kind=movie&category=热门&type=全部&limit=6&start=0',
-        ),
-        fetch(
-          '/api/douban/categories?kind=tv&category=tv&type=tv&limit=6&start=0',
-        ),
-        GetBangumiCalendarData(),
-      ]);
+    const [moviesResponse, tvShowsResponse] = await Promise.allSettled([
+      fetch(
+        '/api/douban/categories?kind=movie&category=热门&type=全部&limit=6&start=0',
+      ),
+      fetch(
+        '/api/douban/categories?kind=tv&category=tv&type=tv&limit=6&start=0',
+      ),
+    ]);
 
     const posters: PosterItem[] = [];
 
@@ -412,46 +409,33 @@ export async function getPosterCarouselData(): Promise<{
       );
     }
 
-    // 处理Bangumi动漫数据
-    if (
-      bangumiData.status === 'fulfilled' &&
-      Array.isArray(bangumiData.value)
-    ) {
-      try {
-        // 获取今日动漫
-        const today = new Date();
-        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const currentWeekday = weekdays[today.getDay()];
+    // 处理华语动漫数据
+    try {
+      // 获取番剧（华语地区）
+      const seriesAnimeData = await getDoubanRecommends({
+        kind: 'tv',
+        pageLimit: 10,
+        pageStart: 0,
+        category: '动画',
+        format: '电视剧',
+        region: '华语',
+      });
 
-        const todayBangumi =
-          bangumiData.value.find((item) => item.weekday.en === currentWeekday)
-            ?.items || [];
+      // 获取剧场版（华语地区）
+      const movieAnimeData = await getDoubanRecommends({
+        kind: 'movie',
+        pageLimit: 10,
+        pageStart: 0,
+        category: '动画',
+        region: '华语',
+      });
 
-        // 从今日更新的动漫中随机选择2部
-        const animeItems = getRandomItems(todayBangumi, 2);
-        for (const anime of animeItems) {
-          const title = anime.name_cn || anime.name;
-          const year = anime.air_date
-            ? new Date(anime.air_date).getFullYear().toString()
-            : '';
-          let overview = ''; // anime 对象没有 summary 属性
-
-          // 如果没有简介，尝试获取详细信息
-          if (!overview || overview.trim() === '') {
-            try {
-              const response = await fetch(
-                `https://api.bgm.tv/v0/subjects/${anime.id}`,
-              );
-              if (response.ok) {
-                const detailData = await response.json();
-                if (detailData.summary) {
-                  overview = detailData.summary;
-                }
-              }
-            } catch (error) {
-              logger.warn(`获取动漫 ${title} 详情失败:`, error);
-            }
-          }
+      // 从番剧中随机选择2部
+      if (seriesAnimeData.code === 200 && seriesAnimeData.list) {
+        const selectedSeriesAnime = getRandomItems(seriesAnimeData.list, 2);
+        for (const anime of selectedSeriesAnime) {
+          const title = anime.title;
+          const year = anime.year || '';
 
           // 通过智能名称搜索TMDB海报（动漫特殊处理：先TV后Movie）
           const tmdbPoster = enableTMDBPosters
@@ -459,35 +443,48 @@ export async function getPosterCarouselData(): Promise<{
             : null;
 
           posters.push({
-            id: `anime-${anime.id}`,
+            id: `anime-series-${anime.id}`,
             title: title,
-            poster:
-              tmdbPoster?.backdrop ||
-              anime.images?.large ||
-              anime.images?.common ||
-              '', // 优先使用TMDB横屏海报
+            poster: tmdbPoster?.backdrop || anime.poster || '', // 优先使用TMDB横屏海报
             type: 'anime',
-            category: '新番动漫',
-            rate: anime.rating?.score ? anime.rating.score.toString() : '',
-            year: anime.air_date
-              ? new Date(anime.air_date).getFullYear().toString()
-              : '',
-            overview: tmdbPoster?.overview || overview, // 优先使用TMDB简介
-            doubanId: anime.id.toString(),
+            category: '番剧',
+            rate: anime.rate || '',
+            year: year,
+            overview: tmdbPoster?.overview || anime.plot_summary || '', // 优先使用TMDB简介
+            doubanId: anime.id,
             isTMDB: !!tmdbPoster?.backdrop,
           });
         }
-      } catch (error) {
-        logger.error('处理动漫数据失败:', error);
       }
-    } else {
-      logger.warn(
-        '[PosterCarousel] 动漫数据请求失败:',
-        bangumiData.status,
-        bangumiData.status === 'rejected'
-          ? bangumiData.reason
-          : 'Unknown error',
-      );
+
+      // 从剧场版中随机选择2部
+      if (movieAnimeData.code === 200 && movieAnimeData.list) {
+        const selectedMovieAnime = getRandomItems(movieAnimeData.list, 2);
+        for (const anime of selectedMovieAnime) {
+          const title = anime.title;
+          const year = anime.year || '';
+
+          // 通过智能名称搜索TMDB海报（动漫特殊处理：先TV后Movie）
+          const tmdbPoster = enableTMDBPosters
+            ? await searchTMDBPoster(title, 'movie', year, true)
+            : null;
+
+          posters.push({
+            id: `anime-movie-${anime.id}`,
+            title: title,
+            poster: tmdbPoster?.backdrop || anime.poster || '', // 优先使用TMDB横屏海报
+            type: 'anime',
+            category: '剧场版',
+            rate: anime.rate || '',
+            year: year,
+            overview: tmdbPoster?.overview || anime.plot_summary || '', // 优先使用TMDB简介
+            doubanId: anime.id,
+            isTMDB: !!tmdbPoster?.backdrop,
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('处理动漫数据失败:', error);
     }
 
     // 随机打乱海报顺序
