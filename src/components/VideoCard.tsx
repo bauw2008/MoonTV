@@ -58,7 +58,6 @@ export interface VideoCardProps {
   onDelete?: () => void;
   rate?: string;
   type?: string;
-  type_name?: string; // 用于TVBox页面点击时推断类型
   isBangumi?: boolean;
   isAggregate?: boolean;
   origin?: 'vod' | 'live';
@@ -91,7 +90,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       onDelete,
       rate,
       type = '',
-      type_name,
       isBangumi = false,
       isAggregate = false,
       origin = 'vod',

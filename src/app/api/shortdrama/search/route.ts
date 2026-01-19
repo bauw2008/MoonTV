@@ -8,15 +8,10 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-// 服务端专用函数，直接调用外部API
-async function searchShortDramasInternal(
-  query: string,
-  page = 1,
-  size = 20,
-  retryCount = 0,
-) {
+// 从 wwzy API 搜索短剧
+async function searchShortDramasFromWwzy(query: string, page = 1, size = 20) {
   const response = await fetch(
-    `https://api.r2afosne.dpdns.org/vod/search?name=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    `https://api.wwzy.tv/api.php/provide/vod?ac=list&wd=${encodeURIComponent(query)}&pg=${page}&pagesize=${size}`,
     {
       headers: {
         'User-Agent': getRandomUserAgent(),
@@ -26,15 +21,6 @@ async function searchShortDramasInternal(
     },
   );
 
-  // 如果遇到 403 错误，尝试重试一次（更换 User-Agent）
-  if (response.status === 403 && retryCount < 2) {
-    logger.warn(`搜索短剧遇到 403 错误，尝试重试 (${retryCount + 1}/2)`);
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1000 * (retryCount + 1)),
-    ); // 延迟重试
-    return searchShortDramasInternal(query, page, size, retryCount + 1);
-  }
-
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -42,22 +28,22 @@ async function searchShortDramasInternal(
   const data = await response.json();
   const items = data.list || [];
   const list = items.map((item: any) => ({
-    id: item.id,
-    name: item.name,
-    cover: item.cover,
-    update_time: item.update_time || new Date().toISOString(),
-    score: item.score || 0,
-    episode_count: 1, // 搜索API没有集数信息，ShortDramaCard会自动获取
-    description: item.description || '',
-    author: item.author || '',
-    backdrop: item.backdrop || item.cover,
-    vote_average: item.vote_average || item.score || 0,
-    tmdb_id: item.tmdb_id || undefined,
+    id: item.vod_id,
+    name: item.vod_name,
+    cover: item.vod_pic,
+    update_time: item.vod_time || new Date().toISOString(),
+    score: parseFloat(item.vod_score) || 0,
+    episode_count: item.vod_total || 1,
+    description: item.vod_blurb || '',
+    author: '',
+    backdrop: item.vod_pic,
+    vote_average: parseFloat(item.vod_score) || 0,
+    tmdb_id: undefined,
   }));
 
   return {
     list,
-    hasMore: data.currentPage < data.totalPages,
+    hasMore: page < data.pagecount,
   };
 }
 
@@ -82,7 +68,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 
-    const result = await searchShortDramasInternal(query, pageNum, pageSize);
+    // 直接使用 wwzy API 搜索短剧
+    const result = await searchShortDramasFromWwzy(query, pageNum, pageSize);
+    logger.log('[短剧搜索] wwzy API 获取成功');
 
     // 设置与网页端一致的缓存策略（搜索结果: 1小时）
     const response = NextResponse.json(result);

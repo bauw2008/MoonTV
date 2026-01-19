@@ -7,9 +7,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import {
-  getRecommendedShortDramas,
   getShortDramaCategories,
-  getShortDramaList,
   searchShortDramas,
 } from '@/lib/shortdrama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
@@ -83,14 +81,12 @@ function ShortDramaPageClient() {
 
   // 用于存储最新参数值的 refs
   const currentParamsRef = useRef({
-    shortDramaCategory: '全部',
-    shortDramaType: 'all',
+    shortDramaCategory: '都市',
     currentPage: 0,
   });
 
   // 短剧选择器状态
-  const [shortDramaCategory, setShortDramaCategory] = useState<string>('全部');
-  const [shortDramaType, setShortDramaType] = useState<string>('all');
+  const [shortDramaCategory, setShortDramaCategory] = useState<string>('都市');
 
   // 搜索状态
   const [showSearch, setShowSearch] = useState(false);
@@ -110,7 +106,6 @@ function ShortDramaPageClient() {
 
     currentParamsRef.current = {
       shortDramaCategory,
-      shortDramaType,
       currentPage,
     };
   };
@@ -119,46 +114,12 @@ function ShortDramaPageClient() {
   useEffect(() => {
     currentParamsRef.current = {
       shortDramaCategory,
-      shortDramaType,
       currentPage,
     };
-  }, [shortDramaCategory, shortDramaType, currentPage]);
+  }, [shortDramaCategory, currentPage]);
 
-  // 初始化时标记选择器为准备好状态，并设置默认类型
+  // 初始化时标记选择器为准备好状态
   useEffect(() => {
-    const initDefaultType = async () => {
-      try {
-        const categories = await getShortDramaCategories();
-        if (
-          categories.length > 0 &&
-          shortDramaCategory === '全部' &&
-          shortDramaType === 'all'
-        ) {
-          setShortDramaType(categories[0].type_id.toString());
-        }
-      } catch (err) {
-        logger.error('加载分类失败:', err);
-      }
-    };
-
-    initDefaultType();
-
-    const timer = setTimeout(() => {
-      setSelectorsReady(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [shortDramaCategory, shortDramaType]);
-
-  // 当前参数变化时重置选择器状态
-  useEffect(() => {
-    setShortDramaCategory('全部');
-    setShortDramaType('all');
-    setCurrentPage(0);
-    setDoubanData([]);
-    setHasMore(true);
-    setIsLoadingMore(false);
-
     const timer = setTimeout(() => {
       setSelectorsReady(true);
     }, 50);
@@ -178,7 +139,6 @@ function ShortDramaPageClient() {
 
     const requestSnapshot = {
       shortDramaCategory,
-      shortDramaType,
       currentPage: 0,
     };
 
@@ -191,77 +151,64 @@ function ShortDramaPageClient() {
 
       let data: DoubanResult;
 
-      if (shortDramaCategory === '随机推荐') {
-        const categoryId =
-          shortDramaType !== 'all' ? parseInt(shortDramaType, 10) : undefined;
-        const items = await getRecommendedShortDramas(categoryId, 25);
+      // 使用扩展分类筛选
+      const categories = await getShortDramaCategories();
+
+      if (categories.length === 0) {
         data = {
           code: 200,
           message: 'success',
-          list: items.map((item) => ({
-            id: item.id?.toString() || '',
-            title: item.name || '',
-            poster: item.cover || '',
-            rate: '',
-            year:
-              item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
-            type: 'shortdrama',
-            source: 'shortdrama',
-            videoId: item.id?.toString() || '',
-            source_name: '',
-          })),
+          list: [],
         };
       } else {
-        // 默认使用分类列表
-        const categories = await getShortDramaCategories();
+        // wwzy API 只有 type_id=1（短剧）有内容
+        const categoryId = 1;
 
-        if (categories.length === 0) {
-          data = {
-            code: 200,
-            message: 'success',
-            list: [],
-          };
-        } else {
-          // 确定要使用的分类ID
-          let categoryId: number;
-          if (shortDramaType !== 'all') {
-            categoryId = parseInt(shortDramaType, 10);
-            if (isNaN(categoryId)) {
-              categoryId = categories[0].type_id;
-            }
-          } else {
-            categoryId = categories[0].type_id;
-          }
+        // 构建请求参数
+        const params = new URLSearchParams({
+          categoryId: categoryId.toString(),
+          page: '1',
+          size: '12',
+        });
 
-          const result = await getShortDramaList(categoryId, 1, 25);
-
-          data = {
-            code: 200,
-            message: 'success',
-            list:
-              result.list?.map((item) => ({
-                id: item.id?.toString() || '',
-                title: item.name || '',
-                poster: item.cover || '',
-                rate: '',
-                year:
-                  item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') ||
-                  '',
-                type: 'shortdrama',
-                source: 'shortdrama',
-                videoId: item.id?.toString() || '',
-                source_name: '',
-              })) || [],
-          };
+        // 如果选择了扩展分类，添加 extendedCategory 参数
+        if (shortDramaCategory) {
+          params.append('extendedCategory', shortDramaCategory);
         }
+
+        const apiUrl = `/api/shortdrama/list?${params.toString()}`;
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        data = {
+          code: 200,
+          message: 'success',
+          list:
+            result.list?.map((item: any) => ({
+              id: item.id?.toString() || '',
+              title: item.name || '',
+              poster: item.cover || '',
+              rate: '',
+              year:
+                item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
+              type: 'shortdrama',
+              source: 'shortdrama',
+              videoId: item.id?.toString() || '',
+              source_name: '',
+            })) || [],
+        };
       }
 
       if (data.code === 200) {
         const currentSnapshot = { ...currentParamsRef.current };
         const keyParamsMatch =
           requestSnapshot.shortDramaCategory ===
-            currentSnapshot.shortDramaCategory &&
-          requestSnapshot.shortDramaType === currentSnapshot.shortDramaType;
+          currentSnapshot.shortDramaCategory;
 
         if (keyParamsMatch) {
           setDoubanData(data.list);
@@ -276,7 +223,7 @@ function ShortDramaPageClient() {
       setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false);
     }
-  }, [shortDramaCategory, shortDramaType, showSearch]);
+  }, [shortDramaCategory, showSearch]);
 
   // 只在选择器准备好后才加载数据
   useEffect(() => {
@@ -297,11 +244,13 @@ function ShortDramaPageClient() {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [selectorsReady, shortDramaCategory, shortDramaType, loadInitialData]);
+  }, [selectorsReady, shortDramaCategory, loadInitialData, showSearch]);
 
   // 加载更多数据
+
   useEffect(() => {
     // 如果正在搜索，不加载更多数据
+
     if (showSearch || currentPage === 0) {
       return;
     }
@@ -309,7 +258,7 @@ function ShortDramaPageClient() {
     const fetchMoreData = async () => {
       const requestSnapshot = {
         shortDramaCategory,
-        shortDramaType,
+
         currentPage,
       };
 
@@ -320,83 +269,89 @@ function ShortDramaPageClient() {
 
         let data: DoubanResult;
 
-        if (shortDramaCategory === '随机推荐') {
-          const categoryId =
-            shortDramaType !== 'all' ? parseInt(shortDramaType, 10) : undefined;
-          const items = await getRecommendedShortDramas(categoryId, 25);
+        // 使用扩展分类筛选
+
+        const categories = await getShortDramaCategories();
+
+        if (categories.length === 0) {
+          data = {
+            code: 200,
+
+            message: 'success',
+
+            list: [],
+          };
+        } else {
+          // wwzy API 只有 type_id=1（短剧）有内容
+
+          const categoryId = 1;
+
+          // 构建请求参数
+
+          const params = new URLSearchParams({
+            categoryId: categoryId.toString(),
+
+            page: (currentPage + 1).toString(),
+
+            size: '12',
+          });
+
+          // 如果选择了扩展分类，添加 extendedCategory 参数
+
+          if (shortDramaCategory) {
+            params.append('extendedCategory', shortDramaCategory);
+          }
+
+          const apiUrl = `/api/shortdrama/list?${params.toString()}`;
+
+          const response = await fetch(apiUrl);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
 
           data = {
             code: 200,
+
             message: 'success',
-            list: items.map((item) => ({
-              id: item.id?.toString() || '',
-              title: item.name || '',
-              poster: item.cover || '',
-              rate: '',
-              year:
-                item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
-              type: 'shortdrama',
-              source: 'shortdrama',
-              videoId: item.id?.toString() || '',
-              source_name: '',
-            })),
+
+            list:
+              result.list?.map((item: any) => ({
+                id: item.id?.toString() || '',
+
+                title: item.name || '',
+
+                poster: item.cover || '',
+
+                rate: '',
+
+                year:
+                  item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') ||
+                  '',
+
+                type: 'shortdrama',
+
+                source: 'shortdrama',
+
+                videoId: item.id?.toString() || '',
+
+                source_name: '',
+              })) || [],
           };
-        } else {
-          const categories = await getShortDramaCategories();
-
-          if (categories.length === 0) {
-            data = {
-              code: 200,
-              message: 'success',
-              list: [],
-            };
-          } else {
-            let categoryId: number;
-            if (shortDramaType !== 'all') {
-              categoryId = parseInt(shortDramaType, 10);
-              if (isNaN(categoryId)) {
-                categoryId = categories[0].type_id;
-              }
-            } else {
-              categoryId = categories[0].type_id;
-            }
-
-            const result = await getShortDramaList(
-              categoryId,
-              currentPage + 1,
-              25,
-            );
-
-            data = {
-              code: 200,
-              message: 'success',
-              list:
-                result.list?.map((item) => ({
-                  id: item.id?.toString() || '',
-                  title: item.name || '',
-                  poster: item.cover || '',
-                  rate: '',
-                  year:
-                    item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') ||
-                    '',
-                  type: 'shortdrama',
-                  source: 'shortdrama',
-                  videoId: item.id?.toString() || '',
-                  source_name: '',
-                })) || [],
-            };
-          }
         }
 
         if (data.code === 200) {
           const currentSnapshot = { ...currentParamsRef.current };
+
           const keyParamsMatch =
             requestSnapshot.shortDramaCategory ===
-              currentSnapshot.shortDramaCategory &&
-            requestSnapshot.shortDramaType === currentSnapshot.shortDramaType;
+            currentSnapshot.shortDramaCategory;
 
           if (keyParamsMatch) {
             setDoubanData((prev) => [...prev, ...data.list]);
+
             setHasMore(data.list.length !== 0);
           }
         }
@@ -408,7 +363,7 @@ function ShortDramaPageClient() {
     };
 
     fetchMoreData();
-  }, [currentPage, shortDramaCategory, shortDramaType, showSearch]);
+  }, [currentPage, shortDramaCategory, showSearch]);
 
   // 设置滚动监听（只在非虚拟化模式下启用）
   useEffect(() => {
@@ -459,21 +414,6 @@ function ShortDramaPageClient() {
     [shortDramaCategory],
   );
 
-  const handleTypeChange = useCallback(
-    (value: string | number) => {
-      const strValue = String(value);
-      if (strValue !== shortDramaType) {
-        setLoading(true);
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
-        setShortDramaType(strValue);
-      }
-    },
-    [shortDramaType],
-  );
-
   // 处理搜索
   const handleSearch = useCallback(
     async (query: string) => {
@@ -493,7 +433,7 @@ function ShortDramaPageClient() {
         setHasMore(true);
         setIsLoadingMore(false);
 
-        const result = await searchShortDramas(query, 1, 25);
+        const result = await searchShortDramas(query, 1, 12);
 
         const data: DoubanResult = {
           code: 200,
@@ -563,10 +503,7 @@ function ShortDramaPageClient() {
     if (showSearch && searchQuery) {
       return `搜索"${searchQuery}"的结果`;
     }
-    if (shortDramaCategory === '随机推荐') {
-      return '随机推荐的短剧内容';
-    }
-    return '精选短剧内容';
+    return '来自旺旺的短剧内容';
   };
 
   return (
@@ -627,9 +564,7 @@ function ShortDramaPageClient() {
               <div className='relative'>
                 <ShortDramaSelector
                   primarySelection={shortDramaCategory}
-                  secondarySelection={shortDramaType}
                   onPrimaryChange={handleCategoryChange}
-                  onSecondaryChange={handleTypeChange}
                 />
               </div>
             </div>

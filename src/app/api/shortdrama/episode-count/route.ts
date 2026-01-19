@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime, getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import { getWwzyEpisodeCount } from '@/lib/shortdrama.client';
 import { getRandomUserAgent } from '@/lib/user-agent';
 
 // 标记为动态路由
@@ -10,11 +11,42 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const name = searchParams.get('name'); // 短剧名称
+    const id = searchParams.get('id'); // 短剧ID（用于wwzy）
+    const name = searchParams.get('name'); // 短剧名称（用于备用API）
 
+    // 优先使用 ID 获取集数（wwzy）
+    if (id) {
+      const episodeCount = await getWwzyEpisodeCount(id);
+
+      const response = {
+        episodeCount,
+        dramaName: '',
+        source: 'wwzy-api',
+      };
+
+      // 设置缓存
+      const cacheTime = await getCacheTime();
+      const finalResponse = NextResponse.json(response);
+      finalResponse.headers.set(
+        'Cache-Control',
+        `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+      );
+      finalResponse.headers.set(
+        'CDN-Cache-Control',
+        `public, s-maxage=${cacheTime}`,
+      );
+      finalResponse.headers.set(
+        'Vercel-CDN-Cache-Control',
+        `public, s-maxage=${cacheTime}`,
+      );
+
+      return finalResponse;
+    }
+
+    // 如果没有 ID，使用名称通过备用API获取集数（保留原有功能）
     if (!name) {
       return NextResponse.json(
-        { error: '缺少必要参数: name' },
+        { error: '缺少必要参数: id 或 name' },
         { status: 400 },
       );
     }

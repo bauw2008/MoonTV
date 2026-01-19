@@ -357,6 +357,8 @@ export interface PersonalizedReleaseRecommendation {
 export interface ShortDramaCategory {
   type_id: number;
   type_name: string;
+  type_pid: number;
+  value?: string;
 }
 
 // 短剧项目

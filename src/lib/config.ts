@@ -719,7 +719,43 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       primaryApiUrl: 'https://api.r2afosne.dpdns.org',
       alternativeApiUrl: '',
       enableAlternative: false,
+      adapterType: 'r2afosne',
+      enableAdapter: false,
+      adapterConfigs: {
+        r2afosne: {
+          baseUrl: 'https://api.r2afosne.dpdns.org',
+          enabled: false,
+        },
+        wwzy: {
+          baseUrl: 'https://api.wwzy.tv/api.php/provide/vod',
+          enabled: false,
+        },
+        custom: {
+          baseUrl: '',
+          enabled: false,
+          adapterName: '',
+        },
+      },
     };
+  } else {
+    // 确保适配器配置存在
+    if (!adminConfig.ShortDramaConfig.adapterConfigs) {
+      adminConfig.ShortDramaConfig.adapterConfigs = {
+        r2afosne: {
+          baseUrl: adminConfig.ShortDramaConfig.primaryApiUrl,
+          enabled: false,
+        },
+        wwzy: {
+          baseUrl: 'https://api.wwzy.tv/api.php/provide/vod',
+          enabled: false,
+        },
+        custom: {
+          baseUrl: '',
+          enabled: false,
+          adapterName: '',
+        },
+      };
+    }
   }
 
   return adminConfig;
