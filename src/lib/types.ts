@@ -125,7 +125,7 @@ export interface SearchResult {
   year: string;
   desc?: string;
   type_name?: string;
-  type?: string; // 内容类型，由 TypeInferenceService 推断
+  type?: string; // 内容类型，由 inferType 函数推断
   douban_id?: number;
   remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
   drama_name?: string; // 短剧剧名（用于备用API fallback）

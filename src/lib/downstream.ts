@@ -6,6 +6,118 @@ import { getCachedSearchPage, setCachedSearchPage } from '@/lib/search-cache';
 import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
 
+/**
+ * 类型推断函数
+ * 基于 type_name、source、title、episodes 推断标准化的内容类型
+ */
+function inferType(params: {
+  type_name?: string;
+  source?: string;
+  title: string;
+  episodes: number;
+}): string {
+  const { type_name, source, title, episodes } = params;
+  const lowerTypeName = type_name?.toLowerCase() || '';
+  const lowerSource = source?.toLowerCase() || '';
+  const lowerTitle = title.toLowerCase();
+
+  // 1. 基于源名称的特殊处理
+  if (lowerSource === 'live') {
+    return 'live';
+  }
+  if (lowerSource === 'shortdrama' || lowerSource === 'moonshortdrama') {
+    return 'shortdrama';
+  }
+
+  // 2. 基于 type_name 的关键词匹配（按优先级排序，更具体的类型优先）
+  const keywordMap = [
+    // 优先级1：动漫（最具体，优先匹配）
+    {
+      keywords: [
+        '动漫',
+        '动画',
+        '番剧',
+        '国漫',
+        '日漫',
+        '动画片',
+        'anime',
+        'cartoon',
+        'acg',
+      ],
+      type: 'anime',
+    },
+    // 优先级2：短剧（很具体）
+    {
+      keywords: ['短剧', '短片', '小剧场', '微剧'],
+      type: 'shortdrama',
+    },
+    // 优先级3：综艺（很具体）
+    {
+      keywords: [
+        '综艺',
+        '真人秀',
+        '娱乐',
+        '脱口秀',
+        '选秀',
+        '访谈',
+        '晚会',
+        '相声',
+        '小品',
+        'variety',
+        'show',
+      ],
+      type: 'variety',
+    },
+    // 优先级4：纪录片（很具体）
+    {
+      keywords: ['纪录片', 'documentary', '纪录'],
+      type: 'documentary',
+    },
+    // 优先级5：电影（通用类型，降低优先级）
+    {
+      keywords: ['电影', '影片', '院线', 'movie'],
+      type: 'movie',
+    },
+    // 优先级6：电视剧（通用类型，降低优先级）
+    {
+      keywords: ['电视剧', '连续剧', '剧集', 'tv', 'series'],
+      type: 'tv',
+    },
+    // 优先级7：电视电影（特殊情况）
+    { keywords: ['电视电影'], type: 'movie' },
+  ];
+
+  for (const { keywords, type } of keywordMap) {
+    if (keywords.some((keyword) => lowerTypeName.includes(keyword))) {
+      return type;
+    }
+  }
+
+  // 3. 基于标题的关键词匹配（置信度稍低）
+  const titleKeywordMap = [
+    { keywords: ['电影', '片', '院线'], type: 'movie' },
+    { keywords: ['剧集', '连续剧', '第', '季', '集'], type: 'tv' },
+    { keywords: ['动漫', '动画', '番'], type: 'anime' },
+    { keywords: ['综艺', '秀', '节目'], type: 'variety' },
+    { keywords: ['纪录', '纪录片'], type: 'documentary' },
+    { keywords: ['短剧', '微剧'], type: 'shortdrama' },
+  ];
+
+  for (const { keywords, type } of titleKeywordMap) {
+    if (keywords.some((keyword) => lowerTitle.includes(keyword))) {
+      return type;
+    }
+  }
+
+  // 4. 基于集数的兜底判断
+  if (episodes > 0) {
+    return episodes === 1 ? 'movie' : 'tv';
+  }
+
+  // 默认返回 tv
+  return 'tv';
+}
+
 interface ApiSearchItem {
   vod_id: string;
   vod_name: string;
@@ -114,6 +226,13 @@ async function searchWithCache(
           : 'unknown',
         desc: cleanHtmlTags(item.vod_content || ''),
         type_name: item.type_name,
+        type: inferType({
+          // 添加类型推断
+          type_name: item.type_name,
+          source: apiSite.key,
+          title: item.vod_name,
+          episodes: episodes.length,
+        }),
         douban_id: item.vod_douban_id,
         remarks: item.vod_remarks, // 传递备注信息（如"已完结"等）
       };
@@ -288,6 +407,14 @@ export async function getDetailFromApi(
     episodes = matches.map((link: string) => link.replace(/^\$/, ''));
   }
 
+  // 推断内容类型
+  const inferredType = inferType({
+    type_name: videoDetail.type_name,
+    source: apiSite.key,
+    title: videoDetail.vod_name || '',
+    episodes: episodes.length,
+  });
+
   return {
     id: id.toString(),
     title: videoDetail.vod_name,
@@ -302,6 +429,7 @@ export async function getDetailFromApi(
       : 'unknown',
     desc: cleanHtmlTags(videoDetail.vod_content),
     type_name: videoDetail.type_name,
+    type: inferredType, // 添加推断的类型
     douban_id: videoDetail.vod_douban_id,
     remarks: videoDetail.vod_remarks, // 传递备注信息（如"已完结"等）
   };
@@ -371,6 +499,14 @@ async function handleSpecialSourceDetail(
   const yearMatch = html.match(/>(\d{4})</);
   const yearText = yearMatch ? yearMatch[1] : 'unknown';
 
+  // 推断内容类型
+  const inferredType = inferType({
+    type_name: '',
+    source: apiSite.key,
+    title: titleText || '',
+    episodes: matches.length,
+  });
+
   return {
     id,
     title: titleText,
@@ -383,6 +519,7 @@ async function handleSpecialSourceDetail(
     year: yearText,
     desc: descText,
     type_name: '',
+    type: inferredType, // 添加推断的类型
     douban_id: 0,
     remarks: undefined, // HTML解析无法获取remarks信息
   };

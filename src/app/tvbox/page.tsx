@@ -36,7 +36,7 @@ interface VideoItem {
   year?: string;
   desc?: string;
   type_name?: string;
-  type?: string; // 内容类型，由 TypeInferenceService 推断
+  type?: string;
   douban_id?: number;
   rate?: string;
   inferredType?: 'movie' | 'tv' | 'anime' | 'variety' | 'shortdrama';
@@ -367,8 +367,6 @@ function VideoList({
             poster={video.poster || ''}
             episodes={video.episodes || 0}
             from='tvbox'
-            type={video.type}
-            type_name={video.type_name}
             isAggregate={false}
             source={video.source || '未知源'}
             source_name={video.source_name || video.source || '未知源'}

@@ -659,7 +659,6 @@ function ShortDramaPageClient() {
                   title={item.title}
                   poster={item.poster}
                   from='shortdrama'
-                  type={item.type}
                   rate={item.rate}
                   year={item.year}
                   source_name={item.source_name}

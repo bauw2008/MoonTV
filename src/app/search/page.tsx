@@ -311,7 +311,7 @@ function SearchPageClient() {
       // 使用 title + year + type 作为键，year 必然存在
       const key = `${item.title.replaceAll(' ', '')}-${
         item.year || 'unknown'
-      }-${item.type}`; // 使用TypeInferenceService处理的类型
+      }-${item.type}`;
       const arr = map.get(key) || [];
 
       // 如果是新的键，记录其顺序
@@ -1679,7 +1679,7 @@ function SearchPageClient() {
                             const year = group[0]?.year || 'unknown';
                             const { episodes, source_names, douban_id } =
                               computeGroupStats(group);
-                            const type = group[0]?.type; // 使用TypeInferenceService处理的类型
+                            const type = group[0]?.type;
 
                             // 如果该聚合第一次出现，写入初始统计
                             if (!groupStatsRef.current.has(mapKey)) {
@@ -1735,7 +1735,6 @@ function SearchPageClient() {
                                 }
                                 year={item.year}
                                 from='search'
-                                type={item.type}
                               />
                             </div>
                           ))}

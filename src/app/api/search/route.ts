@@ -4,8 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { logger } from '@/lib/logger';
-import { TypeInferenceService } from '@/lib/type-inference.service';
-import { SearchResult } from '@/lib/types';
+import type { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -56,21 +55,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 类型推断
-    const resultsWithTypes = allResults.map((item) => {
-      const typeInference = TypeInferenceService.infer({
-        type: item.type,
-        type_name: item.type_name,
-        source: item.source,
-        title: item.title || '',
-        episodes: item.episodes,
-      });
-      return { ...item, type: typeInference.type };
-    });
-
     return NextResponse.json({
-      results: resultsWithTypes,
-      total: resultsWithTypes.length,
+      results: allResults,
+      total: allResults.length,
     });
   } catch (error) {
     logger.error('搜索失败:', error);

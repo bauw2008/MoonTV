@@ -29,7 +29,6 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
-import { TypeInferenceService } from '@/lib/type-inference.service';
 import { isSeriesCompleted, processImageUrl } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
@@ -154,19 +153,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const actualEpisodes = dynamicEpisodes;
     const actualYear = year;
     const actualQuery = query || '';
-
-    // 如果 type 为空且 type_name 存在，使用 TypeInferenceService 推断类型
-    let actualSearchType = type;
-    if (!type && type_name && actualSource) {
-      const inference = TypeInferenceService.infer({
-        type: '',
-        type_name: type_name,
-        source: actualSource,
-        title: actualTitle || '',
-        episodes: actualEpisodes || 0,
-      });
-      actualSearchType = inference.type;
-    }
 
     // 获取收藏状态
     useEffect(() => {
@@ -327,9 +313,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       ) {
         const url = `/play?title=${encodeURIComponent(actualTitle.trim())}${
           actualYear ? `&year=${actualYear}` : ''
-        }${doubanIdParam}${
-          actualSearchType ? `&stype=${actualSearchType}` : ''
-        }${isAggregate ? '&prefer=true' : ''}${
+        }${doubanIdParam}${isAggregate ? '&prefer=true' : ''}${
           actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
         }`;
         router.push(url);
@@ -340,7 +324,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           isAggregate ? '&prefer=true' : ''
         }${
           actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
-        }${actualSearchType ? `&stype=${actualSearchType}` : ''}`;
+        }`;
         router.push(url);
       }
     }, [
@@ -353,7 +337,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       actualYear,
       isAggregate,
       actualQuery,
-      actualSearchType,
       actualDoubanId,
     ]);
 
@@ -402,9 +385,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       ) {
         const url = `/play?title=${encodeURIComponent(actualTitle.trim())}${
           actualYear ? `&year=${actualYear}` : ''
-        }${doubanIdParam}${
-          actualSearchType ? `&stype=${actualSearchType}` : ''
-        }${isAggregate ? '&prefer=true' : ''}${
+        }${doubanIdParam}${isAggregate ? '&prefer=true' : ''}${
           actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
         }`;
         window.open(url, '_blank');
@@ -415,7 +396,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           isAggregate ? '&prefer=true' : ''
         }${
           actualQuery ? `&stitle=${encodeURIComponent(actualQuery.trim())}` : ''
-        }${actualSearchType ? `&stype=${actualSearchType}` : ''}`;
+        }`;
         window.open(url, '_blank');
       }
     }, [
@@ -427,7 +408,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       actualYear,
       isAggregate,
       actualQuery,
-      actualSearchType,
       actualDoubanId,
     ]);
 

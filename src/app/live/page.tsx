@@ -51,6 +51,37 @@ interface LiveSource {
   disabled?: boolean;
 }
 
+// 生成直播海报（默认图标）
+function generateLivePoster(channelName: string): string {
+  // 截取频道名称，最多显示8个字符
+  const displayName =
+    channelName.length > 8 ? channelName.slice(0, 8) + '...' : channelName;
+
+  // 生成SVG（透明背景）
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
+      <!-- 播放图标（圆形背景+三角形播放按钮） -->
+      <circle cx="100" cy="120" r="50" fill="#ef4444" opacity="0.9" />
+      <path d="M90 100 L120 120 L90 140 Z" fill="#ffffff" />
+      
+      <!-- 信号波纹 -->
+      <circle cx="100" cy="120" r="60" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.5" />
+      <circle cx="100" cy="120" r="70" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.3" />
+      <circle cx="100" cy="120" r="80" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.15" />
+      
+      <!-- 文字 -->
+      <text x="100" y="220" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ef4444" text-anchor="middle">LIVE</text>
+      <text x="100" y="260" font-family="Arial, sans-serif" font-size="12" fill="#666666" text-anchor="middle">${displayName}</text>
+    </svg>
+  `;
+
+  // 转换为 data URI
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/'/g, '%27')
+    .replace(/"/g, '%22');
+  return `data:image/svg+xml,${encodedSvg}`;
+}
+
 // 自定义 HLS 加载器，用于过滤广告
 let _liveGetSourceKey: (() => string | undefined) | null = null;
 
@@ -729,6 +760,11 @@ function LivePageClient() {
       try {
         if (newFavorited) {
           // 如果未收藏，添加收藏
+          // 如果没有台标，使用默认的直播图标（动态生成，包含频道名称）
+          const coverUrl = currentChannelRef.current.logo
+            ? `/api/proxy/logo?url=${encodeURIComponent(currentChannelRef.current.logo)}&source=${currentSourceRef.current.key}`
+            : generateLivePoster(currentChannelRef.current.name);
+
           await saveFavorite(
             `live_${currentSourceRef.current.key}`,
             `live_${currentChannelRef.current.id}`,
@@ -736,7 +772,7 @@ function LivePageClient() {
               title: currentChannelRef.current.name,
               source_name: currentSourceRef.current.name,
               year: '',
-              cover: `/api/proxy/logo?url=${encodeURIComponent(currentChannelRef.current.logo)}&source=${currentSourceRef.current.key}`,
+              cover: coverUrl,
               total_episodes: 1,
               save_time: Date.now(),
               search_title: '',

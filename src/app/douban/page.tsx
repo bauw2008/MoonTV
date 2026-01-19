@@ -506,54 +506,7 @@ function DoubanPageClient() {
             JSON.stringify(currentSnapshot.multiLevelSelection);
 
         if (keyParamsMatch) {
-          // 固定分类映射
-          const getTypeFromPageType = (pageType: string): string => {
-            const typeMap: Record<string, string> = {
-              movie: 'movie',
-              tv: 'tv',
-              show: 'variety',
-              anime: 'anime',
-            };
-            // 处理 custom 类型（其他菜单功能）
-            if (pageType === 'custom') {
-              if (primarySelection === 'movie') {
-                return 'movie';
-              }
-              if (primarySelection === 'tv' && secondarySelection) {
-                // 纪录片
-                if (
-                  secondarySelection.includes('纪录') ||
-                  secondarySelection.includes('documentary')
-                ) {
-                  return 'documentary';
-                }
-                // 日本动画
-                if (
-                  secondarySelection.includes('日本动画') ||
-                  secondarySelection.includes('动漫')
-                ) {
-                  return 'anime';
-                }
-                // 综艺
-                if (
-                  secondarySelection.includes('综艺') ||
-                  secondarySelection.includes('show')
-                ) {
-                  return 'variety';
-                }
-              }
-              return 'tv';
-            }
-
-            return typeMap[pageType] || '';
-          };
-
-          setDoubanData(
-            data.list.map((item: DoubanItem) => ({
-              ...item,
-              type: getTypeFromPageType(type),
-            })),
-          );
+          setDoubanData(data.list);
           setHasMore(data.list.length !== 0);
           setLoading(false);
         }
@@ -739,24 +692,7 @@ function DoubanPageClient() {
                 JSON.stringify(currentSnapshot.multiLevelSelection);
 
             if (keyParamsMatch) {
-              // 固定分类映射
-              const getTypeFromPageType = (pageType: string): string => {
-                const typeMap: Record<string, string> = {
-                  movie: 'movie',
-                  tv: 'tv',
-                  show: 'variety',
-                  anime: 'anime',
-                };
-                return typeMap[pageType] || '';
-              };
-
-              setDoubanData((prev) => [
-                ...prev,
-                ...data.list.map((item: DoubanItem) => ({
-                  ...item,
-                  type: getTypeFromPageType(type),
-                })),
-              ]);
+              setDoubanData((prev) => [...prev, ...data.list]);
               setHasMore(data.list.length !== 0);
             }
           } else {
@@ -1054,7 +990,6 @@ function DoubanPageClient() {
                             douban_id={Number(item.id)}
                             rate={item.rate}
                             year={item.year}
-                            type={item.type}
                             isBangumi={
                               type === 'anime' &&
                               primarySelection === '每日放送'

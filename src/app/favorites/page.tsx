@@ -422,7 +422,6 @@ export default function FavoritesPage() {
                         source_name={item.source_name}
                         currentEpisode={item.currentEpisode}
                         origin={item.origin}
-                        type={item.type}
                         onDelete={async () => {
                           // 重新加载收藏数据
                           try {

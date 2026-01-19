@@ -7,7 +7,6 @@ import { getConfig } from '@/lib/config';
 import { getAvailableApiSites } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { logger } from '@/lib/logger';
-import { TypeInferenceService } from '@/lib/type-inference.service';
 import type { SearchResult } from '@/lib/types';
 import { getYellowWords } from '@/lib/yellow';
 
@@ -90,6 +89,9 @@ export async function GET(request: NextRequest) {
         let completedCount = 0;
         let allResults: SearchResult[] = [];
 
+        // 获取黄色词汇（用于过滤）
+        const yellowWords = await getYellowWords();
+
         // 为每个源创建搜索 Promise
         const searchPromises = availableSites.map(async (site) => {
           try {
@@ -106,30 +108,13 @@ export async function GET(request: NextRequest) {
 
             const results = (await searchPromise) as SearchResult[];
 
-            // 使用类型推断服务为每个结果推断类型
-            const resultsWithTypes = results.map((item) => {
-              const typeInference = TypeInferenceService.infer({
-                type: item.type,
-                type_name: item.type_name,
-                source: item.source,
-                title: item.title || '',
-                episodes: item.episodes,
-              });
-
-              return {
-                ...item,
-                type: typeInference.type,
-              };
-            });
-
-            // 获取黄色词汇并过滤
-            const yellowWords = await getYellowWords();
-            let filteredResults = resultsWithTypes;
+            // 类型推断已在 searchFromApi 中完成
+            let filteredResults = results;
             if (
               !config.SiteConfig.DisableYellowFilter &&
               yellowWords.length > 0
             ) {
-              filteredResults = resultsWithTypes.filter((result) => {
+              filteredResults = results.filter((result) => {
                 const typeName = result.type_name || '';
                 return !yellowWords.some((word: string) =>
                   typeName.includes(word),
@@ -183,7 +168,7 @@ export async function GET(request: NextRequest) {
 
               // 应用过滤（如果需要过滤）
               if (shouldFilter) {
-                filteredResults = resultsWithTypes.filter((item) => {
+                filteredResults = results.filter((item) => {
                   // 检查 title 和 type_name 字段
                   const title = (item.title || '').toLowerCase();
                   const typeName = (item.type_name || '').toLowerCase();

@@ -23,7 +23,6 @@ import {
 } from '@/lib/db.client';
 import { getDoubanDetails } from '@/lib/douban.client';
 import { logger } from '@/lib/logger';
-import { TypeInferenceService } from '@/lib/type-inference.service';
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
@@ -348,7 +347,6 @@ function PlayPageClient() {
 
   // 搜索所需信息
   const [searchTitle] = useState(searchParams.get('stitle') || '');
-  const [searchType] = useState(searchParams.get('stype') || '');
 
   // 是否需要优选
   const [needPrefer, setNeedPrefer] = useState(
@@ -2515,7 +2513,7 @@ function PlayPageClient() {
           save_time: Date.now(),
           search_title: searchTitle,
           remarks: remarksToSave, // 优先使用搜索结果的 remarks，因为详情接口可能没有
-          type: searchType, // 添加类型字段，从URL参数获取
+          type: detailRef.current?.type || 'tv', // 使用已推断的类型
         },
       );
 
@@ -2620,15 +2618,6 @@ function PlayPageClient() {
         await deleteFavorite(currentSourceRef.current, currentIdRef.current);
         setFavorited(false);
       } else {
-        // 使用统一的类型推断服务
-        const inferenceResult = TypeInferenceService.infer({
-          type: searchType, // 优先使用URL传递的类型
-          type_name: detailRef.current?.type_name,
-          source: currentSourceRef.current,
-          title: videoTitleRef.current || '',
-          episodes: detailRef.current?.episodes.length || 1,
-        });
-
         // 如果未收藏，添加收藏
         await saveFavorite(currentSourceRef.current, currentIdRef.current, {
           title: videoTitleRef.current,
@@ -2638,7 +2627,7 @@ function PlayPageClient() {
           total_episodes: detailRef.current?.episodes.length || 1,
           save_time: Date.now(),
           search_title: searchTitle || videoTitleRef.current, // 确保 search_title 不为空
-          type: inferenceResult.type,
+          type: detailRef.current?.type || 'tv', // 使用已推断的类型
         });
         setFavorited(true);
       }

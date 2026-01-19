@@ -65,7 +65,7 @@
 
 本项目**仅支持 Docker 或其他基于 Docker 的平台** 部署。
 
-### Kvrocks 存储（推荐）
+### Kvrocks 存储
 
 ```yml
 services:
@@ -102,7 +102,7 @@ volumes:
 
 ### Openwrt-Kvrocks
 
-````yml
+```yml
 services:
   vidora-core:
     image: ghcr.io/bauw2008/vidora:latest
