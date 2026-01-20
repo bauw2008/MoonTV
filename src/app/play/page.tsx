@@ -1203,7 +1203,7 @@ function PlayPageClient() {
           ? `&name=${encodeURIComponent(detailData.drama_name)}`
           : '';
         const response = await fetch(
-          `/api/shortdrama/parse?id=${videoId}&episode=${episode}${nameParam}`,
+          `/api/shortdrama/parse?id=${videoId}&episode=${episode}&source=wwzy${nameParam}`,
         );
 
         if (response.ok) {

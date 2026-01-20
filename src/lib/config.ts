@@ -716,19 +716,15 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   // 确保短剧配置有默认值
   if (!adminConfig.ShortDramaConfig) {
     adminConfig.ShortDramaConfig = {
-      primaryApiUrl: 'https://api.r2afosne.dpdns.org',
+      primaryApiUrl: 'https://api.wwzy.tv/api.php/provide/vod',
       alternativeApiUrl: '',
       enableAlternative: false,
-      adapterType: 'r2afosne',
-      enableAdapter: false,
+      adapterType: 'wwzy',
+      enableAdapter: true,
       adapterConfigs: {
-        r2afosne: {
-          baseUrl: 'https://api.r2afosne.dpdns.org',
-          enabled: false,
-        },
         wwzy: {
           baseUrl: 'https://api.wwzy.tv/api.php/provide/vod',
-          enabled: false,
+          enabled: true,
         },
         custom: {
           baseUrl: '',
@@ -741,13 +737,11 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     // 确保适配器配置存在
     if (!adminConfig.ShortDramaConfig.adapterConfigs) {
       adminConfig.ShortDramaConfig.adapterConfigs = {
-        r2afosne: {
-          baseUrl: adminConfig.ShortDramaConfig.primaryApiUrl,
-          enabled: false,
-        },
         wwzy: {
-          baseUrl: 'https://api.wwzy.tv/api.php/provide/vod',
-          enabled: false,
+          baseUrl:
+            adminConfig.ShortDramaConfig.primaryApiUrl ||
+            'https://api.wwzy.tv/api.php/provide/vod',
+          enabled: true,
         },
         custom: {
           baseUrl: '',

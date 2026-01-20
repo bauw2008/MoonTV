@@ -18,7 +18,7 @@ function ShortDramaConfigContent() {
   const { configApi } = useAdminApi();
   const [shortDramaSettings, setShortDramaSettings] =
     useState<ShortDramaConfigSettings>({
-      primaryApiUrl: 'https://api.r2afosne.dpdns.org',
+      primaryApiUrl: 'https://api.wwzy.tv/api.php/provide/vod',
       alternativeApiUrl: '',
       enableAlternative: false,
     });
@@ -44,7 +44,7 @@ function ShortDramaConfigContent() {
         setShortDramaSettings({
           primaryApiUrl:
             data.Config.ShortDramaConfig.primaryApiUrl ||
-            'https://api.r2afosne.dpdns.org',
+            'https://api.wwzy.tv/api.php/provide/vod',
           alternativeApiUrl:
             data.Config.ShortDramaConfig.alternativeApiUrl || '',
           enableAlternative:
@@ -150,7 +150,7 @@ function ShortDramaConfigContent() {
               }))
             }
             className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            placeholder='https://api.r2afosne.dpdns.org'
+            placeholder='https://api.wwzy.tv/api.php/provide/vod'
           />
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
             主要的短剧视频解析API地址，默认优先使用此API

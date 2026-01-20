@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const config = await getConfig();
     const defaultShortDramaConfig = {
-      primaryApiUrl: 'https://api.r2afosne.dpdns.org',
+      primaryApiUrl: 'https://api.wwzy.tv/api.php/provide/vod',
       alternativeApiUrl: '',
       enableAlternative: false,
     };
@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
     // 更新或创建 ShortDramaConfig
     config.ShortDramaConfig = {
       primaryApiUrl:
-        shortDramaSettings.primaryApiUrl || 'https://api.r2afosne.dpdns.org',
+        shortDramaSettings.primaryApiUrl ||
+        'https://api.wwzy.tv/api.php/provide/vod',
       alternativeApiUrl: shortDramaSettings.alternativeApiUrl || '',
       enableAlternative: shortDramaSettings.enableAlternative ?? false,
     };

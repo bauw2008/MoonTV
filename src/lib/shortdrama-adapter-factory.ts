@@ -23,14 +23,13 @@ export class ShortDramaAdapterFactory {
    * @returns 适配器实例
    */
   static create(config: {
-    adapterType?: 'r2afosne' | 'wwzy' | 'custom';
+    adapterType?: 'wwzy' | 'custom';
     adapterConfigs?: {
-      r2afosne?: { baseUrl: string; enabled: boolean };
       wwzy?: { baseUrl: string; enabled: boolean };
       custom?: { baseUrl: string; enabled: boolean; adapterName: string };
     };
   }): IShortDramaAdapter {
-    const { adapterType = 'r2afosne', adapterConfigs } = config;
+    const { adapterType = 'wwzy', adapterConfigs } = config;
 
     switch (adapterType) {
       case 'wwzy':
@@ -38,11 +37,6 @@ export class ShortDramaAdapterFactory {
           logger.warn('WWZY 适配器未启用');
         }
         return new WwzyAdapter(adapterConfigs?.wwzy?.baseUrl);
-
-      case 'r2afosne':
-        // r2afosne 适配器暂未实现
-        logger.warn('R2afosne 适配器暂未实现，返回默认实现');
-        return new DefaultAdapter();
 
       case 'custom':
         // 自定义适配器暂未实现
@@ -63,9 +57,8 @@ export class ShortDramaAdapterFactory {
    */
   static createFallback(
     config: {
-      adapterType?: 'r2afosne' | 'wwzy' | 'custom';
+      adapterType?: 'wwzy' | 'custom';
       adapterConfigs?: {
-        r2afosne?: { baseUrl: string; enabled: boolean };
         wwzy?: { baseUrl: string; enabled: boolean };
         custom?: { baseUrl: string; enabled: boolean; adapterName: string };
       };

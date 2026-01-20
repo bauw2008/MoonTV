@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       poster: result.data.cover,
       episodes: Array.from(
         { length: totalEpisodes },
-        (_, i) => `shortdrama:${id}:${i}`,
+        (_, i) => `shortdrama:${id}:${i + 1}`,
       ),
       episodes_titles: Array.from(
         { length: totalEpisodes },

@@ -423,16 +423,12 @@ export class ShortDramaAdapterFactory {
    * @param config 配置参数
    */
   static create(
-    adapterType: 'wwzy' | 'r2afosne' | 'custom',
+    adapterType: 'wwzy' | 'custom',
     config?: { baseUrl?: string },
   ): IShortDramaAdapter {
     switch (adapterType) {
       case 'wwzy':
         return new WwzyAdapter(config?.baseUrl);
-
-      case 'r2afosne':
-        // TODO: 实现 r2afosne 适配器
-        throw new Error('R2afosne adapter not implemented yet');
 
       case 'custom':
         // TODO: 实现自定义适配器

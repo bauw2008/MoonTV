@@ -140,13 +140,9 @@ export interface AdminConfig {
     alternativeApiUrl: string;
     enableAlternative: boolean;
     // 适配器配置
-    adapterType?: 'r2afosne' | 'wwzy' | 'custom';
+    adapterType?: 'wwzy' | 'custom';
     enableAdapter?: boolean;
     adapterConfigs?: {
-      r2afosne?: {
-        baseUrl: string;
-        enabled: boolean;
-      };
       wwzy?: {
         baseUrl: string;
         enabled: boolean;

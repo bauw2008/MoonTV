@@ -665,8 +665,10 @@ export async function parseWwzyEpisode(
     }
 
     // wwzy 的播放链接可以直接访问（CORS 允许所有来源），不需要代理
+    // 解码转义的反斜杠（将 \/ 替换为 /）
+    const decodedUrl = url.replace(/\\\//g, '/');
     // 将 http:// 转换为 https:// 避免 Mixed Content 错误
-    const videoUrl = url.replace(/^http:\/\//i, 'https://');
+    const videoUrl = decodedUrl.replace(/^http:\/\//i, 'https://');
 
     return {
       code: 0,
