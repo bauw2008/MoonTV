@@ -136,16 +136,23 @@ function DoubanPageClient() {
 
   // 选择器状态 - 完全独立，不依赖URL参数
   const [primarySelection, setPrimarySelection] = useState<string>(() => {
+    // 从 URL 参数中读取 primary 值
+    const primaryFromUrl = searchParams.get('primary');
+
     if (type === 'movie') {
-      return '热门';
+      return primaryFromUrl || '热门';
     }
     if (type === 'tv' || type === 'show') {
-      return '最近热门';
+      return primaryFromUrl || '最近热门';
     }
     if (type === 'anime') {
+      // 番剧和剧场版允许从 URL 参数指定
+      if (primaryFromUrl === '番剧' || primaryFromUrl === '剧场版') {
+        return primaryFromUrl;
+      }
       return '每日放送';
     }
-    return '';
+    return primaryFromUrl || '';
   });
   const [secondarySelection, setSecondarySelection] = useState<string>(() => {
     if (type === 'movie') {
@@ -310,7 +317,14 @@ function DoubanPageClient() {
         setPrimarySelection('最近热门');
         setSecondarySelection('show');
       } else if (type === 'anime') {
-        setPrimarySelection('每日放送');
+        // 从 URL 参数中读取 primary 值
+        const primaryFromUrl = searchParams.get('primary');
+        // 番剧和剧场版允许从 URL 参数指定
+        if (primaryFromUrl === '番剧' || primaryFromUrl === '剧场版') {
+          setPrimarySelection(primaryFromUrl);
+        } else {
+          setPrimarySelection('每日放送');
+        }
         setSecondarySelection('全部');
       } else {
         setPrimarySelection('');

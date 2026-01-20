@@ -221,8 +221,8 @@ const searchTMDBPoster = async (
   if (!title) return null;
 
   const searchTitles = getSearchTitles(title);
-  // 对于动漫，定义搜索顺序：TV -> Movie
-  const searchCategories = isAnime ? ['tv', 'movie'] : [category];
+  // isAnime ? [category] : [category] - 动漫只搜索对应的分类，避免资源浪费
+  const searchCategories = isAnime ? [category] : [category];
 
   for (const searchCategory of searchCategories) {
     for (const searchTitle of searchTitles) {
@@ -430,14 +430,14 @@ export async function getPosterCarouselData(): Promise<{
         region: '华语',
       });
 
-      // 从番剧中随机选择2部
+      // 从番剧中随机选择1部
       if (seriesAnimeData.code === 200 && seriesAnimeData.list) {
-        const selectedSeriesAnime = getRandomItems(seriesAnimeData.list, 2);
+        const selectedSeriesAnime = getRandomItems(seriesAnimeData.list, 1);
         for (const anime of selectedSeriesAnime) {
           const title = anime.title;
           const year = anime.year || '';
 
-          // 通过智能名称搜索TMDB海报（动漫特殊处理：先TV后Movie）
+          // 通过智能名称搜索TMDB海报（番剧只搜索TV分类）
           const tmdbPoster = enableTMDBPosters
             ? await searchTMDBPoster(title, 'tv', year, true)
             : null;
@@ -457,14 +457,14 @@ export async function getPosterCarouselData(): Promise<{
         }
       }
 
-      // 从剧场版中随机选择2部
+      // 从剧场版中随机选择1部
       if (movieAnimeData.code === 200 && movieAnimeData.list) {
-        const selectedMovieAnime = getRandomItems(movieAnimeData.list, 2);
+        const selectedMovieAnime = getRandomItems(movieAnimeData.list, 1);
         for (const anime of selectedMovieAnime) {
           const title = anime.title;
           const year = anime.year || '';
 
-          // 通过智能名称搜索TMDB海报（动漫特殊处理：先TV后Movie）
+          // 通过智能名称搜索TMDB海报（剧场版只搜索Movie分类）
           const tmdbPoster = enableTMDBPosters
             ? await searchTMDBPoster(title, 'movie', year, true)
             : null;

@@ -151,7 +151,8 @@ export default function PosterCarousel({
     const linkMap: { [key: string]: string } = {
       热门电影: '/douban?type=movie',
       热门剧集: '/douban?type=tv',
-      新番动漫: '/douban?type=anime',
+      番剧: '/douban?type=anime&primary=番剧',
+      剧场版: '/douban?type=anime&primary=剧场版',
     };
     return linkMap[category] || '/douban';
   };
