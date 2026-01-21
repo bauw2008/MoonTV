@@ -45,9 +45,9 @@ export const POST = async (request: NextRequest) => {
 
     // 更新站长配置
     const updatedConfig = {
-      SiteMaintenance: siteMaintenance,
-      DebugMode: debugMode,
-      MaxUsers: maxUsers,
+      siteMaintenance,
+      debugMode,
+      maxUsers,
     };
 
     // 保存到存储

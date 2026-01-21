@@ -100,11 +100,11 @@ function RegisterPageClient() {
         }
 
         try {
-          // 直接检查配置
-          const response = await fetch('/api/admin/config');
+          // 使用公开的注册状态接口
+          const response = await fetch('/api/registration');
           if (response.ok) {
             const data = await response.json();
-            if (!data.Config.UserConfig.AllowRegister) {
+            if (!data.allowRegister) {
               setRegistrationDisabled(true);
               setDisabledReason('管理员已关闭用户注册功能');
               setShouldShowRegister(true);

@@ -110,8 +110,8 @@ export interface IStorage {
   clearAllData(): Promise<void>;
 
   // 通用缓存相关（新增）
-  getCache(key: string): Promise<any | null>;
-  setCache(key: string, data: any, expireSeconds?: number): Promise<void>;
+  getCache(key: string): Promise<unknown | null>;
+  setCache(key: string, data: unknown, expireSeconds?: number): Promise<void>;
   deleteCache(key: string): Promise<void>;
   clearExpiredCache(prefix?: string): Promise<void>;
 

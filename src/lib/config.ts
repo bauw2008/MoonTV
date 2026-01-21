@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 import { AdminConfig } from './admin.types';
+import { OwnerConfig } from './types';
 import { getRandomUserAgent } from './user-agent';
 
 export interface ApiSite {
@@ -207,7 +208,7 @@ async function getInitConfig(
   }
 
   // 从存储中读取站长配置（MaxUsers 等）
-  let ownerConfig: any = {};
+  let ownerConfig: OwnerConfig | null = null;
   try {
     const { db } = await import('@/lib/db');
     ownerConfig = await db.getOwnerConfig();
@@ -240,7 +241,7 @@ async function getInitConfig(
       EnableTMDBActorSearch: false, // 默认关闭，需要配置API Key后手动开启
       EnableTMDBPosters: false, // 默认关闭，需要配置API Key后手动开启
       // 从 default-config.json 读取 MaxUsers
-      MaxUsers: ownerConfig.MaxUsers || 1000,
+      MaxUsers: ownerConfig?.MaxUsers || 1000,
       // 添加 MenuSettings 默认值
       MenuSettings: {
         showMovies: process.env.NEXT_PUBLIC_MENU_SHOW_MOVIES === 'true',
@@ -307,15 +308,15 @@ async function getInitConfig(
     .filter((u) => u !== process.env.USERNAME)
     .map((u) => ({
       username: u,
-      role: 'user',
+      role: 'user' as 'user' | 'admin' | 'owner',
       banned: false,
     }));
   allUsers.unshift({
     username: process.env.USERNAME || 'admin',
-    role: 'owner',
+    role: 'owner' as 'user' | 'admin' | 'owner',
     banned: false,
   });
-  adminConfig.UserConfig.Users = allUsers as any;
+  adminConfig.UserConfig.Users = allUsers;
 
   // 从配置文件中补充源信息
   Object.entries(cfgFile.api_site || []).forEach(([key, site]) => {
@@ -398,7 +399,7 @@ export async function getConfig(): Promise<AdminConfig> {
 
 // 清除配置缓存，强制重新从数据库读取
 export function clearConfigCache(): void {
-  cachedConfig = null as any;
+  cachedConfig = null;
 }
 
 // 配置自检
@@ -410,7 +411,8 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       RequireApproval: false,
       PendingUsers: [],
       Users: [],
-    } as any;
+      Tags: [],
+    };
   }
   if (
     !adminConfig.UserConfig.Users ||
@@ -423,11 +425,11 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     adminConfig.UserConfig.AllowRegister = true;
   }
   // 新增：审核相关默认值
-  if ((adminConfig.UserConfig as any).RequireApproval === undefined) {
-    (adminConfig.UserConfig as any).RequireApproval = false;
+  if (adminConfig.UserConfig.RequireApproval === undefined) {
+    adminConfig.UserConfig.RequireApproval = false;
   }
-  if (!(adminConfig.UserConfig as any).PendingUsers) {
-    (adminConfig.UserConfig as any).PendingUsers = [];
+  if (!adminConfig.UserConfig.PendingUsers) {
+    adminConfig.UserConfig.PendingUsers = [];
   }
   // 确保用户组配置存在
   if (
@@ -446,9 +448,9 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   if (!defaultGroupExists) {
     // 自动将前4个可用的采集源作为默认源
     const availableSources = (adminConfig.SourceConfig || [])
-      .filter((source: any) => source && !source.disabled && source.key)
+      .filter((source) => source && !source.disabled && source.key)
       .slice(0, 4)
-      .map((source: any) => source.key);
+      .map((source) => source.key);
 
     adminConfig.UserConfig.Tags.unshift({
       name: defaultGroupName,

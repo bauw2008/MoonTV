@@ -576,7 +576,7 @@ export abstract class BaseRedisStorage implements IStorage {
     return `cache:${key}`;
   }
 
-  async getCache(key: string): Promise<any | null> {
+  async getCache(key: string): Promise<unknown | null> {
     try {
       const val = await this.withRetry(() =>
         this.client.get(this.cacheKey(key)),
@@ -611,7 +611,7 @@ export abstract class BaseRedisStorage implements IStorage {
         // 某些Redis客户端可能直接返回解析后的对象
         return val;
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error(
         `${this.config.clientName} getCache error (key: ${key}):`,
         error,
@@ -622,7 +622,7 @@ export abstract class BaseRedisStorage implements IStorage {
 
   async setCache(
     key: string,
-    data: any,
+    data: unknown,
     expireSeconds?: number,
   ): Promise<void> {
     try {
@@ -682,7 +682,7 @@ export abstract class BaseRedisStorage implements IStorage {
       // 尝试从缓存获取
       const cached = await this.getCache('play_stats_summary');
       if (cached) {
-        return cached;
+        return cached as PlayStatsResult;
       }
 
       // 重新计算统计数据
@@ -1276,10 +1276,10 @@ export abstract class BaseRedisStorage implements IStorage {
       const data = await this.withRetry(() => this.client.get(key));
       return data
         ? JSON.parse(data)
-        : { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+        : { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
     } catch (error) {
       logger.error('获取站长配置失败:', error);
-      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
     }
   }
 

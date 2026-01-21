@@ -18,6 +18,7 @@ import {
 } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
 import { parseCustomTimeFormat } from '@/lib/time';
+import { Favorite } from '@/lib/types';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
 import PageLayout from '@/components/PageLayout';
@@ -26,6 +27,9 @@ import PageLayout from '@/components/PageLayout';
 declare global {
   interface HTMLVideoElement {
     hls?: any;
+  }
+  interface HTMLDivElement {
+    _wheelHandler?: (event: WheelEvent) => void;
   }
 }
 
@@ -36,6 +40,16 @@ interface LiveChannel {
   name: string;
   logo: string;
   group: string;
+  url: string;
+}
+
+// API 返回的频道数据接口
+interface LiveChannelFromAPI {
+  id: string;
+  tvgId?: string;
+  name: string;
+  logo: string;
+  group?: string;
   url: string;
 }
 
@@ -398,14 +412,16 @@ function LivePageClient() {
       }
 
       // 转换频道数据格式
-      const channels: LiveChannel[] = channelsData.map((channel: any) => ({
-        id: channel.id,
-        tvgId: channel.tvgId || channel.name,
-        name: channel.name,
-        logo: channel.logo,
-        group: channel.group || '其他',
-        url: channel.url,
-      }));
+      const channels: LiveChannel[] = channelsData.map(
+        (channel: LiveChannelFromAPI) => ({
+          id: channel.id,
+          tvgId: channel.tvgId || channel.name,
+          name: channel.name,
+          logo: channel.logo,
+          group: channel.group || '其他',
+          url: channel.url,
+        }),
+      );
 
       setCurrentChannels(channels);
 
@@ -891,7 +907,7 @@ function LivePageClient() {
 
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
-      (favorites: Record<string, any>) => {
+      (favorites: Record<string, Favorite>) => {
         const key = generateStorageKey(
           `live_${currentSource.key}`,
           `live_${currentChannel.id}`,
@@ -1534,18 +1550,22 @@ function LivePageClient() {
                               passive: false,
                             });
                             // 将事件处理器存储在容器上，以便后续移除
-                            (container as any)._wheelHandler = handleWheel;
+                            (container as HTMLDivElement)._wheelHandler =
+                              handleWheel;
                           }
                         }}
                         onMouseLeave={() => {
                           // 鼠标离开分组标签区域时，移除滚轮事件监听
                           const container = groupContainerRef.current;
-                          if (container && (container as any)._wheelHandler) {
+                          if (
+                            container &&
+                            (container as HTMLDivElement)._wheelHandler
+                          ) {
                             container.removeEventListener(
                               'wheel',
-                              (container as any)._wheelHandler,
+                              (container as HTMLDivElement)._wheelHandler,
                             );
-                            delete (container as any)._wheelHandler;
+                            delete (container as HTMLDivElement)._wheelHandler;
                           }
                         }}
                       >

@@ -13,6 +13,29 @@ interface CustomCategory {
   from: string;
 }
 
+interface NetDiskConfig {
+  enabled: boolean;
+  pansouUrl?: string;
+  timeout?: number;
+  enabledCloudTypes?: string[];
+}
+
+interface AIConfig {
+  enabled: boolean;
+  apiUrl?: string;
+  apiKey?: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+interface TMDBConfig {
+  enableActorSearch: boolean;
+  enablePosters?: boolean;
+  apiKey?: string;
+  language?: string;
+}
+
 interface RuntimeConfig {
   STORAGE_TYPE: string;
   DOUBAN_PROXY_TYPE?: string;
@@ -22,9 +45,9 @@ interface RuntimeConfig {
   DISABLE_YELLOW_FILTER?: boolean;
   CUSTOM_CATEGORIES: CustomCategory[];
   FLUID_SEARCH?: boolean;
-  NetDiskConfig?: any;
-  AIConfig?: any;
-  TMDBConfig?: any;
+  NetDiskConfig?: NetDiskConfig;
+  AIConfig?: AIConfig;
+  TMDBConfig?: TMDBConfig;
   MenuSettings: MenuSettings;
   SiteName?: string;
 }
@@ -36,9 +59,26 @@ export function getRuntimeConfig(): RuntimeConfig {
     return {
       STORAGE_TYPE: 'localstorage',
       CUSTOM_CATEGORIES: [],
-      NetDiskConfig: { enabled: false },
-      AIConfig: { enabled: false },
-      TMDBConfig: { enableActorSearch: false },
+      NetDiskConfig: {
+        enabled: false,
+        pansouUrl: 'https://so.252035.xyz',
+        timeout: 30,
+        enabledCloudTypes: ['baidu', 'aliyun', 'quark'],
+      },
+      AIConfig: {
+        enabled: false,
+        apiUrl: 'https://api.openai.com/v1',
+        apiKey: '',
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+        maxTokens: 3000,
+      },
+      TMDBConfig: {
+        enableActorSearch: false,
+        enablePosters: false,
+        apiKey: '',
+        language: 'zh-CN',
+      },
       MenuSettings: {
         showMovies: true,
         showTVShows: true,
@@ -59,9 +99,26 @@ function getDefaultConfig(): RuntimeConfig {
   return {
     STORAGE_TYPE: 'localstorage',
     CUSTOM_CATEGORIES: [],
-    NetDiskConfig: { enabled: false },
-    AIConfig: { enabled: false },
-    TMDBConfig: { enableActorSearch: false },
+    NetDiskConfig: {
+      enabled: false,
+      pansouUrl: 'https://so.252035.xyz',
+      timeout: 30,
+      enabledCloudTypes: ['baidu', 'aliyun', 'quark'],
+    },
+    AIConfig: {
+      enabled: false,
+      apiUrl: 'https://api.openai.com/v1',
+      apiKey: '',
+      model: 'gpt-3.5-turbo',
+      temperature: 0.7,
+      maxTokens: 3000,
+    },
+    TMDBConfig: {
+      enableActorSearch: false,
+      enablePosters: false,
+      apiKey: '',
+      language: 'zh-CN',
+    },
     MenuSettings: {
       showMovies: true,
       showTVShows: true,

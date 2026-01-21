@@ -456,7 +456,7 @@ export class UpstashRedisStorage implements IStorage {
     return `cache:${key}`;
   }
 
-  async getCache(key: string): Promise<any | null> {
+  async getCache(key: string): Promise<unknown | null> {
     try {
       const val = await withRetry(() => this.client.get(this.cacheKey(key)));
       if (!val) return null;
@@ -481,7 +481,7 @@ export class UpstashRedisStorage implements IStorage {
 
   async setCache(
     key: string,
-    data: any,
+    data: unknown,
     expireSeconds?: number,
   ): Promise<void> {
     const cacheKey = this.cacheKey(key);
@@ -1159,7 +1159,7 @@ export class UpstashRedisStorage implements IStorage {
       const key = 'owner_config';
       const data = await withRetry(() => this.client.get(key));
       if (!data) {
-        return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+        return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
       }
 
       // 智能处理返回值
@@ -1167,13 +1167,13 @@ export class UpstashRedisStorage implements IStorage {
         try {
           return JSON.parse(data);
         } catch {
-          return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+          return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
         }
       }
       return data;
     } catch (error) {
       logger.error('获取站长配置失败:', error);
-      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
     }
   }
 

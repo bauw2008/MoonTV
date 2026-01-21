@@ -649,12 +649,12 @@ export class DbManager {
   // 站长配置相关方法
   async getOwnerConfig(): Promise<any> {
     if (!this.isUserDataSupported()) {
-      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
     }
     if (typeof this.storage.getOwnerConfig === 'function') {
       return await this.storage.getOwnerConfig();
     }
-    return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+    return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
   }
 
   async setOwnerConfig(config: any): Promise<void> {
