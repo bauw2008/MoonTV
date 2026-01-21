@@ -115,11 +115,6 @@ export function processImageUrl(originalUrl: string): string {
     return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`;
   }
 
-  // 处理 wangwangzyimg1.com 的 HTTP/2 协议错误
-  if (originalUrl.includes('wangwangzyimg1.com')) {
-    return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`;
-  }
-
   // 仅处理豆瓣图片代理
   if (!originalUrl.includes('doubanio.com')) {
     return originalUrl;

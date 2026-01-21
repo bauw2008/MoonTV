@@ -1,25 +1,79 @@
 import { NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
+import { getRandomUserAgent } from '@/lib/user-agent';
+
+// 强制动态路由，禁用所有缓存
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-const ALL_CATEGORIES = [
-  { type_id: 1, type_name: '都市', value: '都市' },
-  { type_id: 2, type_name: '言情', value: '言情' },
-  { type_id: 3, type_name: '玄幻', value: '玄幻' },
-  { type_id: 4, type_name: '古装', value: '古装' },
-  { type_id: 5, type_name: '穿越', value: '穿越' },
-  { type_id: 6, type_name: '萌宝', value: '萌宝' },
-  { type_id: 7, type_name: '励志', value: '励志' },
-  { type_id: 8, type_name: '女频', value: '女频' },
-  { type_id: 9, type_name: '男频', value: '男频' },
-  { type_id: 10, type_name: '现代', value: '现代' },
-  { type_id: 11, type_name: '奇幻', value: '奇幻' },
-];
+// 服务端专用函数，直接调用外部API
+async function getShortDramaCategoriesInternal() {
+  const response = await fetch(
+    'https://api.r2afosne.dpdns.org/vod/categories',
+    {
+      headers: {
+        'User-Agent': getRandomUserAgent(),
+        Accept: 'application/json',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const categories = data.categories || [];
+  return categories.map((item: any) => ({
+    type_id: item.type_id,
+    type_name: item.type_name,
+  }));
+}
 
 export async function GET() {
-  const response = NextResponse.json(ALL_CATEGORIES);
-  response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300');
-  return response;
+  try {
+    const categories = await getShortDramaCategoriesInternal();
+
+    // 设置与网页端一致的缓存策略（categories: 4小时）
+    const response = NextResponse.json(categories);
+
+    // 4小时 = 14400秒（与网页端SHORTDRAMA_CACHE_EXPIRE.categories一致）
+    const cacheTime = 14400;
+    response.headers.set(
+      'Cache-Control',
+      `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+    );
+    response.headers.set('CDN-Cache-Control', `public, s-maxage=${cacheTime}`);
+    response.headers.set(
+      'Vercel-CDN-Cache-Control',
+      `public, s-maxage=${cacheTime}`,
+    );
+
+    // 调试信息
+    response.headers.set('X-Cache-Duration', '4hour');
+    response.headers.set(
+      'X-Cache-Expires-At',
+      new Date(Date.now() + cacheTime * 1000).toISOString(),
+    );
+    response.headers.set('X-Debug-Timestamp', new Date().toISOString());
+
+    // Vary头确保不同设备有不同缓存
+    response.headers.set('Vary', 'Accept-Encoding, User-Agent');
+
+    return response;
+  } catch (error) {
+    logger.error('获取短剧分类失败:', error);
+    const errorResponse = NextResponse.json(
+      { error: '服务器内部错误' },
+      { status: 500 },
+    );
+    // 错误响应不缓存，避免缓存失效的 API
+    errorResponse.headers.set(
+      'Cache-Control',
+      'no-cache, no-store, must-revalidate',
+    );
+    return errorResponse;
+  }
 }

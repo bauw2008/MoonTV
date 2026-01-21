@@ -36,6 +36,7 @@ interface User {
   lastLoginTime?: number; // 添加这个字段以匹配数据库
   tags?: string[];
   videoSources?: string[];
+  videoSourcesInherited?: boolean; // videoSources是否继承自用户组
   features?: {
     aiEnabled?: boolean;
     disableYellowFilter?: boolean;
@@ -354,32 +355,52 @@ function UserConfigContent() {
               netDiskSearchEnabled?: boolean;
               tmdbActorSearchEnabled?: boolean;
             } = {};
+            let isInherited = false; // 是否继承自用户组
 
-            // 1. 如果用户有独立的videoSources，使用它
-            if (finalUser.videoSources && finalUser.videoSources.length > 0) {
-              userVideoSources = finalUser.videoSources;
-              logger.log(`用户 ${finalUser.username} 有独立视频源:`, {
-                videoSources: userVideoSources,
-              });
-            }
-
-            // 2. 如果用户有独立的features，使用它
-            if (finalUser.features) {
-              userFeatures = { ...finalUser.features };
-              logger.log(`用户 ${finalUser.username} 有独立功能配置:`, {
-                features: userFeatures,
-              });
-            }
-
-            // 3. 如果用户有用户组，从用户组继承视频源和功能权限
+            // 1. 如果用户有用户组，先检查是否继承
             if (userTags.length > 0) {
               // 只继承第一个用户组的权限
               const tag = tagsToUse.find((t) => t.name === userTags[0]);
               if (tag) {
-                // 如果用户没有独立的视频源权限，则使用用户组的视频源
-                if (userVideoSources.length === 0 && tag.videoSources) {
-                  userVideoSources = tag.videoSources;
+                // 检查用户的videoSources是否与用户组的videoSources完全一致
+                const isSameArray = (
+                  arr1: any[] | undefined,
+                  arr2: any[] | undefined,
+                ) => {
+                  if (!arr1 || !arr2) return false;
+                  if (arr1.length !== arr2.length) return false;
+                  return arr1.every((val, index) => val === arr2[index]);
+                };
+
+                const userVideoSourcesSameAsTag = isSameArray(
+                  finalUser.videoSources,
+                  tag.videoSources,
+                );
+
+                // 如果用户没有videoSources，或者videoSources与用户组完全一致，则继承
+                if (
+                  !finalUser.videoSources ||
+                  finalUser.videoSources.length === 0 ||
+                  userVideoSourcesSameAsTag
+                ) {
+                  userVideoSources = tag.videoSources || [];
+                  isInherited = true;
+                  logger.log(
+                    `用户 ${finalUser.username} 继承用户组 ${tag.name} 的视频源`,
+                    {
+                      videoSources: userVideoSources,
+                    },
+                  );
+                } else {
+                  // 用户有独立的videoSources，且与用户组不一致
+                  userVideoSources = finalUser.videoSources;
+                  isInherited = finalUser.videoSourcesInherited === true; // 只有明确标记为true才是继承
+                  logger.log(`用户 ${finalUser.username} 有独立视频源:`, {
+                    videoSources: userVideoSources,
+                    inherited: isInherited,
+                  });
                 }
+
                 // 继承用户组的功能配置（不管用户是否有独立配置）
                 if (tag.aiEnabled !== undefined)
                   userFeatures.aiEnabled = tag.aiEnabled;
@@ -391,11 +412,26 @@ function UserConfigContent() {
                   userFeatures.tmdbActorSearchEnabled =
                     tag.tmdbActorSearchEnabled;
               }
+            } else {
+              // 用户没有用户组，使用自己的videoSources
+              if (finalUser.videoSources && finalUser.videoSources.length > 0) {
+                userVideoSources = finalUser.videoSources;
+                isInherited = finalUser.videoSourcesInherited === true;
+              }
             }
 
-            // 4. 构建最终的videoSources和features
+            // 2. 如果用户有独立的features，覆盖用户组的配置
+            if (finalUser.features) {
+              userFeatures = { ...userFeatures, ...finalUser.features };
+              logger.log(`用户 ${finalUser.username} 有独立功能配置:`, {
+                features: userFeatures,
+              });
+            }
+
+            // 3. 构建最终的videoSources和features
             finalUser.videoSources = userVideoSources;
             finalUser.features = userFeatures;
+            finalUser.videoSourcesInherited = isInherited;
 
             logger.log(`用户 ${finalUser.username} 权限继承结果:`, {
               videoSources: finalUser.videoSources,
@@ -697,6 +733,7 @@ function UserConfigContent() {
             return {
               ...u,
               videoSources: selectedApis,
+              videoSourcesInherited: false, // 用户独立配置，标记为非继承
             };
           }
           return u;
@@ -1039,7 +1076,37 @@ function UserConfigContent() {
     if (tag.tmdbActorSearchEnabled)
       updates.tmdbActorSearchEnabled = tag.tmdbActorSearchEnabled;
 
-    await updateUserGroup(editingUserGroupIndex, updates);
+    // 只更新videoSourcesInherited为true的用户，保留独立配置的用户
+    const updatedUsers = userSettings.Users.map((user) => {
+      if (
+        user.tags &&
+        user.tags.includes(tag.name) &&
+        user.videoSourcesInherited !== false
+      ) {
+        return {
+          ...user,
+          videoSources: selectedApis,
+          videoSourcesInherited: true,
+        };
+      }
+      return user;
+    });
+
+    const newSettings = {
+      ...userSettings,
+      Users: updatedUsers,
+      Tags: [
+        ...userSettings.Tags.slice(0, editingUserGroupIndex),
+        { ...tag, ...updates },
+        ...userSettings.Tags.slice(editingUserGroupIndex + 1),
+      ],
+    };
+
+    setUserSettings(newSettings);
+    await saveUnifiedConfig(newSettings, { skipIndexUpdate: true });
+
+    // 更新索引
+    await updateIndexes('userGroup');
 
     setShowEditUserGroupModal(false);
     setEditingUserGroupIndex(null);

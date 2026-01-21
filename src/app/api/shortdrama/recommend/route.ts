@@ -8,16 +8,18 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-// 从 wwzy API 获取推荐短剧
-async function getRecommendedShortDramasFromWwzy(category?: number, size = 10) {
+// 服务端专用函数，直接调用外部API
+async function getRecommendedShortDramasInternal(
+  category?: number,
+  size = 10,
+  retryCount = 0,
+) {
   const params = new URLSearchParams();
-  params.append('ac', 'list');
-  if (category) params.append('t', category.toString());
-  params.append('pg', '1');
-  params.append('pagesize', size.toString());
+  if (category) params.append('category', category.toString());
+  params.append('size', size.toString());
 
   const response = await fetch(
-    `https://api.wwzy.tv/api.php/provide/vod?${params.toString()}`,
+    `https://api.r2afosne.dpdns.org/vod/recommend?${params.toString()}`,
     {
       headers: {
         'User-Agent': getRandomUserAgent(),
@@ -27,24 +29,33 @@ async function getRecommendedShortDramasFromWwzy(category?: number, size = 10) {
     },
   );
 
+  // 如果遇到 403 错误，尝试重试一次（更换 User-Agent）
+  if (response.status === 403 && retryCount < 2) {
+    logger.warn(`获取推荐短剧遇到 403 错误，尝试重试 (${retryCount + 1}/2)`);
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000 * (retryCount + 1)),
+    ); // 延迟重试
+    return getRecommendedShortDramasInternal(category, size, retryCount + 1);
+  }
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
   const data = await response.json();
-  const items = data.list || [];
+  const items = data.items || [];
   return items.map((item: any) => ({
-    id: item.vod_id,
-    name: item.vod_name,
-    cover: item.vod_pic,
-    update_time: item.vod_time || new Date().toISOString(),
-    score: parseFloat(item.vod_score) || 0,
-    episode_count: item.vod_total || 1,
-    description: item.vod_blurb || '',
-    author: item.vod_actor || '',
-    backdrop: item.vod_pic,
-    vote_average: parseFloat(item.vod_score) || 0,
-    tmdb_id: undefined,
+    id: item.vod_id || item.id,
+    name: item.vod_name || item.name,
+    cover: item.vod_pic || item.cover,
+    update_time: item.vod_time || item.update_time || new Date().toISOString(),
+    score: item.vod_score || item.score || 0,
+    episode_count: parseInt(item.vod_remarks?.replace(/[^\d]/g, '') || '1'),
+    description: item.vod_content || item.description || '',
+    author: item.vod_actor || item.author || '',
+    backdrop: item.vod_pic_slide || item.backdrop || item.vod_pic || item.cover,
+    vote_average: item.vod_score || item.vote_average || 0,
+    tmdb_id: item.tmdb_id || undefined,
   }));
 }
 
@@ -64,12 +75,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 
-    // 直接使用 wwzy API 获取推荐短剧
-    const result = await getRecommendedShortDramasFromWwzy(
+    const result = await getRecommendedShortDramasInternal(
       categoryNum,
       pageSize,
     );
-    logger.log('[推荐短剧] wwzy API 获取成功');
 
     // 测试1小时HTTP缓存策略
     const response = NextResponse.json(result);

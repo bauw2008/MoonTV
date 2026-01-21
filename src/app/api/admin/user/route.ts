@@ -405,9 +405,11 @@ export async function POST(request: NextRequest) {
         // 更新用户的采集源权限
         if (videoSources && videoSources.length > 0) {
           targetEntry.videoSources = videoSources;
+          targetEntry.videoSourcesInherited = false; // 用户独立配置，标记为非继承
         } else {
           // 如果为空数组或未提供，则删除该字段，表示无限制
           delete targetEntry.videoSources;
+          delete targetEntry.videoSourcesInherited;
         }
 
         break;

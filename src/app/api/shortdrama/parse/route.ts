@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime, getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
-import {
-  parseShortDramaEpisode,
-  parseWwzyEpisode,
-} from '@/lib/shortdrama.client';
+import { parseShortDramaEpisode } from '@/lib/shortdrama.client';
 
 // 标记为动态路由
 export const dynamic = 'force-dynamic';
@@ -16,7 +13,6 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
     const episode = searchParams.get('episode');
     const name = searchParams.get('name'); // 可选：用于备用API
-    const source = searchParams.get('source'); // 可选：指定数据源（wwzy 或默认）
 
     if (!id || !episode) {
       return NextResponse.json(
@@ -25,48 +21,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const videoId = parseInt(id);
     const episodeNum = parseInt(episode);
 
-    if (isNaN(episodeNum)) {
+    if (isNaN(videoId) || isNaN(episodeNum)) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
 
-    let result;
-
-    // 如果指定了数据源为 wwzy，使用 wwzy API 解析
-    if (source === 'wwzy') {
-      result = await parseWwzyEpisode(id, episodeNum);
-    } else {
-      // 否则使用原来的主 API 和备用 API 机制
-      const videoId = parseInt(id);
-
-      if (isNaN(videoId)) {
-        return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
-      }
-
-      // 读取配置以获取备用API地址
-      let alternativeApiUrl: string | undefined;
-      try {
-        const config = await getConfig();
-        const shortDramaConfig = config.ShortDramaConfig;
-        alternativeApiUrl = shortDramaConfig?.enableAlternative
-          ? shortDramaConfig.alternativeApiUrl
-          : undefined;
-      } catch (configError) {
-        logger.error('读取短剧配置失败:', configError);
-        // 配置读取失败时，不使用备用API
-        alternativeApiUrl = undefined;
-      }
-
-      // 解析视频，默认使用代理，如果提供了剧名且配置了备用API则自动fallback
-      result = await parseShortDramaEpisode(
-        videoId,
-        episodeNum,
-        true,
-        name || undefined,
-        alternativeApiUrl,
-      );
+    // 读取配置以获取备用API地址
+    let alternativeApiUrl: string | undefined;
+    try {
+      const config = await getConfig();
+      const shortDramaConfig = config.ShortDramaConfig;
+      alternativeApiUrl = shortDramaConfig?.enableAlternative
+        ? shortDramaConfig.alternativeApiUrl
+        : undefined;
+    } catch (configError) {
+      logger.error('读取短剧配置失败:', configError);
+      // 配置读取失败时，不使用备用API
+      alternativeApiUrl = undefined;
     }
+
+    // 解析视频，默认使用代理，如果提供了剧名且配置了备用API则自动fallback
+    const result = await parseShortDramaEpisode(
+      videoId,
+      episodeNum,
+      true,
+      name || undefined,
+      alternativeApiUrl,
+    );
 
     if (result.code !== 0 || !result.data) {
       return NextResponse.json(

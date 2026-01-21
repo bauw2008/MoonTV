@@ -53,6 +53,7 @@ export interface AdminConfig {
       tags?: string[]; // 多 tags 取并集限制
       createdAt?: number; // 创建时间（可选）
       permissionVersion?: number; // 权限版本号，用于缓存失效
+      videoSourcesInherited?: boolean; // videoSources是否继承自用户组
     }[];
     Tags?: Array<{
       name: string;
@@ -134,24 +135,8 @@ export interface AdminConfig {
     };
   };
   ShortDramaConfig?: {
-    // 主 API 配置
     primaryApiUrl: string;
-    // 备用 API 配置
     alternativeApiUrl: string;
     enableAlternative: boolean;
-    // 适配器配置
-    adapterType?: 'wwzy' | 'custom';
-    enableAdapter?: boolean;
-    adapterConfigs?: {
-      wwzy?: {
-        baseUrl: string;
-        enabled: boolean;
-      };
-      custom?: {
-        baseUrl: string;
-        enabled: boolean;
-        adapterName: string;
-      };
-    };
   };
 }

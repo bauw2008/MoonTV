@@ -15,6 +15,8 @@ import {
 } from './types';
 import { getRandomUserAgent } from './user-agent';
 
+const SHORTDRAMA_API_BASE = 'https://api.r2afosne.dpdns.org';
+
 // 获取短剧分类列表
 export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
   const cacheKey = getCacheKey('categories', {});
@@ -22,7 +24,7 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
   try {
     const cached = await getCache(cacheKey);
     if (cached) {
-      return cached as ShortDramaCategory[];
+      return cached;
     }
 
     // 统一使用内部 API
@@ -56,7 +58,7 @@ export async function getRecommendedShortDramas(
   try {
     const cached = await getCache(cacheKey);
     if (cached) {
-      return cached as ShortDramaItem[];
+      return cached;
     }
 
     // 统一使用内部 API
@@ -91,7 +93,7 @@ export async function getShortDramaList(
   try {
     const cached = await getCache(cacheKey);
     if (cached) {
-      return cached as { list: ShortDramaItem[]; hasMore: boolean };
+      return cached;
     }
 
     // 统一使用内部 API
@@ -273,8 +275,7 @@ async function parseWithAlternativeApi(
     // Step 3: 尝试获取视频直链，如果当前集不存在则自动跳到下一集
     // 最多尝试3集（防止无限循环）
     let actualEpisodeIndex = episodeIndex;
-    let directData: { url?: string; pic?: string; title?: string } | null =
-      null;
+    let directData: any = null;
     const maxRetries = 3;
 
     for (let retry = 0; retry < maxRetries; retry++) {
@@ -579,133 +580,5 @@ export async function parseShortDramaAll(
   } catch (error) {
     logger.error('解析完整短剧失败:', error);
     return [];
-  }
-}
-
-// ============ wwzy API 相关函数 ============
-
-// wwzy API 返回的短剧详情类型
-interface WwzyDetail {
-  vod_id: string;
-  vod_name: string;
-  vod_pic: string;
-  vod_play_url: string;
-  vod_total: number;
-  vod_blurb: string;
-}
-
-// 从 wwzy API 获取短剧详情
-async function getWwzyDetail(id: string): Promise<WwzyDetail | null> {
-  const response = await fetch(
-    `https://api.wwzy.tv/api.php/provide/vod?ac=detail&ids=${id}`,
-    {
-      headers: {
-        'User-Agent': getRandomUserAgent(),
-        Accept: 'application/json',
-      },
-      signal: AbortSignal.timeout(30000),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.list?.[0] || null;
-}
-
-// 解析 wwzy 的播放链接
-export async function parseWwzyEpisode(
-  id: string,
-  episode: number,
-): Promise<ShortDramaParseResult> {
-  try {
-    // 获取短剧详情
-    const detail = await getWwzyDetail(id);
-
-    if (!detail) {
-      return {
-        code: 1,
-        msg: '未找到该短剧',
-      };
-    }
-
-    // 解析播放链接
-    const playUrl = detail.vod_play_url || '';
-    const episodes = playUrl.split('#').filter(Boolean);
-
-    if (episodes.length === 0) {
-      return {
-        code: 1,
-        msg: '该短剧暂无播放链接',
-      };
-    }
-
-    // 查找指定集数的播放链接
-    const targetEpisode = episodes.find((ep) => {
-      const [epNum] = ep.split('$');
-      return parseInt(epNum) === episode;
-    });
-
-    if (!targetEpisode) {
-      return {
-        code: 1,
-        msg: `第${episode}集不存在（共${episodes.length}集）`,
-      };
-    }
-
-    const [, url] = targetEpisode.split('$');
-
-    if (!url) {
-      return {
-        code: 1,
-        msg: '播放链接无效',
-      };
-    }
-
-    // wwzy 的播放链接可以直接访问（CORS 允许所有来源），不需要代理
-    // 解码转义的反斜杠（将 \/ 替换为 /）
-    const decodedUrl = url.replace(/\\\//g, '/');
-    // 将 http:// 转换为 https:// 避免 Mixed Content 错误
-    const videoUrl = decodedUrl.replace(/^http:\/\//i, 'https://');
-
-    return {
-      code: 0,
-      data: {
-        videoId: id,
-        videoName: detail.vod_name || '',
-        currentEpisode: episode,
-        totalEpisodes: detail.vod_total || episodes.length,
-        parsedUrl: videoUrl,
-        proxyUrl: videoUrl,
-        cover: detail.vod_pic || '',
-        description: detail.vod_blurb || '',
-        episode: {
-          index: episode,
-          label: `第${episode}集`,
-          parsedUrl: videoUrl,
-          proxyUrl: videoUrl,
-          title: `第${episode}集`,
-        },
-      },
-    };
-  } catch (error) {
-    logger.error('解析 wwzy 播放链接失败:', error);
-    return {
-      code: -1,
-      msg: '网络连接失败，请检查网络后重试',
-    };
-  }
-}
-
-// 获取 wwzy 短剧的集数
-export async function getWwzyEpisodeCount(id: string): Promise<number> {
-  try {
-    const detail = await getWwzyDetail(id);
-    return detail?.vod_total || 0;
-  } catch (error) {
-    logger.error('获取 wwzy 集数失败:', error);
-    return 0;
   }
 }

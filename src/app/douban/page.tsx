@@ -348,7 +348,7 @@ function DoubanPageClient() {
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [type, customCategories]);
+  }, [type, customCategories, searchParams]);
 
   // 生成骨架屏数据
   const skeletonData = Array.from({ length: 25 }, (_, index) => index);
