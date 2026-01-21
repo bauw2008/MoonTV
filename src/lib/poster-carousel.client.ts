@@ -35,180 +35,46 @@ const getRandomItems = <T>(items: T[], count: number): T[] => {
   return result;
 };
 
-// 智能名称匹配规则 - 优化版
+// 智能名称匹配规则 - 简化版
 const getSearchTitles = (title: string) => {
   if (!title) return [''];
 
   const searchTitles = [title];
 
-  // 扩展数字转换映射（支持更多季数）
-  const chineseToNum: { [key: string]: string } = {
-    一: '1',
-    二: '2',
-    三: '3',
-    四: '4',
-    五: '5',
-    六: '6',
-    七: '7',
-    八: '8',
-    九: '9',
-    十: '10',
-  };
+  // 如果原标题带有非主标题部分，生成简化版本
+  // 去除：分隔符、数字结尾、第X季、特别篇、剧场版、TV版、SP等
+  let simplifiedTitle = title;
 
-  const numToChinese: { [key: string]: string } = {
-    '1': '一',
-    '2': '二',
-    '3': '三',
-    '4': '四',
-    '5': '五',
-    六: '6',
-    七: '七',
-    '8': '八',
-    '9': '九',
-    '10': '十',
-  };
-
-  // 1. 处理中文季数格式
-  if (title.includes('第') && title.includes('季')) {
-    const seasonMatch = title.match(/(.+)第([一二三四五六七八九十]+)季/);
-    if (seasonMatch) {
-      const [, baseTitle, seasonNum] = seasonMatch;
-      const arabicNum = chineseToNum[seasonNum];
-      if (arabicNum) {
-        // 生成多种变体，优先级高的放前面
-        searchTitles.push(`${baseTitle} Season ${arabicNum}`);
-        searchTitles.push(`${baseTitle} S${arabicNum}`);
-        searchTitles.push(`${baseTitle} ${arabicNum}`);
-        searchTitles.push(`${baseTitle}第${arabicNum}季`);
-      }
+  // 1. 去除分隔符后的内容
+  const separators = [':', '：', '-', '—', '–', '|', '｜'];
+  for (const sep of separators) {
+    const parts = simplifiedTitle.split(sep);
+    if (parts.length > 1) {
+      simplifiedTitle = parts[0].trim();
+      break; // 只去除第一个分隔符后的内容
     }
   }
 
-  // 2. 处理数字季数格式
-  const digitalSeasonMatch = title.match(/(.+?)(\d+)$/);
-  if (digitalSeasonMatch) {
-    const [, baseTitle, seasonNum] = digitalSeasonMatch;
-    const chineseNum = numToChinese[seasonNum];
-    if (chineseNum) {
-      searchTitles.push(`${baseTitle} Season ${seasonNum}`);
-      searchTitles.push(`${baseTitle} S${seasonNum}`);
-      searchTitles.push(`${baseTitle}第${chineseNum}季`);
-      searchTitles.push(`${baseTitle} ${seasonNum}`);
-    }
-  }
-
-  // 3. 处理英文Season格式："Show Title Season 2"
-  const seasonMatch = title.match(/(.+) Season (\d+)/i);
-  if (seasonMatch) {
-    const [, baseTitle, seasonNum] = seasonMatch;
-    const chineseNum = numToChinese[seasonNum];
-    if (chineseNum) {
-      searchTitles.push(`${baseTitle} S${seasonNum}`);
-      searchTitles.push(`${baseTitle} ${seasonNum}`);
-      searchTitles.push(`${baseTitle}第${chineseNum}季`);
-    }
-  }
-
-  // 4. 处理简写英文格式："Show Title S2"
-  const shortSeasonMatch = title.match(/(.+) S(\d+)/i);
-  if (shortSeasonMatch) {
-    const [, baseTitle, seasonNum] = shortSeasonMatch;
-    const chineseNum = numToChinese[seasonNum];
-    if (chineseNum) {
-      searchTitles.push(`${baseTitle} Season ${seasonNum}`);
-      searchTitles.push(`${baseTitle}第${chineseNum}季`);
-      searchTitles.push(`${baseTitle} ${seasonNum}`);
-    }
-  }
-
-  // 5. 处理Series格式："Show Title Series 2"
-  const seriesMatch = title.match(/(.+) Series (\d+)/i);
-  if (seriesMatch) {
-    const [, baseTitle, seasonNum] = seriesMatch;
-    searchTitles.push(`${baseTitle} Season ${seasonNum}`);
-    searchTitles.push(`${baseTitle} S${seasonNum}`);
-    searchTitles.push(`${baseTitle} ${seasonNum}`);
-  }
-
-  // 6. 处理Part格式："Show Title Part 2"
-  const partMatch = title.match(/(.+) Part (\d+)/i);
-  if (partMatch) {
-    const [, baseTitle, partNum] = partMatch;
-    searchTitles.push(`${baseTitle} Season ${partNum}`);
-    searchTitles.push(`${baseTitle} S${partNum}`);
-    searchTitles.push(`${baseTitle} ${partNum}`);
-  }
-
-  // 7. 处理全角字符："Ｓｅａｓｏｎ ２" → "Season 2"
-  const fullWidthTitle = title.replace(/[０-９Ａ-Ｚａ-ｚ]/g, (char) => {
-    return String.fromCharCode(char.charCodeAt(0) - 0xfee0);
-  });
-  if (fullWidthTitle !== title) {
-    searchTitles.push(fullWidthTitle);
-  }
-
-  // 8. 去掉副标题和分隔符
-  const cleanTitles = [
-    title.split(/[：:：]/)[0].trim(), // 中文冒号分割
-    title.split(/[-—–]/)[0].trim(), // 破折号分割
-    title.split(/[|｜]/)[0].trim(), // 竖线分割
-    title.split(/第.季/)[0].trim(), // 季数分割
-    title.split(/Season \d+/i)[0].trim(), // 英文季数分割
-    title.split(/ S\d+/i)[0].trim(), // 简写季数分割
+  // 2. 去除后缀
+  const suffixesToRemove = [
+    /第[一二三四五六七八九十]+季$/,
+    /特别篇$/,
+    /剧场版$/,
+    /电影版$/,
+    /TV版$/,
+    /SP$/,
+    /\d+$/, // 数字结尾
   ];
 
-  cleanTitles.forEach((cleanTitle) => {
-    if (cleanTitle && cleanTitle !== title) {
-      searchTitles.push(cleanTitle);
-    }
+  suffixesToRemove.forEach((suffix) => {
+    simplifiedTitle = simplifiedTitle.replace(suffix, '').trim();
   });
 
-  // 9. 处理常见前缀
-  const prefixes = ['新', '新版', '2024', '2023', '2022', '2021'];
-  prefixes.forEach((prefix) => {
-    if (title.startsWith(prefix)) {
-      const withoutPrefix = title.substring(prefix.length).trim();
-      if (withoutPrefix) {
-        searchTitles.push(withoutPrefix);
-      }
-    }
-  });
-
-  // 10. 处理常见后缀
-  const suffixes = ['电影版', '剧场版', 'TV版', '特别篇', 'SP'];
-  suffixes.forEach((suffix) => {
-    if (title.endsWith(suffix)) {
-      const withoutSuffix = title
-        .substring(0, title.length - suffix.length)
-        .trim();
-      if (withoutSuffix) {
-        searchTitles.push(withoutSuffix);
-      }
-    }
-  });
-
-  // 11. 处理空格和特殊字符
-  const normalizedTitle = title
-    .replace(/[：:·\-—–|｜]/g, ' ') // 替换分隔符为空格
-    .replace(/\s+/g, ' ') // 合并多个空格
-    .trim();
-  if (normalizedTitle !== title) {
-    searchTitles.push(normalizedTitle);
+  if (simplifiedTitle && simplifiedTitle !== title) {
+    searchTitles.push(simplifiedTitle);
   }
 
-  // 12. 去重并按优先级排序（原始标题优先，然后是常见变体）
-  const uniqueTitles = [...new Set(searchTitles)];
-
-  // 重新排序：原始标题、Season格式、S格式、数字格式、其他
-  return uniqueTitles.sort((a, b) => {
-    if (a === title) return -1;
-    if (b === title) return 1;
-    if (a.includes('Season')) return -1;
-    if (b.includes('Season')) return 1;
-    if (/ S\d+/.test(a)) return -1;
-    if (/ S\d+/.test(b)) return 1;
-    return 0;
-  });
+  return [...new Set(searchTitles)];
 };
 
 // 通用TMDB搜索函数（支持TV和Movie双重搜索）
