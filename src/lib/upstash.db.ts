@@ -1052,6 +1052,140 @@ export class UpstashRedisStorage implements IStorage {
       return 0;
     }
   }
+
+  // 评论相关方法
+  async getComments(): Promise<any[]> {
+    try {
+      const key = 'comments';
+      const data = await withRetry(() => this.client.get(key));
+      if (!data) return [];
+
+      // 智能处理返回值
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return [];
+        }
+      }
+      return data as any[];
+    } catch (error) {
+      logger.error('获取评论失败:', error);
+      return [];
+    }
+  }
+
+  async addComment(comment: any): Promise<void> {
+    try {
+      const comments = await this.getComments();
+      comments.push(comment);
+      const key = 'comments';
+      await withRetry(() => this.client.set(key, JSON.stringify(comments)));
+    } catch (error) {
+      logger.error('添加评论失败:', error);
+      throw error;
+    }
+  }
+
+  async addReply(commentId: string, reply: any): Promise<void> {
+    try {
+      const comments = await this.getComments();
+      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+
+      if (commentIndex !== -1) {
+        if (!comments[commentIndex].replies) {
+          comments[commentIndex].replies = [];
+        }
+        comments[commentIndex].replies.push(reply);
+        const key = 'comments';
+        await withRetry(() => this.client.set(key, JSON.stringify(comments)));
+      }
+    } catch (error) {
+      logger.error('添加回复失败:', error);
+      throw error;
+    }
+  }
+
+  async clearComments(): Promise<void> {
+    try {
+      const key = 'comments';
+      await withRetry(() => this.client.set(key, JSON.stringify([])));
+    } catch (error) {
+      logger.error('清空评论失败:', error);
+      throw error;
+    }
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    try {
+      const comments = await this.getComments();
+      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+
+      if (commentIndex !== -1) {
+        comments.splice(commentIndex, 1);
+        const key = 'comments';
+        await withRetry(() => this.client.set(key, JSON.stringify(comments)));
+      }
+    } catch (error) {
+      logger.error('删除评论失败:', error);
+      throw error;
+    }
+  }
+
+  async deleteReply(commentId: string, replyId: string): Promise<void> {
+    try {
+      const comments = await this.getComments();
+      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+
+      if (commentIndex !== -1 && comments[commentIndex].replies) {
+        const replies = comments[commentIndex].replies;
+        const replyIndex = replies.findIndex((r: any) => r.id === replyId);
+
+        if (replyIndex !== -1) {
+          replies.splice(replyIndex, 1);
+          const key = 'comments';
+          await withRetry(() => this.client.set(key, JSON.stringify(comments)));
+        }
+      }
+    } catch (error) {
+      logger.error('删除回复失败:', error);
+      throw error;
+    }
+  }
+
+  // 站长配置相关方法
+  async getOwnerConfig(): Promise<any> {
+    try {
+      const key = 'owner_config';
+      const data = await withRetry(() => this.client.get(key));
+      if (!data) {
+        return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+      }
+
+      // 智能处理返回值
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+        }
+      }
+      return data;
+    } catch (error) {
+      logger.error('获取站长配置失败:', error);
+      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+    }
+  }
+
+  async setOwnerConfig(config: any): Promise<void> {
+    try {
+      const key = 'owner_config';
+      await withRetry(() => this.client.set(key, JSON.stringify(config)));
+    } catch (error) {
+      logger.error('保存站长配置失败:', error);
+      throw error;
+    }
+  }
 }
 
 // 单例 Upstash Redis 客户端

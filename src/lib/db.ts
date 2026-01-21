@@ -551,95 +551,33 @@ export class DbManager {
     try {
       const storage = getStorage();
       if (storage) {
-        const result = await storage.getCache('comments');
-        return result || [];
+        return await storage.getComments();
       }
-      // 使用文件存储作为fallback
-      return this.getCommentsFromFile();
-    } catch {
-      // 尝试从文件获取
-      try {
-        return this.getCommentsFromFile();
-      } catch {
-        return [];
-      }
-    }
-  }
-
-  // 文件存储方法
-  private async getCommentsFromFile(): Promise<any[]> {
-    const fs = require('fs').promises;
-    const path = require('path');
-    const filePath = path.join(process.cwd(), 'data', 'comments.json');
-
-    try {
-      const data = await fs.readFile(filePath, 'utf8');
-      return JSON.parse(data);
-    } catch {
-      // 文件不存在，返回空数组
       return [];
-    }
-  }
-
-  private async saveCommentsToFile(comments: any[]): Promise<boolean> {
-    const fs = require('fs').promises;
-    const path = require('path');
-    const filePath = path.join(process.cwd(), 'data', 'comments.json');
-
-    try {
-      // 确保data目录存在
-      const dirPath = path.dirname(filePath);
-      await fs.mkdir(dirPath, { recursive: true });
-      await fs.writeFile(filePath, JSON.stringify(comments, null, 2));
-      return true;
-    } catch (error) {
-      logger.error('保存留言到文件失败:', error);
-      return false;
+    } catch {
+      return [];
     }
   }
 
   async addComment(comment: any): Promise<boolean> {
     try {
-      const comments = await this.getComments();
-      comments.push(comment);
-
       const storage = getStorage();
       if (storage) {
-        await storage.setCache('comments', comments);
+        await storage.addComment(comment);
         return true;
       }
-      // 使用文件存储作为fallback
-      return this.saveCommentsToFile(comments);
+      return false;
     } catch {
-      // 尝试保存到文件
-      try {
-        const comments = await this.getComments();
-        comments.push(comment);
-        return this.saveCommentsToFile(comments);
-      } catch {
-        return false;
-      }
+      return false;
     }
   }
 
   async addReply(commentId: string, reply: any): Promise<boolean> {
     try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
-
-      if (commentIndex !== -1) {
-        if (!comments[commentIndex].replies) {
-          comments[commentIndex].replies = [];
-        }
-        comments[commentIndex].replies.push(reply);
-
-        const storage = getStorage();
-        if (storage) {
-          await storage.setCache('comments', comments);
-          return true;
-        }
-        // 使用文件存储作为fallback
-        return this.saveCommentsToFile(comments);
+      const storage = getStorage();
+      if (storage) {
+        await storage.addReply(commentId, reply);
+        return true;
       }
       return false;
     } catch (error) {
@@ -652,12 +590,10 @@ export class DbManager {
     try {
       const storage = getStorage();
       if (storage) {
-        await storage.setCache('comments', []);
+        await storage.clearComments();
         return true;
       }
-
-      // 使用文件存储作为fallback
-      return this.saveCommentsToFile([]);
+      return false;
     } catch {
       return false;
     }
@@ -665,23 +601,25 @@ export class DbManager {
 
   async deleteComment(commentId: string): Promise<boolean> {
     try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
-
-      if (commentIndex !== -1) {
-        comments.splice(commentIndex, 1);
-
-        const storage = getStorage();
-        if (storage) {
-          await storage.setCache('comments', comments);
-          return true;
-        }
-
-        // 使用文件存储作为fallback
-        return this.saveCommentsToFile(comments);
-      } else {
-        return false;
+      const storage = getStorage();
+      if (storage) {
+        await storage.deleteComment(commentId);
+        return true;
       }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async deleteReply(commentId: string, replyId: string): Promise<boolean> {
+    try {
+      const storage = getStorage();
+      if (storage) {
+        await storage.deleteReply(commentId, replyId);
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -706,6 +644,26 @@ export class DbManager {
       return await this.storage.getUserLastActivity(userName);
     }
     return 0;
+  }
+
+  // 站长配置相关方法
+  async getOwnerConfig(): Promise<any> {
+    if (!this.isUserDataSupported()) {
+      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+    }
+    if (typeof this.storage.getOwnerConfig === 'function') {
+      return await this.storage.getOwnerConfig();
+    }
+    return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
+  }
+
+  async setOwnerConfig(config: any): Promise<void> {
+    if (!this.isUserDataSupported()) {
+      return;
+    }
+    if (typeof this.storage.setOwnerConfig === 'function') {
+      await this.storage.setOwnerConfig(config);
+    }
   }
 }
 

@@ -1,8 +1,5 @@
 /* @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-import fs from 'fs';
-import path from 'path';
-
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
@@ -209,20 +206,11 @@ async function getInitConfig(
     cfgFile = {} as ConfigFileStruct;
   }
 
-  // 从 default-config.json 读取站长配置（MaxUsers 等）
+  // 从存储中读取站长配置（MaxUsers 等）
   let ownerConfig: any = {};
   try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const ownerConfigPath = path.join(
-      process.cwd(),
-      'data',
-      'default-config.json',
-    );
-    if (fs.existsSync(ownerConfigPath)) {
-      const ownerConfigContent = fs.readFileSync(ownerConfigPath, 'utf-8');
-      ownerConfig = JSON.parse(ownerConfigContent);
-    }
+    const { db } = await import('@/lib/db');
+    ownerConfig = await db.getOwnerConfig();
   } catch {
     // 读取站长配置失败，使用默认值
   }
@@ -537,24 +525,6 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
         showShortDrama: false,
       },
     };
-  }
-
-  // 从 default-config.json 读取 MaxUsers（站长配置）
-  try {
-    const ownerConfigPath = path.join(
-      process.cwd(),
-      'data',
-      'default-config.json',
-    );
-    if (fs.existsSync(ownerConfigPath)) {
-      const ownerConfigContent = fs.readFileSync(ownerConfigPath, 'utf-8');
-      const ownerConfig = JSON.parse(ownerConfigContent);
-      if (ownerConfig.MaxUsers !== undefined) {
-        adminConfig.SiteConfig.MaxUsers = ownerConfig.MaxUsers;
-      }
-    }
-  } catch {
-    // 读取失败，使用默认值
   }
 
   // 确保 MaxUsers 有默认值

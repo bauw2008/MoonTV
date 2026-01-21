@@ -15,8 +15,6 @@ import {
 } from './types';
 import { getRandomUserAgent } from './user-agent';
 
-const SHORTDRAMA_API_BASE = 'https://api.r2afosne.dpdns.org';
-
 // 获取短剧分类列表
 export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
   const cacheKey = getCacheKey('categories', {});
@@ -153,6 +151,13 @@ async function parseWithAlternativeApi(
   episode: number,
   alternativeApiUrl: string,
 ): Promise<ShortDramaParseResult> {
+  // 备用API返回的视频数据类型
+  interface DirectVideoData {
+    url: string;
+    pic?: string;
+    title?: string;
+  }
+
   try {
     // 规范化 API 基础地址，移除末尾斜杠
     const alternativeApiBase = alternativeApiUrl.replace(/\/+$/, '');
@@ -275,7 +280,7 @@ async function parseWithAlternativeApi(
     // Step 3: 尝试获取视频直链，如果当前集不存在则自动跳到下一集
     // 最多尝试3集（防止无限循环）
     let actualEpisodeIndex = episodeIndex;
-    let directData: any = null;
+    let directData: DirectVideoData | null = null;
     const maxRetries = 3;
 
     for (let retry = 0; retry < maxRetries; retry++) {
