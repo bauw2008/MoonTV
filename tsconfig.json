@@ -16,16 +16,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "~/*": ["./public/*"]
-    },
+    "paths": { "@/*": ["./src/*"], "~/*": ["./public/*"] },
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "plugins": [{ "name": "next" }]
   },
   "include": [
     "next-env.d.ts",
@@ -34,6 +27,12 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "backup"],
+  "exclude": [
+    "node_modules",
+    "backup",
+    "node-functions",
+    "edge-functions",
+    "functions"
+  ],
   "moduleResolution": ["node_modules", ".next", "node"]
 }
