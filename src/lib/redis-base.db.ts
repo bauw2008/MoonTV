@@ -26,6 +26,18 @@ function ensureStringArray(value: any[]): string[] {
   return value.map((item) => String(item));
 }
 
+// Redis v5 返回类型可能是 string | null | {}，需要转换为 string | null
+function ensureRedisString(value: string | null | {}): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  // 如果是空对象或其他类型，转换为字符串
+  return String(value);
+}
+
 // 连接配置接口
 export interface RedisConnectionConfig {
   url: string;
@@ -193,7 +205,8 @@ export abstract class BaseRedisStorage implements IStorage {
     const val = await this.withRetry(() =>
       this.client.get(this.prKey(userName, key)),
     );
-    return val ? (JSON.parse(val) as PlayRecord) : null;
+    const strVal = ensureRedisString(val);
+    return strVal ? (JSON.parse(strVal) as PlayRecord) : null;
   }
 
   async setPlayRecord(
@@ -221,10 +234,15 @@ export abstract class BaseRedisStorage implements IStorage {
     keys.forEach((fullKey: string, idx: number) => {
       const raw = values[idx];
       if (raw) {
-        const rec = JSON.parse(raw) as PlayRecord;
-        // 截取 source+id 部分
-        const keyPart = ensureString(fullKey.replace(`u:${userName}:pr:`, ''));
-        result[keyPart] = rec;
+        const strRaw = ensureRedisString(raw);
+        if (strRaw) {
+          const rec = JSON.parse(strRaw) as PlayRecord;
+          // 截取 source+id 部分
+          const keyPart = ensureString(
+            fullKey.replace(`u:${userName}:pr:`, ''),
+          );
+          result[keyPart] = rec;
+        }
       }
     });
     return result;
@@ -243,7 +261,8 @@ export abstract class BaseRedisStorage implements IStorage {
     const val = await this.withRetry(() =>
       this.client.get(this.favKey(userName, key)),
     );
-    return val ? (JSON.parse(val) as Favorite) : null;
+    const strVal = ensureRedisString(val);
+    return strVal ? (JSON.parse(strVal) as Favorite) : null;
   }
 
   async setFavorite(
@@ -269,9 +288,14 @@ export abstract class BaseRedisStorage implements IStorage {
     keys.forEach((fullKey: string, idx: number) => {
       const raw = values[idx];
       if (raw) {
-        const fav = JSON.parse(raw) as Favorite;
-        const keyPart = ensureString(fullKey.replace(`u:${userName}:fav:`, ''));
-        result[keyPart] = fav;
+        const strRaw = ensureRedisString(raw);
+        if (strRaw) {
+          const fav = JSON.parse(strRaw) as Favorite;
+          const keyPart = ensureString(
+            fullKey.replace(`u:${userName}:fav:`, ''),
+          );
+          result[keyPart] = fav;
+        }
       }
     });
     return result;
@@ -447,7 +471,8 @@ export abstract class BaseRedisStorage implements IStorage {
     const val = await this.withRetry(() =>
       this.client.get(this.adminConfigKey()),
     );
-    return val ? (JSON.parse(val) as AdminConfig) : null;
+    const strVal = ensureRedisString(val);
+    return strVal ? (JSON.parse(strVal) as AdminConfig) : null;
   }
 
   async setAdminConfig(config: AdminConfig): Promise<void> {
@@ -469,7 +494,8 @@ export abstract class BaseRedisStorage implements IStorage {
     const val = await this.withRetry(() =>
       this.client.get(this.episodeSkipConfigKey(userName, source, id)),
     );
-    return val ? (JSON.parse(val) as EpisodeSkipConfig) : null;
+    const strVal = ensureRedisString(val);
+    return strVal ? (JSON.parse(strVal) as EpisodeSkipConfig) : null;
   }
 
   async saveEpisodeSkipConfig(
@@ -514,13 +540,14 @@ export abstract class BaseRedisStorage implements IStorage {
     keys.forEach((key, index) => {
       const value = values[index];
       if (value) {
-        // 从key中提取source+id
-        const match = key.match(/^u:.+?:episodeskip:(.+)$/);
-        if (match) {
-          const sourceAndId = match[1];
-          configs[sourceAndId] = JSON.parse(
-            value as string,
-          ) as EpisodeSkipConfig;
+        const strValue = ensureRedisString(value);
+        if (strValue) {
+          // 从key中提取source+id
+          const match = key.match(/^u:.+?:episodeskip:(.+)$/);
+          if (match) {
+            const sourceAndId = match[1];
+            configs[sourceAndId] = JSON.parse(strValue) as EpisodeSkipConfig;
+          }
         }
       }
     });
@@ -876,8 +903,9 @@ export abstract class BaseRedisStorage implements IStorage {
         try {
           const loginStatsKey = `user_login_stats:${userName}`;
           const storedLoginStats = await this.client.get(loginStatsKey);
-          if (storedLoginStats) {
-            const parsed = JSON.parse(storedLoginStats);
+          const strStats = ensureRedisString(storedLoginStats);
+          if (strStats) {
+            const parsed = JSON.parse(strStats);
             loginStats = {
               loginCount: parsed.loginCount || 0,
               firstLoginTime: parsed.firstLoginTime || 0,
@@ -962,8 +990,9 @@ export abstract class BaseRedisStorage implements IStorage {
       try {
         const loginStatsKey = `user_login_stats:${userName}`;
         const storedLoginStats = await this.client.get(loginStatsKey);
-        if (storedLoginStats) {
-          const parsed = JSON.parse(storedLoginStats);
+        const strStats = ensureRedisString(storedLoginStats);
+        if (strStats) {
+          const parsed = JSON.parse(strStats);
           loginStats = {
             loginCount: parsed.loginCount || 0,
             firstLoginTime: parsed.firstLoginTime || 0,
@@ -1118,8 +1147,9 @@ export abstract class BaseRedisStorage implements IStorage {
 
       // 获取当前登入统计数据
       const currentStats = await this.client.get(loginStatsKey);
-      const loginStats = currentStats
-        ? JSON.parse(currentStats)
+      const strStats = ensureRedisString(currentStats);
+      const loginStats = strStats
+        ? JSON.parse(strStats)
         : {
             loginCount: 0,
             firstLoginTime: null,
@@ -1164,7 +1194,8 @@ export abstract class BaseRedisStorage implements IStorage {
     try {
       const key = `user:last_activity:${userName}`;
       const lastActivity = await this.withRetry(() => this.client.get(key));
-      return lastActivity ? parseInt(lastActivity, 10) : 0;
+      const strActivity = ensureRedisString(lastActivity);
+      return strActivity ? parseInt(strActivity, 10) : 0;
     } catch (error) {
       logger.error(`获取用户 ${userName} 活动时间失败:`, error);
       return 0;
@@ -1176,7 +1207,8 @@ export abstract class BaseRedisStorage implements IStorage {
     try {
       const key = 'comments';
       const data = await this.withRetry(() => this.client.get(key));
-      return data ? JSON.parse(data) : [];
+      const strData = ensureRedisString(data);
+      return strData ? JSON.parse(strData) : [];
     } catch (error) {
       logger.error('获取评论失败:', error);
       return [];
@@ -1274,8 +1306,9 @@ export abstract class BaseRedisStorage implements IStorage {
     try {
       const key = 'owner_config';
       const data = await this.withRetry(() => this.client.get(key));
-      return data
-        ? JSON.parse(data)
+      const strData = ensureRedisString(data);
+      return strData
+        ? JSON.parse(strData)
         : { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
     } catch (error) {
       logger.error('获取站长配置失败:', error);

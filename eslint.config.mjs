@@ -1,6 +1,5 @@
 import js from '@eslint/js';
 import nextConfig from 'eslint-config-next';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
@@ -152,7 +151,6 @@ export default [
       },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       'simple-import-sort': simpleImportSort,
@@ -169,19 +167,6 @@ export default [
       'no-console': 'warn',
       'no-undef': 'error',
 
-      // TypeScript 规则
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        {
-          vars: 'all',
-          varsIgnorePattern: '^_',
-          args: 'after-used',
-          argsIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-
       // React 规则
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
@@ -195,8 +180,6 @@ export default [
       // React Hooks 规则
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-
-      
 
       // Import 排序规则
       'unused-imports/no-unused-imports': 'warn',
@@ -236,6 +219,14 @@ export default [
           ],
         },
       ],
+    },
+  },
+  // 单独的 TypeScript 配置，覆盖 eslint-config-next 的默认规则
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
     },
   },
 ];

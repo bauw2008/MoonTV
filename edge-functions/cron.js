@@ -19,12 +19,13 @@ export default {
       });
 
       if (!response.ok) {
-        throw new Error(`Cron API returned ${response.status}: ${response.statusText}`);
+        throw new Error(
+          `Cron API returned ${response.status}: ${response.statusText}`,
+        );
       }
 
       const result = await response.json();
       console.log('Cron job completed successfully:', result);
-
     } catch (error) {
       console.error('Cron job failed:', error);
       throw error;
@@ -58,26 +59,31 @@ export default {
 
       const result = await response.json();
 
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'Cron job executed via Edge Function',
-        timestamp: new Date().toISOString(),
-        result,
-      }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: response.status,
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Cron job executed via Edge Function',
+          timestamp: new Date().toISOString(),
+          result,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          status: response.status,
+        },
+      );
     } catch (error) {
-      return new Response(JSON.stringify({
-        success: false,
-        message: 'Cron job failed',
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 500,
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Cron job failed',
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          status: 500,
+        },
+      );
     }
   },
 };
