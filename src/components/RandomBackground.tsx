@@ -17,13 +17,10 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
   useEffect(() => {
     // 随机图片API列表
     const randomImageApis = [
-      'https://cdn.seovx.com/?mom=302', // 美图
-      'https://cdn.seovx.com/ha/?mom=302', // 古风
-      'https://cdn.seovx.com/d/?mom=302', // 二次元
-      //'https://picsum.photos/1920/1080?random=1',
-      //'https://source.unsplash.com/random/1920x1080/?nature,landscape',
-      //'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop',
-      //'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1920&h=1080&fit=crop',
+      //'https://cdn.seovx.com/?mom=302', // 美图
+      //'https://cdn.seovx.com/ha/?mom=302', // 古风
+      //'https://cdn.seovx.com/d/?mom=302', // 二次元
+      'https://edgeone-picture.edgeone.app/api/random',
     ];
 
     // 备用图片地址
