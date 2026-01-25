@@ -373,30 +373,30 @@ export async function getConfig(): Promise<AdminConfig> {
   try {
     adminConfig = await db.getAdminConfig();
   } catch (e) {
-    // 获取管理员配置失败
+    // 获取管理员配置失败（连接问题、网络问题等）
     logger.error('获取管理员配置失败:', e);
     logger.error('错误详情:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
-    // 🔥 关键修复：网络错误时使用缓存的配置，避免误触发初始化逻辑
+    // 连接失败时使用缓存的配置，避免误触发初始化逻辑
     if (cachedConfig) {
-      logger.warn('网络错误，使用缓存的配置');
+      logger.warn('数据库连接失败，使用缓存的配置');
       return cachedConfig;
     }
-    // 如果没有缓存，返回 null，让调用方处理
-    return null as any;
+    // 如果没有缓存，抛出错误
+    throw new Error('无法读取配置，请检查数据库连接');
   }
 
-  // db 中无配置，执行一次初始化
+  // db 中无配置（第一次构建）
   if (!adminConfig) {
-    logger.warn('数据库中没有配置，使用默认配置');
+    logger.warn('数据库中没有配置，执行初始化');
     adminConfig = await getInitConfig('');
     adminConfig = configSelfCheck(adminConfig);
     cachedConfig = adminConfig;
     // 保存初始化配置到数据库
     try {
       await db.saveAdminConfig(cachedConfig);
-      // 初始化配置已保存到数据库
-    } catch {
-      // 保存初始化配置到数据库失败
+      logger.info('初始化配置已保存到数据库');
+    } catch (saveError) {
+      logger.error('保存初始化配置到数据库失败:', saveError);
     }
   } else {
     adminConfig = configSelfCheck(adminConfig);
