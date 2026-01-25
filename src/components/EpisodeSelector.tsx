@@ -1,12 +1,6 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
@@ -66,7 +60,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const router = useRouter();
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
 
-  // 使用 useMemo 初始化 videoInfoMap 和 attemptedSources，避免在 useEffect 中同步 setState
+  // 初始化 videoInfoMap 和 attemptedSources
   const [videoInfoMap, setVideoInfoMap] = useState<Map<string, VideoInfo>>(
     () => {
       if (precomputedVideoInfo && precomputedVideoInfo.size > 0) {
@@ -116,12 +110,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const [descending, setDescending] = useState<boolean>(false);
 
   // 根据 descending 状态计算实际显示的分页索引
-  const displayPage = useMemo(() => {
-    if (descending) {
-      return pageCount - 1 - currentPage;
-    }
-    return currentPage;
-  }, [currentPage, descending, pageCount]);
+  const displayPage = descending ? pageCount - 1 - currentPage : currentPage;
 
   // 获取视频信息的函数 - 移除 attemptedSources 依赖避免不必要的重新创建
   const getVideoInfo = useCallback(async (source: SearchResult) => {
@@ -250,24 +239,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, [activeTab, availableSources, getVideoInfo, optimizationEnabled]);
 
   // 升序分页标签
-  const categoriesAsc = useMemo(() => {
-    return Array.from({ length: pageCount }, (_, i) => {
-      const start = i * episodesPerPage + 1;
-      const end = Math.min(start + episodesPerPage - 1, totalEpisodes);
-      return { start, end };
-    });
-  }, [pageCount, episodesPerPage, totalEpisodes]);
+  const categoriesAsc = Array.from({ length: pageCount }, (_, i) => {
+    const start = i * episodesPerPage + 1;
+    const end = Math.min(start + episodesPerPage - 1, totalEpisodes);
+    return { start, end };
+  });
 
   // 根据 descending 状态决定分页标签的排序和内容
-  const categories = useMemo(() => {
-    if (descending) {
-      // 倒序时，label 也倒序显示
-      return [...categoriesAsc]
-        .reverse()
-        .map(({ start, end }) => `${end}-${start}`);
-    }
-    return categoriesAsc.map(({ start, end }) => `${start}-${end}`);
-  }, [categoriesAsc, descending]);
+  const categories = descending
+    ? [...categoriesAsc].reverse().map(({ start, end }) => `${end}-${start}`)
+    : categoriesAsc.map(({ start, end }) => `${start}-${end}`);
 
   const categoryContainerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -353,31 +334,22 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     setActiveTab('sources');
   };
 
-  const handleCategoryClick = useCallback(
-    (index: number) => {
-      if (descending) {
-        // 在倒序时，需要将显示索引转换为实际索引
-        setCurrentPage(pageCount - 1 - index);
-      } else {
-        setCurrentPage(index);
-      }
-    },
-    [descending, pageCount],
-  );
+  const handleCategoryClick = (index: number) => {
+    if (descending) {
+      // 在倒序时，需要将显示索引转换为实际索引
+      setCurrentPage(pageCount - 1 - index);
+    } else {
+      setCurrentPage(index);
+    }
+  };
 
-  const handleEpisodeClick = useCallback(
-    (episodeNumber: number) => {
-      onChange?.(episodeNumber);
-    },
-    [onChange],
-  );
+  const handleEpisodeClick = (episodeNumber: number) => {
+    onChange?.(episodeNumber);
+  };
 
-  const handleSourceClick = useCallback(
-    (source: SearchResult) => {
-      onSourceChange?.(source.source, source.id, source.title);
-    },
-    [onSourceChange],
-  );
+  const handleSourceClick = (source: SearchResult) => {
+    onSourceChange?.(source.source, source.id, source.title);
+  };
 
   const currentStart = currentPage * episodesPerPage + 1;
   const currentEnd = Math.min(

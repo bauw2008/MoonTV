@@ -37,9 +37,6 @@ export async function POST(request: NextRequest) {
         showLive: boolean;
         showTvbox: boolean;
         showShortDrama: boolean;
-        showAI: boolean;
-        showNetDiskSearch: boolean;
-        showTMDBActorSearch: boolean;
       };
     };
 
@@ -52,10 +49,7 @@ export async function POST(request: NextRequest) {
       typeof MenuSettings?.showVariety !== 'boolean' ||
       typeof MenuSettings?.showLive !== 'boolean' ||
       typeof MenuSettings?.showTvbox !== 'boolean' ||
-      typeof MenuSettings?.showShortDrama !== 'boolean' ||
-      typeof MenuSettings?.showAI !== 'boolean' ||
-      typeof MenuSettings?.showNetDiskSearch !== 'boolean' ||
-      typeof MenuSettings?.showTMDBActorSearch !== 'boolean'
+      typeof MenuSettings?.showShortDrama !== 'boolean'
     ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }

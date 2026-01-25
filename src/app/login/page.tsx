@@ -1,64 +1,44 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useActionState, useEffect, useState } from 'react';
 
-import { logger } from '@/lib/logger';
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
+
+import { loginAction } from '@/app/auth/actions';
 
 function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [shouldAskUsername] = useState(true);
+
+  // 根据存储类型决定是否需要用户名
+  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+  const shouldAskUsername = storageType !== 'localstorage';
 
   const { siteName } = useSite();
 
-  // 两种模式都支持独立用户名
+  const [state, formAction, isPending] = useActionState(loginAction, {
+    error: null,
+  });
+
+  // 登录成功后跳转 - 检查实际的认证状态
   useEffect(() => {
-    // 不设置默认用户名，让用户自己输入
-    setUsername('');
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!password || (shouldAskUsername && !username)) return;
-
-    try {
-      setLoading(true);
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password,
-          ...(shouldAskUsername ? { username } : {}),
-        }),
-      });
-
-      if (res.ok) {
+    const checkAuthAndRedirect = () => {
+      const auth = getAuthInfoFromBrowserCookie();
+      // 只有在已登录且没有错误时才跳转
+      if (auth && !state.error && !isPending) {
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
-      } else if (res.status === 401) {
-        setError('密码错误');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? '服务器错误');
       }
-    } catch (error) {
-      logger.error('登录请求失败:', error);
-      setError('网络错误，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    checkAuthAndRedirect();
+  }, [state.error, isPending, router, searchParams]);
 
   return (
     <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
@@ -75,52 +55,66 @@ function LoginPageClient() {
         <h1 className='text-white dark:text-gray-100 tracking-tight text-center text-2xl font-extrabold mb-6 bg-clip-text drop-shadow-sm'>
           {siteName}
         </h1>
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form action={formAction} className='space-y-6'>
+          {state.error && (
+            <div className='rounded-lg bg-red-500/20 p-4 text-sm text-red-200 backdrop-blur-sm'>
+              {state.error}
+            </div>
+          )}
+
           {shouldAskUsername && (
             <div>
-              <label htmlFor='username' className='sr-only'>
+              <label
+                htmlFor='username'
+                className='block text-sm font-medium text-white'
+              >
                 用户名
               </label>
               <input
                 id='username'
+                name='username'
                 type='text'
-                autoComplete='username'
-                className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-sm bg-white/90 dark:bg-gray-800/90 backdrop-blur'
-                placeholder='输入用户名'
+                required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                className='mt-1 block w-full rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm focus:bg-white/20 focus:ring-2 focus:ring-white/50'
+                placeholder='请输入用户名'
               />
             </div>
           )}
 
           <div>
-            <label htmlFor='password' className='sr-only'>
+            <label
+              htmlFor='password'
+              className='block text-sm font-medium text-white'
+            >
               密码
             </label>
             <input
               id='password'
+              name='password'
               type='password'
-              autoComplete='current-password'
-              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-sm bg-white/90 dark:bg-gray-800/90 backdrop-blur'
-              placeholder='输入访问密码 (至少3位)'
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className='mt-1 block w-full rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm focus:bg-white/20 focus:ring-2 focus:ring-white/50'
+              placeholder='请输入密码'
             />
           </div>
 
-          {error && (
+          {state.error && (
             <p className='text-sm text-red-300 dark:text-red-400 bg-red-900/30 dark:bg-red-900/50 rounded-lg py-2 px-3 text-center'>
-              {error}
+              {state.error}
             </p>
           )}
 
           <button
             type='submit'
-            disabled={!password || loading || (shouldAskUsername && !username)}
+            disabled={isPending}
             className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
           >
             <span className='flex items-center justify-center'>
-              {loading ? (
+              {isPending ? (
                 <>
                   <svg
                     className='animate-spin h-5 w-5 text-white mr-2'

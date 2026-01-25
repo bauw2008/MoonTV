@@ -14,7 +14,7 @@ import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
-import VirtualVideoGrid from '@/components/VirtualVideoGrid';
+import { VirtualVideoGrid } from '@/components/VirtualVideoGrid';
 
 // ==================== 类型定义 ====================
 interface VideoSource {
@@ -481,9 +481,9 @@ function TVBoxPageContent() {
   };
 
   // 稳定的加载更多回调函数
-  const handleLoadMore = useCallback(() => {
+  const handleLoadMore = () => {
     setCurrentPage((prev) => prev + 1);
-  }, []);
+  };
 
   // ==================== 滚动加载更多（非虚拟化模式） ====================
   useEffect(() => {
@@ -680,17 +680,29 @@ function TVBoxPageContent() {
       lastFetchAtRef.current = Date.now();
     }
   }, [
+    setLoading,
+    setIsLoadingMore,
+    setVideos,
+    setFromCache,
+    selectedSource,
+    currentPage,
+    isSearchMode,
+    searchKeyword,
+    selectedPrimary,
+    selectedSecondary,
+  ]);
+
+  useEffect(() => {
+    fetchContent();
+  }, [
     selectedSource,
     currentPage,
     selectedPrimary,
     selectedSecondary,
     isSearchMode,
     searchKeyword,
+    fetchContent,
   ]);
-
-  useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
 
   // ==================== 事件处理 ====================
   const handleSourceChange = (key: string) => {
@@ -900,7 +912,6 @@ function TVBoxPageContent() {
         {useVirtualization ? (
           <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
             <VirtualVideoGrid
-              ref={virtualGridRef}
               videos={videos}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}

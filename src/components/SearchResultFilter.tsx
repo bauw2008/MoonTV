@@ -5,7 +5,7 @@ import {
   ArrowUpDown,
   ArrowUpNarrowWide,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export type SearchFilterKey =
@@ -56,12 +56,10 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const mergedValues = useMemo(() => {
-    return {
-      ...DEFAULTS,
-      ...values,
-    } as Record<SearchFilterKey, string>;
-  }, [values]);
+  const mergedValues = {
+    ...DEFAULTS,
+    ...values,
+  } as Record<SearchFilterKey, string>;
 
   const calculateDropdownPosition = (categoryKey: SearchFilterKey) => {
     const element = categoryRefs.current[categoryKey];

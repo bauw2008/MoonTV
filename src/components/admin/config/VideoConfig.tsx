@@ -52,7 +52,13 @@ const SourceItem = ({
   onDelete: (key: string) => void;
   selected: boolean;
   onSelect: (key: string) => void;
-  validationResult?: any;
+  validationResult?: {
+    key: string;
+    name: string;
+    status: 'validating' | 'valid' | 'no_results' | 'invalid';
+    message: string;
+    resultCount: number;
+  };
 }) => {
   return (
     <div
@@ -196,7 +202,15 @@ function VideoConfigContent() {
   );
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResults, setValidationResults] = useState<any[]>([]);
+  const [validationResults, setValidationResults] = useState<
+    {
+      key: string;
+      name: string;
+      status: 'validating' | 'valid' | 'no_results' | 'invalid';
+      message: string;
+      resultCount: number;
+    }[]
+  >([]);
 
   const [newSource, setNewSource] = useState<DataSource>({
     name: '',
@@ -228,7 +242,13 @@ function VideoConfigContent() {
     loadConfig();
   }, [loadConfig]);
 
-  const callSourceApi = async (body: any) => {
+  const callSourceApi = async (body: {
+    action: string;
+    key?: string;
+    name?: string;
+    api?: string;
+    detail?: string;
+  }) => {
     try {
       const resp = await fetch('/api/admin/source', {
         method: 'POST',
@@ -430,24 +450,18 @@ function VideoConfigContent() {
   >('none');
 
   // 计算可见范围
-  const updateVisibleRange = useCallback(
-    (scrollTop: number) => {
-      const start = Math.floor(scrollTop / itemHeight);
-      const visibleCount = Math.ceil(containerHeight / itemHeight);
-      const end = Math.min(start + visibleCount + 5, sources.length); // +5 缓冲
+  const updateVisibleRange = (scrollTop: number) => {
+    const start = Math.floor(scrollTop / itemHeight);
+    const visibleCount = Math.ceil(containerHeight / itemHeight);
+    const end = Math.min(start + visibleCount + 5, sources.length); // +5 缓冲
 
-      setVisibleRange({ start: Math.max(0, start - 2), end }); // -2 预渲染
-    },
-    [containerHeight, sources.length, itemHeight],
-  );
+    setVisibleRange({ start: Math.max(0, start - 2), end }); // -2 预渲染
+  };
 
   // 滚动处理
-  const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      updateVisibleRange(e.currentTarget.scrollTop);
-    },
-    [updateVisibleRange],
-  );
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    updateVisibleRange(e.currentTarget.scrollTop);
+  };
 
   // 获取当前可见的视频源
   const getSortedSources = () => {

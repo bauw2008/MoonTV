@@ -1,5 +1,3 @@
-/* react-hooks/exhaustive-deps,@typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { Search, X } from 'lucide-react';
@@ -20,9 +18,27 @@ import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import ShortDramaSelector from '@/components/ShortDramaSelector';
 import VideoCard from '@/components/VideoCard';
-import VirtualDoubanGrid, {
-  VirtualDoubanGridRef,
-} from '@/components/VirtualDoubanGrid';
+import type { VirtualDoubanGridRef } from '@/components/VirtualDoubanGrid';
+import { VirtualDoubanGrid } from '@/components/VirtualDoubanGrid';
+
+// 定义全局窗口配置类型
+interface WindowConfig {
+  __DISABLED_MENUS?: {
+    showShortDrama?: boolean;
+    [key: string]: boolean | undefined;
+  };
+  RUNTIME_CONFIG?: {
+    AIConfig?: {
+      enabled?: boolean;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+}
+
+declare global {
+  interface Window extends WindowConfig {}
+}
 
 // 权限检查组件
 function ShortDramaPagePermissionCheck({
@@ -32,7 +48,7 @@ function ShortDramaPagePermissionCheck({
 }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      const disabledMenus = window.__DISABLED_MENUS || {};
       if (disabledMenus.showShortDrama) {
         window.location.href = '/';
       }
@@ -40,7 +56,7 @@ function ShortDramaPagePermissionCheck({
   }, []);
 
   if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    const disabledMenus = window.__DISABLED_MENUS || {};
     if (disabledMenus.showShortDrama) {
       return null;
     }
@@ -55,7 +71,7 @@ function ShortDramaPageClient() {
   // 功能启用状态（从全局配置读取）
   const isAIEnabled =
     typeof window !== 'undefined'
-      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
+      ? (window.RUNTIME_CONFIG?.AIConfig?.enabled ?? false)
       : false;
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
@@ -276,7 +292,7 @@ function ShortDramaPageClient() {
       setError(err instanceof Error ? err.message : '加载数据失败');
       setLoading(false);
     }
-  }, [shortDramaCategory, shortDramaType, showSearch]);
+  }, [showSearch, shortDramaCategory, shortDramaType]);
 
   // 只在选择器准备好后才加载数据
   useEffect(() => {
@@ -297,7 +313,7 @@ function ShortDramaPageClient() {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [selectorsReady, shortDramaCategory, shortDramaType, loadInitialData]);
+  }, [selectorsReady, loadInitialData]);
 
   // 加载更多数据
   useEffect(() => {
@@ -444,120 +460,105 @@ function ShortDramaPageClient() {
   }, [hasMore, isLoadingMore, loading, useVirtualization, showSearch]);
 
   // 处理选择器变化
-  const handleCategoryChange = useCallback(
-    (value: string | number) => {
-      const strValue = String(value);
-      if (strValue !== shortDramaCategory) {
-        setLoading(true);
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
-        setShortDramaCategory(strValue);
-      }
-    },
-    [shortDramaCategory],
-  );
+  const handleCategoryChange = (value: string | number) => {
+    const strValue = String(value);
+    if (strValue !== shortDramaCategory) {
+      setLoading(true);
+      setCurrentPage(0);
+      setDoubanData([]);
+      setHasMore(true);
+      setIsLoadingMore(false);
+      setShortDramaCategory(strValue);
+    }
+  };
 
-  const handleTypeChange = useCallback(
-    (value: string | number) => {
-      const strValue = String(value);
-      if (strValue !== shortDramaType) {
-        setLoading(true);
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
-        setShortDramaType(strValue);
-      }
-    },
-    [shortDramaType],
-  );
+  const handleTypeChange = (value: string | number) => {
+    const strValue = String(value);
+    if (strValue !== shortDramaType) {
+      setLoading(true);
+      setCurrentPage(0);
+      setDoubanData([]);
+      setHasMore(true);
+      setIsLoadingMore(false);
+      setShortDramaType(strValue);
+    }
+  };
 
   // 处理搜索
-  const handleSearch = useCallback(
-    async (query: string) => {
-      if (!query.trim()) {
-        // 如果搜索框为空，恢复正常显示
-        setShowSearch(false);
-        setSearchQuery('');
-        loadInitialData();
-        return;
-      }
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      // 如果搜索框为空，恢复正常显示
+      setShowSearch(false);
+      setSearchQuery('');
+      loadInitialData();
+      return;
+    }
 
-      try {
-        setIsSearching(true);
-        setLoading(true);
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
+    try {
+      setIsSearching(true);
+      setLoading(true);
+      setCurrentPage(0);
+      setDoubanData([]);
+      setHasMore(true);
+      setIsLoadingMore(false);
 
-        const result = await searchShortDramas(query, 1, 25);
+      const result = await searchShortDramas(query, 1, 25);
 
-        const data: DoubanResult = {
-          code: 200,
-          message: 'success',
-          list:
-            result.list?.map((item) => ({
-              id: item.id?.toString() || '',
-              title: item.name || '',
-              poster: item.cover || '',
-              rate: '',
-              year:
-                item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
-              type: 'shortdrama',
-              source: 'shortdrama',
-              videoId: item.id?.toString() || '',
-              source_name: '',
-            })) || [],
-        };
+      const data: DoubanResult = {
+        code: 200,
+        message: 'success',
+        list:
+          result.list?.map((item) => ({
+            id: item.id?.toString() || '',
+            title: item.name || '',
+            poster: item.cover || '',
+            rate: '',
+            year:
+              item.update_time?.split(/[\sT]/)?.[0]?.replace(/-/g, '.') || '',
+            type: 'shortdrama',
+            source: 'shortdrama',
+            videoId: item.id?.toString() || '',
+            source_name: '',
+          })) || [],
+      };
 
-        setDoubanData(data.list);
-        setHasMore(result.hasMore);
-        setLoading(false);
-      } catch (err) {
-        logger.error('搜索失败:', err);
-        setError(err instanceof Error ? err.message : '搜索失败');
-        setLoading(false);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [loadInitialData],
-  );
+      setDoubanData(data.list);
+      setHasMore(result.hasMore);
+      setLoading(false);
+    } catch (err) {
+      logger.error('搜索失败:', err);
+      setError(err instanceof Error ? err.message : '搜索失败');
+      setLoading(false);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // 处理搜索框输入
-  const handleSearchInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSearchQuery(value);
-    },
-    [],
-  );
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+  };
 
   // 处理搜索提交
-  const handleSearchSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      handleSearch(searchQuery);
-    },
-    [searchQuery, handleSearch],
-  );
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(searchQuery);
+  };
 
   // 关闭搜索
-  const handleCloseSearch = useCallback(() => {
+  const handleCloseSearch = () => {
     setShowSearch(false);
     setSearchQuery('');
     loadInitialData();
-  }, [loadInitialData]);
+  };
 
   // 处理虚拟化组件的加载更多请求
-  const handleVirtualLoadMore = useCallback(() => {
+  const handleVirtualLoadMore = () => {
     if (hasMore && !isLoadingMore) {
       setCurrentPage((prev) => prev + 1);
     }
-  }, [hasMore, isLoadingMore]);
+  };
 
   const getPageDescription = () => {
     if (showSearch && searchQuery) {

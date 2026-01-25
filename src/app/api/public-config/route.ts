@@ -36,9 +36,6 @@ export async function GET(request: NextRequest) {
         showLive: false,
         showTvbox: false,
         showShortDrama: false,
-        showAI: false,
-        showNetDiskSearch: false,
-        showTMDBActorSearch: false,
       },
       CustomCategories: config.CustomCategories || [],
     };

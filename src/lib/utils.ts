@@ -7,7 +7,9 @@ import { logger } from './logger';
 const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
 // iOS 设备检测 (包括 iPad 的新版本检测)
-const isIOS = /iPad|iPhone|iPod/i.test(userAgent) && !(window as any).MSStream; // eslint-disable-line @typescript-eslint/no-explicit-any
+const isIOS =
+  /iPad|iPhone|iPod/i.test(userAgent) &&
+  !(window as { MSStream?: boolean }).MSStream;
 const isIOS13Plus =
   isIOS ||
   (userAgent.includes('Macintosh') &&
@@ -90,14 +92,23 @@ function getDoubanImageProxyConfig(): {
 } {
   const doubanImageProxyType =
     localStorage.getItem('doubanImageProxyType') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || // eslint-disable-line @typescript-eslint/no-explicit-any
+    (window as { RUNTIME_CONFIG?: { DOUBAN_IMAGE_PROXY_TYPE?: string } })
+      .RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
     'cmliussss-cdn-tencent';
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || // eslint-disable-line @typescript-eslint/no-explicit-any
+    (window as { RUNTIME_CONFIG?: { DOUBAN_IMAGE_PROXY?: string } })
+      .RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
     '';
   return {
-    proxyType: doubanImageProxyType,
+    proxyType: doubanImageProxyType as
+      | 'direct'
+      | 'server'
+      | 'img3'
+      | 'cmliussss-cdn-tencent'
+      | 'cmliussss-cdn-ali'
+      | 'baidu-image'
+      | 'custom',
     proxyUrl: doubanImageProxy,
   };
 }

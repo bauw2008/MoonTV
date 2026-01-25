@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import {
@@ -66,6 +66,9 @@ function AIConfigContent() {
   // 所有状态定义必须在任何条件渲染之前
   const [, setConfig] = useState<unknown>(null);
 
+  // 使用 ref 跟踪是否已经加载过
+  const hasLoaded = useRef(false);
+
   // AI配置状态
   const [aiSettings, setAiSettings] = useState<AISettings>({
     enabled: false,
@@ -76,33 +79,34 @@ function AIConfigContent() {
     maxTokens: 3000,
   });
 
-  // 加载配置
-  const loadConfig = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/config');
-      const data = await response.json();
-      setConfig(data.Config);
-
-      if (data.Config?.AIRecommendConfig) {
-        setAiSettings({
-          enabled: data.Config.AIRecommendConfig.enabled ?? false,
-          apiUrl:
-            data.Config.AIRecommendConfig.apiUrl || 'https://api.openai.com/v1',
-          apiKey: data.Config.AIRecommendConfig.apiKey || '',
-          model: data.Config.AIRecommendConfig.model || 'gpt-3.5-turbo',
-          temperature: data.Config.AIRecommendConfig.temperature ?? 0.7,
-          maxTokens: data.Config.AIRecommendConfig.maxTokens ?? 3000,
-        });
-      }
-    } catch {
-      // logger.error('加载AI配置失败:', error);
-    }
-  }, []); // 空依赖数组
-
   // 初始化加载
   useEffect(() => {
-    withLoading('loadAIConfig', loadConfig);
-  }, [loadConfig, withLoading]); // 添加 withLoading 依赖
+    if (!hasLoaded.current) {
+      hasLoaded.current = true;
+      (async () => {
+        try {
+          const response = await fetch('/api/admin/config');
+          const data = await response.json();
+          setConfig(data.Config);
+
+          if (data.Config?.AIRecommendConfig) {
+            setAiSettings({
+              enabled: data.Config.AIRecommendConfig.enabled ?? false,
+              apiUrl:
+                data.Config.AIRecommendConfig.apiUrl ||
+                'https://api.openai.com/v1',
+              apiKey: data.Config.AIRecommendConfig.apiKey || '',
+              model: data.Config.AIRecommendConfig.model || 'gpt-3.5-turbo',
+              temperature: data.Config.AIRecommendConfig.temperature ?? 0.7,
+              maxTokens: data.Config.AIRecommendConfig.maxTokens ?? 3000,
+            });
+          }
+        } catch {
+          // logger.error('加载AI配置失败:', error);
+        }
+      })();
+    }
+  }, []);
 
   // 加载状态
   if (loading) {

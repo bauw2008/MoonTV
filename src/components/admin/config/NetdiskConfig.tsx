@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock, Save, Shield } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import {
@@ -28,6 +28,8 @@ function NetdiskConfigContent() {
     timeout: 5000,
     enabledCloudTypes: ['aliyun', '115', 'quark'],
   });
+
+  const hasLoadedRef = useRef(false);
 
   // 加载配置
   const loadConfig = useCallback(async () => {
@@ -58,7 +60,10 @@ function NetdiskConfigContent() {
 
   // 初始化加载
   useEffect(() => {
-    withLoading('loadNetdiskConfig', loadConfig);
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      withLoading('loadNetdiskConfig', loadConfig);
+    }
   }, [loadConfig, withLoading]);
 
   // 加载状态

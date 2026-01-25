@@ -402,7 +402,10 @@ async function getCachedCategories(
       const data = await response.json();
       if (data.class && Array.isArray(data.class)) {
         let categories = data.class
-          .map((cat: any) => cat.type_name || cat.name) // eslint-disable-line @typescript-eslint/no-explicit-any
+          .map(
+            (cat: { type_name?: string; name?: string }) =>
+              cat.type_name || cat.name,
+          )
           .filter((name: string) => name);
 
         // 应用18+过滤器（使用搜索页面的逻辑）
@@ -1415,7 +1418,7 @@ export async function GET(request: NextRequest) {
           },
         ],
         maxHomeVideoContent: '20',
-      } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      };
     }
 
     // 添加 Spider 状态透明化字段（帮助诊断）

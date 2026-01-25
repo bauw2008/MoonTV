@@ -2,7 +2,7 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useActionState, useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 
@@ -10,39 +10,61 @@ import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+import { registerAction } from '@/app/auth/actions';
+
 function RegisterPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [shouldShowRegister, setShouldShowRegister] = useState(false);
   const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const [disabledReason, setDisabledReason] = useState('');
   const [reason, setReason] = useState('');
-  const [pending, setPending] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
 
   const { siteName } = useSite();
 
+  const [state, formAction, isPending] = useActionState(registerAction, {
+    error: null,
+    success: null,
+    pending: false,
+  });
+
+  // 注册成功后跳转
+  useEffect(() => {
+    if (state.success && !state.pending && !isPending) {
+      // 设置通知标记
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('last-pending-update', Date.now().toString());
+      }
+      setTimeout(() => {
+        const redirect = searchParams.get('redirect') || '/';
+        router.replace(redirect);
+      }, 1500);
+    }
+  }, [state.success, state.pending, isPending, router, searchParams]);
+
   // 在客户端挂载后设置配置
   useEffect(() => {
     const checkRegistrationAvailable = async () => {
       if (typeof window !== 'undefined') {
-        const storageType = (window as any).RUNTIME_CONFIG?.STORAGE_TYPE;
-        // localStorage 模式不支持注册
+        const storageType = (window as unknown as Record<string, unknown>)
+          .RUNTIME_CONFIG
+          ? ((
+              (window as unknown as Record<string, unknown>)
+                .RUNTIME_CONFIG as Record<string, unknown>
+            ).STORAGE_TYPE as string)
+          : undefined;
         if (storageType === 'localstorage') {
           router.replace('/login');
           return;
         }
 
         try {
-          // 使用公开的注册状态接口
           const response = await fetch('/api/registration');
           if (response.ok) {
             const data = await response.json();
@@ -57,7 +79,6 @@ function RegisterPageClient() {
           setShouldShowRegister(true);
         } catch (error) {
           logger.error('检查注册可用性失败:', error);
-          // 网络错误也显示注册页面
           setShouldShowRegister(true);
         }
       }
@@ -67,7 +88,7 @@ function RegisterPageClient() {
   }, [router]);
 
   // 实时表单验证
-  const validateForm = () => {
+  const _validateForm = () => {
     const errors: { [key: string]: string } = {};
 
     if (!username.trim()) {
@@ -163,56 +184,6 @@ function RegisterPageClient() {
     setValidationErrors(errors);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, confirmPassword, reason }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        // 显示成功消息，稍等一下再跳转
-        setError(null);
-        if (data?.pending) {
-          setPending(true);
-          setSuccess('已提交注册申请，等待管理员审核');
-
-          // 如果服务器返回通知标记，设置时间戳
-          if (data.notifyAdmin) {
-            localStorage.setItem('last-pending-update', Date.now().toString());
-          }
-        } else {
-          setSuccess('注册成功！正在跳转...');
-
-          // 给用户一个成功提示，然后再跳转
-          setTimeout(() => {
-            const redirect = searchParams.get('redirect') || '/';
-            router.replace(redirect);
-          }, 1500); // 1.5秒后跳转，让用户看到成功消息
-        }
-      } else {
-        const data = await res.json();
-        setError(data.error ?? '注册失败');
-      }
-    } catch (error) {
-      logger.error('注册请求失败:', error);
-      setError('网络错误，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!shouldShowRegister) {
     return <div>Loading...</div>;
   }
@@ -278,24 +249,25 @@ function RegisterPageClient() {
           注册账号
         </h1>
 
-        {pending ? (
+        {state.pending ? (
           <div className='text-center space-y-4'>
             <CheckCircle className='w-16 h-16 text-green-400 mx-auto' />
             <p className='text-white dark:text-gray-100 font-medium'>
-              {success}
+              {state.success}
             </p>
             <p className='text-sm text-gray-300 dark:text-gray-400'>
               请等待管理员审核
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className='space-y-4'>
+          <form action={formAction} className='space-y-4'>
             <div>
               <label htmlFor='username' className='sr-only'>
                 用户名
               </label>
               <input
                 id='username'
+                name='username'
                 type='text'
                 autoComplete='username'
                 className={`block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-sm bg-white/90 dark:bg-gray-800/90 backdrop-blur ${
@@ -316,6 +288,7 @@ function RegisterPageClient() {
               </label>
               <input
                 id='password'
+                name='password'
                 type='password'
                 autoComplete='new-password'
                 className={`block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-sm bg-white/90 dark:bg-gray-800/90 backdrop-blur ${
@@ -336,6 +309,7 @@ function RegisterPageClient() {
               </label>
               <input
                 id='confirmPassword'
+                name='confirmPassword'
                 type='password'
                 autoComplete='new-password'
                 className={`block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/90 dark:bg-gray-800/90 backdrop-blur ${
@@ -356,6 +330,7 @@ function RegisterPageClient() {
               </label>
               <textarea
                 id='reason'
+                name='reason'
                 rows={3}
                 className='block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-gray-600/60 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-sm bg-white/90 dark:bg-gray-800/90 backdrop-blur resize-none'
                 placeholder='请简要说明注册理由（填写暗号可以更快通过哟~）'
@@ -365,9 +340,9 @@ function RegisterPageClient() {
               />
             </div>
 
-            {error && (
+            {state.error && (
               <p className='text-sm text-red-300 dark:text-red-400 bg-red-900/30 dark:bg-red-900/50 rounded-lg py-2 px-3 text-center border border-red-700/50'>
-                {error}
+                {state.error}
               </p>
             )}
 
@@ -395,19 +370,19 @@ function RegisterPageClient() {
               </p>
             )}
 
-            {success && (
+            {state.success && !state.pending && (
               <p className='text-sm text-green-300 dark:text-green-400 bg-green-900/30 dark:bg-green-900/50 rounded-lg py-2 px-3 text-center border border-green-700/50'>
-                {success}
+                {state.success}
               </p>
             )}
 
             <button
               type='submit'
-              disabled={loading}
+              disabled={isPending}
               className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
             >
               <span className='flex items-center justify-center'>
-                {loading ? (
+                {isPending ? (
                   <>
                     <svg
                       className='animate-spin h-5 w-5 text-white mr-2'

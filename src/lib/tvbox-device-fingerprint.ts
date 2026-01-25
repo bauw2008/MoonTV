@@ -32,7 +32,7 @@ export function getDeviceInfo(): DeviceInfo {
     screenResolution: `${window.screen.width}x${window.screen.height}`,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
     hardwareConcurrency: navigator.hardwareConcurrency || 0,
-    deviceMemory: (navigator as any).deviceMemory || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
+    deviceMemory: (navigator as { deviceMemory?: number }).deviceMemory || 0,
   };
 }
 

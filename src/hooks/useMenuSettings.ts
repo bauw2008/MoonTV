@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   getMenuSettings,
@@ -66,62 +66,56 @@ export function useMenuSettings() {
     };
   }, [storageType, showToast]);
 
-  const updateMenuSettings = useCallback(
-    (newSettings: Partial<typeof menuSettings>) => {
-      updateMenuSettingsGlobal(newSettings);
-      setMenuSettings(getMenuSettings()); // 立即更新本地状态
-    },
-    [],
-  );
+  const updateMenuSettings = (newSettings: Partial<typeof menuSettings>) => {
+    updateMenuSettingsGlobal(newSettings);
+    setMenuSettings(getMenuSettings()); // 立即更新本地状态
+  };
 
-  const toggleMenu = useCallback(
-    (menuKey: keyof typeof menuSettings) => {
-      const newSettings = {
-        ...menuSettings,
-        [menuKey]: !menuSettings[menuKey],
-      };
-      updateMenuSettingsGlobal(newSettings);
-      setMenuSettings(newSettings);
+  const toggleMenu = (menuKey: keyof typeof menuSettings) => {
+    const newSettings = {
+      ...menuSettings,
+      [menuKey]: !menuSettings[menuKey],
+    };
+    updateMenuSettingsGlobal(newSettings);
+    setMenuSettings(newSettings);
 
-      // localstorage 模式：立即通知配置更新
-      if (storageType === 'localstorage') {
-        notifyConfigUpdated();
-      }
+    // localstorage 模式：立即通知配置更新
+    if (storageType === 'localstorage') {
+      notifyConfigUpdated();
+    }
 
-      // 触发自定义事件，通知其他组件更新
-      window.dispatchEvent(
-        new CustomEvent('vidora-config-update', {
-          bubbles: true,
-          composed: true,
-          detail: { menuSettings: newSettings },
-        }),
-      );
-    },
-    [menuSettings, storageType],
-  );
+    // 触发自定义事件，通知其他组件更新
+    window.dispatchEvent(
+      new CustomEvent('vidora-config-update', {
+        bubbles: true,
+        composed: true,
+        detail: { menuSettings: newSettings },
+      }),
+    );
+  };
 
-  const setMenuEnabled = useCallback(
-    (menuKey: keyof typeof menuSettings, enabled: boolean) => {
-      const newSettings = { ...menuSettings, [menuKey]: enabled };
-      updateMenuSettingsGlobal(newSettings);
-      setMenuSettings(newSettings);
+  const setMenuEnabled = (
+    menuKey: keyof typeof menuSettings,
+    enabled: boolean,
+  ) => {
+    const newSettings = { ...menuSettings, [menuKey]: enabled };
+    updateMenuSettingsGlobal(newSettings);
+    setMenuSettings(newSettings);
 
-      // localstorage 模式：立即通知配置更新
-      if (storageType === 'localstorage') {
-        notifyConfigUpdated();
-      }
+    // localstorage 模式：立即通知配置更新
+    if (storageType === 'localstorage') {
+      notifyConfigUpdated();
+    }
 
-      // 触发自定义事件，通知其他组件更新
-      window.dispatchEvent(
-        new CustomEvent('vidora-config-update', {
-          bubbles: true,
-          composed: true,
-          detail: { menuSettings: newSettings },
-        }),
-      );
-    },
-    [menuSettings, storageType],
-  );
+    // 触发自定义事件，通知其他组件更新
+    window.dispatchEvent(
+      new CustomEvent('vidora-config-update', {
+        bubbles: true,
+        composed: true,
+        detail: { menuSettings: newSettings },
+      }),
+    );
+  };
 
   return {
     menuSettings,

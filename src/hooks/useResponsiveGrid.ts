@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 interface GridDimensions {
   columnCount: number;
@@ -17,8 +17,13 @@ export const useResponsiveGrid = (
     containerWidth: 450,
   });
 
-  const calculateDimensions = useCallback(
-    (width?: number) => {
+  useLayoutEffect(() => {
+    // 使用递归重试机制
+    let cleanup: (() => void) | null = null;
+    let retryCount = 0;
+    const maxRetries = 20; // 减少到20次，200ms足够
+
+    const calculateDimensions = (width?: number) => {
       let containerWidth: number;
 
       if (width !== undefined) {
@@ -78,15 +83,7 @@ export const useResponsiveGrid = (
         itemHeight,
         containerWidth,
       });
-    },
-    [containerRef],
-  );
-
-  useLayoutEffect(() => {
-    // 使用递归重试机制
-    let cleanup: (() => void) | null = null;
-    let retryCount = 0;
-    const maxRetries = 20; // 减少到20次，200ms足够
+    };
 
     const setupObserver = () => {
       retryCount++;
@@ -144,7 +141,7 @@ export const useResponsiveGrid = (
         cleanup();
       }
     };
-  }, [containerRef, calculateDimensions]);
+  }, [containerRef]);
 
   return dimensions;
 };

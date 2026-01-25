@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import PageLayout from '@/components/PageLayout';
 
@@ -32,7 +32,7 @@ export default function TVBoxConfigPage() {
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [showDeviceList, setShowDeviceList] = useState(false);
 
-  const fetchSecurityConfig = useCallback(async () => {
+  async function fetchSecurityConfig() {
     try {
       const response = await fetch('/api/tvbox-config');
 
@@ -58,9 +58,9 @@ export default function TVBoxConfigPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  const fetchDevices = useCallback(async () => {
+  async function fetchDevices() {
     try {
       setDevicesLoading(true);
       const response = await fetch('/api/tvbox-config/devices');
@@ -73,52 +73,49 @@ export default function TVBoxConfigPage() {
     } finally {
       setDevicesLoading(false);
     }
-  }, []);
+  }
 
-  const unbindDevice = useCallback(
-    async (deviceId: string) => {
-      try {
-        const response = await fetch('/api/tvbox-config/devices', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ deviceId }),
-        });
+  async function unbindDevice(deviceId: string) {
+    try {
+      const response = await fetch('/api/tvbox-config/devices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deviceId }),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            // 重新获取设备列表
-            await fetchDevices();
-            // 重新获取安全配置以更新设备数量显示
-            await fetchSecurityConfig();
-            return true;
-          }
-          throw new Error(data.error || '解绑失败');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // 重新获取设备列表
+          await fetchDevices();
+          // 重新获取安全配置以更新设备数量显示
+          await fetchSecurityConfig();
+          return true;
         }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || '解绑失败');
-      } catch (error) {
-        logger.error('解绑设备失败:', error);
-        alert(error instanceof Error ? error.message : '解绑设备失败');
-        return false;
+        throw new Error(data.error || '解绑失败');
       }
-    },
-    [fetchDevices, fetchSecurityConfig],
-  );
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || '解绑失败');
+    } catch (error) {
+      logger.error('解绑设备失败:', error);
+      alert(error instanceof Error ? error.message : '解绑设备失败');
+      return false;
+    }
+  }
 
   useEffect(() => {
     fetchSecurityConfig();
-  }, [fetchSecurityConfig]);
+  }, []);
 
   useEffect(() => {
     if (securityConfig?.enableDeviceBinding) {
       fetchDevices();
     }
-  }, [securityConfig?.enableDeviceBinding, fetchDevices]);
+  }, [securityConfig?.enableDeviceBinding]);
 
-  const getConfigUrl = useCallback(() => {
+  function getConfigUrl() {
     if (typeof window === 'undefined') {
       return '';
     }
@@ -137,7 +134,7 @@ export default function TVBoxConfigPage() {
     }
 
     return `${baseUrl}/api/tvbox?${params.toString()}`;
-  }, [format, configMode, securityConfig]);
+  }
 
   return (
     <PageLayout activePath='/tvbox'>

@@ -5,7 +5,7 @@
 
 import { MenuSettings } from '@/types/menu';
 
-interface CustomCategory {
+export interface CustomCategory {
   name: string;
   type: 'movie' | 'tv';
   query: string;

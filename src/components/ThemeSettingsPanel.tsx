@@ -412,7 +412,7 @@ export const ThemeSettingsPanel: React.FC<{
 
           // 强制触发重绘，确保主题应用生效
           document.body.style.display = 'none';
-          document.body.offsetHeight; // 触发重排
+          void document.body.offsetHeight; // 触发重排
           document.body.style.display = '';
         });
       }
@@ -939,11 +939,11 @@ export const ThemeSettingsPanel: React.FC<{
       // 强制触发重绘，确保主题应用生效
       requestAnimationFrame(() => {
         document.body.style.display = 'none';
-        document.body.offsetHeight; // 触发重排
+        void document.body.offsetHeight; // 触发重排
         document.body.style.display = '';
       });
     }
-  }, [mounted, resolvedTheme, settings]);
+  }, [settings, resolvedTheme, mounted]);
 
   useEffect(() => {
     if (mounted) {
@@ -1221,7 +1221,7 @@ export const ThemeSettingsPanel: React.FC<{
 
         // 强制触发重绘，确保主题应用生效
         document.body.style.display = 'none';
-        document.body.offsetHeight; // 触发重排
+        void document.body.offsetHeight; // 触发重排
         document.body.style.display = '';
       });
     }

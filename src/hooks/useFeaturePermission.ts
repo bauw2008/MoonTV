@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
@@ -31,47 +25,41 @@ export function useFeaturePermission() {
   });
   const [loading, setLoading] = useState(true);
 
-  const checkPermission = useCallback(
-    async (feature: FeatureType): Promise<boolean> => {
-      try {
-        const authInfo = getAuthInfoFromBrowserCookie();
-        if (!authInfo || !authInfo.username) {
-          return false;
-        }
-
-        const timestamp = Date.now();
-        const url = `/api/check-permission?feature=${feature}&_t=${timestamp}`;
-
-        const response = await fetch(url, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            Pragma: 'no-cache',
-            Expires: '0',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return data.hasPermission || false;
-        }
-
-        return false;
-      } catch (error) {
-        logger.error(`[useFeaturePermission] 检查 ${feature} 权限失败:`, error);
+  async function checkPermission(feature: FeatureType): Promise<boolean> {
+    try {
+      const authInfo = getAuthInfoFromBrowserCookie();
+      if (!authInfo || !authInfo.username) {
         return false;
       }
-    },
-    [],
-  );
 
-  const hasPermission = useCallback(
-    (feature: FeatureType): boolean => {
-      return permissions[feature];
-    },
-    [permissions],
-  );
+      const timestamp = Date.now();
+      const url = `/api/check-permission?feature=${feature}&_t=${timestamp}`;
 
-  const refreshPermissions = useCallback(async () => {
+      const response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.hasPermission || false;
+      }
+
+      return false;
+    } catch (error) {
+      logger.error(`[useFeaturePermission] 检查 ${feature} 权限失败:`, error);
+      return false;
+    }
+  }
+
+  function hasPermission(feature: FeatureType): boolean {
+    return permissions[feature];
+  }
+
+  async function refreshPermissions() {
     setLoading(true);
     try {
       const features: FeatureType[] = [
@@ -102,11 +90,43 @@ export function useFeaturePermission() {
     } finally {
       setLoading(false);
     }
-  }, [checkPermission]);
+  }
 
   useEffect(() => {
-    refreshPermissions();
-  }, [refreshPermissions]);
+    async function loadPermissions() {
+      setLoading(true);
+      try {
+        const features: FeatureType[] = [
+          'ai-recommend',
+          'disable-yellow-filter',
+          'netdisk-search',
+          'tmdb-actor-search',
+        ];
+
+        const results = await Promise.all(
+          features.map(async (feature) => {
+            const hasPermission = await checkPermission(feature);
+            return { feature, hasPermission };
+          }),
+        );
+
+        const newPermissions: Partial<FeaturePermissions> = {};
+        results.forEach(({ feature, hasPermission }) => {
+          newPermissions[feature] = hasPermission;
+        });
+
+        setPermissions((prev) => ({
+          ...prev,
+          ...newPermissions,
+        }));
+      } catch (error) {
+        logger.error('[useFeaturePermission] 刷新权限失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPermissions();
+  }, []);
 
   // 使用 ref 存储最新的 refreshPermissions 函数
   const refreshPermissionsRef = useRef(refreshPermissions);

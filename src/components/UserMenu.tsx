@@ -2,7 +2,6 @@
 
 import {
   BarChart3,
-  Calendar,
   Camera,
   Check,
   ChevronDown,
@@ -16,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactCrop, { Crop, PercentCrop, PixelCrop } from 'react-image-crop';
 
@@ -39,7 +38,7 @@ export const UserMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const user = useMemo(() => getAuthInfoFromBrowserCookie(), []);
+  const user = getAuthInfoFromBrowserCookie();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -220,11 +219,6 @@ export const UserMenu: React.FC = () => {
   const handlePlayStats = () => {
     setIsOpen(false);
     router.push('/play-stats');
-  };
-
-  const handleReleaseCalendar = () => {
-    setIsOpen(false);
-    router.push('/release-calendar');
   };
 
   const handleMessageBoard = () => {
@@ -732,15 +726,6 @@ export const UserMenu: React.FC = () => {
               </span>
             </button>
           )}
-
-          {/* 上映日程按钮 */}
-          <button
-            onClick={handleReleaseCalendar}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/20 transition-colors text-sm rounded-lg mx-1'
-          >
-            <Calendar className='w-4 h-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>上映日程</span>
-          </button>
 
           {/* 留言板按钮 */}
           <button

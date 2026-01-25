@@ -132,7 +132,19 @@ const PlayStatsPage: React.FC = () => {
   const { fetchWithAuth } = useAuthenticatedFetch();
 
   const [statsData, setStatsData] = useState<PlayStatsResult | null>(null);
-  const [userStats, setUserStats] = useState<any>(null);
+  const [userStats, setUserStats] = useState<{
+    username: string;
+    totalWatchTime: number;
+    totalPlays: number;
+    totalVideos: number;
+    recentRecords: PlayRecord[];
+    registrationDays?: number;
+    loginDays?: number;
+    totalMovies?: number;
+    totalSeries?: number;
+    avgWatchTime?: number;
+    mostWatchedSource?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -241,7 +253,7 @@ const PlayStatsPage: React.FC = () => {
         err instanceof Error ? err.message : '获取播放统计失败';
       setError(errorMessage);
     }
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, setError]);
 
   // 获取用户个人统计数据（带缓存）
   const fetchUserStats = useCallback(async () => {
@@ -286,7 +298,7 @@ const PlayStatsPage: React.FC = () => {
         err instanceof Error ? err.message : '获取个人统计失败';
       setError(errorMessage);
     }
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, setUserStats, setError]);
 
   // 根据用户角色获取数据
   const fetchStats = useCallback(async () => {
@@ -377,8 +389,11 @@ const PlayStatsPage: React.FC = () => {
   // 检查是否支持播放统计
   const storageType =
     typeof window !== 'undefined' &&
-    (window as any).RUNTIME_CONFIG?.STORAGE_TYPE
-      ? (window as any).RUNTIME_CONFIG.STORAGE_TYPE
+    (window as unknown as Record<string, unknown>).RUNTIME_CONFIG
+      ? ((
+          (window as unknown as Record<string, unknown>)
+            .RUNTIME_CONFIG as Record<string, unknown>
+        ).STORAGE_TYPE as string)
       : 'localstorage';
 
   useEffect(() => {
@@ -1036,7 +1051,7 @@ const PlayStatsPage: React.FC = () => {
                                 </h6>
                                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                                   {userStat.recentRecords.map(
-                                    (record: any, recordIndex) => {
+                                    (record: PlayRecord, recordIndex) => {
                                       // 为每条记录生成不同的渐变背景
                                       const recordGradients = [
                                         'from-slate-100/90 to-gray-200/80 dark:from-slate-800/80 dark:to-gray-700/70',

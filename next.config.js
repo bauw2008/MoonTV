@@ -2,9 +2,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const nextConfig = {
-  ...(process.env.VERCEL || process.env.DOCKER_BUILD ? { output: 'standalone' } : {}),
+  ...(process.env.VERCEL || process.env.DOCKER_BUILD
+    ? { output: 'standalone' }
+    : {}),
 
-  reactStrictMode: false,
+  reactStrictMode: true,
+  reactCompiler: true,
 
   // Next.js 16 使用 Turbopack，配置 SVG 加载
   turbopack: {

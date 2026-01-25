@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
@@ -72,43 +72,40 @@ export default function MessageBoard() {
     'all' | 'suggestion' | 'feedback' | 'discussion' | 'other'
   >('all');
 
-  const fetchComments = useCallback(
-    async (page = 1, append = false) => {
-      try {
-        if (append) {
-          setLoadingMore(true);
-        } else {
-          setLoading(true);
-        }
-
-        const response = await fetch(`/api/message?page=${page}&limit=6`);
-        const data = await response.json();
-
-        if (append) {
-          // 追加数据而不是替换
-          setComments((prev) => [...prev, ...data.comments]);
-        } else {
-          // 替换数据
-          setComments(data.comments || []);
-        }
-
-        // 更新分页信息
-        setCurrentPage(data.pagination?.currentPage || 1);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setHasNextPage(data.pagination?.hasNextPage || false);
-        setHasPrevPage(data.pagination?.hasPrevPage || false);
-
-        // 标记已加载
-        hasLoadedComments.current = true;
-      } catch {
-        logger.error('获取评论失败，请稍后重试');
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
+  const fetchComments = async (page = 1, append = false) => {
+    try {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
       }
-    },
-    [], // 空依赖数组，避免频繁重新创建
-  );
+
+      const response = await fetch(`/api/message?page=${page}&limit=6`);
+      const data = await response.json();
+
+      if (append) {
+        // 追加数据而不是替换
+        setComments((prev) => [...prev, ...data.comments]);
+      } else {
+        // 替换数据
+        setComments(data.comments || []);
+      }
+
+      // 更新分页信息
+      setCurrentPage(data.pagination?.currentPage || 1);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setHasNextPage(data.pagination?.hasNextPage || false);
+      setHasPrevPage(data.pagination?.hasPrevPage || false);
+
+      // 标记已加载
+      hasLoadedComments.current = true;
+    } catch {
+      logger.error('获取评论失败，请稍后重试');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     // 等待认证状态加载完成
@@ -393,14 +390,14 @@ export default function MessageBoard() {
   };
 
   // 计算筛选后的评论
-  const filteredComments = useMemo(() => {
+  const filteredComments = (() => {
     if (selectedCategoryFilter === 'all') {
       return comments;
     }
     return comments.filter(
       (comment) => comment.category === selectedCategoryFilter,
     );
-  }, [comments, selectedCategoryFilter]);
+  })();
 
   return (
     <PageLayout activePath='/message'>

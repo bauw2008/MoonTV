@@ -7,7 +7,6 @@ import React, {
   startTransition,
   Suspense,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -34,9 +33,7 @@ import SearchResultFilter, {
 import SearchSuggestions from '@/components/SearchSuggestions';
 import TMDBFilterPanel, { TMDBFilterState } from '@/components/TMDBFilterPanel';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
-import VirtualSearchGrid, {
-  VirtualSearchGridRef,
-} from '@/components/VirtualSearchGrid';
+import { VirtualSearchGrid } from '@/components/VirtualSearchGrid';
 
 function SearchPageClient() {
   logger.log('[搜索页面] 组件渲染开始');
@@ -63,7 +60,7 @@ function SearchPageClient() {
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   // VirtualSearchGrid ref for scroll control
-  const virtualGridRef = useRef<VirtualSearchGridRef>(null);
+  const virtualGridRef = useRef<any>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -303,7 +300,7 @@ function SearchPageClient() {
   };
 
   // 聚合后的结果（按标题和年份分组）
-  const aggregatedResults = useMemo(() => {
+  const aggregatedResults = (() => {
     const map = new Map<string, SearchResult[]>();
     const keyOrder: string[] = []; // 记录键出现的顺序
 
@@ -329,7 +326,7 @@ function SearchPageClient() {
     );
 
     return aggregatedResults;
-  }, [searchResults]);
+  })();
 
   // 当聚合结果变化时，如果某个聚合已存在，则调用其卡片 ref 的 set 方法增量更新
   useEffect(() => {
@@ -361,7 +358,7 @@ function SearchPageClient() {
   }, [aggregatedResults]);
 
   // 构建筛选选项
-  const filterOptions = useMemo(() => {
+  const filterOptions = (() => {
     const sourcesSet = new Map<string, string>();
     const titlesSet = new Set<string>();
     const yearsSet = new Set<string>();
@@ -471,10 +468,10 @@ function SearchPageClient() {
       secondaryFilterOptionsAll,
       secondaryFilterOptionsAgg,
     };
-  }, [searchResults]);
+  })();
 
   // 非聚合：应用筛选与排序
-  const filteredAllResults = useMemo(() => {
+  const filteredAllResults = (() => {
     const { source, title, year, type, yearOrder } = filterAll;
     const filtered = searchResults.filter((item) => {
       if (source !== 'all' && item.source !== source) {
@@ -521,10 +518,10 @@ function SearchPageClient() {
         ? a.title.localeCompare(b.title)
         : b.title.localeCompare(a.title);
     });
-  }, [searchResults, filterAll, searchQuery]);
+  })();
 
   // 聚合：应用筛选与排序
-  const filteredAggResults = useMemo(() => {
+  const filteredAggResults = (() => {
     const { source, title, year, type, yearOrder } = filterAgg as any;
     const filtered = aggregatedResults.filter(([_, group]) => {
       const gTitle = group[0]?.title ?? '';
@@ -580,7 +577,7 @@ function SearchPageClient() {
         ? aTitle.localeCompare(bTitle)
         : bTitle.localeCompare(aTitle);
     });
-  }, [aggregatedResults, filterAgg, searchQuery]);
+  })();
 
   useEffect(() => {
     // 无搜索参数时聚焦搜索框
@@ -1643,7 +1640,6 @@ function SearchPageClient() {
                   {/* 条件渲染：虚拟化 vs 传统网格 */}
                   {useVirtualization ? (
                     <VirtualSearchGrid
-                      ref={virtualGridRef}
                       allResults={searchResults}
                       filteredResults={filteredAllResults}
                       aggregatedResults={aggregatedResults}

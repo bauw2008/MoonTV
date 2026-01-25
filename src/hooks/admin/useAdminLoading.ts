@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 interface LoadingState {
   [key: string]: boolean;
@@ -7,32 +7,26 @@ interface LoadingState {
 export const useAdminLoading = () => {
   const [loadingStates, setLoadingStates] = useState<LoadingState>({});
 
-  const setLoading = useCallback((key: string, loading: boolean) => {
+  const setLoading = (key: string, loading: boolean) => {
     setLoadingStates((prev) => ({ ...prev, [key]: loading }));
-  }, []);
+  };
 
-  const isLoading = useCallback(
-    (key: string) => loadingStates[key] || false,
-    [loadingStates],
-  );
+  const isLoading = (key: string) => loadingStates[key] || false;
 
-  const withLoading = useCallback(
-    async <T>(key: string, operation: () => Promise<T>): Promise<T> => {
-      setLoading(key, true);
-      try {
-        const result = await operation();
-        return result;
-      } finally {
-        setLoading(key, false);
-      }
-    },
-    [setLoading],
-  );
+  const withLoading = async <T>(
+    key: string,
+    operation: () => Promise<T>,
+  ): Promise<T> => {
+    setLoading(key, true);
+    try {
+      const result = await operation();
+      return result;
+    } finally {
+      setLoading(key, false);
+    }
+  };
 
-  const isAnyLoading = useCallback(
-    () => Object.values(loadingStates).some(Boolean),
-    [loadingStates],
-  );
+  const isAnyLoading = () => Object.values(loadingStates).some(Boolean);
 
   return {
     loadingStates,

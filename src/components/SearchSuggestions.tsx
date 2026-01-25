@@ -32,7 +32,7 @@ export default function SearchSuggestions({
   // 用于中止旧请求
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchSuggestionsFromAPI = useCallback(async (searchQuery: string) => {
+  const fetchSuggestionsFromAPI = async (searchQuery: string) => {
     // 每次请求前取消上一次的请求
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -69,7 +69,7 @@ export default function SearchSuggestions({
         setSuggestions([]);
       }
     }
-  }, []);
+  };
 
   // 防抖触发
   const debouncedFetchSuggestions = useCallback(
@@ -83,9 +83,9 @@ export default function SearchSuggestions({
         } else {
           setSuggestions([]);
         }
-      }, 300); //300ms
+      }, 300);
     },
-    [isVisible, fetchSuggestionsFromAPI],
+    [isVisible],
   );
 
   useEffect(() => {

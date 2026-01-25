@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 export interface ToastProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -60,26 +60,23 @@ export function useToast() {
     }>
   >([]);
 
-  const removeToast = useCallback((id: string) => {
+  const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  };
 
-  const addToast = useCallback(
-    (toast: Omit<ToastProps, 'onClose'>) => {
-      const id = `${Date.now()}-${Math.random()}`;
-      const newToast = { ...toast, id };
+  const addToast = (toast: Omit<ToastProps, 'onClose'>) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const newToast = { ...toast, id };
 
-      setToasts((prev) => [...prev, newToast]);
+    setToasts((prev) => [...prev, newToast]);
 
-      // 自动移除
-      setTimeout(() => {
-        removeToast(id);
-      }, toast.duration || 3000);
+    // 自动移除
+    setTimeout(() => {
+      removeToast(id);
+    }, toast.duration || 3000);
 
-      return id;
-    },
-    [removeToast],
-  );
+    return id;
+  };
 
   const success = (message: string, duration?: number) => {
     return addToast({ type: 'success', message, duration });

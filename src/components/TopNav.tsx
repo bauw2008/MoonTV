@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
@@ -101,11 +101,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const menuSettings = getMenuSettings();
   const customCategories = getCustomCategories();
 
-  // 使用 useMemo 缓存 auth，避免每次渲染都调用 getAuthInfoFromBrowserCookie
-  const auth = useMemo(() => getAuthInfoFromBrowserCookie(), []);
+  // 获取认证信息
+  const auth = getAuthInfoFromBrowserCookie();
 
-  // 使用 useMemo 缓存菜单项，只在配置变化时重新计算
-  const menuItems = useMemo(() => {
+  // 构建菜单项
+  const menuItems = (() => {
     const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
       return menuSettings[menuKey];
     };
@@ -151,7 +151,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     items.push({ icon: Star, label: '收藏', href: '/favorites' });
 
     return items;
-  }, [menuSettings, customCategories]);
+  })();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);

@@ -21,7 +21,7 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 // 使用统一方案中的 hooks
@@ -43,7 +43,7 @@ function ConfigFile() {
 
   const isLoadingRef = useRef(false);
 
-  const loadConfig = useCallback(async () => {
+  const loadConfig = async () => {
     // 防止重复加载
     if (isLoadingRef.current) {
       return;
@@ -74,11 +74,12 @@ function ConfigFile() {
     } finally {
       isLoadingRef.current = false;
     }
-  }, [configApi]);
+  };
 
   useEffect(() => {
     loadConfig();
-  }, [loadConfig]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const validateJson = () => {

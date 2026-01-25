@@ -19,7 +19,13 @@ function CustomAdFilterConfigContent({
   config,
   refreshConfig,
 }: {
-  config?: any;
+  config?: {
+    SiteConfig?: {
+      CustomAdFilterCode?: string;
+      CustomAdFilterVersion?: number;
+      CustomAdFilterEnabled?: boolean;
+    };
+  };
   refreshConfig?: () => void;
 }) {
   // 使用统一的 hooks
@@ -425,7 +431,13 @@ export default function CustomAdFilterConfig({
   config,
   refreshConfig,
 }: {
-  config?: any;
+  config?: {
+    SiteConfig?: {
+      CustomAdFilterCode?: string;
+      CustomAdFilterVersion?: number;
+      CustomAdFilterEnabled?: boolean;
+    };
+  };
   refreshConfig?: () => void;
 }) {
   return (

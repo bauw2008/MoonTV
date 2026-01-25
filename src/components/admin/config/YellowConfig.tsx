@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Save, Shield, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 import {
@@ -21,29 +21,30 @@ function YellowConfigContent() {
   const [filterEnabled, setFilterEnabled] = useState(true);
   const [newWord, setNewWord] = useState('');
 
-  // 加载配置
-  const loadConfig = useCallback(async () => {
-    await withLoading('loadYellowConfig', async () => {
-      try {
-        const response = await fetch('/api/admin/config');
-        const data = await response.json();
-        setYellowWords(data.Config.YellowWords || []);
-        // 加载过滤开关状态，默认为true
-        setFilterEnabled(
-          data.Config.DisableYellowFilter !== undefined
-            ? !data.Config.DisableYellowFilter
-            : true,
-        );
-      } catch (error) {
-        logger.error('加载18+配置失败:', error);
-      }
-    });
-  }, [withLoading]);
+  // 使用 ref 跟踪是否已经加载过
+  const hasLoaded = useRef(false);
 
   // 初始化加载
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    if (!hasLoaded.current) {
+      hasLoaded.current = true;
+      (async () => {
+        try {
+          const response = await fetch('/api/admin/config');
+          const data = await response.json();
+          setYellowWords(data.Config.YellowWords || []);
+          // 加载过滤开关状态，默认为true
+          setFilterEnabled(
+            data.Config.DisableYellowFilter !== undefined
+              ? !data.Config.DisableYellowFilter
+              : true,
+          );
+        } catch (error) {
+          logger.error('加载18+配置失败:', error);
+        }
+      })();
+    }
+  }, []);
 
   // 加载状态
   if (loading) {

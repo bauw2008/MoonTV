@@ -5,7 +5,7 @@ import Hls from 'hls.js';
 import { Cloud, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 import artplayerPluginChromecast from '@/lib/artplayer-plugin-chromecast';
 import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
@@ -173,9 +173,9 @@ class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
 function PlayPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const updateActivity = useCallback(() => {
+  const updateActivity = () => {
     // 这里可以添加更新用户活动的逻辑
-  }, []);
+  };
 
   // -----------------------------------------------------------------------------
   // 状态变量（State）

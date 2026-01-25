@@ -115,9 +115,9 @@ export default async function RootLayout({
     showTVShows: true,
     showAnime: true,
     showVariety: true,
-    showLive: false,
-    showTvbox: false,
-    showShortDrama: false,
+    showLive: true,
+    showTvbox: true,
+    showShortDrama: true,
   };
 
   if (storageType !== 'localstorage') {

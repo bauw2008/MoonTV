@@ -9,7 +9,7 @@ import {
   TagIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 export interface TMDBFilterState {
   // 时间筛选
@@ -124,22 +124,22 @@ export const TMDBFilterPanel: React.FC<TMDBFilterPanelProps> = ({
     (option) => !option.tvOnly || contentType === 'tv',
   );
 
-  const updateFilter = useCallback((key: keyof TMDBFilterState, value: any) => {
+  const updateFilter = (key: keyof TMDBFilterState, value: any) => {
     setLocalFilters((prev) => ({
       ...prev,
       [key]: value,
     }));
-  }, []);
+  };
 
-  const applyFilters = useCallback(() => {
+  const applyFilters = () => {
     onFiltersChange(localFilters);
-  }, [localFilters, onFiltersChange]);
+  };
 
-  const resetFilters = useCallback(() => {
+  const resetFilters = () => {
     const emptyFilters: TMDBFilterState = {};
     setLocalFilters(emptyFilters);
     onFiltersChange(emptyFilters);
-  }, [onFiltersChange]);
+  };
 
   const hasActiveFilters = Object.keys(localFilters).some((key) => {
     const value = localFilters[key as keyof TMDBFilterState];

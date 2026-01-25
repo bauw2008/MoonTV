@@ -348,49 +348,6 @@ export interface ContentStat {
   uniqueUsers: number; // 观看用户数
 }
 
-// 发布日历数据结构
-export interface ReleaseCalendarItem {
-  id: string; // 唯一标识符
-  title: string; // 影视名称
-  type: 'movie' | 'tv'; // 类型：电影或电视剧
-  director: string; // 导演
-  actors: string; // 主演
-  region: string; // 地区
-  genre: string; // 类型/标签
-  genres: string[]; // 类型标签数组
-  releaseDate: string; // 发布日期 (YYYY-MM-DD)
-  cover?: string; // 封面图片URL
-  description?: string; // 简介
-  episodes?: number; // 集数（电视剧）
-  source: 'manmankan'; // 数据来源
-  createdAt: number; // 记录创建时间戳
-  updatedAt: number; // 记录更新时间戳
-}
-
-// 发布日历API响应结构
-export interface ReleaseCalendarResult {
-  items: ReleaseCalendarItem[];
-  total: number;
-  hasMore: boolean;
-  filters: {
-    types: Array<{ value: 'movie' | 'tv'; label: string; count: number }>;
-    regions: Array<{ value: string; label: string; count: number }>;
-    genres: Array<{ value: string; label: string; count: number }>;
-  };
-}
-
-// 个性化发布推荐结构
-export interface PersonalizedReleaseRecommendation {
-  userId: string;
-  recommendations: Array<{
-    item: ReleaseCalendarItem;
-    reason: string; // 推荐理由
-    score: number; // 推荐分数 0-100
-    matchedPreferences: string[]; // 匹配的用户偏好
-  }>;
-  generatedAt: number; // 生成时间戳
-}
-
 // 短剧分类
 export interface ShortDramaCategory {
   type_id: number;

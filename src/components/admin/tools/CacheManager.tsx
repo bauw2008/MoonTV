@@ -12,7 +12,7 @@ import {
   Trash2,
   Video,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   useAdminAuth,
@@ -48,7 +48,7 @@ interface CacheType {
   key: string;
   name: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   color: string;
 }
 
@@ -122,6 +122,9 @@ function CacheManager() {
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
+  // 使用 ref 跟踪是否已经加载过
+  const hasLoaded = useRef(false);
+
   const fetchStats = useCallback(async () => {
     await withLoading('fetchStats', async () => {
       try {
@@ -150,7 +153,8 @@ function CacheManager() {
 
   // 组件挂载时获取统计数据
   useEffect(() => {
-    if (isOwner) {
+    if (isOwner && !hasLoaded.current) {
+      hasLoaded.current = true;
       fetchStats();
     }
   }, [isOwner, fetchStats]);
@@ -292,9 +296,11 @@ function CacheManager() {
         {stats && (
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {CACHE_TYPES.map((cacheType) => {
-              const typeStats = stats[
-                cacheType.key as keyof typeof stats
-              ] as any;
+              const typeStats = stats[cacheType.key as keyof typeof stats] as {
+                count: number;
+                size: number;
+                types?: Record<string, number>;
+              };
               const Icon = cacheType.icon;
 
               return (
@@ -347,19 +353,21 @@ function CacheManager() {
                       <div className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
                         类型分布：
                       </div>
-                      {Object.entries(typeStats.types).map(([type, count]) => (
-                        <div
-                          key={type}
-                          className='flex justify-between text-xs'
-                        >
-                          <span className='text-gray-600 dark:text-gray-400'>
-                            {type}:
-                          </span>
-                          <span className='font-mono text-gray-900 dark:text-gray-100'>
-                            {count as number}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(typeStats.types || {}).map(
+                        ([type, count]) => (
+                          <div
+                            key={type}
+                            className='flex justify-between text-xs'
+                          >
+                            <span className='text-gray-600 dark:text-gray-400'>
+                              {type}:
+                            </span>
+                            <span className='font-mono text-gray-900 dark:text-gray-100'>
+                              {count}
+                            </span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   )}
 
@@ -369,19 +377,21 @@ function CacheManager() {
                       <div className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
                         类型分布：
                       </div>
-                      {Object.entries(typeStats.types).map(([type, count]) => (
-                        <div
-                          key={type}
-                          className='flex justify-between text-xs'
-                        >
-                          <span className='text-gray-600 dark:text-gray-400'>
-                            {type}:
-                          </span>
-                          <span className='font-mono text-gray-900 dark:text-gray-100'>
-                            {count as number}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(typeStats.types || {}).map(
+                        ([type, count]) => (
+                          <div
+                            key={type}
+                            className='flex justify-between text-xs'
+                          >
+                            <span className='text-gray-600 dark:text-gray-400'>
+                              {type}:
+                            </span>
+                            <span className='font-mono text-gray-900 dark:text-gray-100'>
+                              {count}
+                            </span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   )}
 
@@ -391,19 +401,21 @@ function CacheManager() {
                       <div className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
                         类型分布：
                       </div>
-                      {Object.entries(typeStats.types).map(([type, count]) => (
-                        <div
-                          key={type}
-                          className='flex justify-between text-xs'
-                        >
-                          <span className='text-gray-600 dark:text-gray-400'>
-                            {type}:
-                          </span>
-                          <span className='font-mono text-gray-900 dark:text-gray-100'>
-                            {count as number}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(typeStats.types || {}).map(
+                        ([type, count]) => (
+                          <div
+                            key={type}
+                            className='flex justify-between text-xs'
+                          >
+                            <span className='text-gray-600 dark:text-gray-400'>
+                              {type}:
+                            </span>
+                            <span className='font-mono text-gray-900 dark:text-gray-100'>
+                              {count}
+                            </span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   )}
 

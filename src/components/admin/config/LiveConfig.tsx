@@ -287,7 +287,14 @@ function LiveConfigContent() {
     loadConfig();
   }, [loadConfig]);
 
-  const callLiveSourceApi = async (body: any) => {
+  const callLiveSourceApi = async (body: {
+    action: string;
+    key?: string;
+    name?: string;
+    url?: string;
+    ua?: string;
+    epg?: string;
+  }) => {
     try {
       const resp = await fetch('/api/admin/live', {
         method: 'POST',

@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { notifyConfigUpdated } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
@@ -497,10 +497,10 @@ function UserConfigContent() {
   }, []);
 
   // 辅助函数：计算用户组的视频源数量
-  const getVideoSourceCount = useCallback((tag: any) => {
+  const getVideoSourceCount = (tag: any) => {
     // 直接使用videoSources字段
     return tag.videoSources?.length || 0;
-  }, []);
+  };
 
   // 加载状态
   if (loading) {

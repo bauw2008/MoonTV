@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 
 interface UseLongPressOptions {
   onLongPress: () => void;
@@ -24,63 +24,57 @@ export const useLongPress = ({
   const isActive = useRef(false); // 防止重复触发
   const wasButton = useRef(false); // 记录触摸开始时是否是按钮
 
-  const clearTimer = useCallback(() => {
+  const clearTimer = () => {
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
       pressTimer.current = null;
     }
-  }, []);
+  };
 
-  const handleStart = useCallback(
-    (clientX: number, clientY: number, isButton = false) => {
-      // 如果已经有活跃的手势，忽略新的开始
-      if (isActive.current) {
-        return;
+  const handleStart = (clientX: number, clientY: number, isButton = false) => {
+    // 如果已经有活跃的手势，忽略新的开始
+    if (isActive.current) {
+      return;
+    }
+
+    isActive.current = true;
+    isLongPress.current = false;
+    startPosition.current = { x: clientX, y: clientY };
+
+    // 记录触摸开始时是否是按钮
+    wasButton.current = isButton;
+
+    pressTimer.current = setTimeout(() => {
+      // 再次检查是否仍然活跃
+      if (!isActive.current) return;
+
+      isLongPress.current = true;
+
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
       }
 
-      isActive.current = true;
-      isLongPress.current = false;
-      startPosition.current = { x: clientX, y: clientY };
+      // 触发长按事件
+      onLongPress();
+    }, longPressDelay);
+  };
 
-      // 记录触摸开始时是否是按钮
-      wasButton.current = isButton;
+  const handleMove = (clientX: number, clientY: number) => {
+    if (!startPosition.current || !isActive.current) return;
 
-      pressTimer.current = setTimeout(() => {
-        // 再次检查是否仍然活跃
-        if (!isActive.current) return;
+    const distance = Math.sqrt(
+      Math.pow(clientX - startPosition.current.x, 2) +
+        Math.pow(clientY - startPosition.current.y, 2),
+    );
 
-        isLongPress.current = true;
+    // 如果移动距离超过阈值，取消长按
+    if (distance > moveThreshold) {
+      clearTimer();
+      isActive.current = false;
+    }
+  };
 
-        if (navigator.vibrate) {
-          navigator.vibrate(50);
-        }
-
-        // 触发长按事件
-        onLongPress();
-      }, longPressDelay);
-    },
-    [onLongPress, longPressDelay],
-  );
-
-  const handleMove = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!startPosition.current || !isActive.current) return;
-
-      const distance = Math.sqrt(
-        Math.pow(clientX - startPosition.current.x, 2) +
-          Math.pow(clientY - startPosition.current.y, 2),
-      );
-
-      // 如果移动距离超过阈值，取消长按
-      if (distance > moveThreshold) {
-        clearTimer();
-        isActive.current = false;
-      }
-    },
-    [clearTimer, moveThreshold],
-  );
-
-  const handleEnd = useCallback(() => {
+  const handleEnd = () => {
     clearTimer();
 
     // 根据情况决定是否触发点击事件：
@@ -99,43 +93,34 @@ export const useLongPress = ({
     startPosition.current = null;
     isActive.current = false;
     wasButton.current = false;
-  }, [clearTimer, onClick]);
+  };
 
   // 触摸事件处理器
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      // 检查是否触摸的是按钮或其他交互元素
-      const target = e.target as HTMLElement;
-      const buttonElement = target.closest('[data-button]');
+  const onTouchStart = (e: React.TouchEvent) => {
+    // 检查是否触摸的是按钮或其他交互元素
+    const target = e.target as HTMLElement;
+    const buttonElement = target.closest('[data-button]');
 
-      // 更精确的按钮检测：只有当触摸目标直接是按钮元素或其直接子元素时才认为是按钮
-      const isDirectButton = target.hasAttribute('data-button');
-      const isButton = !!buttonElement && isDirectButton;
+    // 更精确的按钮检测：只有当触摸目标直接是按钮元素或其直接子元素时才认为是按钮
+    const isDirectButton = target.hasAttribute('data-button');
+    const isButton = !!buttonElement && isDirectButton;
 
-      // 阻止默认的长按行为，但不阻止触摸开始事件
-      const touch = e.touches[0];
-      handleStart(touch.clientX, touch.clientY, !!isButton);
-    },
-    [handleStart],
-  );
+    // 阻止默认的长按行为，但不阻止触摸开始事件
+    const touch = e.touches[0];
+    handleStart(touch.clientX, touch.clientY, !!isButton);
+  };
 
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      const touch = e.touches[0];
-      handleMove(touch.clientX, touch.clientY);
-    },
-    [handleMove],
-  );
+  const onTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
+  };
 
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      // 始终阻止默认行为，避免任何系统长按菜单
-      e.preventDefault();
-      e.stopPropagation();
-      handleEnd();
-    },
-    [handleEnd],
-  );
+  const onTouchEnd = (e: React.TouchEvent) => {
+    // 始终阻止默认行为，避免任何系统长按菜单
+    e.preventDefault();
+    e.stopPropagation();
+    handleEnd();
+  };
 
   return {
     onTouchStart,

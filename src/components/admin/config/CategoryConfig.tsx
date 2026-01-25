@@ -1,7 +1,7 @@
 'use client';
 
 import { ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   notifyConfigUpdated,
@@ -69,7 +69,7 @@ function CategoryConfigContent() {
     ],
   };
 
-  const loadConfig = useCallback(async () => {
+  const loadConfig = async () => {
     try {
       const result = await withLoading('loadCategoryConfig', async () => {
         const response = await fetch('/api/admin/config');
@@ -83,18 +83,26 @@ function CategoryConfigContent() {
       logger.error('加载分类配置失败:', error);
       return [];
     }
-  }, [withLoading]);
+  };
 
   useEffect(() => {
     const initializeConfig = async () => {
-      const categories = await loadConfig();
-      // 初始化时也更新导航配置
-      if (categories && categories.length > 0) {
-        updateCustomCategories(categories);
+      try {
+        const response = await fetch('/api/admin/config');
+        const data = await response.json();
+        const categories = data.Config.CustomCategories || [];
+        setCategories(categories);
+
+        // 初始化时也更新导航配置
+        if (categories && categories.length > 0) {
+          updateCustomCategories(categories);
+        }
+      } catch (error) {
+        logger.error('加载分类配置失败:', error);
       }
     };
     initializeConfig();
-  }, [loadConfig]);
+  }, []);
 
   const handleTypeChange = (type: 'movie' | 'tv') => {
     setNewCategory((prev) => ({
@@ -129,7 +137,12 @@ function CategoryConfigContent() {
     }
   };
 
-  const callCategoryApi = async (body: Record<string, any>) => {
+  const callCategoryApi = async (body: {
+    action: string;
+    name?: string;
+    type?: 'movie' | 'tv';
+    query?: string;
+  }) => {
     const response = await fetch('/api/admin/category', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
