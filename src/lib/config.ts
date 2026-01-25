@@ -376,10 +376,18 @@ export async function getConfig(): Promise<AdminConfig> {
     // 获取管理员配置失败
     logger.error('获取管理员配置失败:', e);
     logger.error('错误详情:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
+    // 🔥 关键修复：网络错误时使用缓存的配置，避免误触发初始化逻辑
+    if (cachedConfig) {
+      logger.warn('网络错误，使用缓存的配置');
+      return cachedConfig;
+    }
+    // 如果没有缓存，返回 null，让调用方处理
+    return null as any;
   }
 
   // db 中无配置，执行一次初始化
   if (!adminConfig) {
+    logger.warn('数据库中没有配置，使用默认配置');
     adminConfig = await getInitConfig('');
     adminConfig = configSelfCheck(adminConfig);
     cachedConfig = adminConfig;
@@ -801,8 +809,13 @@ export async function resetConfig() {
 
 // 获取缓存时间
 export async function getCacheTime(): Promise<number> {
-  const config = await getConfig();
-  return config.SiteConfig.SiteInterfaceCacheTime || 7200;
+  try {
+    const config = await getConfig();
+    return config.SiteConfig.SiteInterfaceCacheTime || 7200;
+  } catch (e) {
+    logger.error('获取缓存时间失败，使用默认值:', e);
+    return 7200; // 网络错误时使用默认值，避免触发初始化逻辑
+  }
 }
 
 // 获取用户可用的 API 站点（采集源）

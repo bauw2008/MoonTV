@@ -79,6 +79,13 @@ export async function POST(request: NextRequest) {
     adminConfig = refineConfig(adminConfig);
     // 更新配置文件
     await db.saveAdminConfig(adminConfig);
+
+    // 清除内存缓存，强制下次重新从数据库读取
+    clearConfigCache();
+
+    // 刷新所有页面的缓存，使新配置立即生效
+    revalidatePath('/', 'layout');
+
     return NextResponse.json({
       success: true,
       message: '配置文件更新成功',
