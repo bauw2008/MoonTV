@@ -15,9 +15,20 @@ export async function GET(request: NextRequest) {
   try {
     const config = await getConfig();
 
+    // 检查配置是否为 null
+    if (!config) {
+      logger.error('配置为 null，无法获取公开配置');
+      return NextResponse.json(
+        {
+          error: '配置未初始化',
+        },
+        { status: 500 },
+      );
+    }
+
     // 只返回公开的配置信息，不包含敏感数据
     const publicConfig = {
-      MenuSettings: config.SiteConfig.MenuSettings || {
+      MenuSettings: config.SiteConfig?.MenuSettings || {
         showMovies: true,
         showTVShows: true,
         showAnime: true,

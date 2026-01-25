@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   const config = await getConfig();
   let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Vidora';
-  if (storageType !== 'localstorage') {
+  if (storageType !== 'localstorage' && config?.SiteConfig) {
     siteName = config.SiteConfig.SiteName;
   }
 
@@ -63,22 +63,26 @@ export default async function RootLayout({
   if (storageType !== 'localstorage') {
     clearConfigCache(); // 清除配置缓存，确保获取最新菜单配置
     const config = await getConfig();
-    siteName = config.SiteConfig.SiteName;
-    announcement = config.SiteConfig.Announcement;
 
-    doubanProxyType = config.SiteConfig.DoubanProxyType;
-    doubanProxy = config.SiteConfig.DoubanProxy;
-    doubanImageProxyType = config.SiteConfig.DoubanImageProxyType;
-    doubanImageProxy = config.SiteConfig.DoubanImageProxy;
-    disableYellowFilter = config.SiteConfig.DisableYellowFilter;
-    customCategories = config.CustomCategories.filter(
-      (category) => !category.disabled,
-    ).map((category) => ({
-      name: category.name || '',
-      type: category.type,
-      query: category.query,
-    }));
-    fluidSearch = config.SiteConfig.FluidSearch;
+    // 检查配置是否为 null
+    if (config?.SiteConfig) {
+      siteName = config.SiteConfig.SiteName;
+      announcement = config.SiteConfig.Announcement;
+
+      doubanProxyType = config.SiteConfig.DoubanProxyType;
+      doubanProxy = config.SiteConfig.DoubanProxy;
+      doubanImageProxyType = config.SiteConfig.DoubanImageProxyType;
+      doubanImageProxy = config.SiteConfig.DoubanImageProxy;
+      disableYellowFilter = config.SiteConfig.DisableYellowFilter;
+      customCategories = (config.CustomCategories || [])
+        .filter((category) => !category.disabled)
+        .map((category) => ({
+          name: category.name || '',
+          type: category.type,
+          query: category.query,
+        }));
+      fluidSearch = config.SiteConfig.FluidSearch;
+    }
   }
 
   // 获取完整配置用于 runtimeConfig
@@ -93,14 +97,16 @@ export default async function RootLayout({
 
   if (storageType !== 'localstorage') {
     const config = await getConfig();
-    netDiskConfig = config.NetDiskConfig || { enabled: false };
-    aiConfig = config.AIRecommendConfig || { enabled: false };
-    tmdbConfig = {
-      apiKey: config.SiteConfig.TMDBApiKey || '',
-      language: config.SiteConfig.TMDBLanguage || 'zh-CN',
-      enableActorSearch: config.SiteConfig.EnableTMDBActorSearch || false,
-      enablePosters: config.SiteConfig.EnableTMDBPosters ?? true,
-    };
+    if (config?.SiteConfig) {
+      netDiskConfig = config.NetDiskConfig || { enabled: false };
+      aiConfig = config.AIRecommendConfig || { enabled: false };
+      tmdbConfig = {
+        apiKey: config.SiteConfig.TMDBApiKey || '',
+        language: config.SiteConfig.TMDBLanguage || 'zh-CN',
+        enableActorSearch: config.SiteConfig.EnableTMDBActorSearch || false,
+        enablePosters: config.SiteConfig.EnableTMDBPosters ?? true,
+      };
+    }
   }
 
   // 获取菜单配置
@@ -116,7 +122,9 @@ export default async function RootLayout({
 
   if (storageType !== 'localstorage') {
     const config = await getConfig();
-    menuSettings = config.SiteConfig.MenuSettings || menuSettings;
+    if (config?.SiteConfig?.MenuSettings) {
+      menuSettings = config.SiteConfig.MenuSettings;
+    }
   }
 
   // 将运行时配置注入到全局 window 对象，供客户端在运行时读取
