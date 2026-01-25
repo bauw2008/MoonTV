@@ -253,8 +253,8 @@ export async function syncToServer(): Promise<boolean> {
   }
 }
 
-// 广播频道名称
-const CONFIG_CHANNEL = 'vidora-config-channel';
+// 配置更新标记键名
+const CONFIG_UPDATE_KEY = 'vidora-config-update-timestamp';
 
 // 通知配置更新
 export async function notifyConfigUpdated(): Promise<void> {
@@ -262,16 +262,12 @@ export async function notifyConfigUpdated(): Promise<void> {
     return;
   }
 
-  // 通过 BroadcastChannel 通知其他标签页
+  // 通过 localStorage 触发 storage 事件通知其他标签页
   try {
-    const channel = new BroadcastChannel(CONFIG_CHANNEL);
-    channel.postMessage({
-      type: 'config-updated',
-      timestamp: Date.now(),
-    });
-    channel.close();
+    const timestamp = Date.now();
+    localStorage.setItem(CONFIG_UPDATE_KEY, timestamp.toString());
   } catch {
-    // 静默处理广播失败
+    // 静默处理 localStorage 保存错误
   }
 
   // 触发自定义事件供组件监听
@@ -343,11 +339,10 @@ export function initConfigListener(): () => void {
   // 初始化禁用菜单配置
   updateDisabledMenus();
 
-  // 监听 BroadcastChannel 消息
-  const channel = new BroadcastChannel(CONFIG_CHANNEL);
-
-  const handleBroadcastMessage = async (event: MessageEvent) => {
-    if (event.data?.type === 'config-updated') {
+  // 监听 storage 事件（跨标签页配置同步）
+  const handleStorage = async (event: StorageEvent) => {
+    // 只处理配置更新事件
+    if (event.key === CONFIG_UPDATE_KEY && event.newValue !== event.oldValue) {
       try {
         await refreshConfig();
         window.dispatchEvent(
@@ -361,8 +356,6 @@ export function initConfigListener(): () => void {
       }
     }
   };
-
-  channel.addEventListener('message', handleBroadcastMessage);
 
   // 监听页面可见性变化，当页面从隐藏变为可见时刷新配置
   let refreshTimeout: NodeJS.Timeout | null = null;
@@ -395,11 +388,11 @@ export function initConfigListener(): () => void {
     }
   };
 
+  window.addEventListener('storage', handleStorage);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   return () => {
-    channel.removeEventListener('message', handleBroadcastMessage);
-    channel.close();
+    window.removeEventListener('storage', handleStorage);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
 
     if (refreshTimeout) {
