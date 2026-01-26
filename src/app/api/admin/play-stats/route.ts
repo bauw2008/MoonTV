@@ -167,8 +167,8 @@ export async function GET(request: NextRequest) {
 
         try {
           // 获取用户头像
-          if (typeof (storage as any).getUserAvatar === 'function') {
-            userAvatar = await (storage as any).getUserAvatar(user.username);
+          if (typeof storage.getUserAvatar === 'function') {
+            userAvatar = await storage.getUserAvatar(user.username);
           }
         } catch (error) {
           logger.error(`获取用户 ${user.username} 头像失败:`, error);
@@ -177,10 +177,8 @@ export async function GET(request: NextRequest) {
         // 获取用户登录IP
         let userLoginIp = '暂无IP记录';
         try {
-          if (typeof (storage as any).getUserLoginIp === 'function') {
-            const loginIp = await (storage as any).getUserLoginIp(
-              user.username,
-            );
+          if (typeof storage.getUserLoginIp === 'function') {
+            const loginIp = await storage.getUserLoginIp(user.username);
             userLoginIp = loginIp || '暂无IP记录';
           }
         } catch (error) {
@@ -337,7 +335,7 @@ export async function GET(request: NextRequest) {
           avgWatchTime: 0,
           mostWatchedSource: '',
           avatar: undefined,
-          loginIp: (user as any).loginIp || '未知IP',
+          loginIp: '暂无IP记录',
           registrationDays,
           lastLoginTime: userCreatedAt, // 没有播放记录时使用注册时间
           loginCount: 0,

@@ -1,18 +1,38 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 
+import { AdminConfig } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { Favorite, PlayRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
 const gunzipAsync = promisify(gunzip);
+
+// 导入的用户数据接口
+interface ImportUser {
+  password?: string;
+  playRecords?: Record<string, PlayRecord>;
+  favorites?: Record<string, Favorite>;
+  searchHistory?: string[];
+  skipConfigs?: Record<string, unknown>;
+}
+
+// 导入数据接口
+interface ImportData {
+  version?: string;
+  serverVersion?: string;
+  timestamp?: string;
+  data: {
+    adminConfig: AdminConfig;
+    userData: Record<string, ImportUser>;
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -72,9 +92,9 @@ export async function POST(req: NextRequest) {
     const decompressedData = decompressedBuffer.toString();
 
     // 解析JSON数据
-    let importData: any;
+    let importData: ImportData;
     try {
-      importData = JSON.parse(decompressedData);
+      importData = JSON.parse(decompressedData) as ImportData;
     } catch (error) {
       logger.error('解析备份文件失败:', error);
       return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
@@ -110,14 +130,14 @@ export async function POST(req: NextRequest) {
       // 导入播放记录
       if (user.playRecords) {
         for (const [key, record] of Object.entries(user.playRecords)) {
-          await (db as any).storage.setPlayRecord(username, key, record);
+          await db.storage.setPlayRecord(username, key, record);
         }
       }
 
       // 导入收藏夹
       if (user.favorites) {
         for (const [key, favorite] of Object.entries(user.favorites)) {
-          await (db as any).storage.setFavorite(username, key, favorite);
+          await db.storage.setFavorite(username, key, favorite);
         }
       }
 

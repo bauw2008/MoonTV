@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
@@ -8,11 +6,21 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { IRedisClient } from '@/lib/types';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
 
 const gzipAsync = promisify(gzip);
+
+// 用户数据接口
+interface UserData {
+  playRecords: Record<string, unknown>;
+  favorites: Record<string, unknown>;
+  searchHistory: string[];
+  skipConfigs: Record<string, unknown>;
+  password: string | null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,7 +66,7 @@ export async function POST(req: NextRequest) {
         // 管理员配置
         adminConfig: config,
         // 所有用户数据
-        userData: {} as { [username: string]: any },
+        userData: {} as { [username: string]: UserData },
       },
     };
 
@@ -129,11 +137,13 @@ export async function POST(req: NextRequest) {
 async function getUserPassword(username: string): Promise<string | null> {
   try {
     // 使用 Redis 存储的直接访问方法
-    const storage = (db as any).storage;
-    if (storage && typeof storage.client?.get === 'function') {
+    const storage = db.storage;
+    if (storage && storage.client) {
+      const redisClient = storage.client as IRedisClient;
       const passwordKey = `u:${username}:pwd`;
-      const password = await storage.client.get(passwordKey);
-      return password;
+      const password = await redisClient.get(passwordKey);
+      // 处理可能的返回类型
+      return typeof password === 'string' ? password : null;
     }
     return null;
   } catch (error) {

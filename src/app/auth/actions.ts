@@ -41,6 +41,15 @@ async function generateSignature(
     .join('');
 }
 
+// 定义认证数据类型
+interface AuthData {
+  role: 'owner' | 'admin' | 'user';
+  username?: string;
+  password?: string;
+  signature?: string;
+  timestamp?: number;
+}
+
 // 生成认证Cookie（带签名）
 async function generateAuthCookie(
   username?: string,
@@ -48,7 +57,7 @@ async function generateAuthCookie(
   role?: 'owner' | 'admin' | 'user',
   includePassword = false,
 ): Promise<string> {
-  const authData: any = { role: role || 'user' };
+  const authData: AuthData = { role: role || 'user' };
 
   if (includePassword && password) {
     authData.password = password;
@@ -274,12 +283,12 @@ export async function registerAction(
       const secret = process.env.PASSWORD || 'site-secret';
       const encryptedPassword = SimpleCrypto.encrypt(password, secret);
 
-      if (!(config.UserConfig as any).PendingUsers) {
-        (config.UserConfig as any).PendingUsers = [];
+      if (!config.UserConfig.PendingUsers) {
+        config.UserConfig.PendingUsers = [];
       }
 
-      const existsInPending = (config.UserConfig as any).PendingUsers.find(
-        (u: any) => u.username === username,
+      const existsInPending = config.UserConfig.PendingUsers.find(
+        (u) => u.username === username,
       );
       if (existsInPending) {
         return {

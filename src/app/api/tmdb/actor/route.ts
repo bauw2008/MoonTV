@@ -83,6 +83,16 @@ export async function GET(request: NextRequest) {
   // 排序
   const sortBy = searchParams.get('sortBy');
   const sortOrder = searchParams.get('sortOrder');
+
+  type SortByType =
+    | 'rating'
+    | 'date'
+    | 'popularity'
+    | 'vote_count'
+    | 'title'
+    | 'episode_count';
+  type SortOrderType = 'asc' | 'desc';
+
   if (
     sortBy &&
     [
@@ -94,10 +104,10 @@ export async function GET(request: NextRequest) {
       'episode_count',
     ].includes(sortBy)
   ) {
-    filterOptions.sortBy = sortBy as any;
+    filterOptions.sortBy = sortBy as SortByType;
   }
   if (sortOrder && ['asc', 'desc'].includes(sortOrder)) {
-    filterOptions.sortOrder = sortOrder as any;
+    filterOptions.sortOrder = sortOrder as SortOrderType;
   }
 
   // 结果限制

@@ -201,9 +201,9 @@ export function createRedisClient(
 
 // 抽象基类，包含所有通用的Redis操作逻辑
 export abstract class BaseRedisStorage implements IStorage {
-  protected client: RedisClientType;
+  public client: RedisClientType;
   protected config: RedisConnectionConfig;
-  protected withRetry: <T>(
+  public withRetry: <T>(
     operation: () => Promise<T>,
     maxRetries?: number,
   ) => Promise<T>;

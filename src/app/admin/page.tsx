@@ -273,7 +273,7 @@ function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const isClient = typeof window !== 'undefined';
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const [activeCategory, setActiveCategory] =
     useState<keyof typeof configCategories>('basic');

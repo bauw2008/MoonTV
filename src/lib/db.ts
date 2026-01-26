@@ -57,7 +57,7 @@ export function generateStorageKey(source: string, id: string): string {
 
 // 导出便捷方法
 export class DbManager {
-  private storage: IStorage;
+  public storage: IStorage;
 
   constructor() {
     this.storage = getStorage();

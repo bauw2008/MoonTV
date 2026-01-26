@@ -8,6 +8,25 @@ import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
+type UserRole = 'owner' | 'admin' | 'user';
+
+interface UserEntry {
+  username: string;
+  role: UserRole;
+  banned?: boolean;
+  videoSources?: string[];
+  features?: {
+    aiEnabled?: boolean;
+    disableYellowFilter?: boolean;
+    netDiskSearchEnabled?: boolean;
+    tmdbActorSearchEnabled?: boolean;
+  };
+  tags?: string[];
+  createdAt?: number;
+  permissionVersion?: number;
+  videoSourcesInherited?: boolean;
+}
+
 export const runtime = 'nodejs';
 
 // 支持的操作类型
@@ -110,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
-    let targetEntry: any = null;
+    let targetEntry: UserEntry | undefined = undefined;
     let isTargetAdmin = false;
 
     if (
@@ -152,18 +171,12 @@ export async function POST(request: NextRequest) {
         const { userGroup } = body as { userGroup?: string };
 
         // 更新配置
-        const newUser: any = {
+        const newUser = {
           username: targetUsername,
-          role: 'user',
+          role: 'user' as const,
           createdAt: Date.now(), // 设置创建时间戳
+          tags: userGroup && userGroup.trim() ? [userGroup] : ['默认'],
         };
-
-        // 如果指定了用户组，添加到tags中，否则使用默认用户组
-        if (userGroup && userGroup.trim()) {
-          newUser.tags = [userGroup];
-        } else {
-          newUser.tags = ['默认'];
-        }
 
         adminConfig.UserConfig.Users.push(newUser);
         targetEntry =
@@ -187,7 +200,7 @@ export async function POST(request: NextRequest) {
             { status: 404 },
           );
         }
-        const pending: any = adminConfig.UserConfig.PendingUsers[pendingIndex];
+        const pending = adminConfig.UserConfig.PendingUsers[pendingIndex];
         const secret = process.env.PASSWORD || 'site-secret';
         const decryptedPwd = SimpleCrypto.decrypt(
           pending.encryptedPassword,
@@ -200,7 +213,7 @@ export async function POST(request: NextRequest) {
           role: 'user',
           createdAt: Date.now(),
           tags: ['默认'], // 为审核通过的用户分配默认用户组
-        } as any);
+        });
         adminConfig.UserConfig.PendingUsers.splice(pendingIndex, 1);
         break;
       }

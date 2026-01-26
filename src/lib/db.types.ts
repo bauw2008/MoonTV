@@ -75,7 +75,7 @@ export interface DbIndex {
 }
 
 // 数据库集合
-export interface DbCollection<T = unknown> {
+export interface DbCollection {
   name: string;
   schema?: Record<string, unknown>;
   indexes?: DbIndex[];

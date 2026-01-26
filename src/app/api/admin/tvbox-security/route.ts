@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
       // 检查至少有一个启用的用户Token
       const enabledTokens = tvboxSecurityConfig.userTokens.filter(
-        (t: any) => t.enabled,
+        (t) => t.enabled,
       );
       if (enabledTokens.length === 0) {
         return NextResponse.json(

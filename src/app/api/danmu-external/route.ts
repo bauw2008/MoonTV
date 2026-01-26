@@ -14,7 +14,7 @@ interface DanmuApiResponse {
   code: number;
   name: string;
   danum: number;
-  danmuku: any[];
+  danmuku: DanmuRawItem[];
 }
 
 interface DanmuItem {
@@ -22,6 +22,50 @@ interface DanmuItem {
   time: number;
   color?: string;
   mode?: number;
+}
+
+interface DanmuRawItem extends Array<string | number> {
+  0: string | number; // 时间
+  1: string; // 位置
+  2: string; // 颜色
+  3: string; // 空字符串
+  4: string; // 文本
+  5: string; // 空字符串
+  6: string; // 空字符串
+  7: string | number; // 字号
+  length: 8;
+}
+
+interface PlatformInfo {
+  platform: string;
+  url: string;
+  count: number;
+}
+
+interface CaijiApiResponse {
+  list: CaijiVideoItem[];
+}
+
+interface CaijiVideoItem {
+  vod_name: string;
+  type_name: string;
+  vod_play_url?: string;
+  vod_id?: string | number;
+}
+
+interface CaijiDetailResponse {
+  list: CaijiDetailItem[];
+}
+
+interface CaijiDetailItem {
+  vod_play_url?: string;
+  vod_play_from?: string;
+}
+
+interface CaijiVideoDetail {
+  vod_name: string;
+  vod_year?: string;
+  vod_play_url?: string;
 }
 
 // 从caiji.cyou API搜索视频链接
@@ -60,7 +104,7 @@ async function searchFromCaijiAPI(
         continue; // 尝试下一个标题
       }
 
-      const data: any = await response.json();
+      const data: CaijiApiResponse = await response.json();
       if (!data.list || data.list.length === 0) {
         logger.log(`📭 搜索"${searchTitle}"未找到内容`);
         continue; // 尝试下一个标题
@@ -69,8 +113,8 @@ async function searchFromCaijiAPI(
       logger.log(`🎬 搜索"${searchTitle}"找到 ${data.list.length} 个匹配结果`);
 
       // 智能选择最佳匹配结果
-      let bestMatch: any = null;
-      let exactMatch: any = null;
+      let bestMatch: CaijiVideoItem | null = null;
+      let exactMatch: CaijiVideoItem | null = null;
 
       for (const result of data.list) {
         logger.log(`📋 候选: "${result.vod_name}" (类型: ${result.type_name})`);
@@ -124,13 +168,12 @@ async function searchFromCaijiAPI(
 
 // 处理选中的结果
 async function processSelectedResult(
-  selectedResult: any,
+  selectedResult: CaijiVideoItem,
   episode?: string | null,
 ): Promise<PlatformUrl[]> {
   try {
     logger.log(`🔄 处理选中的结果: "${selectedResult.vod_name}"`);
-    const firstResult: any = selectedResult;
-    const detailUrl = `https://www.caiji.cyou/api.php/provide/vod/?ac=detail&ids=${firstResult.vod_id}`;
+    const detailUrl = `https://www.caiji.cyou/api.php/provide/vod/?ac=detail&ids=${selectedResult.vod_id}`;
 
     const detailResponse = await fetch(detailUrl, {
       headers: {
@@ -140,10 +183,10 @@ async function processSelectedResult(
 
     if (!detailResponse.ok) return [];
 
-    const detailData: any = await detailResponse.json();
+    const detailData: CaijiDetailResponse = await detailResponse.json();
     if (!detailData.list || detailData.list.length === 0) return [];
 
-    const videoInfo: any = detailData.list[0];
+    const videoInfo: CaijiVideoDetail = detailData.list[0] as CaijiVideoDetail;
     logger.log(`🎭 视频详情: "${videoInfo.vod_name}" (${videoInfo.vod_year})`);
 
     const urls: PlatformUrl[] = [];
@@ -781,9 +824,9 @@ async function fetchDanmuFromAPI(videoUrl: string): Promise<DanmuItem[]> {
     logger.log(`获取到 ${data.danmuku.length} 条原始弹幕数据`);
 
     const danmuList = data.danmuku
-      .map((item: any[]) => {
+      .map((item: DanmuRawItem) => {
         // 正确解析时间 - 第一个元素就是时间(秒)
-        const time = parseFloat(item[0]) || 0;
+        const time = parseFloat(String(item[0])) || 0;
         const text = (item[4] || '').toString().trim();
         const color = item[2] || '#FFFFFF';
 
@@ -929,7 +972,7 @@ export async function GET(request: NextRequest) {
 
     // 合并所有成功的弹幕数据
     let allDanmu: DanmuItem[] = [];
-    const platformInfo: any[] = [];
+    const platformInfo: PlatformInfo[] = [];
 
     results.forEach((result) => {
       if (result.status === 'fulfilled' && result.value.danmu.length > 0) {

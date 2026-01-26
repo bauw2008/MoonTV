@@ -913,6 +913,7 @@ function LivePageClient() {
     };
 
     fetchLiveSources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 检查收藏状态

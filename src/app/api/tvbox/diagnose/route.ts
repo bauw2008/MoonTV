@@ -9,6 +9,41 @@ import { GET as getTVBoxConfig } from '../route';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+interface ConfigDiagnosisResult {
+  ok: boolean;
+  status: number;
+  contentType: string;
+  size: number;
+  baseUrl: string;
+  configUrl: string;
+  receivedToken: string;
+  hasJson: boolean;
+  issues: string[];
+  json?: unknown;
+  parseError?: string;
+  spider_url?: string;
+  spider_md5?: string;
+  spider_cached?: boolean;
+  spider_real_size?: number;
+  spider_tried?: boolean;
+  spider_success?: boolean;
+  spiderReachable?: boolean;
+  spiderStatus?: number | string;
+  spiderContentLength?: string;
+  spiderLastModified?: string;
+  spiderSizeKB?: number;
+  sitesCount?: number;
+  livesCount?: number;
+  spider?: string;
+  spiderPrivate?: boolean;
+  privateApis?: number;
+  issuesCount?: number;
+  parsesCount?: number;
+  spider_backup?: string;
+  spider_candidates?: string[];
+  pass?: boolean;
+}
+
 function getBaseUrl(req: NextRequest): string {
   const envBase = (process.env.SITE_BASE || '').trim().replace(/\/$/, '');
   if (envBase) {
@@ -128,15 +163,15 @@ export async function GET(req: NextRequest) {
     const cfgRes = await getTVBoxConfig(mockRequest);
     const contentType = cfgRes.headers.get('content-type') || '';
     const text = await cfgRes.text();
-    let parsed: any = null;
+    let parsed: Record<string, unknown> | null = null;
     let parseError: string | undefined;
     try {
-      parsed = JSON.parse(text);
-    } catch (e: any) {
-      parseError = e?.message || 'json parse error';
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch (e: unknown) {
+      parseError = (e as Error)?.message || 'json parse error';
     }
 
-    const result: any = {
+    const result: ConfigDiagnosisResult = {
       ok: cfgRes.ok,
       status: cfgRes.status,
       contentType,
@@ -170,33 +205,34 @@ export async function GET(req: NextRequest) {
 
       // 传递 Spider 状态透明化字段
       if (parsed.spider_url) {
-        result.spider_url = parsed.spider_url;
+        result.spider_url = parsed.spider_url as string;
       }
       if (parsed.spider_md5) {
-        result.spider_md5 = parsed.spider_md5;
+        result.spider_md5 = parsed.spider_md5 as string;
       }
       if (parsed.spider_cached !== undefined) {
-        result.spider_cached = parsed.spider_cached;
+        result.spider_cached = parsed.spider_cached as boolean;
       }
       if (parsed.spider_real_size !== undefined) {
-        result.spider_real_size = parsed.spider_real_size;
+        result.spider_real_size = parsed.spider_real_size as number;
       }
       if (parsed.spider_tried !== undefined) {
-        result.spider_tried = parsed.spider_tried;
+        result.spider_tried = parsed.spider_tried as boolean;
       }
       if (parsed.spider_success !== undefined) {
-        result.spider_success = parsed.spider_success;
+        result.spider_success = parsed.spider_success as boolean;
       }
       if (parsed.spider_backup) {
-        result.spider_backup = parsed.spider_backup;
+        result.spider_backup = parsed.spider_backup as string;
       }
       if (parsed.spider_candidates) {
-        result.spider_candidates = parsed.spider_candidates;
+        result.spider_candidates = parsed.spider_candidates as string[];
       }
 
       // 检查私网地址
       const privateApis = sites.filter(
-        (s: any) => typeof s?.api === 'string' && isPrivateHost(s.api),
+        (s: { api?: string }) =>
+          typeof s?.api === 'string' && isPrivateHost(s.api),
       ).length;
       result.privateApis = privateApis;
       if (privateApis > 0) {
@@ -217,6 +253,9 @@ export async function GET(req: NextRequest) {
           result.spiderStatus = healthCheck.status;
           result.spiderContentLength = healthCheck.contentLength;
           result.spiderLastModified = healthCheck.lastModified;
+          result.spiderSizeKB = healthCheck.contentLength
+            ? Math.round(parseInt(healthCheck.contentLength) / 1024)
+            : undefined;
 
           if (!healthCheck.accessible) {
             result.issues.push(
@@ -238,6 +277,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    result.issuesCount = result.issues.length;
+
     // 最终状态
     result.pass =
       result.ok &&
@@ -246,10 +287,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result, {
       headers: { 'cache-control': 'no-store' },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error('Diagnose failed', e);
     return NextResponse.json(
-      { ok: false, error: e?.message || 'unknown error' },
+      { ok: false, error: (e as Error)?.message || 'unknown error' },
       { status: 500 },
     );
   }

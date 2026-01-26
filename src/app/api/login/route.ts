@@ -61,6 +61,14 @@ async function generateSignature(
     .join('');
 }
 
+interface AuthData {
+  username?: string;
+  password?: string;
+  role: 'owner' | 'admin' | 'user';
+  signature?: string;
+  timestamp?: number;
+}
+
 // 生成认证Cookie（带签名）
 async function generateAuthCookie(
   username?: string,
@@ -68,7 +76,7 @@ async function generateAuthCookie(
   role?: 'owner' | 'admin' | 'user',
   includePassword = false,
 ): Promise<string> {
-  const authData: any = { role: role || 'user' };
+  const authData: AuthData = { role: role || 'user' };
 
   // 只在需要时包含 password
   if (includePassword && password) {

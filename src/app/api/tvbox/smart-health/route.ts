@@ -60,21 +60,57 @@ async function testUrlReachability(
         error: `HTTP ${response.status}: ${response.statusText}`,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     const responseTime = Date.now() - startTime;
     return {
       success: false,
       responseTime,
-      error: error.message || 'Network error',
+      error: (error as Error)?.message || 'Network error',
     };
   }
 }
 
+// 定义网络环境类型
+interface NetworkEnvironment {
+  region: string;
+  latency?: number;
+  stability?: number;
+  isDomestic?: boolean;
+  url?: string;
+}
+
+// 定义健康检查结果类型
+interface HealthCheckResult {
+  success: boolean;
+  responseTime: number;
+  size?: number;
+  statusCode?: number;
+  error?: string;
+  url?: string;
+}
+
+// 定义 Spider 状态类型
+interface SpiderStatus {
+  accessible?: boolean;
+  status?: number;
+  contentLength?: string;
+  lastModified?: string;
+  error?: string;
+  success?: boolean;
+  tried?: number;
+  buffer?: unknown;
+  md5?: string;
+  source?: string;
+  cached?: boolean;
+  timestamp?: number;
+  size?: number;
+}
+
 // 生成针对性的优化建议
 function generateRecommendations(
-  networkEnv: any,
-  spiderStatus: any,
-  testResults: any[],
+  networkEnv: NetworkEnvironment,
+  spiderStatus: SpiderStatus,
+  testResults: HealthCheckResult[],
 ): string[] {
   const recommendations: string[] = [];
 
@@ -114,7 +150,7 @@ function generateRecommendations(
     recommendations.push(
       '🔧 当前使用备用JAR，功能可能受限，建议重试或联系管理员',
     );
-  } else if (spiderStatus.tried > 3) {
+  } else if (spiderStatus.tried && spiderStatus.tried > 3) {
     recommendations.push(
       '📡 多个源尝试后才成功，建议检查网络稳定性或切换网络环境',
     );
@@ -256,12 +292,12 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[SmartHealth] 错误:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Health check failed',
+        error: (error as Error)?.message || 'Health check failed',
         timestamp: Date.now(),
       },
       { status: 500 },

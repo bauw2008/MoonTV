@@ -4,6 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { DatabaseCacheManager } from '@/lib/database-cache';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { IRedisClient } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -27,20 +28,21 @@ export async function GET(request: NextRequest) {
 
     // 如果是 Upstash，直接测试连接
     if (storageType === 'upstash') {
-      const storage = (db as any).storage;
+      const storage = db.storage;
 
-      if (storage && storage.client) {
+      if (storage && storage.client && storage.withRetry) {
+        const redisClient = storage.client as IRedisClient;
         try {
           logger.log('🔍 测试获取所有cache:*键...');
           const allKeys = await storage.withRetry(() =>
-            storage.client.keys('cache:*'),
+            redisClient.keys('cache:*'),
           );
           logger.log('🔍 找到的键:', allKeys.length, allKeys.slice(0, 5));
 
           if (allKeys.length > 0) {
             logger.log('🔍 测试获取第一个键的值...');
             const firstValue = await storage.withRetry(() =>
-              storage.client.get(allKeys[0]),
+              redisClient.get(allKeys[0]),
             );
             logger.log('🔍 第一个值的类型:', typeof firstValue);
             logger.log(

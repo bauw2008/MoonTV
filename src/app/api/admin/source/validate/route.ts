@@ -7,6 +7,14 @@ import { getConfig } from '@/lib/config';
 import { API_CONFIG } from '@/lib/config';
 import { logger } from '@/lib/logger';
 
+// API 响应数据结构
+interface VideoSourceResponse {
+  list: Array<{
+    vod_name: string;
+    [key: string]: unknown;
+  }>;
+}
+
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -91,7 +99,7 @@ export async function GET(request: NextRequest) {
               throw new Error(`HTTP ${response.status}`);
             }
 
-            const data = (await response.json()) as any;
+            const data = (await response.json()) as VideoSourceResponse;
 
             // 检查结果是否有效
             let status: 'valid' | 'no_results' | 'invalid';
@@ -102,7 +110,7 @@ export async function GET(request: NextRequest) {
               data.list.length > 0
             ) {
               // 检查是否有标题包含搜索词的结果
-              const validResults = data.list.filter((item: any) => {
+              const validResults = data.list.filter((item) => {
                 const title = item.vod_name || '';
                 return title
                   .toLowerCase()

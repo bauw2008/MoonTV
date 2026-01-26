@@ -10,6 +10,12 @@ import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
+type SpecialFeatureType =
+  | 'ai-recommend'
+  | 'disable-yellow-filter'
+  | 'netdisk-search'
+  | 'tmdb-actor-search';
+
 export async function GET(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
@@ -43,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     const hasPermission = await hasSpecialFeaturePermission(
       authInfo.username,
-      feature as any,
+      feature as SpecialFeatureType,
       config, // 传递最新配置，避免使用缓存
     );
 

@@ -42,7 +42,7 @@ function HomeClient() {
   >([]);
   const [posterCarouselData, setPosterCarouselData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const { announcement } = useSite();
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);

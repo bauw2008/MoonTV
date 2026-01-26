@@ -26,10 +26,15 @@ async function getShortDramaCategoriesInternal() {
 
   const data = await response.json();
   const categories = data.categories || [];
-  return categories.map((item: any) => ({
+  return categories.map((item: CategoryItem) => ({
     type_id: item.type_id,
     type_name: item.type_name,
   }));
+}
+
+interface CategoryItem {
+  type_id: string | number;
+  type_name: string;
 }
 
 export async function GET() {

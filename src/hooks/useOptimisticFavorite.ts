@@ -12,14 +12,6 @@ import {
 } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
 
-interface FavoriteItem {
-  id: string;
-  source: string;
-  title: string;
-  poster: string;
-  save_time: number;
-}
-
 /**
  * 乐观收藏 Hook
  * 提供即时的收藏状态反馈，提升用户体验

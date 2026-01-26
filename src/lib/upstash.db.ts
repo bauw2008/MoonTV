@@ -84,7 +84,7 @@ async function withRetry<T>(
 }
 
 export class UpstashRedisStorage implements IStorage {
-  private client: Redis;
+  public client: Redis;
 
   constructor() {
     this.client = getUpstashRedisClient();

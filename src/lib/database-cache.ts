@@ -1,5 +1,6 @@
 import { db } from './db';
 import { logger } from './logger';
+import { IRedisClient } from './types';
 
 // 格式化字节大小
 function formatBytes(bytes: number): string {
@@ -18,18 +19,20 @@ function getStorageType(): string {
 }
 
 // 获取Redis兼容存储实例（支持KVRocks、Upstash、Redis）
-function getRedisStorage(): any {
+function getRedisStorage(): {
+  client: IRedisClient;
+  withRetry: <T>(fn: () => Promise<T>) => Promise<T>;
+} | null {
   try {
     // 安全地访问存储实例
-    const storage = (db as any).storage;
+    const storage = db.storage;
 
     // 检查是否有Redis相关的方法
-    if (
-      storage &&
-      (typeof storage.client?.keys === 'function' || // 标准Redis客户端
-        typeof storage.keys === 'function') // Upstash客户端
-    ) {
-      return storage;
+    if (storage && storage.client && storage.withRetry) {
+      return {
+        client: storage.client as IRedisClient,
+        withRetry: storage.withRetry,
+      };
     }
 
     logger.warn('当前存储类型不支持缓存统计功能');
@@ -55,7 +58,6 @@ export class DatabaseCacheManager {
     }
 
     logger.log('✅ Redis存储实例获取成功');
-    logger.log('🔍 存储实例类型:', storage.constructor?.name);
     logger.log('🔍 存储方法检查: withRetry =', typeof storage.withRetry);
     logger.log('🔍 存储方法检查: client =', !!storage.client);
     logger.log('🔍 存储方法检查: client.keys =', typeof storage.client?.keys);
@@ -96,7 +98,6 @@ export class DatabaseCacheManager {
             allCacheKeys = await storage.client.keys('cache:*');
           } else {
             logger.warn('❌ Upstash存储没有可用的keys方法');
-            logger.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
             return null;
           }
         } catch (error) {
@@ -117,7 +118,6 @@ export class DatabaseCacheManager {
       } else {
         logger.warn('❌ 不支持的存储类型或无法找到合适的keys方法');
         logger.log('🔍 存储类型:', storageType);
-        logger.log('🔍 可用方法:', Object.getOwnPropertyNames(storage));
         return null;
       }
 
@@ -188,7 +188,10 @@ export class DatabaseCacheManager {
                 typeof storage.withRetry === 'function' &&
                 storage.client?.get
               ) {
-                value = await storage.withRetry(() => storage.client.get(key));
+                const result = await storage.withRetry(() =>
+                  storage.client.get(key),
+                );
+                value = typeof result === 'string' ? result : null;
               }
               values.push(value);
             } catch (error) {
@@ -203,8 +206,10 @@ export class DatabaseCacheManager {
         for (const key of allCacheKeys) {
           try {
             let value: any = null;
-            if (typeof storage.get === 'function') {
-              value = await storage.get(key);
+            if (storage.client?.get) {
+              value = await storage.client.get(key);
+            } else if (typeof storage.withRetry === 'function') {
+              value = await storage.withRetry(() => storage.client?.get(key));
             }
             values.push(value);
           } catch (error) {

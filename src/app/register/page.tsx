@@ -2,7 +2,13 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useActionState, useEffect, useState,useTransition } from 'react';
+import {
+  Suspense,
+  useActionState,
+  useEffect,
+  useState,
+  useTransition,
+} from 'react';
 
 import { logger } from '@/lib/logger';
 
@@ -51,14 +57,14 @@ function RegisterPageClient() {
   useEffect(() => {
     const checkRegistrationAvailable = async () => {
       if (typeof window !== 'undefined') {
-        const storageType = (window as unknown as Record<string, unknown>)
+        const username = (window as unknown as Record<string, unknown>)
           .RUNTIME_CONFIG
           ? ((
               (window as unknown as Record<string, unknown>)
                 .RUNTIME_CONFIG as Record<string, unknown>
-            ).STORAGE_TYPE as string)
+            ).USERNAME as string)
           : undefined;
-        if (storageType === 'localstorage') {
+        if (!username) {
           router.replace('/login');
           return;
         }

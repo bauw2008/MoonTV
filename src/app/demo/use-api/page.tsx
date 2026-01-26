@@ -5,7 +5,7 @@
  * 它简化了异步数据的处理，无需使用 useEffect + useState
  */
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { use } from 'react';
 
 import { getConfigPromise, useCachedConfig } from '@/lib/use-config';
@@ -73,36 +73,56 @@ function CachedUseExample() {
  * use() 会自动处理 Promise 的错误，可以使用 Error Boundary 捕获
  */
 function ErrorHandlingExample() {
-  try {
-    const config = use(getConfigPromise()) as any;
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getConfigPromise()
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err as Error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
     return (
       <div className='bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md'>
-        <h3 className='text-xl font-bold mb-4 text-gray-800 dark:text-gray-200'>
-          错误处理示例
-        </h3>
-        <div className='space-y-2'>
-          <p className='text-gray-600 dark:text-gray-400'>
-            <span className='font-semibold'>配置加载成功</span>
-          </p>
-          <p className='text-sm text-gray-500 dark:text-gray-500 mt-2'>
-            💡 如果 Promise reject，use() 会抛出错误，可以使用 Error
-            Boundary 捕获
-          </p>
-        </div>
+        <p className='text-gray-600 dark:text-gray-400'>加载中...</p>
       </div>
     );
-  } catch (error) {
+  }
+
+  if (error) {
     return (
       <div className='bg-red-50 dark:bg-red-900/20 rounded-lg p-6 shadow-md border border-red-200 dark:border-red-800'>
         <h3 className='text-xl font-bold mb-4 text-red-800 dark:text-red-200'>
           配置加载失败
         </h3>
         <p className='text-red-600 dark:text-red-400'>
-          {error instanceof Error ? error.message : '未知错误'}
+          {(error as Error).message}
         </p>
       </div>
     );
   }
+
+  return (
+    <div className='bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md'>
+      <h3 className='text-xl font-bold mb-4 text-gray-800 dark:text-gray-200'>
+        错误处理示例
+      </h3>
+      <div className='space-y-2'>
+        <p className='text-gray-600 dark:text-gray-400'>
+          <span className='font-semibold'>配置加载成功</span>
+        </p>
+        <p className='text-sm text-gray-500 dark:text-gray-500 mt-2'>
+          💡 如果 Promise reject，use() 会抛出错误，可以使用 Error Boundary 捕获
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -166,20 +186,20 @@ function LimitationsExample() {
           - 或者在 use() 调用期间渲染的组件中使用
         </li>
         <li>
-          <span className='font-semibold'>不能在事件处理函数中使用</span>
-          - use() 只能在渲染期间调用
+          <span className='font-semibold'>不能在事件处理函数中使用</span>- use()
+          只能在渲染期间调用
         </li>
         <li>
-          <span className='font-semibold'>不能在 useEffect 中使用</span>
-          - use() 不是 hook，不能在函数组件外使用
+          <span className='font-semibold'>不能在 useEffect 中使用</span>- use()
+          不是 hook，不能在函数组件外使用
         </li>
         <li>
-          <span className='font-semibold'>需要配合 Suspense 使用</span>
-          - 用于显示加载状态
+          <span className='font-semibold'>需要配合 Suspense 使用</span>-
+          用于显示加载状态
         </li>
         <li>
-          <span className='font-semibold'>Promise 会自动去重</span>
-          - 多次使用同一个 Promise 只会执行一次
+          <span className='font-semibold'>Promise 会自动去重</span>-
+          多次使用同一个 Promise 只会执行一次
         </li>
       </ul>
     </div>
@@ -198,8 +218,8 @@ export default function UseApiDemoPage() {
             React 19 use() API 演示
           </h1>
           <p className='text-gray-600 dark:text-gray-400'>
-            use() API 是 React 19 的新特性，用于在渲染期间读取 Promise
-            或 Context
+            use() API 是 React 19 的新特性，用于在渲染期间读取 Promise 或
+            Context
           </p>
         </div>
 
@@ -230,20 +250,22 @@ export default function UseApiDemoPage() {
             </h3>
             <ul className='list-disc list-inside space-y-2 text-blue-700 dark:text-blue-300'>
               <li>
-                <span className='font-semibold'>在 Server Components 中使用</span>
+                <span className='font-semibold'>
+                  在 Server Components 中使用
+                </span>
                 - 适合读取数据库、API 等异步数据
               </li>
               <li>
-                <span className='font-semibold'>配合 Suspense 使用</span>
-                - 提供更好的加载体验
+                <span className='font-semibold'>配合 Suspense 使用</span>-
+                提供更好的加载体验
               </li>
               <li>
-                <span className='font-semibold'>缓存 Promise</span>
-                - 避免重复请求，提升性能
+                <span className='font-semibold'>缓存 Promise</span>-
+                避免重复请求，提升性能
               </li>
               <li>
-                <span className='font-semibold'>错误处理</span>
-                - 使用 Error Boundary 捕获 Promise 错误
+                <span className='font-semibold'>错误处理</span>- 使用 Error
+                Boundary 捕获 Promise 错误
               </li>
             </ul>
           </div>

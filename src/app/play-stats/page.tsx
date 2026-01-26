@@ -152,7 +152,7 @@ const PlayStatsPage: React.FC = () => {
     mostWatchedSource?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'admin' | 'users' | 'personal'>(

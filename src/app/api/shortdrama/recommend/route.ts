@@ -8,6 +8,28 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
+interface ShortDramaRecommendItem {
+  vod_id?: string | number;
+  id?: string | number;
+  vod_name?: string;
+  name?: string;
+  vod_pic?: string;
+  cover?: string;
+  vod_time?: string;
+  update_time?: string;
+  vod_score?: number;
+  score?: number;
+  vod_remarks?: string;
+  vod_content?: string;
+  description?: string;
+  vod_actor?: string;
+  author?: string;
+  vod_pic_slide?: string;
+  backdrop?: string;
+  vote_average?: number;
+  tmdb_id?: string | number;
+}
+
 // 服务端专用函数，直接调用外部API
 async function getRecommendedShortDramasInternal(
   category?: number,
@@ -44,7 +66,7 @@ async function getRecommendedShortDramasInternal(
 
   const data = await response.json();
   const items = data.items || [];
-  return items.map((item: any) => ({
+  return items.map((item: ShortDramaRecommendItem) => ({
     id: item.vod_id || item.id,
     name: item.vod_name || item.name,
     cover: item.vod_pic || item.cover,

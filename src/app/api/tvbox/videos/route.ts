@@ -11,19 +11,29 @@ import {
 } from '@/lib/tvbox-cache';
 import { getYellowWords } from '@/lib/yellow';
 
+// 定义用户标签配置类型
+interface UserTagConfig {
+  name: string;
+  videoSources?: string[];
+  disableYellowFilter?: boolean;
+}
+
+// 定义分类数据类型
+interface CategoryData {
+  type_id: string;
+  type_name: string;
+  [key: string]: unknown;
+}
+
+// 定义分类类型
+interface Category {
+  name: string;
+  url: string;
+  [key: string]: unknown;
+}
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-// 定义分类数据的类型
-interface Category {
-  type_id: number;
-  type_pid: number;
-  type_name: string;
-}
-
-interface CategoryData {
-  class?: Category[];
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,7 +104,7 @@ export async function GET(request: NextRequest) {
           categoryCache.primary_categories.length > 0
         ) {
           // 为缓存的视频添加源名称
-          let videosWithSourceName = videoCache.list.map((video: any) => ({
+          let videosWithSourceName = videoCache.list.map((video) => ({
             ...video,
             source_name: site.name,
           }));
@@ -115,17 +125,20 @@ export async function GET(request: NextRequest) {
             if (!tvboxConfig.SiteConfig.DisableYellowFilter) {
               if (userConfig?.role === 'owner') {
                 shouldFilter = false; // 站长豁免
-              } else if (
+              }
+              // 检查用户组设置
+              else if (
                 userConfig?.tags &&
                 userConfig.tags.length > 0 &&
                 tvboxConfig.UserConfig.Tags
               ) {
                 for (const tagName of userConfig.tags) {
-                  const tagConfig = (tvboxConfig.UserConfig.Tags as any)?.find(
-                    (t: any) => t.name === tagName,
-                  );
+                  const tagConfig = (
+                    tvboxConfig.UserConfig.Tags as UserTagConfig[]
+                  )?.find((t) => t.name === tagName);
+                  // disableYellowFilter = true 表示用户组开启过滤
                   if (tagConfig?.disableYellowFilter === true) {
-                    shouldFilter = true; // 用户组开启过滤
+                    shouldFilter = true;
                     break;
                   }
                 }
@@ -285,11 +298,10 @@ export async function GET(request: NextRequest) {
       }
 
       // 为结果添加源名称
-      let resultsWithSourceName = results.map((video: any) => ({
+      let resultsWithSourceName = results.map((video) => ({
         ...video,
         source_name: site.name,
       }));
-
       // 应用18+过滤
       const yellowWords = await getYellowWords();
       if (yellowWords && yellowWords.length > 0) {
@@ -320,12 +332,16 @@ export async function GET(request: NextRequest) {
         }
 
         if (shouldFilter) {
-          resultsWithSourceName = resultsWithSourceName.filter((item: any) => {
-            const title = (item.title || '').toLowerCase();
-            const typeName = (item.type_name || '').toLowerCase();
-            const combinedText = title + ' ' + typeName;
-            return !yellowWords.some((word) =>
-              combinedText.includes(word.toLowerCase()),
+          // 应用18+过滤
+          resultsWithSourceName = resultsWithSourceName.filter((item) => {
+            const title = (
+              (item as any).vod_name ||
+              (item as any).title ||
+              ''
+            ).toLowerCase();
+            const typeName = ((item as any).type_name || '').toLowerCase();
+            return !yellowWords.some(
+              (word: string) => title.includes(word) || typeName.includes(word),
             );
           });
         }

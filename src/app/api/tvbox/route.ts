@@ -10,6 +10,10 @@ import { getMobileUserAgent, TVBOX_USER_AGENTS } from '@/lib/user-agent';
 interface UserTagConfig {
   name: string;
   videoSources?: string[];
+  disableYellowFilter?: boolean;
+  aiEnabled?: boolean;
+  netDiskSearchEnabled?: boolean;
+  tmdbActorSearchEnabled?: boolean;
 }
 
 // 定义源站配置类型（与 AdminConfig.SourceConfig 兼容）
@@ -834,7 +838,9 @@ export async function GET(request: NextRequest) {
     let currentUser:
       | { username: string; tags?: string[]; videoSources?: string[] }
       | undefined;
-    let targetUser: any = undefined;
+    let targetUser:
+      | { username: string; tags?: string[]; videoSources?: string[] }
+      | undefined;
 
     // 优先使用Token验证时获取的用户名
     if (tokenUsername) {

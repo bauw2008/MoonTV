@@ -8,6 +8,14 @@ import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
+interface AuthData {
+  username?: string;
+  password?: string;
+  role: 'owner' | 'admin' | 'user';
+  signature?: string;
+  timestamp?: number;
+}
+
 // 读取存储类型环境变量，默认 localstorage
 const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
@@ -51,7 +59,7 @@ async function generateAuthCookie(
   role?: 'owner' | 'admin' | 'user',
   includePassword = false,
 ): Promise<string> {
-  const authData: any = { role: role || 'user' };
+  const authData: AuthData = { role: role || 'user' };
 
   // 只在需要时包含 password
   if (includePassword && password) {
@@ -156,8 +164,7 @@ export async function POST(req: NextRequest) {
 
       // 注册用户，获取配置判断是否需要审核
       const config = await getConfig();
-      const requireApproval =
-        (config.UserConfig as any).RequireApproval === true;
+      const requireApproval = config.UserConfig?.RequireApproval === true;
 
       if (requireApproval) {
         // 加密保存密码到待审核队列，使用站长 PASSWORD 作为加密密钥
@@ -165,13 +172,13 @@ export async function POST(req: NextRequest) {
         const encryptedPassword = SimpleCrypto.encrypt(password, secret);
 
         // 初始化 PendingUsers
-        if (!(config.UserConfig as any).PendingUsers) {
-          (config.UserConfig as any).PendingUsers = [];
+        if (!config.UserConfig?.PendingUsers) {
+          config.UserConfig.PendingUsers = [];
         }
 
         // 防重：如果已在待审核队列中，返回提示
-        const existsInPending = (config.UserConfig as any).PendingUsers.find(
-          (u: any) => u.username === username,
+        const existsInPending = config.UserConfig.PendingUsers.find(
+          (u) => u.username === username,
         );
         if (existsInPending) {
           return NextResponse.json(
@@ -180,7 +187,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        (config.UserConfig as any).PendingUsers.push({
+        config.UserConfig.PendingUsers?.push({
           username,
           reason,
           encryptedPassword,
@@ -206,7 +213,7 @@ export async function POST(req: NextRequest) {
         tags: ['默认'], // 为新用户分配默认用户组
       };
 
-      config.UserConfig.Users.push(newUser as any);
+      config.UserConfig.Users.push(newUser);
 
       // 保存更新后的配置
       await db.saveAdminConfig(config);

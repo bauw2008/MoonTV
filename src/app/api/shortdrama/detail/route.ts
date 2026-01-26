@@ -9,6 +9,22 @@ import { parseShortDramaEpisode } from '@/lib/shortdrama.client';
 // 标记为动态路由
 export const dynamic = 'force-dynamic';
 
+interface VideoDetailResponse {
+  id: string;
+  title: string;
+  poster: string;
+  episodes: string[];
+  episodes_titles: string[];
+  source: string;
+  source_name: string;
+  year: string;
+  description?: string;
+  desc?: string;
+  type_name?: string;
+  drama_name?: string;
+  metadata?: unknown;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -73,7 +89,7 @@ export async function GET(request: NextRequest) {
 
     // 转换为兼容格式
     // 注意：始终使用请求的原始ID（主API的ID），不使用result.data.videoId（可能是备用API的ID）
-    const response: any = {
+    const response: VideoDetailResponse = {
       id: id, // 使用原始请求ID，保持一致性
       title: result.data.videoName,
       poster: result.data.cover,

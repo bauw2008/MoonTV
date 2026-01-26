@@ -8,6 +8,19 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
+interface ShortDramaListItem {
+  id: string | number;
+  name: string;
+  cover: string;
+  update_time?: string;
+  score?: number;
+  description?: string;
+  author?: string;
+  backdrop?: string;
+  vote_average?: number;
+  tmdb_id?: string | number;
+}
+
 // 服务端专用函数，直接调用外部API
 async function getShortDramaListInternal(
   category: number,
@@ -41,7 +54,7 @@ async function getShortDramaListInternal(
 
   const data = await response.json();
   const items = data.list || [];
-  const list = items.map((item: any) => ({
+  const list = items.map((item: ShortDramaListItem) => ({
     id: item.id,
     name: item.name,
     cover: item.cover,

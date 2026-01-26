@@ -8,6 +8,13 @@ import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+// 定义用户标签配置类型
+interface UserTagConfig {
+  name: string;
+  videoSources?: string[];
+  disableYellowFilter?: boolean;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // 检查用户认证
@@ -63,16 +70,15 @@ export async function GET(request: NextRequest) {
           config.UserConfig.Tags
         ) {
           for (const tagName of userConfig.tags) {
-            const tagConfig = (config.UserConfig.Tags as any)?.find(
-              (t: any) => t.name === tagName,
+            const tagConfig = (config.UserConfig.Tags as UserTagConfig[])?.find(
+              (t) => t.name === tagName,
             );
             // disableYellowFilter = true 表示用户组开启过滤
-            if ((tagConfig as any)?.disableYellowFilter === true) {
+            if (tagConfig?.disableYellowFilter === true) {
               shouldFilter = true;
               break;
             }
-          }
-          // 如果用户组没有开启过滤，则不过滤
+          } // 如果用户组没有开启过滤，则不过滤
           if (!shouldFilter) {
             shouldFilter = false;
           }

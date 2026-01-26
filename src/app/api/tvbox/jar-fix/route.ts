@@ -8,13 +8,30 @@ import { getRandomUserAgent, OTHER_USER_AGENTS } from '@/lib/user-agent';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+interface JarSource {
+  url: string;
+  name: string;
+  region: 'domestic' | 'international' | 'proxy' | 'overseas';
+  priority: number;
+}
+
+interface JarTestResult {
+  url: string;
+  name: string;
+  success: boolean;
+  responseTime: number;
+  size?: number;
+  error?: string;
+  statusCode?: number;
+}
+
 /**
  * JAR 源修复和验证 API
  * 专门用于诊断和修复 JAR 加载问题
  */
 
 // 验证通过的稳定 JAR 源列表（2025-10-06 测试）
-const VERIFIED_JAR_SOURCES = [
+const VERIFIED_JAR_SOURCES: JarSource[] = [
   {
     url: 'https://raw.iqiq.io/FongMi/CatVodSpider/main/jar/custom_spider.jar',
     name: '国内CDN加速',
@@ -48,7 +65,7 @@ const VERIFIED_JAR_SOURCES = [
 ];
 
 // 测试单个JAR源
-async function testJarSource(source: any): Promise<{
+async function testJarSource(source: JarSource): Promise<{
   url: string;
   name: string;
   success: boolean;
@@ -104,21 +121,21 @@ async function testJarSource(source: any): Promise<{
         error: `HTTP ${response.status}: ${response.statusText}`,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     const responseTime = Date.now() - startTime;
     return {
       url: source.url,
       name: source.name,
       success: false,
       responseTime,
-      error: error.message || 'Network error',
+      error: (error as Error)?.message || 'Network error',
     };
   }
 }
 
 // 生成修复建议
 function generateFixRecommendations(
-  testResults: any[],
+  testResults: JarTestResult[],
   userRegion: string,
 ): {
   immediate: string[];

@@ -12,9 +12,6 @@ import {
 function OwnerConfigContent() {
   // 使用统一的 hooks
   const { loading, error, isOwner } = useAdminAuth();
-
-  // 调试信息
-  logger.log('OwnerConfig debug:', { loading, error, isOwner });
   const { withLoading, isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
 

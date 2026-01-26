@@ -41,7 +41,7 @@ export default function FavoritesPage() {
   const [favoriteFilter, setFavoriteFilter] = useState<string>('all');
   const [favoriteSortBy, setFavoriteSortBy] = useState<string>('recent');
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
     null,
   );

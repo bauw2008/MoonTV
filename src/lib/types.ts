@@ -58,8 +58,23 @@ export interface Favorite {
   type?: string; // 内容类型（movie/tv/variety/等）
 }
 
+// Redis 客户端接口
+export interface IRedisClient {
+  keys(pattern: string): Promise<string[]>;
+  get(key: string): Promise<string | null | {}>;
+  mget?(keys: string[]): Promise<(string | null | {})[]>; // Upstash 使用 mget
+  mGet?(keys: string[]): Promise<(string | null | {})[]>; // ioredis 使用 mGet
+  set?(key: string, value: string): Promise<string | null | {}>;
+  del?(...keys: string[]): Promise<number>;
+  exists?(key: string): Promise<number>;
+  expire?(key: string, seconds: number): Promise<number>;
+}
+
 // 存储接口
 export interface IStorage {
+  // Redis/Upstash 特有属性（可选）
+  client?: IRedisClient;
+  withRetry?: <T>(fn: () => Promise<T>) => Promise<T>;
   // 播放记录相关
   getPlayRecord(userName: string, key: string): Promise<PlayRecord | null>;
   setPlayRecord(
@@ -89,6 +104,12 @@ export interface IStorage {
   getUserPassword(userName: string): Promise<string | null>;
   // 获取用户登录IP（仅管理员功能）
   getUserLoginIp(userName: string): Promise<string | null>;
+  // 获取用户头像（仅管理员功能）
+  getUserAvatar(userName: string): Promise<string | null>;
+  // 设置用户头像（仅管理员功能）
+  setUserAvatar(userName: string, avatarBase64: string): Promise<void>;
+  // 删除用户头像（仅管理员功能）
+  deleteUserAvatar(userName: string): Promise<void>;
   // 设置用户登录IP
   setUserLoginIp(userName: string, ip: string): Promise<void>;
   // 更新用户最后登录时间

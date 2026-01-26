@@ -110,7 +110,6 @@ function TransitionExample() {
     data: searchResults,
     isPending,
     error,
-    refresh,
   } = useAsyncData(
     async () => {
       if (!debouncedQuery) return [];
@@ -122,11 +121,11 @@ function TransitionExample() {
       return response.json();
     },
     {
-      onSuccess: (results) => {
-        console.log('搜索完成:', results.length);
+      onSuccess: () => {
+        // 搜索完成
       },
-      onError: (error) => {
-        console.error('搜索失败:', error);
+      onError: () => {
+        // 搜索失败
       },
     },
   );

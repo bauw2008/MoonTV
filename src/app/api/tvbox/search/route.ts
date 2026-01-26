@@ -18,6 +18,23 @@ function containsYellowWords(title: string, yellowWords: string[]): boolean {
   );
 }
 
+// 定义 TVBox 搜索结果项类型
+interface TVBoxSearchItem {
+  vod_id?: string | number;
+  vod_name?: string;
+  vod_pic?: string;
+  vod_year?: string;
+  type_name?: string;
+  vod_play_url?: string;
+}
+
+// 定义用户标签配置类型
+interface UserTagConfig {
+  name: string;
+  videoSources?: string[];
+  disableYellowFilter?: boolean;
+}
+
 export async function GET(request: NextRequest) {
   const authInfo = getAuthInfoFromCookie(request);
 
@@ -95,7 +112,7 @@ export async function GET(request: NextRequest) {
       }
 
       // 处理搜索结果
-      const results = data.list.map((item: any) => ({
+      const results = data.list.map((item: TVBoxSearchItem) => ({
         id: item.vod_id?.toString() || '',
         title: item.vod_name?.trim() || '',
         poster: item.vod_pic || '',
@@ -136,11 +153,11 @@ export async function GET(request: NextRequest) {
             config.UserConfig.Tags
           ) {
             for (const tagName of userConfig.tags) {
-              const tagConfig = (config.UserConfig.Tags as any)?.find(
-                (t: any) => t.name === tagName,
-              );
+              const tagConfig = (
+                config.UserConfig.Tags as UserTagConfig[]
+              )?.find((t) => t.name === tagName);
               // disableYellowFilter = true 表示用户组开启过滤
-              if ((tagConfig as any)?.disableYellowFilter === true) {
+              if (tagConfig?.disableYellowFilter === true) {
                 shouldFilter = true;
                 break;
               }

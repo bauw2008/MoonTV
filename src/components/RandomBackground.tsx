@@ -7,7 +7,6 @@ interface RandomBackgroundProps {
 }
 
 const CACHE_KEY = 'cached-background-url';
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24小时
 
 export const RandomBackground: React.FC<RandomBackgroundProps> = ({
   className = '',
@@ -15,54 +14,14 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
 }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
-  const [imageError, setImageError] = useState<boolean>(false);
 
   useEffect(() => {
     // 随机图片API列表
-    const randomImageApis = [
-      'https://edgeone-picture.edgeone.app/api/random',
-    ];
+    const randomImageApis = ['https://edgeone-picture.edgeone.app/api/random'];
 
     // 备用图片地址
     const fallbackImageUrl =
       'https://raw.githubusercontent.com/bauw2008/bauw/main/Pictures/login.webp';
-
-    // 检查缓存
-    const checkCache = () => {
-      if (typeof window === 'undefined') return null;
-      
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (!cached) return null;
-
-      const { url, timestamp } = JSON.parse(cached);
-      const now = Date.now();
-      
-      // 缓存未过期
-      if (now - timestamp < CACHE_EXPIRY) {
-        return url;
-      }
-      
-      // 缓存过期，清除
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    };
-
-    // 保存到缓存
-    const saveCache = (url: string) => {
-      if (typeof window === 'undefined') return;
-      localStorage.setItem(
-        CACHE_KEY,
-        JSON.stringify({ url, timestamp: Date.now() })
-      );
-    };
-
-    // 尝试从缓存获取
-    const cachedUrl = checkCache();
-    if (cachedUrl) {
-      setImageUrl(cachedUrl);
-      setImageLoaded(true);
-      return;
-    }
 
     // 缓存未命中，请求新图片
     const randomApi =
@@ -73,24 +32,24 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
     const handleImageLoad = () => {
       setImageUrl(randomApi);
       setImageLoaded(true);
-      setImageError(false);
-      saveCache(randomApi);
+
+      // 更新缓存
+      try {
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            url: randomApi,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch {
+        // 忽略缓存错误
+      }
     };
 
     const handleImageError = () => {
-      if (!imageError) {
-        const fallbackImgElement = new globalThis.Image();
-        fallbackImgElement.onload = () => {
-          setImageUrl(fallbackImageUrl);
-          setImageLoaded(true);
-          saveCache(fallbackImageUrl);
-        };
-        fallbackImgElement.onerror = () => {
-          setImageLoaded(true);
-        };
-        fallbackImgElement.src = fallbackImageUrl;
-        setImageError(true);
-      }
+      setImageUrl(fallbackImageUrl);
+      setImageLoaded(true);
     };
 
     imgElement.onload = handleImageLoad;
@@ -101,7 +60,7 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
       imgElement.onload = null;
       imgElement.onerror = null;
     };
-  }, [imageError]);
+  }, []);
 
   return (
     <div className={`absolute inset-0 ${className}`}>

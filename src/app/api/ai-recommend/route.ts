@@ -21,6 +21,15 @@ interface ChatRequest {
   stream?: boolean; // 🔥 支持流式响应
 }
 
+interface ChatRequestBody {
+  model: string;
+  messages: OpenAIMessage[];
+  stream: boolean;
+  temperature?: number;
+  max_completion_tokens?: number;
+  max_tokens?: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(request);
@@ -234,7 +243,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const requestBody: any = {
+    const requestBody: ChatRequestBody = {
       model: requestModel,
       messages: chatMessages,
       stream: stream || false, // 🔥 添加流式参数

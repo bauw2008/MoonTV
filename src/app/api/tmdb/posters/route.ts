@@ -4,6 +4,18 @@ import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
+interface TMDBItem {
+  id: number;
+  title?: string;
+  name?: string;
+  backdrop_path?: string;
+  poster_path?: string;
+  vote_average?: number;
+  release_date?: string;
+  first_air_date?: string;
+  overview?: string;
+}
+
 // TMDB API 配置
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -46,8 +58,8 @@ async function getTMDBPoster(
 
     // 获取第一个有backdrop_path的内容
     const firstItemWithBackdrop = data.results.find(
-      (item: any) => item.backdrop_path,
-    );
+      (item: TMDBItem) => item.backdrop_path,
+    ) as TMDBItem | undefined;
 
     if (!firstItemWithBackdrop) {
       throw new Error(`没有找到${category}内容的横屏海报`);
@@ -129,7 +141,9 @@ async function searchTMDBPoster(
     }
 
     // 优先选择有backdrop_path的结果
-    let bestMatch = data.results.find((item: any) => item.backdrop_path);
+    let bestMatch = data.results.find(
+      (item: TMDBItem) => item.backdrop_path,
+    ) as TMDBItem | undefined;
 
     // 如果没有backdrop_path，选择第一个结果
     if (!bestMatch) {

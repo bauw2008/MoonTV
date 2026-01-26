@@ -18,9 +18,8 @@ function LoginPageClient() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
 
-  // 根据存储类型决定是否需要用户名
-  const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-  const shouldAskUsername = storageType !== 'localstorage';
+  // 根据是否配置了 USERNAME 环境变量决定是否需要用户名
+  const shouldAskUsername = !!process.env.USERNAME;
 
   const { siteName } = useSite();
 
