@@ -17,9 +17,6 @@ function LoginPageClient() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
 
-  // 根据是否配置了 USERNAME 环境变量决定是否需要用户名
-  const shouldAskUsername = !!process.env.USERNAME;
-
   const { siteName } = useSite();
 
   const [state, formAction, isPending] = useActionState(loginAction, {
@@ -66,26 +63,24 @@ function LoginPageClient() {
             </div>
           )}
 
-          {shouldAskUsername && (
-            <div>
-              <label
-                htmlFor='username'
-                className='block text-sm font-medium text-white'
-              >
-                用户名
-              </label>
-              <input
-                id='username'
-                name='username'
-                type='text'
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className='mt-1 block w-full rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm focus:bg-white/20 focus:ring-2 focus:ring-white/50'
-                placeholder='请输入用户名'
-              />
-            </div>
-          )}
+          <div>
+            <label
+              htmlFor='username'
+              className='block text-sm font-medium text-white'
+            >
+              用户名
+            </label>
+            <input
+              id='username'
+              name='username'
+              type='text'
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className='mt-1 block w-full rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm focus:bg-white/20 focus:ring-2 focus:ring-white/50'
+              placeholder='请输入用户名'
+            />
+          </div>
 
           <div>
             <label
@@ -119,20 +114,18 @@ function LoginPageClient() {
             登录
           </button>
 
-          {shouldAskUsername && (
-            <div className='text-center'>
-              <span className='text-gray-700 dark:text-gray-300 text-sm'>
-                还没有账户？
-              </span>
-              <button
-                type='button'
-                onClick={() => router.push('/register')}
-                className='ml-2 text-green-600 dark:text-green-400 text-sm font-medium hover:underline'
-              >
-                立即注册
-              </button>
-            </div>
-          )}
+          <div className='text-center'>
+            <span className='text-gray-700 dark:text-gray-300 text-sm'>
+              还没有账户？
+            </span>
+            <button
+              type='button'
+              onClick={() => router.push('/register')}
+              className='ml-2 text-green-600 dark:text-green-400 text-sm font-medium hover:underline'
+            >
+              立即注册
+            </button>
+          </div>
         </form>
       </div>
     </div>
