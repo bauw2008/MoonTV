@@ -4,7 +4,7 @@
 
 import { ChevronDown, ChevronLeft, Search, Settings, X } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
 import { logger } from '@/lib/logger';
 import { UnifiedVideoItem } from '@/lib/types';
@@ -450,6 +450,7 @@ function TVBoxPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -614,14 +615,17 @@ function TVBoxPageContent() {
       const newRawVideos = data.list || [];
       const newVideos = newRawVideos.map((v) => toUnifiedVideoItem(v));
 
-      if (currentPage === 1) {
-        setRawVideos(newRawVideos);
-        setVideos(newVideos);
-        setFromCache(!!data.fromCache);
-      } else {
-        setRawVideos((prev) => [...prev, ...newRawVideos]);
-        setVideos((prev) => [...prev, ...newVideos]);
-      }
+      // 使用 transition 优化状态更新
+      startTransition(() => {
+        if (currentPage === 1) {
+          setRawVideos(newRawVideos);
+          setVideos(newVideos);
+          setFromCache(!!data.fromCache);
+        } else {
+          setRawVideos((prev) => [...prev, ...newRawVideos]);
+          setVideos((prev) => [...prev, ...newVideos]);
+        }
+      });
 
       // 只在非搜索模式下更新分类信息
       if (!isSearchMode) {

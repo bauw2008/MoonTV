@@ -281,7 +281,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           if (response.ok) {
             const data = await response.json();
             const pendingUsers = data.Config?.UserConfig?.PendingUsers || [];
-
             setNotifications((prev) => ({
               ...prev,
               pendingUsers: { count: pendingUsers.length },
@@ -297,8 +296,14 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'last-pending-update' && e.newValue !== e.oldValue) {
         // 有新的待审核用户，更新数量
+        logger.log('[TopNav] 检测到待审核用户更新，重新获取数量');
         fetchPendingUsersCount();
       }
+    };
+
+    // 监听自定义事件（用于同一标签页内通知）
+    const handleCustomEvent = () => {
+      fetchPendingUsersCount();
     };
 
     // 监听页面可见性变化（用于同一标签页内通知）
@@ -317,10 +322,12 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
     // 添加事件监听
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('pending-users-update', handleCustomEvent);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('pending-users-update', handleCustomEvent);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
@@ -597,6 +604,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
+                    // 清除待审核用户通知标记
+                    localStorage.removeItem('last-pending-update');
                     router.push('/admin');
                   }}
                   className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'

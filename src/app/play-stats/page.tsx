@@ -2,7 +2,13 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 import { logger } from '@/lib/logger';
 import { PlayRecord, PlayStatsResult } from '@/lib/types';
@@ -146,6 +152,7 @@ const PlayStatsPage: React.FC = () => {
     mostWatchedSource?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'admin' | 'users' | 'personal'>(
@@ -311,7 +318,10 @@ const PlayStatsPage: React.FC = () => {
       await fetchUserStats();
     }
 
-    setLoading(false);
+    // 使用 transition 优化状态更新
+    startTransition(() => {
+      setLoading(false);
+    });
   }, [isAdmin, fetchAdminStats, fetchUserStats]);
 
   // 添加防抖变量

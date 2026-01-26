@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import {
   clearAllFavorites,
@@ -41,6 +41,7 @@ export default function FavoritesPage() {
   const [favoriteFilter, setFavoriteFilter] = useState<string>('all');
   const [favoriteSortBy, setFavoriteSortBy] = useState<string>('recent');
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
   const [watchingUpdates, setWatchingUpdates] = useState<WatchingUpdate | null>(
     null,
   );
@@ -96,7 +97,9 @@ export default function FavoritesPage() {
           type: itemType,
         } as FavoriteItem;
       });
-    setFavoriteItems(sorted);
+    startTransition(() => {
+      setFavoriteItems(sorted);
+    });
   };
 
   // 检查收藏项是否有新集数更新
@@ -207,7 +210,9 @@ export default function FavoritesPage() {
     const unsubscribeWatchingUpdates = subscribeToWatchingUpdatesEvent(() => {
       logger.log('FavoritesPage: 收到watching updates更新事件');
       const updates = getDetailedWatchingUpdates();
-      setWatchingUpdates(updates);
+      startTransition(() => {
+        setWatchingUpdates(updates);
+      });
     });
 
     return () => {

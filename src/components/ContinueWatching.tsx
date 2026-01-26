@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
 import {
@@ -24,6 +24,7 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
     (PlayRecord & { key: string })[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   // 处理播放记录数据更新的函数
   const updatePlayRecords = (allRecords: Record<string, PlayRecord>) => {
@@ -38,7 +39,9 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
       (a, b) => b.save_time - a.save_time,
     );
 
-    setPlayRecords(sortedRecords);
+    startTransition(() => {
+      setPlayRecords(sortedRecords);
+    });
   };
 
   useEffect(() => {
@@ -51,7 +54,9 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
         updatePlayRecords(allRecords);
       } catch (error) {
         logger.error('获取播放记录失败:', error);
-        setPlayRecords([]);
+        startTransition(() => {
+          setPlayRecords([]);
+        });
       } finally {
         setLoading(false);
       }

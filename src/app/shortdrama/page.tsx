@@ -1,7 +1,14 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 import { logger } from '@/lib/logger';
 import {
@@ -25,7 +32,12 @@ import { VirtualDoubanGrid } from '@/components/VirtualDoubanGrid';
 interface WindowConfig {
   __DISABLED_MENUS?: {
     showShortDrama?: boolean;
-    [key: string]: boolean | undefined;
+    showLive?: boolean;
+    showTvbox?: boolean;
+    showMovies?: boolean;
+    showTVShows?: boolean;
+    showAnime?: boolean;
+    showVariety?: boolean;
   };
   RUNTIME_CONFIG?: {
     AIConfig?: {
@@ -48,7 +60,9 @@ function ShortDramaPagePermissionCheck({
 }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const disabledMenus = window.__DISABLED_MENUS || {};
+      const disabledMenus = window.__DISABLED_MENUS ?? {
+        showShortDrama: false,
+      };
       if (disabledMenus.showShortDrama) {
         window.location.href = '/';
       }
@@ -56,7 +70,7 @@ function ShortDramaPagePermissionCheck({
   }, []);
 
   if (typeof window !== 'undefined') {
-    const disabledMenus = window.__DISABLED_MENUS || {};
+    const disabledMenus = window.__DISABLED_MENUS ?? { showShortDrama: false };
     if (disabledMenus.showShortDrama) {
       return null;
     }
@@ -76,6 +90,7 @@ function ShortDramaPageClient() {
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -412,8 +427,11 @@ function ShortDramaPageClient() {
             requestSnapshot.shortDramaType === currentSnapshot.shortDramaType;
 
           if (keyParamsMatch) {
-            setDoubanData((prev) => [...prev, ...data.list]);
-            setHasMore(data.list.length !== 0);
+            // 使用 transition 优化状态更新
+            startTransition(() => {
+              setDoubanData((prev) => [...prev, ...data.list]);
+              setHasMore(data.list.length !== 0);
+            });
           }
         }
       } catch (err) {

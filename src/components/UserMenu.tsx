@@ -1142,9 +1142,9 @@ export const UserMenu: React.FC = () => {
                   <input
                     type='checkbox'
                     className='sr-only peer'
-                    checked={!settings.enableNotifications}
+                    checked={settings.enableNotifications}
                     onChange={(e) =>
-                      updateSetting('enableNotifications', !e.target.checked)
+                      updateSetting('enableNotifications', e.target.checked)
                     }
                   />
                   <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>

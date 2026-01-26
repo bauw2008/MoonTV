@@ -194,6 +194,7 @@ export async function registerAction(
     error: string | null;
     success: string | null;
     pending: boolean;
+    notifyAdmin?: boolean;
   },
   formData: FormData,
 ) {
@@ -301,6 +302,7 @@ export async function registerAction(
         error: null,
         success: '已提交注册申请，等待管理员审核',
         pending: true,
+        notifyAdmin: true,
       };
     }
 

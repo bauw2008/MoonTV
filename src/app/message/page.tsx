@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { MessageSquare, Reply, Send, Trash2, User, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { logger } from '@/lib/logger';
 import { useCurrentAuth } from '@/hooks/useCurrentAuth-';
@@ -47,6 +47,7 @@ export default function MessageBoard() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -83,22 +84,25 @@ export default function MessageBoard() {
       const response = await fetch(`/api/message?page=${page}&limit=6`);
       const data = await response.json();
 
-      if (append) {
-        // 追加数据而不是替换
-        setComments((prev) => [...prev, ...data.comments]);
-      } else {
-        // 替换数据
-        setComments(data.comments || []);
-      }
+      // 使用 transition 优化状态更新
+      startTransition(() => {
+        if (append) {
+          // 追加数据而不是替换
+          setComments((prev) => [...prev, ...data.comments]);
+        } else {
+          // 替换数据
+          setComments(data.comments || []);
+        }
 
-      // 更新分页信息
-      setCurrentPage(data.pagination?.currentPage || 1);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setHasNextPage(data.pagination?.hasNextPage || false);
-      setHasPrevPage(data.pagination?.hasPrevPage || false);
+        // 更新分页信息
+        setCurrentPage(data.pagination?.currentPage || 1);
+        setTotalPages(data.pagination?.totalPages || 1);
+        setHasNextPage(data.pagination?.hasNextPage || false);
+        setHasPrevPage(data.pagination?.hasPrevPage || false);
 
-      // 标记已加载
-      hasLoadedComments.current = true;
+        // 标记已加载
+        hasLoadedComments.current = true;
+      });
     } catch {
       logger.error('获取评论失败，请稍后重试');
     } finally {

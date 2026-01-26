@@ -4,7 +4,7 @@
 
 import { Calendar, ChevronRight, Film, Tv, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import {
   BangumiCalendarData,
@@ -42,6 +42,7 @@ function HomeClient() {
   >([]);
   const [posterCarouselData, setPosterCarouselData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
   const { announcement } = useSite();
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
@@ -69,11 +70,17 @@ function HomeClient() {
         const response = await fetch('/api/tmdb/posters?category=movie');
 
         if (response.status === 403) {
-          setTmdbPostersEnabled(false);
+          startTransition(() => {
+            setTmdbPostersEnabled(false);
+          });
         } else if (response.ok) {
-          setTmdbPostersEnabled(true);
+          startTransition(() => {
+            setTmdbPostersEnabled(true);
+          });
         } else {
-          setTmdbPostersEnabled(false);
+          startTransition(() => {
+            setTmdbPostersEnabled(false);
+          });
         }
       } catch (error) {
         // 发生错误时默认不启用
@@ -113,9 +120,13 @@ function HomeClient() {
           moviesData.status === 'fulfilled' &&
           moviesData.value?.code === 200
         ) {
-          setHotMovies(moviesData.value.list);
+          startTransition(() => {
+            setHotMovies(moviesData.value.list);
+          });
         } else {
-          setHotMovies([]);
+          startTransition(() => {
+            setHotMovies([]);
+          });
         }
 
         // 处理剧集数据
@@ -123,9 +134,13 @@ function HomeClient() {
           tvShowsData.status === 'fulfilled' &&
           tvShowsData.value?.code === 200
         ) {
-          setHotTvShows(tvShowsData.value.list);
+          startTransition(() => {
+            setHotTvShows(tvShowsData.value.list);
+          });
         } else {
-          setHotTvShows([]);
+          startTransition(() => {
+            setHotTvShows([]);
+          });
         }
 
         // 处理综艺数据
@@ -133,9 +148,13 @@ function HomeClient() {
           varietyShowsData.status === 'fulfilled' &&
           varietyShowsData.value?.code === 200
         ) {
-          setHotVarietyShows(varietyShowsData.value.list);
+          startTransition(() => {
+            setHotVarietyShows(varietyShowsData.value.list);
+          });
         } else {
-          setHotVarietyShows([]);
+          startTransition(() => {
+            setHotVarietyShows([]);
+          });
         }
 
         // 处理bangumi数据，防止接口失败导致页面崩溃
@@ -143,9 +162,13 @@ function HomeClient() {
           bangumiCalendarData.status === 'fulfilled' &&
           Array.isArray(bangumiCalendarData.value)
         ) {
-          setBangumiCalendarData(bangumiCalendarData.value);
+          startTransition(() => {
+            setBangumiCalendarData(bangumiCalendarData.value);
+          });
         } else {
-          setBangumiCalendarData([]);
+          startTransition(() => {
+            setBangumiCalendarData([]);
+          });
         }
 
         // 处理海报轮播数据
@@ -154,9 +177,13 @@ function HomeClient() {
           posterData.value &&
           posterData.value.posters
         ) {
-          setPosterCarouselData(posterData.value.posters);
+          startTransition(() => {
+            setPosterCarouselData(posterData.value.posters);
+          });
         } else {
-          setPosterCarouselData([]);
+          startTransition(() => {
+            setPosterCarouselData([]);
+          });
         }
       } catch (error) {
         // 静默处理错误

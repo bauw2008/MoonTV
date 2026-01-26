@@ -2,12 +2,13 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useActionState, useEffect, useState } from 'react';
+import { Suspense, useActionState, useEffect, useState,useTransition } from 'react';
 
 import { logger } from '@/lib/logger';
 
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
+import { SubmitButton } from '@/components/SubmitButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { registerAction } from '@/app/auth/actions';
@@ -27,8 +28,9 @@ function RegisterPageClient() {
   }>({});
 
   const { siteName } = useSite();
+  const [isPending, startTransition] = useTransition();
 
-  const [state, formAction, isPending] = useActionState(registerAction, {
+  const [state, formAction] = useActionState(registerAction, {
     error: null,
     success: null,
     pending: false,
@@ -36,17 +38,14 @@ function RegisterPageClient() {
 
   // 注册成功后跳转
   useEffect(() => {
-    if (state.success && !state.pending && !isPending) {
-      // 设置通知标记
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('last-pending-update', Date.now().toString());
-      }
-      setTimeout(() => {
-        const redirect = searchParams.get('redirect') || '/';
+    if (state.success && !isPending) {
+      // 立即跳转到登录页面
+      startTransition(() => {
+        const redirect = searchParams.get('redirect') || '/login';
         router.replace(redirect);
-      }, 1500);
+      });
     }
-  }, [state.success, state.pending, isPending, router, searchParams]);
+  }, [state.success, isPending, router, searchParams]);
 
   // 在客户端挂载后设置配置
   useEffect(() => {
@@ -370,47 +369,12 @@ function RegisterPageClient() {
               </p>
             )}
 
-            {state.success && !state.pending && (
-              <p className='text-sm text-green-300 dark:text-green-400 bg-green-900/30 dark:bg-green-900/50 rounded-lg py-2 px-3 text-center border border-green-700/50'>
-                {state.success}
-              </p>
-            )}
-
-            <button
-              type='submit'
-              disabled={isPending}
-              className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
+            <SubmitButton
+              pendingText='注册中...'
+              className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl'
             >
-              <span className='flex items-center justify-center'>
-                {isPending ? (
-                  <>
-                    <svg
-                      className='animate-spin h-5 w-5 text-white mr-2'
-                      xmlns='http://www.w3.org/2000/svg'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                    >
-                      <circle
-                        className='opacity-25'
-                        cx='12'
-                        cy='12'
-                        r='10'
-                        stroke='currentColor'
-                        strokeWidth='4'
-                      ></circle>
-                      <path
-                        className='opacity-75'
-                        fill='currentColor'
-                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                      ></path>
-                    </svg>
-                    注册中...
-                  </>
-                ) : (
-                  '注册'
-                )}
-              </span>
-            </button>
+              注册
+            </SubmitButton>
 
             <div className='text-center'>
               <button

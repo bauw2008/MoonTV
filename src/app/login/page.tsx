@@ -7,6 +7,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
+import { SubmitButton } from '@/components/SubmitButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { loginAction } from '@/app/auth/actions';
@@ -33,6 +34,11 @@ function LoginPageClient() {
       const auth = getAuthInfoFromBrowserCookie();
       // 只有在已登录且没有错误时才跳转
       if (auth && !state.error && !isPending) {
+        // 如果是管理员或站长，设置通知标记
+        if (auth.role === 'admin' || auth.role === 'owner') {
+          localStorage.setItem('last-pending-update', Date.now().toString());
+          window.dispatchEvent(new CustomEvent('pending-users-update'));
+        }
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
       }
@@ -108,41 +114,12 @@ function LoginPageClient() {
             </p>
           )}
 
-          <button
-            type='submit'
-            disabled={isPending}
-            className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
+          <SubmitButton
+            pendingText='登录中...'
+            className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl'
           >
-            <span className='flex items-center justify-center'>
-              {isPending ? (
-                <>
-                  <svg
-                    className='animate-spin h-5 w-5 text-white mr-2'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                  >
-                    <circle
-                      className='opacity-25'
-                      cx='12'
-                      cy='12'
-                      r='10'
-                      stroke='currentColor'
-                      strokeWidth='4'
-                    ></circle>
-                    <path
-                      className='opacity-75'
-                      fill='currentColor'
-                      d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                    ></path>
-                  </svg>
-                  登录中...
-                </>
-              ) : (
-                '登录'
-              )}
-            </span>
-          </button>
+            登录
+          </SubmitButton>
 
           {shouldAskUsername && (
             <div className='text-center'>

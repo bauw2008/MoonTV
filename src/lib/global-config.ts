@@ -13,14 +13,14 @@ export interface CustomCategory {
   from: string;
 }
 
-interface NetDiskConfig {
+export interface NetDiskConfig {
   enabled: boolean;
   pansouUrl?: string;
   timeout?: number;
   enabledCloudTypes?: string[];
 }
 
-interface AIConfig {
+export interface AIConfig {
   enabled: boolean;
   apiUrl?: string;
   apiKey?: string;
@@ -29,14 +29,14 @@ interface AIConfig {
   maxTokens?: number;
 }
 
-interface TMDBConfig {
+export interface TMDBConfig {
   enableActorSearch: boolean;
   enablePosters?: boolean;
   apiKey?: string;
   language?: string;
 }
 
-interface RuntimeConfig {
+export interface RuntimeConfig {
   STORAGE_TYPE: string;
   DOUBAN_PROXY_TYPE?: string;
   DOUBAN_PROXY?: string;
@@ -50,6 +50,25 @@ interface RuntimeConfig {
   TMDBConfig?: TMDBConfig;
   MenuSettings: MenuSettings;
   SiteName?: string;
+  __DISABLED_MENUS?: DisabledMenus;
+}
+
+export interface DisabledMenus {
+  showLive: boolean;
+  showTvbox: boolean;
+  showShortDrama: boolean;
+  showMovies: boolean;
+  showTVShows: boolean;
+  showAnime: boolean;
+  showVariety: boolean;
+}
+
+// 扩展 Window 接口
+declare global {
+  interface Window {
+    RUNTIME_CONFIG: RuntimeConfig;
+    __DISABLED_MENUS: DisabledMenus;
+  }
 }
 
 // 获取全局运行时配置
@@ -91,7 +110,7 @@ export function getRuntimeConfig(): RuntimeConfig {
     };
   }
 
-  return (window as any).RUNTIME_CONFIG || getDefaultConfig();
+  return window.RUNTIME_CONFIG || getDefaultConfig();
 }
 
 // 默认配置
@@ -154,7 +173,7 @@ export function updateMenuSettings(newSettings: Partial<MenuSettings>): void {
   const updatedSettings = { ...config.MenuSettings, ...newSettings };
 
   // 更新全局配置
-  (window as any).RUNTIME_CONFIG.MenuSettings = updatedSettings;
+  window.RUNTIME_CONFIG.MenuSettings = updatedSettings;
 
   // localstorage 模式：保存到 localStorage
   if (!isServerMode()) {
@@ -186,7 +205,7 @@ function updateDisabledMenus(): void {
   if (typeof window === 'undefined') return;
 
   const menuSettings = getMenuSettings();
-  const disabledMenus = {
+  const disabledMenus: DisabledMenus = {
     showLive: menuSettings.showLive === false,
     showTvbox: menuSettings.showTvbox === false,
     showShortDrama: menuSettings.showShortDrama === false,
@@ -197,11 +216,11 @@ function updateDisabledMenus(): void {
   };
 
   // 更新window.__DISABLED_MENUS供页面访问权限检查使用
-  (window as any).__DISABLED_MENUS = disabledMenus;
+  window.__DISABLED_MENUS = disabledMenus;
 
   // 同时更新RUNTIME_CONFIG中的配置
-  if ((window as any).RUNTIME_CONFIG) {
-    (window as any).RUNTIME_CONFIG.__DISABLED_MENUS = disabledMenus;
+  if (window.RUNTIME_CONFIG) {
+    window.RUNTIME_CONFIG.__DISABLED_MENUS = disabledMenus;
   }
 }
 
@@ -215,7 +234,7 @@ export function updateCustomCategories(categories: CustomCategory[]): void {
   if (typeof window === 'undefined') return;
 
   // 更新全局配置
-  (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES = categories;
+  window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = categories;
 
   // localstorage 模式：保存到 localStorage
   if (!isServerMode()) {
@@ -285,9 +304,9 @@ export async function refreshConfig(): Promise<void> {
     try {
       const savedSettings = localStorage.getItem('vidora-menu-settings');
       if (savedSettings) {
-        const parsedSettings = JSON.parse(savedSettings);
-        if ((window as any).RUNTIME_CONFIG) {
-          (window as any).RUNTIME_CONFIG.MenuSettings = parsedSettings;
+        const parsedSettings: MenuSettings = JSON.parse(savedSettings);
+        if (window.RUNTIME_CONFIG) {
+          window.RUNTIME_CONFIG.MenuSettings = parsedSettings;
           // 更新禁用菜单的全局变量
           updateDisabledMenus();
         }
@@ -295,9 +314,9 @@ export async function refreshConfig(): Promise<void> {
 
       const savedCategories = localStorage.getItem('vidora-custom-categories');
       if (savedCategories) {
-        const parsedCategories = JSON.parse(savedCategories);
-        if ((window as any).RUNTIME_CONFIG) {
-          (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES = parsedCategories;
+        const parsedCategories: CustomCategory[] = JSON.parse(savedCategories);
+        if (window.RUNTIME_CONFIG) {
+          window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = parsedCategories;
         }
       }
     } catch {
@@ -314,17 +333,16 @@ export async function refreshConfig(): Promise<void> {
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data: Partial<RuntimeConfig> = await response.json();
 
-      if (data?.MenuSettings && (window as any).RUNTIME_CONFIG) {
-        (window as any).RUNTIME_CONFIG.MenuSettings = data.MenuSettings;
+      if (data?.MenuSettings && window.RUNTIME_CONFIG) {
+        window.RUNTIME_CONFIG.MenuSettings = data.MenuSettings;
         // 更新禁用菜单的全局变量
         updateDisabledMenus();
       }
 
-      if (data?.CustomCategories && (window as any).RUNTIME_CONFIG) {
-        (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES =
-          data.CustomCategories;
+      if (data?.CUSTOM_CATEGORIES && window.RUNTIME_CONFIG) {
+        window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = data.CUSTOM_CATEGORIES;
       }
     }
   } catch {

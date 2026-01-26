@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
@@ -273,6 +273,7 @@ function AdminContent() {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const isClient = typeof window !== 'undefined';
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const [activeCategory, setActiveCategory] =
     useState<keyof typeof configCategories>('basic');
@@ -302,7 +303,9 @@ function AdminContent() {
           const data = await res.json();
           // 只在服务器确认权限时更新，失败时不改变
           if (data.Role) {
-            setHasAccess(true);
+            startTransition(() => {
+              setHasAccess(true);
+            });
           }
         })
         .catch((error) => {
@@ -389,14 +392,16 @@ function AdminContent() {
             }))}
             value={activeCategory}
             onChange={(value) => {
-              setActiveCategory(value as keyof typeof configCategories);
-              // 自动选择第一个项目
-              const firstItem =
-                configCategories[value as keyof typeof configCategories]
-                  .items[0];
-              if (firstItem) {
-                setActiveItem(firstItem.id);
-              }
+              startTransition(() => {
+                setActiveCategory(value as keyof typeof configCategories);
+                // 自动选择第一个项目
+                const firstItem =
+                  configCategories[value as keyof typeof configCategories]
+                    .items[0];
+                if (firstItem) {
+                  setActiveItem(firstItem.id);
+                }
+              });
             }}
             enableVirtualScroll={true}
           />
@@ -409,7 +414,9 @@ function AdminContent() {
               value: item.id,
             }))}
             value={activeItem}
-            onChange={(value) => setActiveItem(String(value))}
+            onChange={(value) =>
+              startTransition(() => setActiveItem(String(value)))
+            }
             enableVirtualScroll={true}
           />
         </div>

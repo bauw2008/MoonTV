@@ -6,6 +6,9 @@ interface RandomBackgroundProps {
   children?: React.ReactNode;
 }
 
+const CACHE_KEY = 'cached-background-url';
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24小时
+
 export const RandomBackground: React.FC<RandomBackgroundProps> = ({
   className = '',
   children,
@@ -17,9 +20,6 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
   useEffect(() => {
     // 随机图片API列表
     const randomImageApis = [
-      //'https://cdn.seovx.com/?mom=302', // 美图
-      //'https://cdn.seovx.com/ha/?mom=302', // 古风
-      //'https://cdn.seovx.com/d/?mom=302', // 二次元
       'https://edgeone-picture.edgeone.app/api/random',
     ];
 
@@ -27,29 +27,65 @@ export const RandomBackground: React.FC<RandomBackgroundProps> = ({
     const fallbackImageUrl =
       'https://raw.githubusercontent.com/bauw2008/bauw/main/Pictures/login.webp';
 
-    // 随机选择一个API
+    // 检查缓存
+    const checkCache = () => {
+      if (typeof window === 'undefined') return null;
+      
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return null;
+
+      const { url, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      
+      // 缓存未过期
+      if (now - timestamp < CACHE_EXPIRY) {
+        return url;
+      }
+      
+      // 缓存过期，清除
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    };
+
+    // 保存到缓存
+    const saveCache = (url: string) => {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ url, timestamp: Date.now() })
+      );
+    };
+
+    // 尝试从缓存获取
+    const cachedUrl = checkCache();
+    if (cachedUrl) {
+      setImageUrl(cachedUrl);
+      setImageLoaded(true);
+      return;
+    }
+
+    // 缓存未命中，请求新图片
     const randomApi =
       randomImageApis[Math.floor(Math.random() * randomImageApis.length)];
 
-    // 预加载图片
     const imgElement = new globalThis.Image();
 
     const handleImageLoad = () => {
       setImageUrl(randomApi);
       setImageLoaded(true);
       setImageError(false);
+      saveCache(randomApi);
     };
 
     const handleImageError = () => {
-      // 如果随机API失败，使用备用图片
       if (!imageError) {
         const fallbackImgElement = new globalThis.Image();
         fallbackImgElement.onload = () => {
           setImageUrl(fallbackImageUrl);
           setImageLoaded(true);
+          saveCache(fallbackImageUrl);
         };
         fallbackImgElement.onerror = () => {
-          // 如果备用图片也失败，使用纯色背景
           setImageLoaded(true);
         };
         fallbackImgElement.src = fallbackImageUrl;

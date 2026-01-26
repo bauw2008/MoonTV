@@ -7,7 +7,14 @@ import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 import {
   deleteFavorite,
@@ -26,7 +33,11 @@ import PageLayout from '@/components/PageLayout';
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
   interface HTMLVideoElement {
-    hls?: any;
+    hls?: Hls;
+    flv?: {
+      unload?: () => void;
+      destroy?: () => void;
+    };
   }
   interface HTMLDivElement {
     _wheelHandler?: (event: WheelEvent) => void;
@@ -63,6 +74,17 @@ interface LiveSource {
   from: 'config' | 'custom';
   channelNumber?: number;
   disabled?: boolean;
+}
+
+// 禁用菜单接口
+interface DisabledMenus {
+  showLive: boolean;
+  showTvbox: boolean;
+  showShortDrama: boolean;
+  showMovies: boolean;
+  showTVShows: boolean;
+  showAnime: boolean;
+  showVariety: boolean;
 }
 
 // 生成直播海报（默认图标）
@@ -145,7 +167,8 @@ class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
 function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const disabledMenus = (window as any).__DISABLED_MENUS || {};
+      const disabledMenus: DisabledMenus =
+        (window as any).__DISABLED_MENUS || {};
       if (disabledMenus.showLive) {
         window.location.href = '/';
       }
@@ -153,7 +176,7 @@ function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (typeof window !== 'undefined') {
-    const disabledMenus = (window as any).__DISABLED_MENUS || {};
+    const disabledMenus: DisabledMenus = (window as any).__DISABLED_MENUS || {};
     if (disabledMenus.showLive) {
       return null;
     }
@@ -248,6 +271,15 @@ function LivePageClient() {
   const [favorited, setFavorited] = useState(false);
   const favoritedRef = useRef(false);
   const currentChannelRef = useRef<LiveChannel | null>(null);
+
+  // 乐观收藏状态 - 使用 useOptimistic 提供即时反馈
+  const [optimisticFavorited, toggleOptimisticFavorite] = useOptimistic(
+    favorited,
+    (currentState, newFavorited: boolean) => newFavorited,
+  );
+
+  // 使用 useTransition 优化异步操作
+  const [isFavoritePending, startFavoriteTransition] = useTransition();
 
   // EPG数据清洗函数 - 去除重叠的节目，保留时间较短的，只显示今日节目
   const cleanEpgData = (
@@ -760,19 +792,17 @@ function LivePageClient() {
     }
   };
 
-  // 切换收藏
-  const handleToggleFavorite = async () => {
+  // 切换收藏 - 使用 useOptimistic 和 useTransition 优化
+  const handleToggleFavorite = () => {
     if (!currentSourceRef.current || !currentChannelRef.current) return;
 
-    try {
-      const currentFavorited = favoritedRef.current;
-      const newFavorited = !currentFavorited;
+    const newFavorited = !optimisticFavorited;
 
-      // 立即更新状态
-      setFavorited(newFavorited);
-      favoritedRef.current = newFavorited;
+    // 1. 乐观更新 - 立即显示新状态
+    toggleOptimisticFavorite(newFavorited);
 
-      // 异步执行收藏操作
+    // 2. 非紧急更新 - 异步保存到服务器
+    startFavoriteTransition(async () => {
       try {
         if (newFavorited) {
           // 如果未收藏，添加收藏
@@ -802,15 +832,16 @@ function LivePageClient() {
             `live_${currentChannelRef.current.id}`,
           );
         }
+
+        // 3. 成功后更新实际状态
+        setFavorited(newFavorited);
+        favoritedRef.current = newFavorited;
       } catch (err) {
+        // 4. 失败时 React 会自动回滚到原始状态
         logger.error('收藏操作失败:', err);
-        // 如果操作失败，回滚状态
-        setFavorited(currentFavorited);
-        favoritedRef.current = currentFavorited;
+        // 乐观状态会自动恢复，无需手动处理
       }
-    } catch (err) {
-      logger.error('切换收藏失败:', err);
-    }
+    });
   };
 
   // 初始化
@@ -1775,10 +1806,11 @@ function LivePageClient() {
                           e.stopPropagation();
                           handleToggleFavorite();
                         }}
-                        className='flex-shrink-0 hover:opacity-80 transition-opacity'
-                        title={favorited ? '取消收藏' : '收藏'}
+                        disabled={isFavoritePending}
+                        className='flex-shrink-0 hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed'
+                        title={optimisticFavorited ? '取消收藏' : '收藏'}
                       >
-                        <FavoriteIcon filled={favorited} />
+                        <FavoriteIcon filled={optimisticFavorited} />
                       </button>
                     </div>
                     <p className='text-sm text-gray-500 dark:text-gray-400 truncate'>

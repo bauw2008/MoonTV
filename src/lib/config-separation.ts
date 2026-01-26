@@ -4,8 +4,56 @@
  * @param username 用户名
  * @returns true=有豁免权限（不过滤），false=需要过滤
  */
+
+interface UserFeatures {
+  disableYellowFilter?: boolean;
+  aiEnabled?: boolean;
+  netDiskSearchEnabled?: boolean;
+  tmdbActorSearchEnabled?: boolean;
+}
+
+interface User {
+  username: string;
+  role: 'owner' | 'admin' | 'user';
+  features?: UserFeatures;
+  tags?: string[];
+}
+
+interface Tag {
+  name: string;
+  disableYellowFilter?: boolean;
+  aiEnabled?: boolean;
+  netDiskSearchEnabled?: boolean;
+  tmdbActorSearchEnabled?: boolean;
+}
+
+interface UserConfig {
+  Users?: User[];
+  Tags?: Tag[];
+}
+
+interface SiteConfig {
+  DisableYellowFilter?: boolean;
+  EnableTMDBActorSearch?: boolean;
+}
+
+interface AIConfig {
+  enabled?: boolean;
+}
+
+interface NetDiskConfig {
+  enabled?: boolean;
+}
+
+interface Config {
+  SiteConfig?: SiteConfig;
+  UserConfig?: UserConfig;
+  AIConfig?: AIConfig;
+  NetDiskConfig?: NetDiskConfig;
+}
+
 export function shouldApplyYellowFilter(
-  config: any,
+  config: Config,
   username: string,
 ): boolean {
   // 1. 检查全局开关（优先级最高）
@@ -14,8 +62,8 @@ export function shouldApplyYellowFilter(
   }
 
   // 2. 检查用户配置
-  const userConfig = config.UserConfig.Users?.find(
-    (u) => u.username === username,
+  const userConfig = config.UserConfig?.Users?.find(
+    (u: User) => u.username === username,
   );
   if (!userConfig) {
     return true; // 新用户默认过滤
@@ -34,7 +82,9 @@ export function shouldApplyYellowFilter(
   // 5. 检查用户组权限
   if (userConfig.tags) {
     for (const tagName of userConfig.tags) {
-      const tagConfig = config.UserConfig.Tags?.find((t) => t.name === tagName);
+      const tagConfig = config.UserConfig?.Tags?.find(
+        (t: Tag) => t.name === tagName,
+      );
       // 检查用户组是否有18+权限
       if (tagConfig?.disableYellowFilter) {
         return false;
@@ -54,15 +104,15 @@ export function shouldApplyYellowFilter(
  * @param username 用户名
  * @returns true=有权限，false=无权限
  */
-export function hasAIPermission(config: any, username: string): boolean {
+export function hasAIPermission(config: Config, username: string): boolean {
   // 1. 检查全局AI开关（优先级最高）
   if (!config.AIConfig?.enabled) {
     return false; // 全局关闭，所有人都不能用
   }
 
   // 2. 检查用户配置
-  const userConfig = config.UserConfig.Users?.find(
-    (u) => u.username === username,
+  const userConfig = config.UserConfig?.Users?.find(
+    (u: User) => u.username === username,
   );
   if (!userConfig) {
     return false; // 新用户默认无权限
@@ -81,7 +131,9 @@ export function hasAIPermission(config: any, username: string): boolean {
   // 5. 检查用户组权限
   if (userConfig.tags) {
     for (const tagName of userConfig.tags) {
-      const tagConfig = config.UserConfig.Tags?.find((t) => t.name === tagName);
+      const tagConfig = config.UserConfig?.Tags?.find(
+        (t: Tag) => t.name === tagName,
+      );
       // 检查用户组是否有AI权限
       if (tagConfig?.aiEnabled) {
         return true;
@@ -102,7 +154,7 @@ export function hasAIPermission(config: any, username: string): boolean {
  * @returns true=有权限，false=无权限
  */
 export function hasNetDiskSearchPermission(
-  config: any,
+  config: Config,
   username: string,
 ): boolean {
   // 1. 检查全局网盘搜索开关（优先级最高）
@@ -111,8 +163,8 @@ export function hasNetDiskSearchPermission(
   }
 
   // 2. 检查用户配置
-  const userConfig = config.UserConfig.Users?.find(
-    (u) => u.username === username,
+  const userConfig = config.UserConfig?.Users?.find(
+    (u: User) => u.username === username,
   );
   if (!userConfig) {
     return false; // 新用户默认无权限
@@ -131,7 +183,9 @@ export function hasNetDiskSearchPermission(
   // 5. 检查用户组权限
   if (userConfig.tags) {
     for (const tagName of userConfig.tags) {
-      const tagConfig = config.UserConfig.Tags?.find((t) => t.name === tagName);
+      const tagConfig = config.UserConfig?.Tags?.find(
+        (t: Tag) => t.name === tagName,
+      );
       // 检查用户组是否有网盘搜索权限
       if (tagConfig?.netDiskSearchEnabled) {
         return true;
@@ -152,7 +206,7 @@ export function hasNetDiskSearchPermission(
  * @returns true=有权限，false=无权限
  */
 export function hasTmdbActorSearchPermission(
-  config: any,
+  config: Config,
   username: string,
 ): boolean {
   // 1. 检查全局TMDB演员搜索开关（优先级最高）
@@ -161,8 +215,8 @@ export function hasTmdbActorSearchPermission(
   }
 
   // 2. 检查用户配置
-  const userConfig = config.UserConfig.Users?.find(
-    (u) => u.username === username,
+  const userConfig = config.UserConfig?.Users?.find(
+    (u: User) => u.username === username,
   );
   if (!userConfig) {
     return false; // 新用户默认无权限
@@ -181,7 +235,9 @@ export function hasTmdbActorSearchPermission(
   // 5. 检查用户组权限
   if (userConfig.tags) {
     for (const tagName of userConfig.tags) {
-      const tagConfig = config.UserConfig.Tags?.find((t) => t.name === tagName);
+      const tagConfig = config.UserConfig?.Tags?.find(
+        (t: Tag) => t.name === tagName,
+      );
       // 检查用户组是否有TMDB演员搜索权限
       if (tagConfig?.tmdbActorSearchEnabled) {
         return true;

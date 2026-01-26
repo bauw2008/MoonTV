@@ -5,7 +5,14 @@ import Hls from 'hls.js';
 import { Cloud, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 import artplayerPluginChromecast from '@/lib/artplayer-plugin-chromecast';
 import artplayerPluginLiquidGlass from '@/lib/artplayer-plugin-liquid-glass';
@@ -67,7 +74,7 @@ import SkipController from '@/components/SkipController';
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
   interface HTMLVideoElement {
-    hls?: any;
+    hls?: Hls;
   }
 }
 
@@ -198,6 +205,15 @@ function PlayPageClient() {
   } | null>(null);
   // 收藏和详情状态
   const [favorited, setFavorited] = useState(false); // 收藏状态
+
+  // 乐观收藏状态 - 使用 useOptimistic 提供即时反馈
+  const [optimisticFavorited, toggleOptimisticFavorite] = useOptimistic(
+    favorited,
+    (currentState, newFavorited: boolean) => newFavorited,
+  );
+
+  // 使用 useTransition 优化异步操作
+  const [isFavoritePending, startFavoriteTransition] = useTransition();
   // 豆瓣详情状态
   const [movieDetails, setMovieDetails] = useState<any>(null);
   const [loadingMovieDetails, setLoadingMovieDetails] = useState(false);
@@ -2601,8 +2617,8 @@ function PlayPageClient() {
     return unsubscribe;
   }, [currentSource, currentId, videoDoubanId, shortdramaId]);
 
-  // 切换收藏
-  const handleToggleFavorite = async () => {
+  // 切换收藏 - 使用 useOptimistic 和 useTransition 优化
+  const handleToggleFavorite = () => {
     if (
       !videoTitleRef.current ||
       !detailRef.current ||
@@ -2612,28 +2628,39 @@ function PlayPageClient() {
       return;
     }
 
-    try {
-      if (favorited) {
-        // 如果已收藏，删除收藏
-        await deleteFavorite(currentSourceRef.current, currentIdRef.current);
-        setFavorited(false);
-      } else {
-        // 如果未收藏，添加收藏
-        await saveFavorite(currentSourceRef.current, currentIdRef.current, {
-          title: videoTitleRef.current,
-          source_name: detailRef.current?.source_name || '',
-          year: detailRef.current?.year,
-          cover: detailRef.current?.poster || '',
-          total_episodes: detailRef.current?.episodes.length || 1,
-          save_time: Date.now(),
-          search_title: searchTitle || videoTitleRef.current, // 确保 search_title 不为空
-          type: detailRef.current?.type || 'tv', // 使用已推断的类型
-        });
-        setFavorited(true);
+    const newFavorited = !optimisticFavorited;
+
+    // 1. 乐观更新 - 立即显示新状态
+    toggleOptimisticFavorite(newFavorited);
+
+    // 2. 非紧急更新 - 异步保存到服务器
+    startFavoriteTransition(async () => {
+      try {
+        if (newFavorited) {
+          // 如果未收藏，添加收藏
+          await saveFavorite(currentSourceRef.current, currentIdRef.current, {
+            title: videoTitleRef.current,
+            source_name: detailRef.current?.source_name || '',
+            year: detailRef.current?.year,
+            cover: detailRef.current?.poster || '',
+            total_episodes: detailRef.current?.episodes.length || 1,
+            save_time: Date.now(),
+            search_title: searchTitle || videoTitleRef.current, // 确保 search_title 不为空
+            type: detailRef.current?.type || 'tv', // 使用已推断的类型
+          });
+        } else {
+          // 如果已收藏，删除收藏
+          await deleteFavorite(currentSourceRef.current, currentIdRef.current);
+        }
+
+        // 3. 成功后更新实际状态
+        setFavorited(newFavorited);
+      } catch (err) {
+        // 4. 失败时 React 会自动回滚到原始状态
+        logger.error('切换收藏失败:', err);
+        // 乐观状态会自动恢复，无需手动处理
       }
-    } catch (err) {
-      logger.error('切换收藏失败:', err);
-    }
+    });
   };
 
   useEffect(() => {
@@ -4216,9 +4243,10 @@ function PlayPageClient() {
                     e.stopPropagation();
                     handleToggleFavorite();
                   }}
-                  className='ml-3 flex-shrink-0 hover:opacity-80 transition-opacity'
+                  disabled={isFavoritePending}
+                  className='ml-3 flex-shrink-0 hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                  <FavoriteIcon filled={favorited} />
+                  <FavoriteIcon filled={optimisticFavorited} />
                 </button>
 
                 {/* 网盘资源提示按钮 */}
