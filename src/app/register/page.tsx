@@ -14,7 +14,6 @@ import { logger } from '@/lib/logger';
 
 import { RandomBackground } from '@/components/RandomBackground';
 import { useSite } from '@/components/SiteProvider';
-import { SubmitButton } from '@/components/SubmitButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { registerAction } from '@/app/auth/actions';
@@ -375,12 +374,12 @@ function RegisterPageClient() {
               </p>
             )}
 
-            <SubmitButton
-              pendingText='注册中...'
+            <button
+              type='submit'
               className='w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-500 hover:to-emerald-500 hover:shadow-xl'
             >
               注册
-            </SubmitButton>
+            </button>
 
             <div className='text-center'>
               <button
