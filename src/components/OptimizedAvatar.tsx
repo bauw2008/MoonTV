@@ -20,7 +20,10 @@ export const clearAvatarFromLocalStorage = async (): Promise<void> => {
   if (typeof window === 'undefined') return;
 
   try {
+    // 清除服务器头像
     await fetch('/api/avatar', { method: 'DELETE' });
+    // 清除本地缓存
+    localStorage.removeItem('user-avatar');
   } catch (error) {
     logger.error('清除头像失败:', error);
   }
@@ -153,16 +156,46 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
   // 从 API 读取头像（仅在没有外部传入时）
   useEffect(() => {
     if (!externalAvatarUrl) {
+      const CACHE_KEY = 'user-avatar';
+      const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
+
       // 使用 requestAnimationFrame 来延迟 setState 调用
       requestAnimationFrame(() => {
         setIsLoadingCustomAvatar(true);
       });
+
+      // 先尝试从 localStorage 读取缓存
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { avatar, timestamp } = JSON.parse(cached);
+          // 检查缓存是否过期
+          if (Date.now() - timestamp < CACHE_DURATION) {
+            requestAnimationFrame(() => {
+              setInternalAvatarUrl(avatar);
+              setHasCustomAvatar(true);
+              setIsLoadingCustomAvatar(false);
+            });
+            return; // 使用缓存，直接返回
+          }
+        }
+      } catch {
+        // 缓存读取失败，继续请求 API
+      }
+
+      // 缓存不存在或过期，请求 API
       fetch('/api/avatar')
         .then((res) => res.json())
         .then((data) => {
           if (data.avatar) {
-            setInternalAvatarUrl(`data:image/jpeg;base64,${data.avatar}`);
+            const avatarUrl = `data:image/jpeg;base64,${data.avatar}`;
+            setInternalAvatarUrl(avatarUrl);
             setHasCustomAvatar(true);
+            // 保存到缓存
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ avatar: avatarUrl, timestamp: Date.now() }),
+            );
           } else {
             setHasCustomAvatar(false);
           }
