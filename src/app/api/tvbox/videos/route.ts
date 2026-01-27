@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
             // 当应该应用过滤时，进行过滤
             if (shouldFilter) {
               videosWithSourceName = videosWithSourceName.filter(
-                (item: any) =>
+                (item: { title?: string; type_name?: string }) =>
                   !yellowWords.some((word: string) => {
                     const title = (item.title || '').toLowerCase();
                     const typeName = (item.type_name || '').toLowerCase();
@@ -239,8 +239,12 @@ export async function GET(request: NextRequest) {
                 ) {
                   for (const tagName of userConfig.tags) {
                     const tagConfig = (
-                      tvboxConfig.UserConfig.Tags as any
-                    )?.find((t: any) => t.name === tagName);
+                      tvboxConfig.UserConfig.Tags as Array<{
+                        name: string;
+                        videoSources: string[];
+                        disableYellowFilter?: boolean;
+                      }>
+                    )?.find((t) => t.name === tagName);
                     if (tagConfig?.disableYellowFilter === true) {
                       shouldFilter = true;
                       break;
@@ -253,7 +257,8 @@ export async function GET(request: NextRequest) {
                 finalCategoryStructure.primary_categories =
                   finalCategoryStructure.primary_categories.filter(
                     (category) => {
-                      const categoryName = (category as any).type_name || '';
+                      const categoryName =
+                        (category as { type_name?: string }).type_name || '';
                       return !yellowWords.some((word) =>
                         categoryName.includes(word),
                       );
@@ -263,7 +268,8 @@ export async function GET(request: NextRequest) {
                 finalCategoryStructure.secondary_categories =
                   finalCategoryStructure.secondary_categories.filter(
                     (category) => {
-                      const categoryName = category.type_name || '';
+                      const categoryName =
+                        (category as { type_name?: string }).type_name || '';
                       return !yellowWords.some((word) =>
                         categoryName.includes(word),
                       );
@@ -271,10 +277,14 @@ export async function GET(request: NextRequest) {
                   );
 
                 // 从category_map中移除被过滤的分类
-                const filteredCategoryMap: Record<number, any> = {};
+                const filteredCategoryMap: Record<
+                  number,
+                  { type_name?: string }
+                > = {};
                 Object.entries(finalCategoryStructure.category_map).forEach(
                   ([id, category]) => {
-                    const categoryName = (category as any).type_name || '';
+                    const categoryName =
+                      (category as { type_name?: string }).type_name || '';
                     const shouldFilter = yellowWords.some((word) =>
                       categoryName.includes(word),
                     );
@@ -320,9 +330,13 @@ export async function GET(request: NextRequest) {
             tvboxConfig.UserConfig.Tags
           ) {
             for (const tagName of userConfig.tags) {
-              const tagConfig = (tvboxConfig.UserConfig.Tags as any)?.find(
-                (t: any) => t.name === tagName,
-              );
+              const tagConfig = (
+                tvboxConfig.UserConfig.Tags as Array<{
+                  name: string;
+                  videoSources: string[];
+                  disableYellowFilter?: boolean;
+                }>
+              )?.find((t) => t.name === tagName);
               if (tagConfig?.disableYellowFilter === true) {
                 shouldFilter = true;
                 break;
@@ -335,11 +349,13 @@ export async function GET(request: NextRequest) {
           // 应用18+过滤
           resultsWithSourceName = resultsWithSourceName.filter((item) => {
             const title = (
-              (item as any).vod_name ||
-              (item as any).title ||
+              (item as { vod_name?: string; title?: string }).vod_name ||
+              (item as { vod_name?: string; title?: string }).title ||
               ''
             ).toLowerCase();
-            const typeName = ((item as any).type_name || '').toLowerCase();
+            const typeName = (
+              (item as { type_name?: string }).type_name || ''
+            ).toLowerCase();
             return !yellowWords.some(
               (word: string) => title.includes(word) || typeName.includes(word),
             );

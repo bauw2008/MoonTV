@@ -135,7 +135,12 @@ export async function POST(request: NextRequest) {
 
     logger.log('保存评论到数据库...');
     // 保存评论到数据库
-    const success = await db.addComment(comment);
+    const success = await db.addComment({
+      ...comment,
+      role: comment.role || 'user',
+      replies:
+        comment.replies?.map((r) => ({ ...r, role: r.role || 'user' })) || [],
+    });
     logger.log('保存结果:', success);
 
     if (success) {

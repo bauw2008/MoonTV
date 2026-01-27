@@ -125,8 +125,12 @@ export default function TVBoxConfigPage() {
     params.append('format', format);
 
     // 如果启用了设备绑定且有Token，则添加Token参数
-    if (securityConfig?.enableDeviceBinding && (securityConfig as any).token) {
-      params.append('token', (securityConfig as any).token);
+    if (
+      securityConfig?.enableDeviceBinding &&
+      'token' in securityConfig &&
+      securityConfig.token
+    ) {
+      params.append('token', securityConfig.token);
     }
 
     if (configMode !== 'standard') {
@@ -407,7 +411,15 @@ export default function TVBoxConfigPage() {
                   name='configMode'
                   value='standard'
                   checked={configMode === 'standard'}
-                  onChange={(e) => setConfigMode(e.target.value as any)}
+                  onChange={(e) => {
+                    setConfigMode(
+                      e.target.value as
+                        | 'standard'
+                        | 'safe'
+                        | 'fast'
+                        | 'yingshicang',
+                    );
+                  }}
                   className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
                 />
                 <div className='text-sm'>
@@ -425,7 +437,15 @@ export default function TVBoxConfigPage() {
                   name='configMode'
                   value='safe'
                   checked={configMode === 'safe'}
-                  onChange={(e) => setConfigMode(e.target.value as any)}
+                  onChange={(e) =>
+                    setConfigMode(
+                      e.target.value as
+                        | 'standard'
+                        | 'safe'
+                        | 'fast'
+                        | 'yingshicang',
+                    )
+                  }
                   className='mr-2 w-4 h-4 text-blue-600 focus:ring-blue-500'
                 />
                 <div className='text-sm'>
@@ -443,7 +463,15 @@ export default function TVBoxConfigPage() {
                   name='configMode'
                   value='fast'
                   checked={configMode === 'fast'}
-                  onChange={(e) => setConfigMode(e.target.value as any)}
+                  onChange={(e) =>
+                    setConfigMode(
+                      e.target.value as
+                        | 'standard'
+                        | 'safe'
+                        | 'fast'
+                        | 'yingshicang',
+                    )
+                  }
                   className='mr-2 w-4 h-4 text-green-600 focus:ring-green-500'
                 />
                 <div className='text-sm'>
@@ -461,7 +489,15 @@ export default function TVBoxConfigPage() {
                   name='configMode'
                   value='yingshicang'
                   checked={configMode === 'yingshicang'}
-                  onChange={(e) => setConfigMode(e.target.value as any)}
+                  onChange={(e) =>
+                    setConfigMode(
+                      e.target.value as
+                        | 'standard'
+                        | 'safe'
+                        | 'fast'
+                        | 'yingshicang',
+                    )
+                  }
                   className='mr-2 w-4 h-4 text-purple-600 focus:ring-purple-500'
                 />
                 <div className='text-sm'>
@@ -486,21 +522,20 @@ export default function TVBoxConfigPage() {
           </div>
 
           {securityConfig?.enableDeviceBinding &&
-            (securityConfig as any).token && (
+            'token' in securityConfig &&
+            securityConfig.token && (
               <div className='mb-4'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'></label>
                 <div className='flex items-center space-x-2'>
                   <input
                     type='text'
                     readOnly
-                    value={(securityConfig as any).token}
+                    value={securityConfig.token}
                     className='flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none'
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(
-                        (securityConfig as any).token,
-                      );
+                      navigator.clipboard.writeText(securityConfig.token);
                       setTokenCopied(true);
                       setTimeout(() => setTokenCopied(false), 2000);
                     }}

@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { notifyConfigUpdated } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
 import { DefaultPermissions, PermissionType } from '@/lib/permission-types';
+import type { AdminConfig } from '@/lib/types';
 import {
   useAdminApi,
   useAdminAuth,
@@ -25,49 +26,9 @@ import {
 } from '@/hooks/admin';
 
 // 类型定义
-interface User {
-  username: string;
-  password?: string;
-  role: 'owner' | 'admin' | 'user';
-  enabled?: boolean;
-  banned?: boolean;
-  createdAt?: number;
-  lastLoginAt?: number;
-  lastLoginTime?: number; // 添加这个字段以匹配数据库
-  tags?: string[];
-  videoSources?: string[];
-  videoSourcesInherited?: boolean; // videoSources是否继承自用户组
-  features?: {
-    aiEnabled?: boolean;
-    disableYellowFilter?: boolean;
-    netDiskSearchEnabled?: boolean;
-    tmdbActorSearchEnabled?: boolean;
-  };
-  userGroup?: string; // 新增用户组字段
-}
-
-interface UserSettings {
-  Users: User[];
-  Tags: Array<{
-    name: string;
-    videoSources: string[];
-    aiEnabled?: boolean;
-    disableYellowFilter?: boolean;
-    netDiskSearchEnabled?: boolean;
-    tmdbActorSearchEnabled?: boolean;
-  }>;
-  AllowRegister: boolean;
-  RequireApproval: boolean;
-  AutoCleanupInactiveUsers: boolean;
-  InactiveUserDays: number;
-  PendingUsers: Array<{
-    username: string;
-    encryptedPassword: string;
-    createdAt: number;
-    reason?: string;
-    appliedAt: string;
-  }>;
-}
+type User = AdminConfig['UserConfig']['Users'][number];
+type Tag = AdminConfig['UserConfig']['Tags'][number];
+type UserSettings = AdminConfig['UserConfig'];
 
 // 用户头像组件
 interface UserAvatarProps {
@@ -184,9 +145,8 @@ function UserConfigContent() {
 
   // 添加用户表单状态
   const [showAddUserForm, setShowAddUserForm] = useState(false);
-  const [newUser, setNewUser] = useState<User>({
+  const [newUser, setNewUser] = useState<Partial<User>>({
     username: '',
-    password: '',
     role: 'user',
     userGroup: '', // 新增用户组字段
   });
@@ -291,7 +251,7 @@ function UserConfigContent() {
         logger.log('处理后的用户组列表:', tagsToUse);
 
         // 获取用户统计信息（包含登录时间）
-        let userStats: any[] = [];
+        let userStats: Array<{ username: string; lastLoginTime?: number }> = [];
         try {
           const statsResponse = await fetch('/api/admin/play-stats');
           if (statsResponse.ok) {
@@ -314,18 +274,19 @@ function UserConfigContent() {
 
         // 合并用户数据和统计信息
         const mergedUsers = finalConfig.UserConfig.Users.map(
-          (configUser: any) => {
+          (configUser: User) => {
             let finalUser = { ...configUser };
 
             // 从统计信息中获取登录时间
             const userStat = userStats.find(
-              (stat: any) => stat.username === configUser.username,
+              (stat: { username: string; lastLoginTime?: number }) =>
+                stat.username === configUser.username,
             );
-            if (userStat && (userStat.lastLoginTime || userStat.lastLoginAt)) {
-              finalUser.lastLoginTime =
-                userStat.lastLoginTime || userStat.lastLoginAt;
-              finalUser.lastLoginAt =
-                userStat.lastLoginTime || userStat.lastLoginAt;
+            if (userStat && userStat.lastLoginTime) {
+              finalUser.lastLoginTime = userStat.lastLoginTime;
+              finalUser.lastLoginAt = new Date(
+                userStat.lastLoginTime,
+              ).toISOString();
             }
 
             // 对于站长账户（环境变量用户），确保有时间戳
@@ -364,8 +325,8 @@ function UserConfigContent() {
               if (tag) {
                 // 检查用户的videoSources是否与用户组的videoSources完全一致
                 const isSameArray = (
-                  arr1: any[] | undefined,
-                  arr2: any[] | undefined,
+                  arr1: string[] | undefined,
+                  arr2: string[] | undefined,
                 ) => {
                   if (!arr1 || !arr2) return false;
                   if (arr1.length !== arr2.length) return false;
@@ -456,7 +417,13 @@ function UserConfigContent() {
           InactiveUserDays:
             Number(data.Config.UserConfig.InactiveUserDays) || 7,
           PendingUsers: (data.Config.UserConfig.PendingUsers || []).map(
-            (p: any) => ({
+            (p: {
+              username: string;
+              encryptedPassword: string;
+              createdAt?: number;
+              reason?: string;
+              appliedAt?: string;
+            }) => ({
               username: p.username,
               encryptedPassword: p.encryptedPassword,
               createdAt: p.createdAt || Date.now(),
@@ -497,7 +464,7 @@ function UserConfigContent() {
   }, []);
 
   // 辅助函数：计算用户组的视频源数量
-  const getVideoSourceCount = (tag: any) => {
+  const getVideoSourceCount = (tag: Tag) => {
     // 直接使用videoSources字段
     return tag.videoSources?.length || 0;
   };
@@ -683,7 +650,7 @@ function UserConfigContent() {
     handleUserAction('cancelAdmin', username);
 
   // 配置用户采集源权限
-  const handleConfigureUserApis = (user: any) => {
+  const handleConfigureUserApis = (user: User) => {
     setSelectedUser(user);
     // 确保使用用户独立的videoSources字段，而不是继承自用户组的权限
     setSelectedApis(user.videoSources || []);
@@ -836,7 +803,10 @@ function UserConfigContent() {
   };
 
   // 保持向后兼容的saveConfigWithSettings函数
-  const handleToggleSwitch = async (key: keyof UserSettings, value: any) => {
+  const handleToggleSwitch = async (
+    key: keyof UserSettings,
+    value: UserSettings[keyof UserSettings],
+  ) => {
     try {
       logger.log(`切换开关: ${key} = ${value}`);
 
@@ -1026,7 +996,7 @@ function UserConfigContent() {
       return;
     }
 
-    const updates: any = {};
+    const updates: Partial<Tag> = {};
 
     if (
       permissionType === 'ai-recommend' ||
@@ -1065,7 +1035,7 @@ function UserConfigContent() {
     if (!tag) return;
 
     // 只更新videoSources和features字段
-    const updates: any = {
+    const updates: Partial<Tag> = {
       videoSources: selectedApis,
     };
     if (tag.aiEnabled) updates.aiEnabled = tag.aiEnabled;

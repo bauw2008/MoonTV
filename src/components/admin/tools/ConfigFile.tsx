@@ -55,19 +55,25 @@ function ConfigFile() {
       const data = await configApi.getConfig();
 
       // 直接从Config对象获取数据
-      const configData = (data as any).Config || {};
-      const configFile = configData.ConfigFile;
-      const configSub = configData.ConfigSubscribtion;
+      const configData = (data as { Config?: unknown }).Config || {};
+      const configFile = configData as { ConfigFile?: string };
+      const configSub = configData as {
+        ConfigSubscribtion?: {
+          URL?: string;
+          AutoUpdate?: boolean;
+          LastCheck?: string;
+        };
+      };
 
       // 使用从服务器返回的数据，避免闭包陷阱
-      if (configFile) {
-        setConfigContent(configFile);
+      if (configFile.ConfigFile) {
+        setConfigContent(configFile.ConfigFile);
       }
 
-      if (configSub) {
-        setSubscriptionUrl(configSub.URL || '');
-        setAutoUpdate(configSub.AutoUpdate || false);
-        setLastCheckTime(configSub.LastCheck || '');
+      if (configSub.ConfigSubscribtion) {
+        setSubscriptionUrl(configSub.ConfigSubscribtion.URL || '');
+        setAutoUpdate(configSub.ConfigSubscribtion.AutoUpdate || false);
+        setLastCheckTime(configSub.ConfigSubscribtion.LastCheck || '');
       }
     } catch (error) {
       logger.error('加载配置失败:', error);
@@ -108,8 +114,13 @@ function ConfigFile() {
     try {
       const data = await configApi.fetchSubscription(subscriptionUrl);
 
-      if ((data as any).configContent) {
-        setConfigContent((data as any).configContent);
+      if (
+        data &&
+        typeof data === 'object' &&
+        'configContent' in data &&
+        data.configContent
+      ) {
+        setConfigContent(data.configContent as string);
         // 更新本地配置的最后检查时间
         const currentTime = new Date().toISOString();
         setLastCheckTime(currentTime);

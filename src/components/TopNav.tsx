@@ -36,7 +36,7 @@ interface MenuItem {
   label: string;
   path?: string;
   href: string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<{ className?: string }>;
   badge?: string | number;
 }
 
@@ -68,8 +68,9 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const getMenuSettings = (): MenuSettings => {
     if (typeof window !== 'undefined') {
       // 客户端
-      if ((window as any).RUNTIME_CONFIG?.MenuSettings) {
-        return (window as any).RUNTIME_CONFIG.MenuSettings;
+      const config = (window as Window).RUNTIME_CONFIG;
+      if (config?.MenuSettings) {
+        return config.MenuSettings;
       }
     } else {
       // 服务端
@@ -86,11 +87,12 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     };
   };
 
-  const getCustomCategories = (): any[] => {
+  const getCustomCategories = (): unknown[] => {
     if (typeof window !== 'undefined') {
       // 客户端
-      if ((window as any).RUNTIME_CONFIG?.CUSTOM_CATEGORIES) {
-        return (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES;
+      const config = (window as Window).RUNTIME_CONFIG;
+      if (config?.CUSTOM_CATEGORIES) {
+        return config.CUSTOM_CATEGORIES;
       }
     } else {
       // 服务端
@@ -565,6 +567,16 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                 <button
                   onClick={() => {
                     setShowNotificationModal(false);
+                    // 清除版本更新通知标记
+                    localStorage.removeItem('last-version-check');
+                    setNotifications((prev) => ({
+                      ...prev,
+                      versionUpdate: {
+                        hasUpdate: false,
+                        version: '',
+                        count: 0,
+                      },
+                    }));
                   }}
                   className='text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-shrink-0'
                 >
@@ -606,6 +618,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                     setShowNotificationModal(false);
                     // 清除待审核用户通知标记
                     localStorage.removeItem('last-pending-update');
+                    // 同时清除通知状态
+                    setNotifications((prev) => ({
+                      ...prev,
+                      pendingUsers: { count: 0 },
+                    }));
                     router.push('/admin');
                   }}
                   className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'

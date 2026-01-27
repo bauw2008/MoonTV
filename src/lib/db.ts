@@ -5,7 +5,10 @@ import { logger } from '@/lib/logger';
 import { AdminConfig } from './admin.types';
 import { KvrocksStorage } from './kvrocks.db';
 import { RedisStorage } from './redis.db';
+import type { OwnerConfig } from './types';
 import {
+  AppComment,
+  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -247,20 +250,20 @@ export class DbManager {
   async getAllUsers(): Promise<string[]> {
     if (
       this.storage &&
-      typeof (this.storage as any).getAllUsers === 'function'
+      typeof (this.storage as IStorage).getAllUsers === 'function'
     ) {
-      return (this.storage as any).getAllUsers();
+      return (this.storage as IStorage).getAllUsers();
     }
     return [];
   }
 
   // 获取全部用户详细信息
-  async getAllUsersWithDetails(): Promise<any[]> {
+  async getAllUsersWithDetails(): Promise<AdminConfig['UserConfig']['Users']> {
     if (
       this.storage &&
-      typeof (this.storage as any).getAllUsersWithDetails === 'function'
+      typeof (this.storage as IStorage).getAllUsersWithDetails === 'function'
     ) {
-      return (this.storage as any).getAllUsersWithDetails();
+      return (this.storage as IStorage).getAllUsersWithDetails();
     }
 
     // 如果存储不支持，从管理员配置中获取
@@ -280,9 +283,9 @@ export class DbManager {
   async getAdminConfig(): Promise<AdminConfig | null> {
     if (
       this.storage &&
-      typeof (this.storage as any).getAdminConfig === 'function'
+      typeof (this.storage as IStorage).getAdminConfig === 'function'
     ) {
-      return (this.storage as any).getAdminConfig();
+      return (this.storage as IStorage).getAdminConfig();
     }
     return null;
   }
@@ -290,9 +293,9 @@ export class DbManager {
   async saveAdminConfig(config: AdminConfig): Promise<void> {
     if (
       this.storage &&
-      typeof (this.storage as any).setAdminConfig === 'function'
+      typeof (this.storage as IStorage).setAdminConfig === 'function'
     ) {
-      await (this.storage as any).setAdminConfig(config);
+      await (this.storage as IStorage).setAdminConfig(config);
     }
   }
 
@@ -300,22 +303,22 @@ export class DbManager {
   async getUserAvatar(userName: string): Promise<string | null> {
     if (
       this.storage &&
-      typeof (this.storage as any).getUserAvatar === 'function'
+      typeof (this.storage as IStorage).getUserAvatar === 'function'
     ) {
-      return (this.storage as any).getUserAvatar(userName);
+      return (this.storage as IStorage).getUserAvatar(userName);
     }
     return null;
   }
 
   async setUserAvatar(userName: string, avatarBase64: string): Promise<void> {
-    if (typeof (this.storage as any).setUserAvatar === 'function') {
-      await (this.storage as any).setUserAvatar(userName, avatarBase64);
+    if (typeof (this.storage as IStorage).setUserAvatar === 'function') {
+      await (this.storage as IStorage).setUserAvatar(userName, avatarBase64);
     }
   }
 
   async deleteUserAvatar(userName: string): Promise<void> {
-    if (typeof (this.storage as any).deleteUserAvatar === 'function') {
-      await (this.storage as any).deleteUserAvatar(userName);
+    if (typeof (this.storage as IStorage).deleteUserAvatar === 'function') {
+      await (this.storage as IStorage).deleteUserAvatar(userName);
     }
   }
 
@@ -325,8 +328,12 @@ export class DbManager {
     source: string,
     id: string,
   ): Promise<EpisodeSkipConfig | null> {
-    if (typeof (this.storage as any).getEpisodeSkipConfig === 'function') {
-      return (this.storage as any).getEpisodeSkipConfig(userName, source, id);
+    if (typeof (this.storage as IStorage).getEpisodeSkipConfig === 'function') {
+      return (this.storage as IStorage).getEpisodeSkipConfig(
+        userName,
+        source,
+        id,
+      );
     }
     return null;
   }
@@ -337,8 +344,10 @@ export class DbManager {
     id: string,
     config: EpisodeSkipConfig,
   ): Promise<void> {
-    if (typeof (this.storage as any).saveEpisodeSkipConfig === 'function') {
-      await (this.storage as any).saveEpisodeSkipConfig(
+    if (
+      typeof (this.storage as IStorage).saveEpisodeSkipConfig === 'function'
+    ) {
+      await (this.storage as IStorage).saveEpisodeSkipConfig(
         userName,
         source,
         id,
@@ -352,24 +361,32 @@ export class DbManager {
     source: string,
     id: string,
   ): Promise<void> {
-    if (typeof (this.storage as any).deleteEpisodeSkipConfig === 'function') {
-      await (this.storage as any).deleteEpisodeSkipConfig(userName, source, id);
+    if (
+      typeof (this.storage as IStorage).deleteEpisodeSkipConfig === 'function'
+    ) {
+      await (this.storage as IStorage).deleteEpisodeSkipConfig(
+        userName,
+        source,
+        id,
+      );
     }
   }
 
   async getAllEpisodeSkipConfigs(
     userName: string,
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    if (typeof (this.storage as any).getAllEpisodeSkipConfigs === 'function') {
-      return (this.storage as any).getAllEpisodeSkipConfigs(userName);
+  ): Promise<Record<string, EpisodeSkipConfig>> {
+    if (
+      typeof (this.storage as IStorage).getAllEpisodeSkipConfigs === 'function'
+    ) {
+      return (this.storage as IStorage).getAllEpisodeSkipConfigs(userName);
     }
     return {};
   }
 
   // ---------- 数据清理 ----------
   async clearAllData(): Promise<void> {
-    if (typeof (this.storage as any).clearAllData === 'function') {
-      await (this.storage as any).clearAllData();
+    if (typeof (this.storage as IStorage).clearAllData === 'function') {
+      await (this.storage as IStorage).clearAllData();
     } else {
       throw new Error('存储类型不支持清空数据操作');
     }
@@ -389,7 +406,7 @@ export class DbManager {
 
   async setCache(
     key: string,
-    data: any,
+    data: unknown,
     expireSeconds?: number,
   ): Promise<void> {
     // 本地存储模式不支持缓存功能
@@ -415,8 +432,8 @@ export class DbManager {
 
   // ---------- 播放统计相关 ----------
   async getPlayStats(): Promise<PlayStatsResult> {
-    if (typeof (this.storage as any).getPlayStats === 'function') {
-      return (this.storage as any).getPlayStats();
+    if (typeof (this.storage as IStorage).getPlayStats === 'function') {
+      return (this.storage as IStorage).getPlayStats();
     }
 
     // 如果存储不支持统计功能，返回默认值
@@ -445,8 +462,8 @@ export class DbManager {
   }
 
   async getUserPlayStat(userName: string): Promise<UserPlayStat> {
-    if (typeof (this.storage as any).getUserPlayStat === 'function') {
-      return (this.storage as any).getUserPlayStat(userName);
+    if (typeof (this.storage as IStorage).getUserPlayStat === 'function') {
+      return (this.storage as IStorage).getUserPlayStat(userName);
     }
 
     // 如果存储不支持统计功能，返回默认值
@@ -464,8 +481,8 @@ export class DbManager {
   }
 
   async getContentStats(limit = 10): Promise<ContentStat[]> {
-    if (typeof (this.storage as any).getContentStats === 'function') {
-      return (this.storage as any).getContentStats(limit);
+    if (typeof (this.storage as IStorage).getContentStats === 'function') {
+      return (this.storage as IStorage).getContentStats(limit);
     }
 
     // 如果存储不支持统计功能，返回空数组
@@ -478,8 +495,8 @@ export class DbManager {
     _id: string,
     _watchTime: number,
   ): Promise<void> {
-    if (typeof (this.storage as any).updatePlayStatistics === 'function') {
-      await (this.storage as any).updatePlayStatistics(
+    if (typeof (this.storage as IStorage).updatePlayStatistics === 'function') {
+      await (this.storage as IStorage).updatePlayStatistics(
         _userName,
         _source,
         _id,
@@ -499,8 +516,8 @@ export class DbManager {
       return;
     }
 
-    if (typeof (this.storage as any).updateUserLoginStats === 'function') {
-      await (this.storage as any).updateUserLoginStats(
+    if (typeof (this.storage as IStorage).updateUserLoginStats === 'function') {
+      await (this.storage as IStorage).updateUserLoginStats(
         userName,
         loginTime,
         isFirstLogin,
@@ -559,7 +576,7 @@ export class DbManager {
     }
   }
 
-  async addComment(comment: any): Promise<boolean> {
+  async addComment(comment: AppComment): Promise<boolean> {
     try {
       const storage = getStorage();
       if (storage) {
@@ -572,7 +589,7 @@ export class DbManager {
     }
   }
 
-  async addReply(commentId: string, reply: any): Promise<boolean> {
+  async addReply(commentId: string, reply: CommentReply): Promise<boolean> {
     try {
       const storage = getStorage();
       if (storage) {
@@ -657,7 +674,7 @@ export class DbManager {
     return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
   }
 
-  async setOwnerConfig(config: any): Promise<void> {
+  async setOwnerConfig(config: OwnerConfig): Promise<void> {
     if (!this.isUserDataSupported()) {
       return;
     }

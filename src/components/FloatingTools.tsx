@@ -11,7 +11,7 @@ interface FloatingToolsProps {
   useVirtualization?: boolean;
   onToggleVirtualization?: () => void;
   showBackToTop?: boolean;
-  virtualGridRef?: any;
+  virtualGridRef?: React.RefObject<{ scrollToTop?: () => void }>;
   showAggregate?: boolean;
   viewMode?: 'agg' | 'all';
   onViewModeChange?: (mode: 'agg' | 'all') => void;

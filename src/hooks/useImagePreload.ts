@@ -82,7 +82,8 @@ export function useImagePreload(imageUrls: string[], enabled = true) {
         link.as = 'image';
         link.href = cleanUrl;
         // Set fetch priority to low (not blocking visible content)
-        (link as any).fetchPriority = 'low';
+        const linkEl = link as unknown as { fetchPriority?: string };
+        linkEl.fetchPriority = 'low';
 
         // 添加错误处理，限制豆瓣403错误日志输出
         link.addEventListener('error', () => {

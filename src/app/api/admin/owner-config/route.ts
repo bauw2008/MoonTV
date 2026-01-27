@@ -44,10 +44,10 @@ export const POST = async (request: NextRequest) => {
     }
 
     // 更新站长配置
-    const updatedConfig = {
-      siteMaintenance,
-      debugMode,
-      maxUsers,
+    const updatedConfig: import('@/lib/types').OwnerConfig = {
+      SiteMaintenance: siteMaintenance,
+      DebugMode: debugMode,
+      MaxUsers: maxUsers,
     };
 
     // 保存到存储

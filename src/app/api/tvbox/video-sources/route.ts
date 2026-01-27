@@ -92,8 +92,17 @@ export async function GET(request: NextRequest) {
 
     // 转换为TVBox需要的格式，并应用18+分类过滤
     const tvboxSources = availableSites.map((site) => {
-      // @ts-ignore - site 对象可能包含额外的属性
-      let filteredCategories = (site as any).categories || [];
+      interface SiteWithExtras {
+        key: string;
+        name: string;
+        api: string;
+        categories?: string[];
+        ext?: string;
+        jar?: string;
+      }
+
+      const siteWithExtras = site as SiteWithExtras;
+      let filteredCategories = siteWithExtras.categories || [];
 
       // 应用过滤（如果需要过滤）
       if (shouldFilter && config.YellowWords && config.YellowWords.length > 0) {
@@ -113,9 +122,8 @@ export async function GET(request: NextRequest) {
         quickSearch: 1,
         filterable: 1,
         changeable: 1,
-        // @ts-ignore - site 对象可能包含额外的属性
-        ext: (site as any).ext || '',
-        jar: (site as any).jar,
+        ext: siteWithExtras.ext || '',
+        jar: siteWithExtras.jar,
         playerUrl: '',
         hide: 0,
         categories: filteredCategories,

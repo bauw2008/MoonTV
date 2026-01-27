@@ -1,5 +1,7 @@
 import { AdminConfig } from './admin.types';
 
+export type { AdminConfig } from './admin.types';
+
 // 播放记录数据结构
 export interface PlayRecord {
   id: string; // 视频ID
@@ -20,7 +22,7 @@ export interface PlayRecord {
 }
 
 // 评论数据结构
-export interface Comment {
+export interface AppComment {
   id: string;
   username: string;
   role: string;
@@ -37,6 +39,9 @@ export interface CommentReply {
   content: string;
   timestamp: number;
 }
+
+// 导出 Comment 作为 AppComment 的别名（向后兼容）
+export type Comment = AppComment;
 
 // 站长配置数据结构
 export interface OwnerConfig {
@@ -122,6 +127,7 @@ export interface IStorage {
 
   // 用户列表
   getAllUsers(): Promise<string[]>;
+  getAllUsersWithDetails(): Promise<AdminConfig['UserConfig']['Users']>;
 
   // 管理员配置相关
   getAdminConfig(): Promise<AdminConfig | null>;
@@ -169,6 +175,27 @@ export interface IStorage {
   // 站长配置相关
   getOwnerConfig(): Promise<OwnerConfig>;
   setOwnerConfig(config: OwnerConfig): Promise<void>;
+
+  // 剧集跳过配置相关
+  getEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+  ): Promise<EpisodeSkipConfig | null>;
+  saveEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+    config: EpisodeSkipConfig,
+  ): Promise<void>;
+  deleteEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+  ): Promise<void>;
+  getAllEpisodeSkipConfigs(
+    userName: string,
+  ): Promise<Record<string, EpisodeSkipConfig>>;
 }
 
 // 搜索结果数据结构

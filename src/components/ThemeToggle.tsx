@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { Moon, Sun } from 'lucide-react';
@@ -10,7 +8,7 @@ import { useEffect, useState } from 'react';
 export function ThemeToggle({ className }: { className?: string }) {
   const { setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
-  const [mounted] = useState(() => typeof window !== 'undefined');
+  const [mounted, setMounted] = useState(false);
 
   const setThemeColor = (theme?: string) => {
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -24,7 +22,15 @@ export function ThemeToggle({ className }: { className?: string }) {
     }
   };
 
-  // 监听主题变化和路由变化，确保主题色始终同步
+  // 只在客户端挂载时设置 mounted
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    setThemeColor(resolvedTheme);
+  }, [resolvedTheme]);
+
+  // 监听路由变化，确保主题色始终同步
   useEffect(() => {
     if (mounted) {
       setThemeColor(resolvedTheme);
@@ -35,12 +41,15 @@ export function ThemeToggle({ className }: { className?: string }) {
     // 检查浏览器是否支持 View Transitions API
     const targetTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
     setThemeColor(targetTheme);
-    if (!(document as any).startViewTransition) {
+    const doc = document as unknown as {
+      startViewTransition?: (callback: () => void) => void;
+    };
+    if (!doc.startViewTransition) {
       setTheme(targetTheme);
       return;
     }
 
-    (document as any).startViewTransition(() => {
+    doc.startViewTransition(() => {
       setTheme(targetTheme);
     });
   };

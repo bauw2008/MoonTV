@@ -5,6 +5,8 @@ import { createClient, RedisClientType } from 'redis';
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
 import {
+  AppComment,
+  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -18,11 +20,11 @@ import {
 const SEARCH_HISTORY_LIMIT = 20;
 
 // 数据类型转换辅助函数
-function ensureString(value: any): string {
+function ensureString(value: unknown): string {
   return String(value);
 }
 
-function ensureStringArray(value: any[]): string[] {
+function ensureStringArray(value: unknown[]): string[] {
   return value.map((item) => String(item));
 }
 
@@ -77,14 +79,15 @@ function createRetryWrapper(
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await operation();
-      } catch (err: any) {
+      } catch (err: unknown) {
         const isLastAttempt = i === maxRetries - 1;
         const isConnectionError =
-          err.message?.includes('Connection') ||
-          err.message?.includes('ECONNREFUSED') ||
-          err.message?.includes('ENOTFOUND') ||
-          err.code === 'ECONNRESET' ||
-          err.code === 'EPIPE';
+          err instanceof Error &&
+          (err.message?.includes('Connection') ||
+            err.message?.includes('ECONNREFUSED') ||
+            err.message?.includes('ENOTFOUND') ||
+            (err as { code?: string }).code === 'ECONNRESET' ||
+            (err as { code?: string }).code === 'EPIPE');
 
         if (isConnectionError && !isLastAttempt) {
           logger.log(
@@ -123,7 +126,9 @@ export function createRedisClient(
   config: RedisConnectionConfig,
   globalSymbol: symbol,
 ): RedisClientType {
-  let client: RedisClientType | undefined = (global as any)[globalSymbol];
+  let client: RedisClientType | undefined = (
+    global as Record<symbol, RedisClientType>
+  )[globalSymbol];
 
   if (!client) {
     if (!config.url) {
@@ -136,11 +141,18 @@ export function createRedisClient(
     }
 
     // 创建客户端配置
-    const clientConfig: any = {
+    const clientConfig: {
+      url: string;
+      socket: {
+        reconnectStrategy: (retries: number) => number | Error;
+        noDelay?: boolean;
+      };
+      pingInterval?: number;
+    } = {
       url: config.url,
       socket: {
         // 重连策略：指数退避，最大30秒
-        reconnectStrategy: (retries: number) => {
+        reconnectStrategy: (retries: number): number | Error => {
           logger.log(
             `${config.clientName} reconnection attempt ${retries + 1}`,
           );
@@ -148,15 +160,15 @@ export function createRedisClient(
             logger.error(
               `${config.clientName} max reconnection attempts exceeded`,
             );
-            return false; // 停止重连
+            return new Error('Max reconnection attempts exceeded'); // 停止重连
           }
           return Math.min(1000 * Math.pow(2, retries), 30000); // 指数退避，最大30秒
         },
-        connectTimeout: 10000, // 10秒连接超时
-        // 设置no delay，减少延迟
         noDelay: true,
+      } as {
+        reconnectStrategy: (retries: number) => number | Error;
+        noDelay?: boolean;
       },
-      // 添加其他配置
       pingInterval: 30000, // 30秒ping一次，保持连接活跃
     };
 
@@ -193,7 +205,7 @@ export function createRedisClient(
 
     connectWithRetry();
 
-    (global as any)[globalSymbol] = client;
+    (global as Record<symbol, RedisClientType>)[globalSymbol] = client;
   }
 
   return client;
@@ -446,7 +458,7 @@ export abstract class BaseRedisStorage implements IStorage {
       this.client.lRange(this.shKey(userName), 0, -1),
     );
     // 确保返回的都是字符串类型
-    return ensureStringArray(result as any[]);
+    return ensureStringArray(result as unknown[]);
   }
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
@@ -483,6 +495,12 @@ export abstract class BaseRedisStorage implements IStorage {
       .filter((u): u is string => typeof u === 'string');
   }
 
+  // ---------- 获取全部用户详细信息 ----------
+  async getAllUsersWithDetails(): Promise<AdminConfig['UserConfig']['Users']> {
+    const adminConfig = await this.getAdminConfig();
+    return adminConfig?.UserConfig?.Users || [];
+  }
+
   // ---------- 管理员配置 ----------
   private adminConfigKey() {
     return 'admin:config';
@@ -500,80 +518,6 @@ export abstract class BaseRedisStorage implements IStorage {
     await this.withRetry(() =>
       this.client.set(this.adminConfigKey(), JSON.stringify(config)),
     );
-  }
-
-  // ---------- 剧集跳过配置（新版，多片段支持）----------
-  private episodeSkipConfigKey(user: string, source: string, id: string) {
-    return `u:${user}:episodeskip:${source}+${id}`;
-  }
-
-  async getEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<EpisodeSkipConfig | null> {
-    const val = await this.withRetry(() =>
-      this.client.get(this.episodeSkipConfigKey(userName, source, id)),
-    );
-    const strVal = ensureRedisString(val);
-    return strVal ? (JSON.parse(strVal) as EpisodeSkipConfig) : null;
-  }
-
-  async saveEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig,
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.set(
-        this.episodeSkipConfigKey(userName, source, id),
-        JSON.stringify(config),
-      ),
-    );
-  }
-
-  async deleteEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.del(this.episodeSkipConfigKey(userName, source, id)),
-    );
-  }
-
-  async getAllEpisodeSkipConfigs(
-    userName: string,
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    const pattern = `u:${userName}:episodeskip:*`;
-    const keys = await this.withRetry(() => scanKeys(this.client, pattern));
-
-    if (keys.length === 0) {
-      return {};
-    }
-
-    const configs: { [key: string]: EpisodeSkipConfig } = {};
-
-    // 批量获取所有配置
-    const values = await this.withRetry(() => this.client.mGet(keys));
-
-    keys.forEach((key, index) => {
-      const value = values[index];
-      if (value) {
-        const strValue = ensureRedisString(value);
-        if (strValue) {
-          // 从key中提取source+id
-          const match = key.match(/^u:.+?:episodeskip:(.+)$/);
-          if (match) {
-            const sourceAndId = match[1];
-            configs[sourceAndId] = JSON.parse(strValue) as EpisodeSkipConfig;
-          }
-        }
-      }
-    });
-
-    return configs;
   }
 
   // ---------- 用户头像 ----------
@@ -1236,7 +1180,7 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
-  async addComment(comment: any): Promise<void> {
+  async addComment(comment: AppComment): Promise<void> {
     try {
       const comments = await this.getComments();
       comments.push(comment);
@@ -1250,10 +1194,12 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
-  async addReply(commentId: string, reply: any): Promise<void> {
+  async addReply(commentId: string, reply: CommentReply): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1) {
         if (!comments[commentIndex].replies) {
@@ -1281,10 +1227,80 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
+  // ---------- 剧集跳过配置 ----------
+  private escKey(userName: string, source: string, id: string) {
+    return `u:${userName}:esc:${source}:${id}`;
+  }
+
+  async getEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+  ): Promise<EpisodeSkipConfig | null> {
+    const val = await this.withRetry(() =>
+      this.client.get(this.escKey(userName, source, id)),
+    );
+    const strVal = ensureRedisString(val);
+    return strVal ? (JSON.parse(strVal) as EpisodeSkipConfig) : null;
+  }
+
+  async saveEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+    config: EpisodeSkipConfig,
+  ): Promise<void> {
+    await this.withRetry(() =>
+      this.client.set(
+        this.escKey(userName, source, id),
+        JSON.stringify(config),
+      ),
+    );
+  }
+
+  async deleteEpisodeSkipConfig(
+    userName: string,
+    source: string,
+    id: string,
+  ): Promise<void> {
+    await this.withRetry(() =>
+      this.client.del(this.escKey(userName, source, id)),
+    );
+  }
+
+  async getAllEpisodeSkipConfigs(
+    userName: string,
+  ): Promise<Record<string, EpisodeSkipConfig>> {
+    const pattern = `u:${userName}:esc:*`;
+    const keys = await this.withRetry(() => scanKeys(this.client, pattern));
+    const configs: Record<string, EpisodeSkipConfig> = {};
+
+    for (const key of keys) {
+      try {
+        const val = await this.withRetry(() => this.client.get(key));
+        const strVal = ensureRedisString(val);
+        if (strVal) {
+          const config = JSON.parse(strVal) as EpisodeSkipConfig;
+          // 提取 source:id 作为键
+          const match = key.match(/u:.+:esc:(.+)/);
+          if (match) {
+            configs[match[1]] = config;
+          }
+        }
+      } catch (error) {
+        logger.warn(`获取剧集跳过配置失败: ${key}`, error);
+      }
+    }
+
+    return configs;
+  }
+
   async deleteComment(commentId: string): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1) {
         comments.splice(commentIndex, 1);
@@ -1302,11 +1318,15 @@ export abstract class BaseRedisStorage implements IStorage {
   async deleteReply(commentId: string, replyId: string): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1 && comments[commentIndex].replies) {
         const replies = comments[commentIndex].replies;
-        const replyIndex = replies.findIndex((r: any) => r.id === replyId);
+        const replyIndex = replies.findIndex(
+          (r: CommentReply) => r.id === replyId,
+        );
 
         if (replyIndex !== -1) {
           replies.splice(replyIndex, 1);
@@ -1337,7 +1357,7 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
-  async setOwnerConfig(config: any): Promise<void> {
+  async setOwnerConfig(config: import('./types').OwnerConfig): Promise<void> {
     try {
       const key = 'owner_config';
       await this.withRetry(() => this.client.set(key, JSON.stringify(config)));

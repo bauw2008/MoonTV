@@ -74,7 +74,10 @@ export async function POST(request: NextRequest) {
     };
 
     // 保存回复到数据库
-    const success = await db.addReply(id, reply);
+    const success = await db.addReply(id, {
+      ...reply,
+      role: reply.role || 'user',
+    });
 
     if (success) {
       return NextResponse.json({

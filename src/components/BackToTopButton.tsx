@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 
 // 虚拟网格引用接口
 interface VirtualGridRef {
-  scrollToTop: () => void;
+  scrollToTop?: () => void;
 }
 
 interface BackToTopButtonProps {

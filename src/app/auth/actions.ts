@@ -277,7 +277,9 @@ export async function registerAction(
     }
 
     // 检查是否需要审核
-    const requireApproval = (config.UserConfig as any).RequireApproval === true;
+    const requireApproval =
+      (config.UserConfig as { RequireApproval?: boolean }).RequireApproval ===
+      true;
 
     if (requireApproval) {
       const secret = process.env.PASSWORD || 'site-secret';
@@ -298,7 +300,7 @@ export async function registerAction(
         };
       }
 
-      (config.UserConfig as any).PendingUsers.push({
+      config.UserConfig.PendingUsers.push({
         username,
         reason,
         encryptedPassword,
@@ -325,7 +327,7 @@ export async function registerAction(
       tags: ['默认'],
     };
 
-    config.UserConfig.Users.push(newUser as any);
+    config.UserConfig.Users.push(newUser);
     await db.saveAdminConfig(config);
     clearConfigCache();
 

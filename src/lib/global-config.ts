@@ -66,7 +66,9 @@ export interface DisabledMenus {
 // 扩展 Window 接口
 declare global {
   interface Window {
-    RUNTIME_CONFIG: RuntimeConfig;
+    RUNTIME_CONFIG?: Partial<RuntimeConfig> & {
+      STORAGE_TYPE?: 'localstorage' | 'redis' | 'upstash' | 'kvrocks';
+    };
     __DISABLED_MENUS: DisabledMenus;
   }
 }
@@ -86,9 +88,9 @@ export function getRuntimeConfig(): RuntimeConfig {
       },
       AIConfig: {
         enabled: false,
-        apiUrl: 'https://api.openai.com/v1',
+        apiUrl: '',
         apiKey: '',
-        model: 'gpt-3.5-turbo',
+        model: '',
         temperature: 0.7,
         maxTokens: 3000,
       },
@@ -110,7 +112,7 @@ export function getRuntimeConfig(): RuntimeConfig {
     };
   }
 
-  return window.RUNTIME_CONFIG || getDefaultConfig();
+  return (window.RUNTIME_CONFIG || getDefaultConfig()) as RuntimeConfig;
 }
 
 // 默认配置
@@ -126,9 +128,9 @@ function getDefaultConfig(): RuntimeConfig {
     },
     AIConfig: {
       enabled: false,
-      apiUrl: 'https://api.openai.com/v1',
+      apiUrl: '',
       apiKey: '',
-      model: 'gpt-3.5-turbo',
+      model: '',
       temperature: 0.7,
       maxTokens: 3000,
     },

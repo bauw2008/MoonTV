@@ -5,6 +5,8 @@ import { Redis } from '@upstash/redis';
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
 import {
+  AppComment,
+  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -39,11 +41,11 @@ async function scanKeys(
 }
 
 // 数据类型转换辅助函数
-function ensureString(value: any): string {
+function ensureString(value: unknown): string {
   return String(value);
 }
 
-function ensureStringArray(value: any[]): string[] {
+function ensureStringArray(value: unknown[]): string[] {
   return value.map((item) => String(item));
 }
 
@@ -55,21 +57,22 @@ async function withRetry<T>(
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await operation();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const isLastAttempt = i === maxRetries - 1;
+      const error = err instanceof Error ? err : new Error(String(err));
       const isConnectionError =
-        err.message?.includes('Connection') ||
-        err.message?.includes('ECONNREFUSED') ||
-        err.message?.includes('ENOTFOUND') ||
-        err.code === 'ECONNRESET' ||
-        err.code === 'EPIPE' ||
-        err.name === 'UpstashError';
+        error.message?.includes('Connection') ||
+        error.message?.includes('ECONNREFUSED') ||
+        error.message?.includes('ENOTFOUND') ||
+        (error as { code?: string }).code === 'ECONNRESET' ||
+        (error as { code?: string }).code === 'EPIPE' ||
+        (error as { name?: string }).name === 'UpstashError';
 
       if (isConnectionError && !isLastAttempt) {
         logger.log(
           `Upstash Redis operation failed, retrying... (${i + 1}/${maxRetries})`,
         );
-        logger.error('Error:', err.message);
+        logger.error('重试失败:', error.message || String(error));
 
         // 等待一段时间后重试
         await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
@@ -296,7 +299,7 @@ export class UpstashRedisStorage implements IStorage {
       this.client.lrange(this.shKey(userName), 0, -1),
     );
     // 确保返回的都是字符串类型
-    return ensureStringArray(result as any[]);
+    return ensureStringArray(result as unknown[]);
   }
 
   async addSearchHistory(userName: string, keyword: string): Promise<void> {
@@ -327,6 +330,12 @@ export class UpstashRedisStorage implements IStorage {
         return match ? ensureString(match[1]) : undefined;
       })
       .filter((u): u is string => typeof u === 'string');
+  }
+
+  // ---------- 获取全部用户详细信息 ----------
+  async getAllUsersWithDetails(): Promise<AdminConfig['UserConfig']['Users']> {
+    const adminConfig = await this.getAdminConfig();
+    return adminConfig?.UserConfig?.Users || [];
   }
 
   // ---------- 管理员配置 ----------
@@ -1093,14 +1102,14 @@ export class UpstashRedisStorage implements IStorage {
           return [];
         }
       }
-      return data as any[];
+      return data as Comment[];
     } catch (error) {
       logger.error('获取评论失败:', error);
       return [];
     }
   }
 
-  async addComment(comment: any): Promise<void> {
+  async addComment(comment: AppComment): Promise<void> {
     try {
       const comments = await this.getComments();
       comments.push(comment);
@@ -1112,10 +1121,12 @@ export class UpstashRedisStorage implements IStorage {
     }
   }
 
-  async addReply(commentId: string, reply: any): Promise<void> {
+  async addReply(commentId: string, reply: CommentReply): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1) {
         if (!comments[commentIndex].replies) {
@@ -1144,7 +1155,9 @@ export class UpstashRedisStorage implements IStorage {
   async deleteComment(commentId: string): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1) {
         comments.splice(commentIndex, 1);
@@ -1160,11 +1173,15 @@ export class UpstashRedisStorage implements IStorage {
   async deleteReply(commentId: string, replyId: string): Promise<void> {
     try {
       const comments = await this.getComments();
-      const commentIndex = comments.findIndex((c: any) => c.id === commentId);
+      const commentIndex = comments.findIndex(
+        (c: AppComment) => c.id === commentId,
+      );
 
       if (commentIndex !== -1 && comments[commentIndex].replies) {
         const replies = comments[commentIndex].replies;
-        const replyIndex = replies.findIndex((r: any) => r.id === replyId);
+        const replyIndex = replies.findIndex(
+          (r: CommentReply) => r.id === replyId,
+        );
 
         if (replyIndex !== -1) {
           replies.splice(replyIndex, 1);
@@ -1202,7 +1219,7 @@ export class UpstashRedisStorage implements IStorage {
     }
   }
 
-  async setOwnerConfig(config: any): Promise<void> {
+  async setOwnerConfig(config: import('./types').OwnerConfig): Promise<void> {
     try {
       const key = 'owner_config';
       await withRetry(() => this.client.set(key, JSON.stringify(config)));
@@ -1216,7 +1233,7 @@ export class UpstashRedisStorage implements IStorage {
 // 单例 Upstash Redis 客户端
 function getUpstashRedisClient(): Redis {
   const globalKey = Symbol.for('__VIDORA_UPSTASH_REDIS_CLIENT__');
-  let client: Redis | undefined = (global as any)[globalKey];
+  let client: Redis | undefined = (global as Record<symbol, Redis>)[globalKey];
 
   if (!client) {
     const upstashUrl = process.env.UPSTASH_URL;
@@ -1242,7 +1259,7 @@ function getUpstashRedisClient(): Redis {
 
     logger.log('Upstash Redis client created successfully');
 
-    (global as any)[globalKey] = client;
+    (global as Record<symbol, Redis>)[globalKey] = client;
   }
 
   return client;

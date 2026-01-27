@@ -50,7 +50,8 @@ export const UserMenu: React.FC = () => {
   const [storageType] = useState<string>(() => {
     // 🔧 优化：直接从 RUNTIME_CONFIG 读取初始值，避免默认值导致的多次渲染
     if (typeof window !== 'undefined') {
-      return (window as any).RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
+      const config = (window as Window).RUNTIME_CONFIG;
+      return config?.STORAGE_TYPE || 'localstorage';
     }
     return 'localstorage';
   });
@@ -313,6 +314,12 @@ export const UserMenu: React.FC = () => {
               return;
             }
 
+            // 🔥 清除缓存，确保显示新头像
+            const cacheKey = user?.username
+              ? `user-avatar-${user.username}`
+              : 'user-avatar';
+            localStorage.removeItem(cacheKey);
+
             showSuccess('头像上传成功，您的头像已更新');
             handleCloseChangeAvatar();
           } catch (error) {
@@ -442,6 +449,12 @@ export const UserMenu: React.FC = () => {
         showError('头像上传失败，请稍后重试');
         return;
       }
+
+      // 🔥 清除缓存，确保显示新头像
+      const cacheKey = user?.username
+        ? `user-avatar-${user.username}`
+        : 'user-avatar';
+      localStorage.removeItem(cacheKey);
 
       showSuccess('头像上传成功，您的头像已更新');
       handleCloseChangeAvatar();

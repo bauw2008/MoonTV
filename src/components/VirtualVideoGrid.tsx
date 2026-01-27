@@ -163,20 +163,25 @@ export const VirtualVideoGrid = ({
 
   // Expose gridRef via a property so parent components can access it
   useEffect(() => {
-    (gridRef as any).scrollToTop = () => {
-      if (gridRef.current?.scrollToCell) {
-        try {
-          gridRef.current.scrollToCell({
-            columnIndex: 0,
-            rowIndex: 0,
-            align: 'start',
-            behavior: 'smooth',
-          });
-        } catch (error) {
-          logger.debug('Grid scroll to top error (safe to ignore):', error);
-        }
-      }
+    const grid = gridRef.current as unknown as {
+      scrollToTop?: () => void;
     };
+    if (grid.scrollToTop) {
+      grid.scrollToTop = () => {
+        if (gridRef.current?.scrollToCell) {
+          try {
+            gridRef.current.scrollToCell({
+              columnIndex: 0,
+              rowIndex: 0,
+              align: 'start',
+              behavior: 'smooth',
+            });
+          } catch (error) {
+            logger.debug('Grid scroll to top error (safe to ignore):', error);
+          }
+        }
+      };
+    }
   }, []);
 
   const rowCount = Math.ceil(displayItemCount / columnCount);

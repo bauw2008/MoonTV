@@ -175,7 +175,8 @@ async function fetchTMDB<T>(
     throw new Error(`TMDB API错误: ${response.status} ${response.statusText}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  return data as T;
 }
 
 /**
@@ -187,7 +188,7 @@ export async function searchTMDBPerson(
 ): Promise<TMDBPersonSearchResponse> {
   // 检查缓存
   const cacheKey = getCacheKey('person_search', { query: query.trim(), page });
-  const cached = await getCache(cacheKey);
+  const cached = await getCache<TMDBPersonSearchResponse>(cacheKey);
   if (cached) {
     logger.log(`TMDB演员搜索缓存命中: ${query}`);
     return cached;
@@ -213,7 +214,7 @@ export async function getTMDBPersonMovies(
 ): Promise<TMDBMovieCreditsResponse> {
   // 检查缓存
   const cacheKey = getCacheKey('movie_credits', { personId });
-  const cached = await getCache(cacheKey);
+  const cached = await getCache<TMDBMovieCreditsResponse>(cacheKey);
   if (cached) {
     logger.log(`TMDB演员电影作品缓存命中: ${personId}`);
     return cached;
@@ -238,7 +239,7 @@ export async function getTMDBPersonTVShows(
 ): Promise<TMDBTVCreditsResponse> {
   // 检查缓存
   const cacheKey = getCacheKey('tv_credits', { personId });
-  const cached = await getCache(cacheKey);
+  const cached = await getCache<TMDBTVCreditsResponse>(cacheKey);
   if (cached) {
     logger.log(`TMDB演员电视剧作品缓存命中: ${personId}`);
     return cached;
@@ -281,7 +282,7 @@ export async function searchTMDBActorWorks(
       ...filterOptions,
     });
 
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<TMDBResult>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -308,7 +309,22 @@ export async function searchTMDBActorWorks(
     )[0];
 
     // 3. 获取该演员的作品
-    let works: any[] = [];
+    let works: Array<{
+      release_date?: string;
+      first_air_date?: string;
+      vote_average?: number;
+      popularity?: number;
+      vote_count?: number;
+      episode_count?: number;
+      genre_ids?: number[];
+      character?: string;
+      job?: string;
+      id: number;
+      poster_path?: string;
+      title?: string;
+      name?: string;
+      original_language?: string;
+    }> = [];
     if (type === 'movie') {
       const movieCredits = await getTMDBPersonMovies(person.id);
       works = movieCredits.cast; // 主要关注演员作品，不是幕后工作
@@ -318,7 +334,7 @@ export async function searchTMDBActorWorks(
     }
 
     // 4. 应用筛选条件
-    let filteredWorks = works.filter((work: any) => {
+    let filteredWorks = works.filter((work) => {
       const releaseDate = work.release_date || work.first_air_date || '';
       const year = releaseDate ? new Date(releaseDate).getFullYear() : 0;
       const rating = work.vote_average || 0;
@@ -405,65 +421,89 @@ export async function searchTMDBActorWorks(
     const sortOrder = filterOptions.sortOrder || 'desc';
     const orderMultiplier = sortOrder === 'asc' ? -1 : 1;
 
-    filteredWorks.sort((a: any, b: any) => {
-      let compareValue = 0;
+    filteredWorks.sort(
+      (
+        a: {
+          release_date?: string;
+          first_air_date?: string;
+          vote_average?: number;
+          popularity?: number;
+          vote_count?: number;
+          title?: string;
+          name?: string;
+          episode_count?: number;
+        },
+        b: {
+          release_date?: string;
+          first_air_date?: string;
+          vote_average?: number;
+          popularity?: number;
+          vote_count?: number;
+          title?: string;
+          name?: string;
+          episode_count?: number;
+        },
+      ) => {
+        let compareValue = 0;
 
-      switch (sortBy) {
-        case 'rating':
-          compareValue =
-            ((b.vote_average || 0) - (a.vote_average || 0)) * orderMultiplier;
-          break;
-        case 'date': {
+        switch (sortBy) {
+          case 'rating':
+            compareValue =
+              ((b.vote_average || 0) - (a.vote_average || 0)) * orderMultiplier;
+            break;
+          case 'date': {
+            const dateA = new Date(
+              a.release_date || a.first_air_date || '1900-01-01',
+            );
+            const dateB = new Date(
+              b.release_date || b.first_air_date || '1900-01-01',
+            );
+            compareValue =
+              (dateB.getTime() - dateA.getTime()) * orderMultiplier;
+            break;
+          }
+          case 'popularity':
+            compareValue =
+              ((b.popularity || 0) - (a.popularity || 0)) * orderMultiplier;
+            break;
+          case 'vote_count':
+            compareValue =
+              ((b.vote_count || 0) - (a.vote_count || 0)) * orderMultiplier;
+            break;
+          case 'title': {
+            const titleA = (a.title || a.name || '').toLowerCase();
+            const titleB = (b.title || b.name || '').toLowerCase();
+            compareValue = titleA.localeCompare(titleB) * orderMultiplier;
+            break;
+          }
+          case 'episode_count':
+            if (type === 'tv') {
+              compareValue =
+                ((b.episode_count || 0) - (a.episode_count || 0)) *
+                orderMultiplier;
+            }
+            break;
+        }
+
+        // 如果主要排序字段相同，使用次要排序（评分 + 时间）
+        if (compareValue === 0 && sortBy !== 'rating') {
+          const ratingDiff = (b.vote_average || 0) - (a.vote_average || 0);
+          if (ratingDiff !== 0) {
+            return ratingDiff;
+          }
+
           const dateA = new Date(
             a.release_date || a.first_air_date || '1900-01-01',
           );
           const dateB = new Date(
             b.release_date || b.first_air_date || '1900-01-01',
           );
-          compareValue = (dateB.getTime() - dateA.getTime()) * orderMultiplier;
-          break;
-        }
-        case 'popularity':
-          compareValue =
-            ((b.popularity || 0) - (a.popularity || 0)) * orderMultiplier;
-          break;
-        case 'vote_count':
-          compareValue =
-            ((b.vote_count || 0) - (a.vote_count || 0)) * orderMultiplier;
-          break;
-        case 'title': {
-          const titleA = (a.title || a.name || '').toLowerCase();
-          const titleB = (b.title || b.name || '').toLowerCase();
-          compareValue = titleA.localeCompare(titleB) * orderMultiplier;
-          break;
-        }
-        case 'episode_count':
-          if (type === 'tv') {
-            compareValue =
-              ((b.episode_count || 0) - (a.episode_count || 0)) *
-              orderMultiplier;
-          }
-          break;
-      }
-
-      // 如果主要排序字段相同，使用次要排序（评分 + 时间）
-      if (compareValue === 0 && sortBy !== 'rating') {
-        const ratingDiff = (b.vote_average || 0) - (a.vote_average || 0);
-        if (ratingDiff !== 0) {
-          return ratingDiff;
+          compareValue = dateB.getTime() - dateA.getTime();
         }
 
-        const dateA = new Date(
-          a.release_date || a.first_air_date || '1900-01-01',
-        );
-        const dateB = new Date(
-          b.release_date || b.first_air_date || '1900-01-01',
-        );
-        compareValue = dateB.getTime() - dateA.getTime();
-      }
-
-      return compareValue;
-    });
+        return compareValue;
+      },
+    );
 
     // 6. 应用结果限制
     if (filterOptions.limit && filterOptions.limit > 0) {
@@ -472,28 +512,44 @@ export async function searchTMDBActorWorks(
 
     // 7. 转换为统一格式
     const list = filteredWorks
-      .map((work: any) => {
-        const releaseDate = work.release_date || work.first_air_date || '';
-        const year = releaseDate
-          ? new Date(releaseDate).getFullYear().toString()
-          : '';
+      .map(
+        (work: {
+          id: number;
+          title?: string;
+          name?: string;
+          poster_path?: string;
+          vote_average?: number;
+          release_date?: string;
+          first_air_date?: string;
+          popularity?: number;
+          vote_count?: number;
+          genre_ids?: number[];
+          character?: string;
+          episode_count?: number;
+          original_language?: string;
+        }) => {
+          const releaseDate = work.release_date || work.first_air_date || '';
+          const year = releaseDate
+            ? new Date(releaseDate).getFullYear().toString()
+            : '';
 
-        return {
-          id: work.id.toString(),
-          title: work.title || work.name || '',
-          poster: work.poster_path
-            ? `${TMDB_IMAGE_BASE_URL}${work.poster_path}`
-            : '',
-          rate: work.vote_average ? work.vote_average.toFixed(1) : '',
-          year: year,
-          popularity: work.popularity,
-          vote_count: work.vote_count,
-          genre_ids: work.genre_ids,
-          character: work.character,
-          episode_count: work.episode_count,
-          original_language: work.original_language,
-        };
-      })
+          return {
+            id: work.id.toString(),
+            title: work.title || work.name || '',
+            poster: work.poster_path
+              ? `${TMDB_IMAGE_BASE_URL}${work.poster_path}`
+              : '',
+            rate: work.vote_average ? work.vote_average.toFixed(1) : '',
+            year: year,
+            popularity: work.popularity,
+            vote_count: work.vote_count,
+            genre_ids: work.genre_ids,
+            character: work.character,
+            episode_count: work.episode_count,
+            original_language: work.original_language,
+          };
+        },
+      )
       .filter((work) => work.title); // 过滤掉没有标题的
 
     const result: TMDBResult = {

@@ -76,11 +76,15 @@ const PLAY_RECORDS_CACHE_EXPIRE_TIME = 5 * 60 * 1000; // 播放记录5分钟缓�
 
 // 注意：豆瓣缓存配置已迁移到 douban.client.ts
 
+// ---- 扩展 PlayRecord 接口 ----
+interface PlayRecordWithCacheFlag extends PlayRecord {
+  _shouldClearCache?: boolean;
+}
+
 // ---- 环境变量 ----
 const STORAGE_TYPE = (() => {
   const raw =
-    (typeof window !== 'undefined' &&
-      (window as any).RUNTIME_CONFIG?.STORAGE_TYPE) ||
+    (typeof window !== 'undefined' && window.RUNTIME_CONFIG?.STORAGE_TYPE) ||
     (process.env.NEXT_PUBLIC_STORAGE_TYPE as
       | 'localstorage'
       | 'redis'
@@ -487,28 +491,28 @@ class HybridCacheManager {
   /**
    * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
-  getDoubanDetails(_id: string): any | null {
+  getDoubanDetails(_id: string): unknown | null {
     return null; // 不再使用本地缓存，返回null强制使用新系统
   }
 
   /**
    * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
-  setDoubanDetails(_id: string, _data: any): void {
+  setDoubanDetails(_id: string, _data: unknown): void {
     // 不再使用本地缓存，空实现
   }
 
   /**
    * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
-  getDoubanList(_cacheKey: string): any | null {
+  getDoubanList(_cacheKey: string): unknown | null {
     return null; // 不再使用本地缓存，返回null强制使用新系统
   }
 
   /**
    * @deprecated 豆瓣缓存已迁移到统一存储，请使用 douban.client.ts 中的方法
    */
-  setDoubanList(_cacheKey: string, _data: any): void {
+  setDoubanList(_cacheKey: string, _data: unknown): void {
     // 不再使用本地缓存，空实现
   }
 
@@ -575,31 +579,31 @@ const cacheManager = HybridCacheManager.getInstance();
  */
 async function handleDatabaseOperationFailure(
   dataType: 'playRecords' | 'favorites' | 'searchHistory',
-  error: any,
+  error: Error,
 ): Promise<void> {
   logger.error(`数据库操作失败 (${dataType}):`, error);
   triggerGlobalError('数据库操作失败');
 
   try {
-    let freshData: any;
+    let freshData: unknown;
     let eventName: string;
 
     switch (dataType) {
       case 'playRecords':
         freshData =
           await fetchFromApi<Record<string, PlayRecord>>('/api/playrecords');
-        cacheManager.cachePlayRecords(freshData);
+        cacheManager.cachePlayRecords(freshData as Record<string, PlayRecord>);
         eventName = 'playRecordsUpdated';
         break;
       case 'favorites':
         freshData =
           await fetchFromApi<Record<string, Favorite>>('/api/favorites');
-        cacheManager.cacheFavorites(freshData);
+        cacheManager.cacheFavorites(freshData as Record<string, Favorite>);
         eventName = 'favoritesUpdated';
         break;
       case 'searchHistory':
         freshData = await fetchFromApi<string[]>('/api/searchhistory');
-        cacheManager.cacheSearchHistory(freshData);
+        cacheManager.cacheSearchHistory(freshData as string[]);
         eventName = 'searchHistoryUpdated';
         break;
     }
@@ -980,7 +984,7 @@ export async function savePlayRecord(
       );
 
       // 🔑 标记需要清除缓存（在数据库更新成功后执行）
-      (record as any)._shouldClearCache = true;
+      (record as PlayRecordWithCacheFlag)._shouldClearCache = true;
     }
   }
 
@@ -1013,7 +1017,7 @@ export async function savePlayRecord(
       }
 
       // 🔑 关键修复：数据库更新成功后，如果更新了 original_episodes，清除相关缓存
-      if ((record as any)._shouldClearCache) {
+      if ((record as PlayRecordWithCacheFlag)._shouldClearCache) {
         try {
           // 🔧 优化：使用新函数清除 watching-updates 缓存
           clearWatchingUpdates();
@@ -1034,7 +1038,7 @@ export async function savePlayRecord(
           logger.log(
             '✅ 数据库更新成功，已清除 watching-updates 和播放记录缓存，并刷新最新数据',
           );
-          delete (record as any)._shouldClearCache;
+          delete (record as PlayRecordWithCacheFlag)._shouldClearCache;
         } catch (cacheError) {
           logger.warn('清除缓存失败:', cacheError);
         }
@@ -1086,7 +1090,10 @@ export async function savePlayRecord(
         }
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('playRecords', err);
+      await handleDatabaseOperationFailure(
+        'playRecords',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('保存播放记录失败');
       throw err;
     }
@@ -1179,7 +1186,10 @@ export async function deletePlayRecord(
         throw new Error(`删除播放记录失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('playRecords', err);
+      await handleDatabaseOperationFailure(
+        'playRecords',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('删除播放记录失败');
       throw err;
     }
@@ -1318,7 +1328,10 @@ export async function addSearchHistory(keyword: string): Promise<void> {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('searchHistory', err);
+      await handleDatabaseOperationFailure(
+        'searchHistory',
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
     return;
   }
@@ -1374,7 +1387,10 @@ export async function clearSearchHistory(): Promise<void> {
         throw new Error(`清空搜索历史失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('searchHistory', err);
+      await handleDatabaseOperationFailure(
+        'searchHistory',
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
     return;
   }
@@ -1428,7 +1444,10 @@ export async function deleteSearchHistory(keyword: string): Promise<void> {
         throw new Error(`删除搜索历史失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('searchHistory', err);
+      await handleDatabaseOperationFailure(
+        'searchHistory',
+        err instanceof Error ? err : new Error(String(err)),
+      );
     }
     return;
   }
@@ -1560,7 +1579,10 @@ export async function saveFavorite(
         throw new Error(`保存收藏失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('favorites', err);
+      await handleDatabaseOperationFailure(
+        'favorites',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('保存收藏失败');
       throw err;
     }
@@ -1626,7 +1648,10 @@ export async function deleteFavorite(
         throw new Error(`删除收藏失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('favorites', err);
+      await handleDatabaseOperationFailure(
+        'favorites',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('删除收藏失败');
       throw err;
     }
@@ -1737,7 +1762,10 @@ export async function clearAllPlayRecords(): Promise<void> {
         throw new Error(`清空播放记录失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('playRecords', err);
+      await handleDatabaseOperationFailure(
+        'playRecords',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('清空播放记录失败');
       throw err;
     }
@@ -1783,7 +1811,10 @@ export async function clearAllFavorites(): Promise<void> {
         throw new Error(`清空收藏失败: ${response.status}`);
       }
     } catch (err) {
-      await handleDatabaseOperationFailure('favorites', err);
+      await handleDatabaseOperationFailure(
+        'favorites',
+        err instanceof Error ? err : new Error(String(err)),
+      );
       triggerGlobalError('清空收藏失败');
       throw err;
     }
@@ -1986,7 +2017,7 @@ export async function preloadUserData(): Promise<void> {
  * @param id 豆瓣ID
  * @returns null
  */
-export function getDoubanDetailsCache(_id: string): any | null {
+export function getDoubanDetailsCache(_id: string): unknown | null {
   return null; // 不再使用本地缓存
 }
 
@@ -1995,7 +2026,7 @@ export function getDoubanDetailsCache(_id: string): any | null {
  * @param id 豆瓣ID
  * @param data 详情数据
  */
-export function setDoubanDetailsCache(_id: string, _data: any): void {
+export function setDoubanDetailsCache(_id: string, _data: unknown): void {
   // 不再使用本地缓存
 }
 
@@ -2012,7 +2043,7 @@ export function getDoubanListCache(
   _tag: string,
   _pageStart: number,
   _pageSize: number,
-): any | null {
+): unknown | null {
   return null; // 不再使用本地缓存
 }
 
@@ -2029,7 +2060,7 @@ export function setDoubanListCache(
   _tag: string,
   _pageStart: number,
   _pageSize: number,
-  _data: any,
+  _data: unknown,
 ): void {
   // 不再使用本地缓存
 }

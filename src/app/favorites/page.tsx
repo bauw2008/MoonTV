@@ -66,7 +66,22 @@ export default function FavoritesPage() {
   ];
 
   // 处理收藏数据更新的函数
-  const updateFavoriteItems = async (allFavorites: Record<string, any>) => {
+  const updateFavoriteItems = async (
+    allFavorites: Record<
+      string,
+      {
+        save_time: number;
+        type?: string;
+        title?: string;
+        year?: string;
+        cover?: string;
+        total_episodes?: number;
+        source_name?: string;
+        search_title?: string;
+        origin?: string;
+      }
+    >,
+  ) => {
     const allPlayRecords = await getAllPlayRecords();
 
     // 根据保存时间排序（从近到远）
@@ -153,19 +168,34 @@ export default function FavoritesPage() {
 
   // 监听收藏更新事件
   useEffect(() => {
-    const handleFavoritesUpdate = (newFavorites: Record<string, any>) => {
+    const handleFavoritesUpdate = (
+      newFavorites: Record<
+        string,
+        {
+          save_time: number;
+          type?: string;
+          title?: string;
+          year?: string;
+          cover?: string;
+          total_episodes?: number;
+          source_name?: string;
+          search_title?: string;
+          origin?: string;
+        }
+      >,
+    ) => {
       updateFavoriteItems(newFavorites);
     };
 
     window.addEventListener(
       'favoritesUpdated',
-      handleFavoritesUpdate as EventListener,
+      handleFavoritesUpdate as unknown as EventListener,
     );
 
     return () => {
       window.removeEventListener(
         'favoritesUpdated',
-        handleFavoritesUpdate as EventListener,
+        handleFavoritesUpdate as unknown as EventListener,
       );
     };
   }, []);

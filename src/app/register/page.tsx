@@ -2,13 +2,7 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Suspense,
-  useActionState,
-  useEffect,
-  useState,
-  useTransition,
-} from 'react';
+import { useActionState, useEffect, useState, useTransition } from 'react';
 
 import { logger } from '@/lib/logger';
 
@@ -28,6 +22,15 @@ function RegisterPageClient() {
   const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const [disabledReason, setDisabledReason] = useState('');
   const [reason, setReason] = useState('');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
+
+  // 只在客户端生成 URL，避免水合错误
+  useEffect(() => {
+    const url = `https://edgeone-picture.edgeone.app/api/random?t=${Date.now()}`;
+    requestAnimationFrame(() => {
+      setBackgroundImageUrl(url);
+    });
+  }, []);
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
@@ -196,11 +199,13 @@ function RegisterPageClient() {
   if (registrationDisabled) {
     return (
       <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
-        {/* 随机背景图片 */}
-        <RandomBackground>
-          {/* 半透明遮罩 */}
-          <div className='absolute inset-0 bg-black/20 dark:bg-black/40' />
-        </RandomBackground>
+        {/* 🔥 随机背景图片 - 独立层 */}
+        {backgroundImageUrl && (
+          <RandomBackground imageUrl={backgroundImageUrl} />
+        )}
+
+        {/* 🔥 半透明遮罩 - 独立层 */}
+        <div className='absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none' />
 
         <div className='absolute top-4 right-4 z-20'>
           <ThemeToggle />
@@ -239,11 +244,11 @@ function RegisterPageClient() {
 
   return (
     <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
-      {/* 随机背景图片 */}
-      <RandomBackground>
-        {/* 半透明遮罩 */}
-        <div className='absolute inset-0 bg-black/20 dark:bg-black/40' />
-      </RandomBackground>
+      {/* 🔥 随机背景图片 - 独立层 */}
+      <RandomBackground imageUrl={backgroundImageUrl} />
+
+      {/* 🔥 半透明遮罩 - 独立层 */}
+      <div className='absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none' />
 
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
@@ -398,9 +403,5 @@ function RegisterPageClient() {
 }
 
 export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <RegisterPageClient />
-    </Suspense>
-  );
+  return <RegisterPageClient />;
 }

@@ -916,6 +916,7 @@ function TVBoxPageContent() {
         {useVirtualization ? (
           <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
             <VirtualVideoGrid
+              ref={virtualGridRef}
               videos={videos}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}

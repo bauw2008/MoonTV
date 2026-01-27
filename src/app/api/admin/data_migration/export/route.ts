@@ -19,7 +19,7 @@ interface UserData {
   favorites: Record<string, unknown>;
   searchHistory: string[];
   skipConfigs: Record<string, unknown>;
-  password: string | null;
+  password: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -86,7 +86,9 @@ export async function POST(req: NextRequest) {
         // 搜索历史
         searchHistory: await db.getSearchHistory(username),
         // 跳过片头片尾配置
-        skipConfigs: await db.getAllEpisodeSkipConfigs(username),
+        skipConfigs: Object.fromEntries(
+          Object.entries(await db.getAllEpisodeSkipConfigs(username)),
+        ),
         // 用户密码（通过验证空密码来检查用户是否存在，然后获取密码）
         password: await getUserPassword(username),
       };

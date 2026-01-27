@@ -1,5 +1,6 @@
 'use client';
 
+import type Artplayer from 'artplayer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';
@@ -9,7 +10,7 @@ interface SkipControllerProps {
   source: string;
   id: string;
   episodeIndex?: number; // 当前集数索引，用于区分不同集数
-  artPlayerRef: React.MutableRefObject<any>;
+  artPlayerRef: React.MutableRefObject<Artplayer | null>;
   currentTime?: number;
   duration?: number;
   onNextEpisode?: () => void; // 跳转下一集的回调
@@ -75,12 +76,17 @@ export default function SkipController({
       ) {
         // 先暂停视频，防止 video:ended 事件再次触发
         if (artPlayerRef.current) {
-          if (!artPlayerRef.current.paused) {
-            artPlayerRef.current.pause();
+          const player = artPlayerRef.current as unknown as {
+            paused?: boolean;
+            pause?: () => void;
+            notice?: { show?: string };
+          };
+          if (!player.paused) {
+            player.pause?.();
           }
           // 显示跳过提示
-          if (artPlayerRef.current.notice) {
-            artPlayerRef.current.notice.show = '自动跳转下一集';
+          if (player.notice) {
+            player.notice.show = '自动跳转下一集';
           }
         }
         // 设置冷却时间，防止新集数立即触发

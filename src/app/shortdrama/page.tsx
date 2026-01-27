@@ -734,7 +734,7 @@ function ShortDramaPageClient() {
         useVirtualization={useVirtualization}
         onToggleVirtualization={toggleVirtualization}
         showBackToTop={true}
-        virtualGridRef={virtualGridRef}
+        virtualGridRef={undefined}
       />
     </PageLayout>
   );

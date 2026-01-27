@@ -481,6 +481,7 @@ function HomeClient() {
       <FloatingTools
         showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
         showBackToTop={true}
+        virtualGridRef={undefined}
       />
     </PageLayout>
   );

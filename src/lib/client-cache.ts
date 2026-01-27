@@ -1,23 +1,23 @@
 import { logger } from '@/lib/logger';
 
 export class ClientCache {
-  static async get(key: string): Promise<any | null> {
+  static async get<T = unknown>(key: string): Promise<T | null> {
     try {
       const response = await fetch(`/api/cache?key=${encodeURIComponent(key)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result = await response.json();
-      return result.data;
+      return result.data as T;
     } catch (error) {
       logger.error('获取缓存失败:', error);
       return null;
     }
   }
 
-  static async set(
+  static async set<T = unknown>(
     key: string,
-    data: any,
+    data: T,
     expireSeconds?: number,
   ): Promise<void> {
     try {

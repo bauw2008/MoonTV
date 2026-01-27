@@ -101,9 +101,10 @@ function OwnerConfigContent() {
           localStorage.removeItem('vidora-menu-settings');
           localStorage.removeItem('vidora-custom-categories');
           // 清除RUNTIME_CONFIG中的菜单设置
-          if ((window as any).RUNTIME_CONFIG) {
-            delete (window as any).RUNTIME_CONFIG.MenuSettings;
-            delete (window as any).RUNTIME_CONFIG.CUSTOM_CATEGORIES;
+          const runtimeConfig = (window as Window).RUNTIME_CONFIG;
+          if (runtimeConfig) {
+            delete runtimeConfig.MenuSettings;
+            delete runtimeConfig.CUSTOM_CATEGORIES;
           }
         }
 

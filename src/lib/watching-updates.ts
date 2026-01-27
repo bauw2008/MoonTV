@@ -302,7 +302,7 @@ async function checkSingleRecordUpdate(
 
         // 查找匹配的数据源
         const matchedSource = sources.find(
-          (source: any) =>
+          (source: { key: string; name: string }) =>
             source.key === record.source_name ||
             source.name === record.source_name,
         );

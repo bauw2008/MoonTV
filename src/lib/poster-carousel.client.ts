@@ -3,6 +3,7 @@
 import { logger } from '@/lib/logger';
 
 import { getDoubanDetails, getDoubanRecommends } from './douban.client';
+import type { DoubanItem } from './types';
 
 export interface PosterItem {
   id: string;
@@ -160,7 +161,7 @@ export async function getPosterCarouselData(): Promise<{
           const selectedMovies = getRandomItems(moviesData.list, 2);
           for (const movie of selectedMovies) {
             // 获取详细信息以获得简介
-            const movieObj = movie as any;
+            const movieObj = movie as DoubanItem;
             let detailedMovie = movieObj;
             if (!movieObj.plot_summary || movieObj.plot_summary.trim() === '') {
               try {
@@ -223,7 +224,7 @@ export async function getPosterCarouselData(): Promise<{
           const selectedShows = getRandomItems(tvShowsData.list, 2);
           for (const show of selectedShows) {
             // 获取详细信息以获得简介
-            const showObj = show as any;
+            const showObj = show as DoubanItem;
             let detailedShow = showObj;
             if (!showObj.plot_summary || showObj.plot_summary.trim() === '') {
               try {

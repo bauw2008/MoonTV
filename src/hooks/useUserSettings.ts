@@ -104,7 +104,7 @@ const getRuntimeDefaults = (): UserSettings => {
     };
   }
 
-  const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+  const runtimeConfig = (window as Window).RUNTIME_CONFIG || {};
   return {
     defaultAggregateSearch: true,
     doubanProxyUrl: runtimeConfig.DOUBAN_PROXY || '',

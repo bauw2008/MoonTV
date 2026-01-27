@@ -52,9 +52,9 @@ async function getCache(key: string): Promise<any | null> {
 }
 
 // 统一缓存设置方法
-async function setCache(
+async function setCache<T>(
   key: string,
-  data: any,
+  data: T,
   expireSeconds: number,
 ): Promise<void> {
   try {
@@ -894,20 +894,22 @@ export async function getDoubanActorMovies(
     const items = searchData.items || [];
 
     // 过滤掉第一个结果（通常是演员本人的资料页）和不相关的结果
-    let filteredItems = items.slice(1).filter((item: any) => {
-      // 过滤掉书籍等非影视内容
-      const abstract = item.abstract || '';
-      const isBook =
-        abstract.includes('出版') ||
-        abstract.includes('页数') ||
-        item.url?.includes('/book/');
-      const isPerson = item.url?.includes('/celebrity/');
-      return !isBook && !isPerson;
-    });
+    let filteredItems = items
+      .slice(1)
+      .filter((item: { abstract?: string; url?: string }) => {
+        // 过滤掉书籍等非影视内容
+        const abstract = item.abstract || '';
+        const isBook =
+          abstract.includes('出版') ||
+          abstract.includes('页数') ||
+          item.url?.includes('/book/');
+        const isPerson = item.url?.includes('/celebrity/');
+        return !isBook && !isPerson;
+      });
 
     // 按类型过滤
     if (type === 'movie') {
-      filteredItems = filteredItems.filter((item: any) => {
+      filteredItems = filteredItems.filter((item: { abstract?: string }) => {
         const abstract = item.abstract || '';
         return (
           !abstract.includes('季') &&
@@ -916,7 +918,7 @@ export async function getDoubanActorMovies(
         );
       });
     } else if (type === 'tv') {
-      filteredItems = filteredItems.filter((item: any) => {
+      filteredItems = filteredItems.filter((item: { abstract?: string }) => {
         const abstract = item.abstract || '';
         return (
           abstract.includes('季') ||
@@ -933,19 +935,27 @@ export async function getDoubanActorMovies(
     const paginatedItems = filteredItems.slice(startIndex, endIndex);
 
     // 转换数据格式
-    const list: DoubanItem[] = paginatedItems.map((item: any) => {
-      // 从abstract中提取年份
-      const yearMatch = item.abstract?.match(/(\d{4})/);
-      const year = yearMatch ? yearMatch[1] : '';
+    const list: DoubanItem[] = paginatedItems.map(
+      (item: {
+        id?: { $numberLong?: string };
+        title?: string;
+        cover_url?: string;
+        rating?: { value?: number };
+        abstract?: string;
+      }) => {
+        // 从abstract中提取年份
+        const yearMatch = item.abstract?.match(/(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : '';
 
-      return {
-        id: item.id?.toString() || '',
-        title: item.title || '',
-        poster: item.cover_url || '',
-        rate: item.rating?.value ? item.rating.value.toFixed(1) : '',
-        year: year,
-      };
-    });
+        return {
+          id: item.id?.toString() || '',
+          title: item.title || '',
+          poster: item.cover_url || '',
+          rate: item.rating?.value ? item.rating.value.toFixed(1) : '',
+          year: year,
+        };
+      },
+    );
 
     const result = {
       code: 200,

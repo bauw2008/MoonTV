@@ -22,7 +22,12 @@ export const clearAvatarFromLocalStorage = async (): Promise<void> => {
   try {
     // 清除服务器头像
     await fetch('/api/avatar', { method: 'DELETE' });
-    // 清除本地缓存
+    // 🔥 修复：清除所有用户的头像缓存
+    const keys = Object.keys(localStorage).filter((key) =>
+      key.startsWith('user-avatar-'),
+    );
+    keys.forEach((key) => localStorage.removeItem(key));
+    // 清除旧的缓存 key（兼容性）
     localStorage.removeItem('user-avatar');
   } catch (error) {
     logger.error('清除头像失败:', error);
@@ -156,7 +161,8 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
   // 从 API 读取头像（仅在没有外部传入时）
   useEffect(() => {
     if (!externalAvatarUrl) {
-      const CACHE_KEY = 'user-avatar';
+      // 🔥 修复：缓存 key 包含用户名，避免切换用户时显示错误头像
+      const CACHE_KEY = username ? `user-avatar-${username}` : 'user-avatar';
       const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 
       // 使用 requestAnimationFrame 来延迟 setState 调用
@@ -213,7 +219,7 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
         setIsLoadingCustomAvatar(false);
       });
     }
-  }, [externalAvatarUrl]);
+  }, [username, externalAvatarUrl]); // 🔥 添加 username 依赖
 
   // 判断显示哪个图片
   const displayImage = selectedImage || avatarUrl;

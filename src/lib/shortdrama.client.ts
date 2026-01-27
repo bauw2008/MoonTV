@@ -20,7 +20,7 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
   const cacheKey = getCacheKey('categories', {});
 
   try {
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<ShortDramaCategory[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -35,11 +35,14 @@ export async function getShortDramaCategories(): Promise<ShortDramaCategory[]> {
 
     const data = await response.json();
     // 内部API直接返回数组
-    const result = data as ShortDramaCategory[];
+    const result = data as
+      | { list?: ShortDramaCategory[] }
+      | ShortDramaCategory[];
+    const categories = Array.isArray(result) ? result : result.list || [];
 
     // 缓存结果
-    await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.categories);
-    return result;
+    await setCache(cacheKey, categories, SHORTDRAMA_CACHE_EXPIRE.categories);
+    return categories;
   } catch (error) {
     logger.error('获取短剧分类失败:', error);
     return [];
@@ -54,7 +57,7 @@ export async function getRecommendedShortDramas(
   const cacheKey = getCacheKey('recommends', { category, size });
 
   try {
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<ShortDramaItem[]>(cacheKey);
     if (cached) {
       return cached;
     }
@@ -69,11 +72,12 @@ export async function getRecommendedShortDramas(
 
     const data = await response.json();
     // 内部API已经处理过格式
-    const result = data as ShortDramaItem[];
+    const result = data as { list?: ShortDramaItem[] } | ShortDramaItem[];
+    const items = Array.isArray(result) ? result : result.list || [];
 
     // 缓存结果
-    await setCache(cacheKey, result, SHORTDRAMA_CACHE_EXPIRE.recommends);
-    return result;
+    await setCache(cacheKey, items, SHORTDRAMA_CACHE_EXPIRE.recommends);
+    return items;
   } catch (error) {
     logger.error('获取推荐短剧失败:', error);
     return [];
@@ -89,7 +93,9 @@ export async function getShortDramaList(
   const cacheKey = getCacheKey('lists', { category, page, size });
 
   try {
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<{ list: ShortDramaItem[]; hasMore: boolean }>(
+      cacheKey,
+    );
     if (cached) {
       return cached;
     }
@@ -105,14 +111,21 @@ export async function getShortDramaList(
     const data = await response.json();
     // 内部API已经处理过格式
     const result = data as { list: ShortDramaItem[]; hasMore: boolean };
+    const finalResult = {
+      list: result.list || [],
+      hasMore: result.hasMore ?? false,
+    };
 
     // 缓存结果 - 第一页缓存时间更长
     const cacheTime =
       page === 1
         ? SHORTDRAMA_CACHE_EXPIRE.lists * 2
         : SHORTDRAMA_CACHE_EXPIRE.lists;
-    await setCache(cacheKey, result, cacheTime);
-    return result;
+
+    await setCache(cacheKey, finalResult, cacheTime);
+    logger.log(`短剧列表已缓存: category=${category}, page=${page}`);
+
+    return finalResult;
   } catch (error) {
     logger.error('获取短剧列表失败:', error);
     return { list: [], hasMore: false };
@@ -136,9 +149,15 @@ export async function searchShortDramas(
 
     const data = await response.json();
     // 内部API已经处理过格式
-    const result = data as { list: ShortDramaItem[]; hasMore: boolean };
+    const result = (data as
+      | { list?: ShortDramaItem[]; hasMore?: boolean }
+      | undefined) || { list: [], hasMore: false };
+    const finalResult = {
+      list: result.list || [],
+      hasMore: result.hasMore ?? false,
+    };
 
-    return result;
+    return finalResult;
   } catch (error) {
     logger.error('搜索短剧失败:', error);
     return { list: [], hasMore: false };

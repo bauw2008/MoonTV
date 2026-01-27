@@ -72,9 +72,9 @@ function AIConfigContent() {
   // AI配置状态
   const [aiSettings, setAiSettings] = useState<AISettings>({
     enabled: false,
-    apiUrl: 'https://api.openai.com/v1',
+    apiUrl: '',
     apiKey: '',
-    model: 'gpt-3.5-turbo',
+    model: '',
     temperature: 0.7,
     maxTokens: 3000,
   });
@@ -92,11 +92,9 @@ function AIConfigContent() {
           if (data.Config?.AIRecommendConfig) {
             setAiSettings({
               enabled: data.Config.AIRecommendConfig.enabled ?? false,
-              apiUrl:
-                data.Config.AIRecommendConfig.apiUrl ||
-                'https://api.openai.com/v1',
+              apiUrl: data.Config.AIRecommendConfig.apiUrl || '',
               apiKey: data.Config.AIRecommendConfig.apiKey || '',
-              model: data.Config.AIRecommendConfig.model || 'gpt-3.5-turbo',
+              model: data.Config.AIRecommendConfig.model || '',
               temperature: data.Config.AIRecommendConfig.temperature ?? 0.7,
               maxTokens: data.Config.AIRecommendConfig.maxTokens ?? 3000,
             });

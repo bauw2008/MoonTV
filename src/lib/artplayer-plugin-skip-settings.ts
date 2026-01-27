@@ -3,7 +3,16 @@
  * 将跳过设置面板集成到播放器内部，而不是页面覆盖层
  */
 
+import type Artplayer from 'artplayer';
+
 import { logger } from './logger';
+
+// 扩展 Window 接口以支持插件全局访问
+declare global {
+  interface Window {
+    artplayerPluginSkipSettings?: typeof artplayerPluginSkipSettings;
+  }
+}
 
 export interface SkipSettingsConfig {
   // 预设的跳过时间配置
@@ -32,7 +41,7 @@ const DEFAULT_CONFIG: SkipSettingsConfig = {
 export default function artplayerPluginSkipSettings(
   initialConfig?: Partial<SkipSettingsConfig>,
 ) {
-  return (art: any) => {
+  return (art: Artplayer) => {
     // 使用默认配置和初始配置，具体值由 SkipController 管理
     let config: SkipSettingsConfig = {
       ...DEFAULT_CONFIG,
@@ -65,8 +74,10 @@ export default function artplayerPluginSkipSettings(
     // 智能检测短剧并禁用跳过功能
     const detectShortDrama = () => {
       const isShort = isShortDrama();
-      (config as any).isShortDrama = isShort;
-
+      const configWithShortDrama = config as unknown as {
+        isShortDrama?: boolean;
+      };
+      configWithShortDrama.isShortDrama = isShort;
       // 合并localStorage操作
       try {
         const savedSettings = localStorage.getItem('skipSettings');
@@ -1114,12 +1125,16 @@ export default function artplayerPluginSkipSettings(
     document.head.appendChild(noticeStyle);
 
     // 将面板和提醒添加到播放器容器
-    if (art.template?.$player) {
-      art.template.$player.appendChild(panelElement);
-      art.template.$player.appendChild(shortDramaNotice);
-    } else if (art.container) {
-      art.container.appendChild(panelElement);
-      art.container.appendChild(shortDramaNotice);
+    const player = art as unknown as {
+      template?: { $player?: HTMLElement };
+      container?: HTMLElement;
+    };
+    if (player.template?.$player) {
+      player.template.$player.appendChild(panelElement);
+      player.template.$player.appendChild(shortDramaNotice);
+    } else if (player.container) {
+      player.container.appendChild(panelElement);
+      player.container.appendChild(shortDramaNotice);
     }
 
     // 点击外部关闭面板
@@ -1213,5 +1228,5 @@ export default function artplayerPluginSkipSettings(
 
 // 添加全局支持
 if (typeof window !== 'undefined') {
-  (window as any).artplayerPluginSkipSettings = artplayerPluginSkipSettings;
+  (window as Window).artplayerPluginSkipSettings = artplayerPluginSkipSettings;
 }

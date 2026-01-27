@@ -37,10 +37,13 @@ export interface AdminConfig {
       reason?: string;
       encryptedPassword?: string; // 加密后的密码，审批通过时解密
       appliedAt: string; // ISO 时间
+      createdAt?: number; // 申请时间
     }[]; // 待审核用户队列
     Users: {
       username: string;
+      password?: string; // 加密密码
       role: 'user' | 'admin' | 'owner';
+      enabled?: boolean; // 用户是否启用
       banned?: boolean;
       videoSources?: string[]; // 用户直接配置的视频源
       features?: {
@@ -54,6 +57,9 @@ export interface AdminConfig {
       createdAt?: number; // 创建时间（可选）
       permissionVersion?: number; // 权限版本号，用于缓存失效
       videoSourcesInherited?: boolean; // videoSources是否继承自用户组
+      userGroup?: string; // 用户组
+      lastLoginTime?: number; // 最后登录时间（时间戳）
+      lastLoginAt?: string; // 最后登录时间（ISO字符串）
     }[];
     Tags?: Array<{
       name: string;

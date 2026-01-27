@@ -542,7 +542,9 @@ function PlayPageClient() {
     try {
       const cacheKey = `${DANMU_CACHE_KEY_PREFIX}-${key}`;
       // 优先从统一存储获取
-      const cached = await ClientCache.get(cacheKey);
+      const cached = await ClientCache.get<{ data: any[]; timestamp: number }>(
+        cacheKey,
+      );
       if (cached) {
         return cached;
       }

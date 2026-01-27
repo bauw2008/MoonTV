@@ -546,9 +546,9 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   if (!adminConfig.AIRecommendConfig) {
     adminConfig.AIRecommendConfig = {
       enabled: false, // 默认关闭
-      apiUrl: 'https://api.openai.com/v1', // 默认OpenAI API
+      apiUrl: '', // 默认为空，需要管理员配置
       apiKey: '', // 默认为空，需要管理员配置
-      model: 'gpt-3.5-turbo', // 默认模型
+      model: '', // 默认为空，需要管理员配置
       temperature: 0.7, // 默认温度
       maxTokens: 3000, // 默认最大token数
     };

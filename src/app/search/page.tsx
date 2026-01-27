@@ -59,12 +59,10 @@ function SearchPageClient() {
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
-  // VirtualSearchGrid ref for scroll control
-  const virtualGridRef = useRef<any>(null);
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentQueryRef = useRef<string>('');
+  const virtualGridRef = useRef<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -1640,6 +1638,7 @@ function SearchPageClient() {
                   {/* 条件渲染：虚拟化 vs 传统网格 */}
                   {useVirtualization ? (
                     <VirtualSearchGrid
+                      ref={virtualGridRef}
                       allResults={searchResults}
                       filteredResults={filteredAllResults}
                       aggregatedResults={aggregatedResults}

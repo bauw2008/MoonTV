@@ -1,6 +1,7 @@
 import { use } from 'react';
 
 import { getConfig } from './config';
+import type { AdminConfig } from './types';
 
 /**
  * React 19 use() API 示例
@@ -35,11 +36,9 @@ export function useConfig() {
   return use(getConfigPromise());
 }
 
-/**
- * 创建一个可缓存的配置 Promise
- * React 19 的 use() 会自动处理 Promise 的缓存和去重
- */
-let configPromise: Promise<any> | null = null;
+// 创建一个可缓存的配置 Promise
+// React 19 的 use() 会自动处理 Promise 的缓存和去重
+let configPromise: Promise<AdminConfig> | null = null;
 
 export function getCachedConfigPromise() {
   if (!configPromise) {

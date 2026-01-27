@@ -55,7 +55,7 @@ const doubanImageProxyTypeOptions = [
 ];
 
 function SiteConfigContent() {
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<SiteConfigSettings | null>(null);
 
   // 使用统一接口
   const { isLoading } = useAdminLoading();

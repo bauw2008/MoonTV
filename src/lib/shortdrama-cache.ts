@@ -13,7 +13,7 @@ const SHORTDRAMA_CACHE_EXPIRE = {
 };
 
 // 缓存工具函数
-function getCacheKey(prefix: string, params: Record<string, any>): string {
+function getCacheKey(prefix: string, params: Record<string, unknown>): string {
   const sortedParams = Object.keys(params)
     .filter((key) => params[key] !== undefined && params[key] !== null)
     .sort()
@@ -23,10 +23,10 @@ function getCacheKey(prefix: string, params: Record<string, any>): string {
 }
 
 // 统一缓存获取方法
-async function getCache(key: string): Promise<any | null> {
+async function getCache<T = unknown>(key: string): Promise<T | null> {
   try {
     // 优先从统一存储获取
-    const cached = await ClientCache.get(key);
+    const cached = await ClientCache.get<T>(key);
     if (cached) return cached;
 
     // 兜底：从localStorage获取（兼容性）
@@ -36,7 +36,7 @@ async function getCache(key: string): Promise<any | null> {
         try {
           const { data, expire } = JSON.parse(localCached);
           if (Date.now() <= expire) {
-            return data;
+            return data as T;
           }
           localStorage.removeItem(key);
         } catch {
@@ -53,9 +53,9 @@ async function getCache(key: string): Promise<any | null> {
 }
 
 // 统一缓存设置方法
-async function setCache(
+async function setCache<T = unknown>(
   key: string,
-  data: any,
+  data: T,
   expireSeconds: number,
 ): Promise<void> {
   try {

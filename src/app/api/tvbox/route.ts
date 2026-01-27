@@ -445,7 +445,7 @@ async function getCachedCategories(
                   (t) => t.name === tagName,
                 );
                 // disableYellowFilter = true 表示用户组开启过滤
-                if ((tagConfig as any)?.disableYellowFilter === true) {
+                if (tagConfig?.disableYellowFilter === true) {
                   shouldFilter = true;
                   break;
                 }
@@ -543,7 +543,7 @@ async function getCachedCategories(
             (t) => t.name === tagName,
           );
           // disableYellowFilter = true 表示用户组开启过滤
-          if ((tagConfig as any)?.disableYellowFilter === true) {
+          if (tagConfig?.disableYellowFilter === true) {
             shouldFilter = true;
             break;
           }

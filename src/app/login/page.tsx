@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
@@ -16,12 +16,21 @@ function LoginPageClient() {
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
 
   const { siteName } = useSite();
 
   const [state, formAction, isPending] = useActionState(loginAction, {
     error: null,
   });
+
+  // 只在客户端生成 URL，避免水合错误
+  useEffect(() => {
+    const url = `https://edgeone-picture.edgeone.app/api/random?t=${Date.now()}`;
+    requestAnimationFrame(() => {
+      setBackgroundImageUrl(url);
+    });
+  }, []);
 
   // 登录成功后跳转 - 检查实际的认证状态
   useEffect(() => {
@@ -43,15 +52,18 @@ function LoginPageClient() {
 
   return (
     <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
-      {/* 随机背景图片 */}
-      <RandomBackground>
-        {/* 半透明遮罩 */}
-        <div className='absolute inset-0 bg-black/20 dark:bg-black/40' />
-      </RandomBackground>
+      {/* 🔥 随机背景图片 - 独立层 */}
+      {backgroundImageUrl && <RandomBackground imageUrl={backgroundImageUrl} />}
 
+      {/* 🔥 半透明遮罩 - 独立层 */}
+      <div className='absolute inset-0 bg-black/20 dark:bg-black/40 pointer-events-none' />
+
+      {/* 🔥 主题切换按钮 */}
       <div className='absolute top-4 right-4 z-20'>
         <ThemeToggle />
       </div>
+
+      {/* 🔥 登录表单 */}
       <div className='relative z-10 w-full max-w-xs rounded-2xl bg-white/10 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl p-6 border border-white/10 dark:border-gray-700/50 mx-auto'>
         <h1 className='text-white dark:text-gray-100 tracking-tight text-center text-2xl font-extrabold mb-6 bg-clip-text drop-shadow-sm'>
           {siteName}
@@ -133,9 +145,5 @@ function LoginPageClient() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginPageClient />
-    </Suspense>
-  );
+  return <LoginPageClient />;
 }

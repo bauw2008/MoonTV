@@ -2,7 +2,7 @@ import React from 'react';
 
 interface SectionTitleProps {
   title: string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<{ className?: string }>;
   iconColor?: string;
 }
 
@@ -20,7 +20,7 @@ export default function SectionTitle({
           <div
             className={`${iconColor} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
           >
-            <Icon size={24} strokeWidth={2.5} />
+            <Icon />
           </div>
         )}
 

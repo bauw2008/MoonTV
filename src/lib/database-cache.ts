@@ -131,7 +131,7 @@ export class DatabaseCacheManager {
       }
 
       // 批量获取所有缓存数据 - 支持不同的Redis客户端
-      let values: any[] = [];
+      let values: unknown[] = [];
 
       if (storageType === 'upstash') {
         // Upstash Redis - 尝试不同的调用方式
@@ -140,11 +140,13 @@ export class DatabaseCacheManager {
             // 方式1：使用 withRetry
             values = (await storage.withRetry(() =>
               storage.client.mget(allCacheKeys),
-            )) as any[];
+            )) as Array<string | null | {}>;
           } else if (storage.client?.mget) {
             // 方式2：直接调用 client.mget
             logger.log('🔍 withRetry不可用，直接调用client.mget');
-            values = (await storage.client.mget(allCacheKeys)) as any[];
+            values = (await storage.client.mget(allCacheKeys)) as Array<
+              string | null | {}
+            >;
           } else {
             logger.warn('Upstash没有client.mget方法，使用逐个获取');
             // 回退：逐个获取
@@ -205,7 +207,7 @@ export class DatabaseCacheManager {
         logger.warn('使用通用回退方法逐个获取缓存数据');
         for (const key of allCacheKeys) {
           try {
-            let value: any = null;
+            let value: string | null | {} = null;
             if (storage.client?.get) {
               value = await storage.client.get(key);
             } else if (typeof storage.withRetry === 'function') {

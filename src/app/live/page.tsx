@@ -3,6 +3,7 @@
 'use client';
 
 import Artplayer from 'artplayer';
+import type { LoaderCallbacks, LoaderContext } from 'hls.js';
 import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
 import Image from 'next/image';
@@ -122,10 +123,14 @@ function generateLivePoster(channelName: string): string {
 let _liveGetSourceKey: (() => string | undefined) | null = null;
 
 class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
-  constructor(config: any) {
+  constructor(config: never) {
     super(config);
     const load = this.load.bind(this);
-    this.load = function (context: any, config: any, callbacks: any) {
+    this.load = function (
+      context: LoaderContext,
+      config: unknown,
+      callbacks: LoaderCallbacks<LoaderContext>,
+    ) {
       // 所有的请求都带一个 source 参数
       try {
         const url = new URL(context.url);
@@ -135,30 +140,8 @@ class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
         // ignore
         logger.error('设置 source 参数失败:', error);
       }
-      // 拦截manifest和level请求
-      if (
-        (context as any).type === 'manifest' ||
-        (context as any).type === 'level'
-      ) {
-        // 判断是否浏览器直连
-        const isLiveDirectConnectStr =
-          localStorage.getItem('liveDirectConnect');
-        const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
-        if (isLiveDirectConnect) {
-          // 浏览器直连，使用 URL 对象处理参数
-          try {
-            const url = new URL(context.url);
-            url.searchParams.set('allowCORS', 'true');
-            context.url = url.toString();
-          } catch (error) {
-            // 如果 URL 解析失败，回退到字符串拼接
-            context.url = context.url + '&allowCORS=true';
-            logger.error('解析 URL 失败:', error);
-          }
-        }
-      }
       // 执行原始load方法
-      load(context, config, callbacks);
+      load(context, config as Parameters<typeof load>[1], callbacks);
     };
   }
 }
@@ -167,8 +150,8 @@ class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
 function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const disabledMenus: DisabledMenus =
-        (window as any).__DISABLED_MENUS || {};
+      const disabledMenus: Partial<DisabledMenus> =
+        (window as Window).__DISABLED_MENUS || {};
       if (disabledMenus.showLive) {
         window.location.href = '/';
       }
@@ -176,7 +159,8 @@ function LivePagePermissionCheck({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (typeof window !== 'undefined') {
-    const disabledMenus: DisabledMenus = (window as any).__DISABLED_MENUS || {};
+    const disabledMenus: Partial<DisabledMenus> =
+      (window as Window).__DISABLED_MENUS || {};
     if (disabledMenus.showLive) {
       return null;
     }
@@ -397,7 +381,7 @@ function LivePageClient() {
   };
 
   // 播放器引用
-  const artPlayerRef = useRef<any>(null);
+  const artPlayerRef = useRef<Artplayer | null>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
 
   // 分组标签滚动相关
@@ -1008,7 +992,7 @@ function LivePageClient() {
       maxBufferLength: 30,
       backBufferLength: 30,
       maxBufferSize: 60 * 1000 * 1000,
-      loader: CustomHlsJsLoader,
+      loader: CustomHlsJsLoader as typeof Hls.DefaultConfig.loader,
     });
     _liveGetSourceKey = () => currentSourceRef.current?.key;
 
@@ -1016,23 +1000,29 @@ function LivePageClient() {
     hls.attachMedia(video);
     video.hls = hls;
 
-    hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-      logger.error('HLS Error:', event, data);
+    hls.on(
+      Hls.Events.ERROR,
+      function (
+        event: string,
+        data: { fatal?: boolean; type?: string; details?: string },
+      ) {
+        logger.error('HLS Error:', event, data);
 
-      if (data.fatal) {
-        switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
-            hls.startLoad();
-            break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            // hls.recoverMediaError();
-            break;
-          default:
-            hls.destroy();
-            break;
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              // hls.recoverMediaError();
+              break;
+            default:
+              hls.destroy();
+              break;
+          }
         }
-      }
-    });
+      },
+    );
   }
 
   // 播放器初始化
@@ -1159,7 +1149,7 @@ function LivePageClient() {
           setIsVideoLoading(true);
         });
 
-        artPlayerRef.current.on('error', (err: any) => {
+        artPlayerRef.current.on('error', (err: Error) => {
           logger.error('播放器错误:', err);
         });
 
