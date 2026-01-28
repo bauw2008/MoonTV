@@ -15,16 +15,13 @@ import {
 import type { CustomCategory } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
 import { DoubanItem, DoubanResult } from '@/lib/types';
-import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
-import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
-import type { VirtualDoubanGridRef } from '@/components/VirtualDoubanGrid';
-import { VirtualDoubanGrid } from '@/components/VirtualDoubanGrid';
 
 import { MenuSettings } from '@/types/menu';
 
@@ -86,17 +83,6 @@ function DoubanPagePermissionCheck({
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
-  const { hasPermission } = useFeaturePermission();
-
-  // 功能启用状态（从全局配置读取）
-  const isAIEnabled =
-    typeof window !== 'undefined'
-      ? ((
-          (window as unknown as Record<string, unknown>).RUNTIME_CONFIG as {
-            AIConfig?: { enabled?: boolean };
-          }
-        )?.AIConfig?.enabled ?? false)
-      : false;
 
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -107,18 +93,6 @@ function DoubanPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // VirtualDoubanGrid ref for scroll control
-  const virtualGridRef = useRef<VirtualDoubanGridRef>(null);
-
-  // 虚拟化开关状态
-  const [useVirtualization, setUseVirtualization] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('useDoubanVirtualization');
-      return saved !== null ? JSON.parse(saved) : true; // 默认启用
-    }
-    return true;
-  });
 
   // 标记组件是否已挂载，避免服务端和客户端渲染不一致
   const [isMounted, setIsMounted] = useState(false);
@@ -191,25 +165,6 @@ function DoubanPageClient() {
 
   // 星期选择器状态
   const [selectedWeekday, setSelectedWeekday] = useState<string>('');
-
-  // 保存虚拟化设置
-  const toggleVirtualization = () => {
-    const newValue = !useVirtualization;
-    setUseVirtualization(newValue);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('useDoubanVirtualization', JSON.stringify(newValue));
-    }
-
-    // 切换虚拟化模式时，立即同步参数引用，避免一致性检查失败
-    currentParamsRef.current = {
-      type,
-      primarySelection,
-      secondarySelection,
-      multiLevelSelection: multiLevelValues,
-      selectedWeekday,
-      currentPage,
-    };
-  };
 
   // 获取自定义分类数据
   useEffect(() => {
@@ -794,13 +749,8 @@ function DoubanPageClient() {
     customCategories,
   ]);
 
-  // 设置滚动监听（只在非虚拟化模式下启用）
+  // 设置滚动监听
   useEffect(() => {
-    // 如果启用了虚拟化，则不使用传统的滚动监听
-    if (useVirtualization) {
-      return;
-    }
-
     // 如果没有更多数据或正在加载，则不设置监听
     if (!hasMore || isLoadingMore || loading) {
       return;
@@ -828,7 +778,7 @@ function DoubanPageClient() {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loading, useVirtualization]);
+  }, [hasMore, isLoadingMore, loading]);
 
   // 处理选择器变化
   const handlePrimaryChange = (value: string | number) => {
@@ -928,13 +878,6 @@ function DoubanPageClient() {
     setSelectedWeekday(weekday);
   };
 
-  // 处理虚拟化组件的加载更多请求
-  const handleVirtualLoadMore = () => {
-    if (hasMore && !isLoadingMore) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
   const getPageTitle = () => {
     // 根据 type 生成标题
     return type === 'movie'
@@ -1024,119 +967,151 @@ function DoubanPageClient() {
 
         {/* 内容展示区域 */}
         <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
-          {/* 条件渲染：虚拟化 vs 传统网格 */}
-          {isMounted &&
-            (useVirtualization ? (
-              <VirtualDoubanGrid
-                ref={virtualGridRef}
-                doubanData={doubanData}
-                hasMore={hasMore}
-                isLoadingMore={isLoadingMore}
-                onLoadMore={handleVirtualLoadMore}
-                type={type}
-                loading={loading || !selectorsReady}
-                primarySelection={primarySelection}
-                isBangumi={type === 'anime' && primarySelection === '每日放送'}
-              />
-            ) : (
-              <>
-                {/* 传统网格渲染 */}
-                <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-                  {loading || !selectorsReady
-                    ? // 显示骨架屏
-                      skeletonData.map((index) => (
-                        <DoubanCardSkeleton key={index} />
-                      ))
-                    : // 显示实际数据
-                      doubanData.map((item, index) => (
-                        <div key={`${item.title}-${index}`} className='w-full'>
-                          <VideoCard
-                            from='douban'
-                            title={item.title}
-                            poster={item.poster}
-                            douban_id={Number(item.id)}
-                            rate={item.rate}
-                            year={item.year}
-                            isBangumi={
-                              type === 'anime' &&
-                              primarySelection === '每日放送'
-                            }
-                          />
-                        </div>
-                      ))}
-                </div>
-
-                {/* 加载更多指示器 */}
-                {hasMore && !loading && (
-                  <div
-                    ref={(el) => {
-                      if (el && el.offsetParent !== null) {
-                        (
-                          loadingRef as React.MutableRefObject<HTMLDivElement | null>
-                        ).current = el;
-                      }
-                    }}
-                    className='flex justify-center mt-12 py-8'
-                  >
-                    {isLoadingMore && (
-                      <div className='relative px-8 py-4 rounded-2xl bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 border border-green-200/50 dark:border-green-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                        {/* 动画背景 */}
-                        <div className='absolute inset-0 bg-gradient-to-r from-green-400/10 via-emerald-400/10 to-teal-400/10 animate-pulse'></div>
-
-                        {/* 内容 */}
-                        <div className='relative flex items-center gap-3'>
-                          {/* 旋转圈 */}
-                          <div className='relative'>
-                            <div className='animate-spin rounded-full h-8 w-8 border-3 border-green-200 dark:border-green-800'></div>
-                            <div className='absolute inset-0 animate-spin rounded-full h-8 w-8 border-3 border-transparent border-t-green-500 dark:border-t-green-400'></div>
-                          </div>
-
-                          {/* 文字和点动画 */}
-                          <div className='flex items-center gap-1'>
-                            <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                              加载中
-                            </span>
-                            <span className='flex gap-0.5'>
-                              <span
-                                className='animate-bounce'
-                                style={{ animationDelay: '0ms' }}
-                              >
-                                .
-                              </span>
-                              <span
-                                className='animate-bounce'
-                                style={{ animationDelay: '150ms' }}
-                              >
-                                .
-                              </span>
-                              <span
-                                className='animate-bounce'
-                                style={{ animationDelay: '300ms' }}
-                              >
-                                .
-                              </span>
-                            </span>
-                          </div>
-                        </div>
+          {/* 传统网格渲染 */}
+          {isMounted && (
+            <>
+              {/* 传统网格渲染 */}
+              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+                {loading || !selectorsReady
+                  ? // 显示骨架屏
+                    skeletonData.map((index) => (
+                      <DoubanCardSkeleton key={index} />
+                    ))
+                  : // 显示实际数据
+                    doubanData.map((item, index) => (
+                      <div key={`${item.title}-${index}`} className='w-full'>
+                        <VideoCard
+                          from='douban'
+                          title={item.title}
+                          poster={item.poster}
+                          douban_id={Number(item.id)}
+                          rate={item.rate}
+                          year={item.year}
+                          isBangumi={
+                            type === 'anime' && primarySelection === '每日放送'
+                          }
+                        />
                       </div>
-                    )}
-                  </div>
-                )}
+                    ))}
+              </div>
 
-                {/* 没有更多数据提示 */}
-                {!hasMore && doubanData.length > 0 && (
-                  <div className='flex justify-center mt-12 py-8'>
-                    <div className='relative px-8 py-5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                      {/* 装饰性背景 */}
-                      <div className='absolute inset-0 bg-gradient-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
+              {/* 加载更多指示器 */}
+              {hasMore && !loading && (
+                <div
+                  ref={(el) => {
+                    if (el && el.offsetParent !== null) {
+                      (
+                        loadingRef as React.MutableRefObject<HTMLDivElement | null>
+                      ).current = el;
+                    }
+                  }}
+                  className='flex justify-center mt-12 py-8'
+                >
+                  {isLoadingMore && (
+                    <div className='relative px-8 py-4 rounded-2xl bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 border border-green-200/50 dark:border-green-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
+                      {/* 动画背景 */}
+                      <div className='absolute inset-0 bg-gradient-to-r from-green-400/10 via-emerald-400/10 to-teal-400/10 animate-pulse'></div>
 
                       {/* 内容 */}
-                      <div className='relative flex flex-col items-center gap-2'>
-                        {/* 完成图标 */}
+                      <div className='relative flex items-center gap-3'>
+                        {/* 旋转圈 */}
                         <div className='relative'>
-                          <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
+                          <div className='animate-spin rounded-full h-8 w-8 border-3 border-green-200 dark:border-green-800'></div>
+                          <div className='absolute inset-0 animate-spin rounded-full h-8 w-8 border-3 border-transparent border-t-green-500 dark:border-t-green-400'></div>
+                        </div>
+
+                        {/* 文字和点动画 */}
+                        <div className='flex items-center gap-1'>
+                          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                            加载中
+                          </span>
+                          <span className='flex gap-0.5'>
+                            <span
+                              className='animate-bounce'
+                              style={{ animationDelay: '0ms' }}
+                            >
+                              .
+                            </span>
+                            <span
+                              className='animate-bounce'
+                              style={{ animationDelay: '150ms' }}
+                            >
+                              .
+                            </span>
+                            <span
+                              className='animate-bounce'
+                              style={{ animationDelay: '300ms' }}
+                            >
+                              .
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 没有更多数据提示 */}
+              {!hasMore && doubanData.length > 0 && (
+                <div className='flex justify-center mt-12 py-8'>
+                  <div className='relative px-8 py-5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
+                    {/* 装饰性背景 */}
+                    <div className='absolute inset-0 bg-gradient-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
+
+                    {/* 内容 */}
+                    <div className='relative flex flex-col items-center gap-2'>
+                      {/* 完成图标 */}
+                      <div className='relative'>
+                        <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
+                          <svg
+                            className='w-7 h-7 text-white'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                          >
+                            <path
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                              strokeWidth='2.5'
+                              d='M5 13l4 4L19 7'
+                            ></path>
+                          </svg>
+                        </div>
+                        {/* 光圈效果 */}
+                        <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
+                      </div>
+
+                      {/* 文字 */}
+                      <div className='text-center'>
+                        <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>
+                          已加载全部内容
+                        </p>
+                        <p className='text-xs text-gray-600 dark:text-gray-400'>
+                          共 {doubanData.length} 项
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 空状态 */}
+              {!loading && doubanData.length === 0 && (
+                <div className='flex justify-center py-16'>
+                  <div className='relative px-12 py-10 rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
+                    {/* 装饰性元素 */}
+                    <div className='absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl'></div>
+                    <div className='absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/20 to-orange-200/20 rounded-full blur-3xl'></div>
+
+                    {/* 内容 */}
+                    <div className='relative flex flex-col items-center gap-4'>
+                      {/* 插图图标 */}
+                      <div className='relative'>
+                        <div className='w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-slate-200 dark:from-gray-700 dark:to-slate-700 flex items-center justify-center shadow-lg'>
+                          {type === 'custom' ? (
                             <svg
-                              className='w-7 h-7 text-white'
+                              className='w-12 h-12 text-gray-400 dark:text-gray-500'
                               fill='none'
                               stroke='currentColor'
                               viewBox='0 0 24 24'
@@ -1144,110 +1119,60 @@ function DoubanPageClient() {
                               <path
                                 strokeLinecap='round'
                                 strokeLinejoin='round'
-                                strokeWidth='2.5'
-                                d='M5 13l4 4L19 7'
+                                strokeWidth='1.5'
+                                d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'
                               ></path>
                             </svg>
-                          </div>
-                          {/* 光圈效果 */}
-                          <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
+                          ) : (
+                            <svg
+                              className='w-12 h-12 text-gray-400 dark:text-gray-500'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth='1.5'
+                                d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
+                              ></path>
+                            </svg>
+                          )}
                         </div>
-
-                        {/* 文字 */}
-                        <div className='text-center'>
-                          <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>
-                            已加载全部内容
-                          </p>
-                          <p className='text-xs text-gray-600 dark:text-gray-400'>
-                            共 {doubanData.length} 项
-                          </p>
-                        </div>
+                        {/* 浮动小点装饰 */}
+                        <div className='absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping'></div>
+                        <div className='absolute -bottom-1 -left-1 w-2 h-2 bg-purple-400 rounded-full animate-pulse'></div>
                       </div>
+
+                      {/* 文字内容 */}
+                      <div className='text-center space-y-2'>
+                        <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                          {type === 'custom'
+                            ? '暂无自定义分类'
+                            : '暂无相关内容'}
+                        </h3>
+                        <p className='text-sm text-gray-600 dark:text-gray-400 max-w-xs'>
+                          {type === 'custom'
+                            ? '请在管理后台的分类配置中添加自定义分类'
+                            : '尝试调整筛选条件或切换其他分类查看更多内容'}
+                        </p>
+                      </div>
+
+                      {/* 装饰线 */}
+                      <div className='w-16 h-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600 rounded-full'></div>
                     </div>
                   </div>
-                )}
-
-                {/* 空状态 */}
-                {!loading && doubanData.length === 0 && (
-                  <div className='flex justify-center py-16'>
-                    <div className='relative px-12 py-10 rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
-                      {/* 装饰性元素 */}
-                      <div className='absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl'></div>
-                      <div className='absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/20 to-orange-200/20 rounded-full blur-3xl'></div>
-
-                      {/* 内容 */}
-                      <div className='relative flex flex-col items-center gap-4'>
-                        {/* 插图图标 */}
-                        <div className='relative'>
-                          <div className='w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-slate-200 dark:from-gray-700 dark:to-slate-700 flex items-center justify-center shadow-lg'>
-                            {type === 'custom' ? (
-                              <svg
-                                className='w-12 h-12 text-gray-400 dark:text-gray-500'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='1.5'
-                                  d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'
-                                ></path>
-                              </svg>
-                            ) : (
-                              <svg
-                                className='w-12 h-12 text-gray-400 dark:text-gray-500'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='1.5'
-                                  d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
-                                ></path>
-                              </svg>
-                            )}
-                          </div>
-                          {/* 浮动小点装饰 */}
-                          <div className='absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping'></div>
-                          <div className='absolute -bottom-1 -left-1 w-2 h-2 bg-purple-400 rounded-full animate-pulse'></div>
-                        </div>
-
-                        {/* 文字内容 */}
-                        <div className='text-center space-y-2'>
-                          <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                            {type === 'custom'
-                              ? '暂无自定义分类'
-                              : '暂无相关内容'}
-                          </h3>
-                          <p className='text-sm text-gray-600 dark:text-gray-400 max-w-xs'>
-                            {type === 'custom'
-                              ? '请在管理后台的分类配置中添加自定义分类'
-                              : '尝试调整筛选条件或切换其他分类查看更多内容'}
-                          </p>
-                        </div>
-
-                        {/* 装饰线 */}
-                        <div className='w-16 h-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600 rounded-full'></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
       {/* 浮动工具组 */}
-      <FloatingTools
-        showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
-        useVirtualization={useVirtualization}
-        onToggleVirtualization={toggleVirtualization}
-        showBackToTop={true}
-        virtualGridRef={undefined}
-      />
+      <div className='fixed bottom-6 right-6 z-[500]'>
+        <BackToTopButton />
+      </div>
     </PageLayout>
   );
 }

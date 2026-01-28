@@ -264,9 +264,6 @@ function RegisterPageClient() {
             <p className='text-white dark:text-gray-100 font-medium'>
               {state.success}
             </p>
-            <p className='text-sm text-gray-300 dark:text-gray-400'>
-              请等待管理员审核
-            </p>
           </div>
         ) : (
           <form action={formAction} className='space-y-4'>

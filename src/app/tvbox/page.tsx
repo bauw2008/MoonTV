@@ -9,12 +9,11 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { logger } from '@/lib/logger';
 import { UnifiedVideoItem } from '@/lib/types';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import { CapsuleSelector } from '@/components/CapsuleSelector';
-import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
-import { VirtualVideoGrid } from '@/components/VirtualVideoGrid';
 
 // ==================== 类型定义 ====================
 interface VideoSource {
@@ -460,37 +459,12 @@ function TVBoxPageContent() {
 
   const loadingRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const virtualGridRef = useRef<any>(null);
   const hasMore = currentPage < totalPages;
   const lastSourceRef = useRef<string>('');
   const lastFetchAtRef = useRef<number>(0); // 记录上次加载时间，用于节流
 
-  const [useVirtualization, setUseVirtualization] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('useTVBoxVirtualization');
-      return saved !== null ? JSON.parse(saved) : true;
-    }
-    return true;
-  });
-
-  const toggleVirtualization = () => {
-    const newValue = !useVirtualization;
-    setUseVirtualization(newValue);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('useTVBoxVirtualization', JSON.stringify(newValue));
-    }
-  };
-
-  // 稳定的加载更多回调函数
-  const handleLoadMore = () => {
-    setCurrentPage((prev) => prev + 1);
-  };
-
-  // ==================== 滚动加载更多（非虚拟化模式） ====================
+  // ==================== 滚动加载更多 ====================
   useEffect(() => {
-    if (useVirtualization) {
-      return;
-    }
     if (!hasMore || isLoadingMore || loading) {
       return;
     }
@@ -521,7 +495,7 @@ function TVBoxPageContent() {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loading, useVirtualization]);
+  }, [hasMore, isLoadingMore, loading]);
 
   // ==================== 获取视频源 ====================
   useEffect(() => {
@@ -913,42 +887,24 @@ function TVBoxPageContent() {
         )}
 
         {/* 内容展示 */}
-        {useVirtualization ? (
-          <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
-            <VirtualVideoGrid
-              ref={virtualGridRef}
-              videos={videos}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={handleLoadMore}
-              loading={loading}
-              from='tvbox'
-            />
-          </div>
-        ) : (
-          <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
-            <VideoList videos={videos} loading={loading} />
-            {hasMore && (
-              <div ref={loadingRef} className='flex justify-center py-4'>
-                {isLoadingMore ? (
-                  <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
-                ) : (
-                  <div className='h-6'></div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
+          <VideoList videos={videos} loading={loading} />
+          {hasMore && (
+            <div ref={loadingRef} className='flex justify-center py-4'>
+              {isLoadingMore ? (
+                <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
+              ) : (
+                <div className='h-6'></div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 浮动工具组 */}
-      <FloatingTools
-        showAI={false} // tvbox页面不显示AI
-        useVirtualization={useVirtualization}
-        onToggleVirtualization={toggleVirtualization}
-        showBackToTop={true}
-        virtualGridRef={virtualGridRef}
-      />
+      <div className='fixed bottom-6 right-6 z-[500]'>
+        <BackToTopButton />
+      </div>
     </PageLayout>
   );
 }

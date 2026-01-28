@@ -199,7 +199,6 @@ export async function POST(req: NextRequest) {
           ok: true,
           pending: true,
           message: '已提交注册申请，等待管理员审核',
-          notifyAdmin: true, // 通知客户端需要设置时间戳
         });
       }
 

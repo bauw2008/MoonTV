@@ -18,15 +18,12 @@ import {
   searchShortDramas,
 } from '@/lib/shortdrama.client';
 import { DoubanItem, DoubanResult } from '@/lib/types';
-import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
+import BackToTopButton from '@/components/BackToTopButton';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
-import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import ShortDramaSelector from '@/components/ShortDramaSelector';
 import VideoCard from '@/components/VideoCard';
-import type { VirtualDoubanGridRef } from '@/components/VirtualDoubanGrid';
-import { VirtualDoubanGrid } from '@/components/VirtualDoubanGrid';
 
 // 定义全局窗口配置类型
 interface WindowConfig {
@@ -80,14 +77,6 @@ function ShortDramaPagePermissionCheck({
 }
 
 function ShortDramaPageClient() {
-  const { hasPermission } = useFeaturePermission();
-
-  // 功能启用状态（从全局配置读取）
-  const isAIEnabled =
-    typeof window !== 'undefined'
-      ? (window.RUNTIME_CONFIG?.AIConfig?.enabled ?? false)
-      : false;
-
   const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [, startTransition] = useTransition();
@@ -99,18 +88,6 @@ function ShortDramaPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // VirtualDoubanGrid ref for scroll control
-  const virtualGridRef = useRef<VirtualDoubanGridRef>(null);
-
-  // 虚拟化开关状态
-  const [useVirtualization, setUseVirtualization] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('useShortDramaVirtualization');
-      return saved !== null ? JSON.parse(saved) : true;
-    }
-    return true;
-  });
 
   // 用于存储最新参数值的 refs
   const currentParamsRef = useRef({
@@ -127,24 +104,6 @@ function ShortDramaPageClient() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [, setIsSearching] = useState(false);
-
-  // 保存虚拟化设置
-  const toggleVirtualization = () => {
-    const newValue = !useVirtualization;
-    setUseVirtualization(newValue);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'useShortDramaVirtualization',
-        JSON.stringify(newValue),
-      );
-    }
-
-    currentParamsRef.current = {
-      shortDramaCategory,
-      shortDramaType,
-      currentPage,
-    };
-  };
 
   // 同步最新参数值到 ref
   useEffect(() => {
@@ -444,9 +403,9 @@ function ShortDramaPageClient() {
     fetchMoreData();
   }, [currentPage, shortDramaCategory, shortDramaType, showSearch]);
 
-  // 设置滚动监听（只在非虚拟化模式下启用）
+  // 设置滚动监听
   useEffect(() => {
-    if (useVirtualization || showSearch) {
+    if (showSearch) {
       return;
     }
 
@@ -475,7 +434,7 @@ function ShortDramaPageClient() {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loading, useVirtualization, showSearch]);
+  }, [hasMore, isLoadingMore, loading, showSearch]);
 
   // 处理选择器变化
   const handleCategoryChange = (value: string | number) => {
@@ -571,13 +530,6 @@ function ShortDramaPageClient() {
     loadInitialData();
   };
 
-  // 处理虚拟化组件的加载更多请求
-  const handleVirtualLoadMore = () => {
-    if (hasMore && !isLoadingMore) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
   const getPageDescription = () => {
     if (showSearch && searchQuery) {
       return `搜索"${searchQuery}"的结果`;
@@ -655,33 +607,21 @@ function ShortDramaPageClient() {
         {/* 内容展示区域 */}
         <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
           {/* 条件渲染：虚拟化 vs 传统网格 */}
-          {useVirtualization ? (
-            <VirtualDoubanGrid
-              ref={virtualGridRef}
-              doubanData={doubanData}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={handleVirtualLoadMore}
-              type='shortdrama'
-              loading={loading}
-            />
-          ) : (
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4'>
-              {doubanData.map((item, index) => (
-                <VideoCard
-                  key={`${item.id}-${index}`}
-                  id={item.id}
-                  source={item.source}
-                  title={item.title}
-                  poster={item.poster}
-                  from='shortdrama'
-                  rate={item.rate}
-                  year={item.year}
-                  source_name={item.source_name}
-                />
-              ))}
-            </div>
-          )}
+          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4'>
+            {doubanData.map((item, index) => (
+              <VideoCard
+                key={`${item.id}-${index}`}
+                id={item.id}
+                source={item.source}
+                title={item.title}
+                poster={item.poster}
+                from='shortdrama'
+                rate={item.rate}
+                year={item.year}
+                source_name={item.source_name}
+              />
+            ))}
+          </div>
 
           {/* 加载中骨架屏 */}
           {loading && (
@@ -729,13 +669,9 @@ function ShortDramaPageClient() {
       </div>
 
       {/* 浮动工具组 */}
-      <FloatingTools
-        showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
-        useVirtualization={useVirtualization}
-        onToggleVirtualization={toggleVirtualization}
-        showBackToTop={true}
-        virtualGridRef={undefined}
-      />
+      <div className='fixed bottom-6 right-6 z-[500]'>
+        <BackToTopButton />
+      </div>
     </PageLayout>
   );
 }

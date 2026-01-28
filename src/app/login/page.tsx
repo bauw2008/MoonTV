@@ -38,11 +38,6 @@ function LoginPageClient() {
       const auth = getAuthInfoFromBrowserCookie();
       // 只有在已登录且没有错误时才跳转
       if (auth && !state.error && !isPending) {
-        // 如果是管理员或站长，设置通知标记
-        if (auth.role === 'admin' || auth.role === 'owner') {
-          localStorage.setItem('last-pending-update', Date.now().toString());
-          window.dispatchEvent(new CustomEvent('pending-users-update'));
-        }
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
       }

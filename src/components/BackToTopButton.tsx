@@ -2,18 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { logger } from '@/lib/logger';
 
-// 虚拟网格引用接口
-interface VirtualGridRef {
-  scrollToTop?: () => void;
-}
-
-interface BackToTopButtonProps {
-  virtualGridRef?: React.RefObject<VirtualGridRef>;
-}
-
-export default function BackToTopButton({
-  virtualGridRef,
-}: BackToTopButtonProps) {
+export default function BackToTopButton() {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -31,23 +20,13 @@ export default function BackToTopButton({
 
   const scrollToTop = () => {
     try {
-      // 1. 滚动页面到顶部
       document.body.scrollTo({
         top: 0,
         behavior: 'smooth',
       });
-
-      // 2. 如果有虚拟网格引用，重置虚拟列表到第一项
-      if (virtualGridRef?.current) {
-        virtualGridRef.current.scrollToTop();
-      }
     } catch (error) {
       logger.error('平滑滚动失败:', error);
-      // 如果平滑滚动完全失败，使用立即滚动
       document.body.scrollTop = 0;
-      if (virtualGridRef?.current) {
-        virtualGridRef.current.scrollToTop();
-      }
     }
   };
 

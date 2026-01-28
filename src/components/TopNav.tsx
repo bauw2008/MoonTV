@@ -13,7 +13,6 @@ import {
   Search,
   Star,
   Tv,
-  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -21,7 +20,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
@@ -48,22 +46,16 @@ interface NotificationModalProps {
   show: boolean;
   onClose: () => void;
   hasVersionUpdate: boolean;
-  hasPendingUsers: boolean;
-  pendingUsersCount: number;
   onClearVersionUpdate: () => void;
-  onClearPendingUsers: () => void;
 }
 
 function NotificationModal({
   show,
   onClose,
   hasVersionUpdate,
-  hasPendingUsers,
-  pendingUsersCount,
   onClearVersionUpdate,
-  onClearPendingUsers,
 }: NotificationModalProps) {
-  if (!show || (!hasVersionUpdate && !hasPendingUsers)) {
+  if (!show || !hasVersionUpdate) {
     return null;
   }
 
@@ -109,38 +101,6 @@ function NotificationModal({
               </button>
               <button
                 onClick={onClearVersionUpdate}
-                className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                title='关闭'
-              >
-                <X className='w-4 h-4' />
-              </button>
-            </div>
-          )}
-
-          {/* 注册审核提醒 */}
-          {pendingUsersCount > 0 && (
-            <div className='flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors'>
-              <div className='flex items-center gap-2 flex-1'>
-                <Users className='w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0' />
-                <span className='text-sm text-gray-900 dark:text-gray-100'>
-                  待审核用户
-                </span>
-                <span className='text-xs text-orange-500 dark:text-orange-400 font-medium'>
-                  {pendingUsersCount}
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  onClose();
-                  localStorage.removeItem('last-pending-update');
-                  onClearPendingUsers();
-                }}
-                className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'
-              >
-                前往
-              </button>
-              <button
-                onClick={onClearPendingUsers}
                 className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
                 title='关闭'
               >
@@ -263,177 +223,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notifications, setNotifications] = useState({
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
-    pendingUsers: { count: 0 },
   });
-
-  // 鼠标滚轮隐藏逻辑
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    // 清理可能残留的测试元素
-    const existingTestElement = document.getElementById('scroll-test');
-    if (existingTestElement) {
-      existingTestElement.remove();
-    }
-
-    let timeoutId: NodeJS.Timeout;
-    let wheelDirection = 0;
-    let wheelTimeout: NodeJS.Timeout;
-
-    const handleWheel = (e: WheelEvent) => {
-      // 清除之前的timeout
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (wheelTimeout) {
-        clearTimeout(wheelTimeout);
-      }
-
-      // 判断滚轮方向
-      const currentDirection = e.deltaY > 0 ? 1 : -1;
-
-      // 如果方向改变，立即更新状态
-      if (currentDirection !== wheelDirection) {
-        wheelDirection = currentDirection;
-
-        if (currentDirection > 0) {
-          setIsVisible(false);
-        } else {
-          setIsVisible(true);
-        }
-      }
-
-      // 停止滚轮0.5秒后显示导航栏
-      wheelTimeout = setTimeout(() => {
-        setIsVisible(true);
-        wheelDirection = 0;
-      }, 500);
-    };
-
-    // 添加鼠标滚轮监听器
-    window.addEventListener('wheel', handleWheel, { passive: true });
-
-    // 移动端触摸滚动检测
-    let touchStartY = 0;
-    let touchEndY = 0;
-    let touchTimeout: NodeJS.Timeout;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      touchEndY = e.touches[0].clientY;
-      const deltaY = touchEndY - touchStartY;
-
-      // 清除之前的timeout
-      if (touchTimeout) {
-        clearTimeout(touchTimeout);
-      }
-
-      // 手向上拨（deltaY为负数）→ 内容向下滚动 → 隐藏导航栏
-      if (deltaY < -30) {
-        setIsVisible(false);
-      }
-      // 手向下拨（deltaY为正数）→ 内容向上滚动 → 显示导航栏
-      else if (deltaY > 30) {
-        setIsVisible(true);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      // 停止触摸1秒后显示导航栏
-      touchTimeout = setTimeout(() => {
-        setIsVisible(true);
-      }, 1000);
-    };
-
-    // 添加触摸事件监听器
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (wheelTimeout) {
-        clearTimeout(wheelTimeout);
-      }
-      if (touchTimeout) {
-        clearTimeout(touchTimeout);
-      }
-    };
-  }, []);
-
-  // 获取待审核用户数量（仅管理员）
-  useEffect(() => {
-    const fetchPendingUsersCount = async () => {
-      try {
-        // 检查用户是否是管理员
-        const authInfo = getAuthInfoFromBrowserCookie();
-        if (authInfo?.role === 'admin' || authInfo?.role === 'owner') {
-          // 只有管理员才获取待审核用户数量
-          const response = await fetch('/api/admin/config');
-          if (response.ok) {
-            const data = await response.json();
-            const pendingUsers = data.Config?.UserConfig?.PendingUsers || [];
-            setNotifications((prev) => ({
-              ...prev,
-              pendingUsers: { count: pendingUsers.length },
-            }));
-          }
-        }
-      } catch (error) {
-        logger.error('获取待审核用户数量失败:', error);
-      }
-    };
-
-    // 监听 storage 事件（用于跨标签页通知）
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'last-pending-update' && e.newValue !== e.oldValue) {
-        // 有新的待审核用户，更新数量
-        logger.log('[TopNav] 检测到待审核用户更新，重新获取数量');
-        fetchPendingUsersCount();
-      }
-    };
-
-    // 监听自定义事件（用于同一标签页内通知）
-    const handleCustomEvent = () => {
-      fetchPendingUsersCount();
-    };
-
-    // 监听页面可见性变化（用于同一标签页内通知）
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // 页面重新可见时检查是否有更新
-        const lastUpdate = localStorage.getItem('last-pending-update');
-        if (lastUpdate) {
-          fetchPendingUsersCount();
-        }
-      }
-    };
-
-    // 初始加载
-    fetchPendingUsersCount();
-
-    // 添加事件监听
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('pending-users-update', handleCustomEvent);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('pending-users-update', handleCustomEvent);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
 
   // 版本检查
   useEffect(() => {
@@ -484,6 +274,43 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     ); // 12小时
 
     return () => clearInterval(interval);
+  }, []);
+
+  // 滚动隐藏导航栏逻辑 - 只有回到顶部才显示
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleScroll = () => {
+      const scrollTop = document.body.scrollTop;
+
+      // 只在顶部显示，任何滚动都隐藏
+      setIsVisible(scrollTop <= 0);
+    };
+
+    // 初始检查
+    handleScroll();
+
+    let ticking = false;
+    const throttledHandleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // 监听 BODY 元素的滚动
+    document.body.addEventListener('scroll', throttledHandleScroll, {
+      passive: true,
+    });
+
+    return () => {
+      document.body.removeEventListener('scroll', throttledHandleScroll);
+    };
   }, []);
 
   // 页面切换动画效果
@@ -540,9 +367,8 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   // 计算提醒状态
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
-  const hasPendingUsers = notifications.pendingUsers.count > 0;
   const hasAnyNotifications =
-    userSettings.enableNotifications && (hasVersionUpdate || hasPendingUsers);
+    userSettings.enableNotifications && hasVersionUpdate;
 
   // 清除版本更新通知
   const handleClearVersionUpdate = () => {
@@ -556,14 +382,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     }));
   };
 
-  // 清除待审核用户通知
-  const handleClearPendingUsers = () => {
-    setNotifications((prev) => ({
-      ...prev,
-      pendingUsers: { count: 0 },
-    }));
-  };
-
   // 服务端渲染时返回空导航栏骨架，完全避免 hydration 不匹配
   if (typeof window === 'undefined') {
     return (
@@ -574,12 +392,12 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
         aria-hidden='true'
       >
         {/* 透明背景层 */}
-        <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+        <div className='relative mx-auto max-w-[92%] max-sm:max-w-full backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500 bg-white/90 dark:bg-gray-900/90'>
           {/* 页面切换进度条 - 服务端渲染时宽度为0 */}
           <div className='absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out w-0'></div>
         </div>
         {/* 导航内容骨架 - 保持与客户端相同的DOM结构 */}
-        <div className='relative px-4 sm:px-6 lg:px-8'>
+        <div className='relative mx-auto max-w-[92%] px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-12'>
             {/* Logo骨架 */}
             <div className='flex items-center flex-none'>
@@ -615,11 +433,11 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               </Link>
             </div>
             {/* 桌面导航菜单骨架 */}
-            <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
+            <div className='hidden md:flex items-center justify-center flex-1 gap-0.75'>
               {/* 菜单项骨架 - 完全匹配客户端结构 */}
               <Link
                 href='/'
-                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-0.75 rounded-lg overflow-hidden h-10 w-20'
               >
                 {/* 悬停背景效果 */}
                 <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
@@ -633,7 +451,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               </Link>
               <a
                 href='/douban?type=movie'
-                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-0.75 rounded-lg overflow-hidden h-10 w-20'
               >
                 {/* 悬停背景效果 */}
                 <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
@@ -647,7 +465,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               </a>
               <a
                 href='/douban?type=tv'
-                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden h-10 w-20'
+                className='relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-0.75 rounded-lg overflow-hidden h-10 w-20'
               >
                 {/* 悬停背景效果 */}
                 <div className='absolute inset-0 rounded-lg transition-all duration-300 bg-gray-100 dark:bg-gray-800 opacity-0'></div>
@@ -721,7 +539,9 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
         style={{ willChange: 'transform, opacity' }}
       >
         {/* 透明背景层 */}
-        <div className='absolute inset-0 backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500'>
+        <div
+          className={`relative mx-auto max-w-[92%] max-sm:max-w-full backdrop-blur-md shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-500 ${isVisible ? 'bg-white/90 dark:bg-gray-900/90' : ''}`}
+        >
           {/* 页面切换进度条 */}
           <div
             className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out ${
@@ -729,7 +549,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             }`}
           ></div>
         </div>
-        <div className='relative px-4 sm:px-6 lg:px-8'>
+        <div className='relative mx-auto max-w-[92%] px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-12'>
             {/* Logo */}
             <div className='flex items-center flex-none'>
@@ -767,7 +587,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
             </div>
 
             {/* Desktop Navigation */}
-            <div className='hidden md:flex items-center justify-center flex-1 gap-1'>
+            <div className='hidden md:flex items-center justify-center flex-1 gap-0.75'>
               {menuItems.map((item, _index) => {
                 const Icon = item.icon;
 
@@ -775,7 +595,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-1 rounded-lg overflow-hidden ${
+                    className={`relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 group mr-0.75 rounded-lg overflow-hidden ${
                       isActive(item.href)
                         ? 'text-blue-600 dark:text-blue-400'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 hover:shadow-md'
@@ -876,9 +696,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                   <Bell className='w-5 h-5 text-orange-500 dark:text-orange-400 transition-transform duration-300 group-hover:rotate-90' />
                   {/* 统一提醒徽章 */}
                   {(() => {
-                    const totalCount =
-                      notifications.versionUpdate.count +
-                      notifications.pendingUsers.count;
+                    const totalCount = notifications.versionUpdate.count;
 
                     if (totalCount > 0) {
                       return (
@@ -997,10 +815,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           show={showNotificationModal}
           onClose={() => setShowNotificationModal(false)}
           hasVersionUpdate={hasVersionUpdate}
-          hasPendingUsers={hasPendingUsers}
-          pendingUsersCount={notifications.pendingUsers.count}
           onClearVersionUpdate={handleClearVersionUpdate}
-          onClearPendingUsers={handleClearPendingUsers}
         />
       </nav>
     </>

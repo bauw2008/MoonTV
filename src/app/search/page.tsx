@@ -33,7 +33,6 @@ import SearchResultFilter, {
 import SearchSuggestions from '@/components/SearchSuggestions';
 import TMDBFilterPanel, { TMDBFilterState } from '@/components/TMDBFilterPanel';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
-import { VirtualSearchGrid } from '@/components/VirtualSearchGrid';
 
 function SearchPageClient() {
   logger.log('[搜索页面] 组件渲染开始');
@@ -51,10 +50,6 @@ function SearchPageClient() {
     typeof window !== 'undefined'
       ? ((window as any).RUNTIME_CONFIG.TMDBConfig?.enableActorSearch ?? false)
       : false;
-  const isAIEnabled =
-    typeof window !== 'undefined'
-      ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
-      : false;
 
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -62,7 +57,6 @@ function SearchPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentQueryRef = useRef<string>('');
-  const virtualGridRef = useRef<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -76,18 +70,6 @@ function SearchPageClient() {
   const pendingResultsRef = useRef<SearchResult[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const [useFluidSearch, setUseFluidSearch] = useState(settings.fluidSearch);
-  // 虚拟化开关状态
-  const [useVirtualization, setUseVirtualization] = useState(true);
-
-  // 客户端加载时从localStorage读取设置
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('useVirtualization');
-      if (saved !== null) {
-        setUseVirtualization(JSON.parse(saved));
-      }
-    }
-  }, []);
 
   // 网盘搜索相关状态
   const [searchType, setSearchType] = useState<
@@ -225,15 +207,6 @@ function SearchPageClient() {
   const [viewMode, setViewMode] = useState<'agg' | 'all'>(
     settings.defaultAggregateSearch ? 'agg' : 'all',
   );
-
-  // 保存虚拟化设置
-  const toggleVirtualization = () => {
-    const newValue = !useVirtualization;
-    setUseVirtualization(newValue);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('useVirtualization', JSON.stringify(newValue));
-    }
-  };
 
   // 在“无排序”场景用于每个源批次的预排序：完全匹配标题优先，其次年份倒序，未知年份最后
   const sortBatchForNoOrder = (items: SearchResult[]) => {
@@ -1635,24 +1608,8 @@ function SearchPageClient() {
                     {/* 开关控件行 */}
                     <div className='flex items-center justify-end gap-6'></div>
                   </div>
-                  {/* 条件渲染：虚拟化 vs 传统网格 */}
-                  {useVirtualization ? (
-                    <VirtualSearchGrid
-                      ref={virtualGridRef}
-                      allResults={searchResults}
-                      filteredResults={filteredAllResults}
-                      aggregatedResults={aggregatedResults}
-                      filteredAggResults={filteredAggResults}
-                      viewMode={viewMode}
-                      searchQuery={searchQuery}
-                      isLoading={isLoading}
-                      groupRefs={groupRefs}
-                      groupStatsRef={groupStatsRef}
-                      getGroupRef={getGroupRef}
-                      computeGroupStats={computeGroupStats}
-                    />
-                  ) : // 传统网格渲染（保持原有逻辑）
-                  searchResults.length === 0 ? (
+                  {/* 传统网格渲染 */}
+                  {searchResults.length === 0 ? (
                     isLoading ? (
                       <div className='flex justify-center items-center h-40'>
                         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
@@ -1794,31 +1751,13 @@ function SearchPageClient() {
       </div>
 
       {/* 浮动工具组 */}
-      {(() => {
-        const showAI = isAIEnabled && hasPermission('ai-recommend');
-        logger.log('[搜索页面] AI图标显示条件:', {
-          isAIEnabled,
-          hasPermission: hasPermission('ai-recommend'),
-          showAI,
-          aiConfig:
-            typeof window !== 'undefined'
-              ? (window as any).RUNTIME_CONFIG?.AIConfig
-              : null,
-          permissions: permissions,
-        });
-        return (
-          <FloatingTools
-            showAI={showAI} // 根据功能配置和用户权限显示AI
-            useVirtualization={useVirtualization}
-            onToggleVirtualization={toggleVirtualization}
-            showBackToTop={true}
-            virtualGridRef={virtualGridRef}
-            showAggregate={true} // 搜索页面显示聚合搜索
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
-        );
-      })()}
+      <FloatingTools
+        showAI={false}
+        showBackToTop={true}
+        showAggregate={true} // 搜索页面显示聚合搜索
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
     </PageLayout>
   );
 }

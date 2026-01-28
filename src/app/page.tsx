@@ -2,29 +2,79 @@
 
 'use client';
 
-import { Calendar, ChevronRight, Film, Tv, X } from 'lucide-react';
+import { Clapperboard, Compass, Film, Radio, Tv, Tv2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 
-import {
-  BangumiCalendarData,
-  GetBangumiCalendarData,
-} from '@/lib/bangumi.client';
-import { getDoubanCategories } from '@/lib/douban.client';
+import { getAllPlayRecords } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
 import { getPosterCarouselData } from '@/lib/poster-carousel.client';
-import { DoubanItem } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 
 import ContinueWatching from '@/components/ContinueWatching';
 import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import PosterCarousel from '@/components/PosterCarousel';
-import ScrollableRow from '@/components/ScrollableRow';
 import SectionTitle from '@/components/SectionTitle';
 import { useSite } from '@/components/SiteProvider';
-import SkeletonCard from '@/components/SkeletonCard';
-import VideoCard from '@/components/VideoCard';
+
+// 快速入口导航配置
+const quickNavItems = [
+  {
+    title: '热门电影',
+    icon: Film,
+    color: 'bg-red-500/30',
+    hoverColor: 'bg-red-500/50',
+    iconColor: 'text-red-500',
+    titleGradient: 'from-red-600 to-orange-500',
+    href: '/douban?type=movie',
+  },
+  {
+    title: '热门剧集',
+    icon: Tv,
+    color: 'bg-blue-500/30',
+    hoverColor: 'bg-blue-500/50',
+    iconColor: 'text-blue-500',
+    titleGradient: 'from-blue-600 to-cyan-500',
+    href: '/douban?type=tv',
+  },
+  {
+    title: '每日新番',
+    icon: Tv2,
+    color: 'bg-purple-500/30',
+    hoverColor: 'bg-purple-500/50',
+    iconColor: 'text-purple-500',
+    titleGradient: 'from-purple-600 to-pink-500',
+    href: '/douban?type=anime',
+  },
+  {
+    title: '热门综艺',
+    icon: Clapperboard,
+    color: 'bg-pink-500/30',
+    hoverColor: 'bg-pink-500/50',
+    iconColor: 'text-pink-500',
+    titleGradient: 'from-pink-600 to-rose-500',
+    href: '/douban?type=show',
+  },
+  {
+    title: 'TVBox采集',
+    icon: Radio,
+    color: 'bg-green-500/30',
+    hoverColor: 'bg-green-500/50',
+    iconColor: 'text-green-500',
+    titleGradient: 'from-green-600 to-emerald-500',
+    href: '/tvbox',
+  },
+  {
+    title: '随机短剧',
+    icon: Compass,
+    color: 'bg-yellow-500/30',
+    hoverColor: 'bg-yellow-500/50',
+    iconColor: 'text-yellow-500',
+    titleGradient: 'from-yellow-600 to-amber-500',
+    href: '/shortdrama',
+  },
+];
 
 function HomeClient() {
   const { hasPermission } = useFeaturePermission();
@@ -34,14 +84,9 @@ function HomeClient() {
     typeof window !== 'undefined'
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
-  const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
-  const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
-  const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
-  const [bangumiCalendarData, setBangumiCalendarData] = useState<
-    BangumiCalendarData[]
-  >([]);
   const [posterCarouselData, setPosterCarouselData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasPlayRecords, setHasPlayRecords] = useState<boolean | null>(null);
   const [, startTransition] = useTransition();
   const { announcement } = useSite();
 
@@ -96,95 +141,25 @@ function HomeClient() {
       try {
         setLoading(true);
 
-        // 并行获取热门电影、热门剧集、热门综艺和海报轮播数据
-        const [
-          moviesData,
-          tvShowsData,
-          varietyShowsData,
-          bangumiCalendarData,
-          posterData,
-        ] = await Promise.allSettled([
-          getDoubanCategories({
-            kind: 'movie',
-            category: '热门',
-            type: '全部',
-          }),
-          getDoubanCategories({ kind: 'tv', category: 'tv', type: 'tv' }),
-          getDoubanCategories({ kind: 'tv', category: 'show', type: 'show' }),
-          GetBangumiCalendarData(),
-          getPosterCarouselData(),
-        ]);
-
-        // 处理电影数据
-        if (
-          moviesData.status === 'fulfilled' &&
-          moviesData.value?.code === 200
-        ) {
-          startTransition(() => {
-            setHotMovies(moviesData.value.list);
-          });
-        } else {
-          startTransition(() => {
-            setHotMovies([]);
-          });
-        }
-
-        // 处理剧集数据
-        if (
-          tvShowsData.status === 'fulfilled' &&
-          tvShowsData.value?.code === 200
-        ) {
-          startTransition(() => {
-            setHotTvShows(tvShowsData.value.list);
-          });
-        } else {
-          startTransition(() => {
-            setHotTvShows([]);
-          });
-        }
-
-        // 处理综艺数据
-        if (
-          varietyShowsData.status === 'fulfilled' &&
-          varietyShowsData.value?.code === 200
-        ) {
-          startTransition(() => {
-            setHotVarietyShows(varietyShowsData.value.list);
-          });
-        } else {
-          startTransition(() => {
-            setHotVarietyShows([]);
-          });
-        }
-
-        // 处理bangumi数据，防止接口失败导致页面崩溃
-        if (
-          bangumiCalendarData.status === 'fulfilled' &&
-          Array.isArray(bangumiCalendarData.value)
-        ) {
-          startTransition(() => {
-            setBangumiCalendarData(bangumiCalendarData.value);
-          });
-        } else {
-          startTransition(() => {
-            setBangumiCalendarData([]);
-          });
-        }
+        // 获取海报轮播数据
+        const posterData = await getPosterCarouselData();
 
         // 处理海报轮播数据
-        if (
-          posterData.status === 'fulfilled' &&
-          posterData.value &&
-          posterData.value.posters
-        ) {
+        if (posterData && posterData.posters) {
           startTransition(() => {
-            setPosterCarouselData(posterData.value.posters);
+            setPosterCarouselData(posterData.posters);
           });
         } else {
           startTransition(() => {
             setPosterCarouselData([]);
           });
         }
+
+        // 获取播放记录数据，用于判断是否显示快速导航
+        const playRecords = await getAllPlayRecords();
+        startTransition(() => {
+          setHasPlayRecords(Object.keys(playRecords).length > 0);
+        });
       } catch (error) {
         // 静默处理错误
         logger.error('获取推荐数据失败:', error);
@@ -211,202 +186,45 @@ function HomeClient() {
           {/* 继续观看 */}
           <ContinueWatching />
 
-          {/* 热门电影 */}
-          <section className='mb-8'>
-            <div className='mb-4 flex items-center justify-between'>
-              <SectionTitle
-                title='热门电影'
-                icon={Film}
-                iconColor='text-red-500'
-              />
-              <Link
-                href='/douban?type=movie'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-              >
-                查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <SkeletonCard key={index} />
-                  ))
-                : // 显示真实数据
-                  hotMovies.map((movie, index) => (
-                    <div
-                      key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+          {/* 快速入口导航 - 仅在无继续观看数据时显示 */}
+          {hasPlayRecords === false && (
+            <section className='mb-8'>
+              <div className='mb-4'>
+                <SectionTitle
+                  title='快速导航'
+                  icon={Compass}
+                  iconColor='text-purple-500'
+                />
+              </div>
+              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4'>
+                {quickNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className='group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 bg-transparent video-card-hover'
                     >
-                      <VideoCard
-                        from='douban'
-                        title={movie.title}
-                        poster={movie.poster}
-                        douban_id={Number(movie.id)}
-                        rate={movie.rate}
-                        year={movie.year}
-                        type='movie'
-                      />
-                    </div>
-                  ))}
-            </ScrollableRow>
-          </section>
-
-          {/* 热门剧集 */}
-          <section className='mb-8'>
-            <div className='mb-4 flex items-center justify-between'>
-              <SectionTitle
-                title='热门剧集'
-                icon={Tv}
-                iconColor='text-blue-500'
-              />
-              <Link
-                href='/douban?type=tv'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-              >
-                查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <SkeletonCard key={index} />
-                  ))
-                : // 显示真实数据
-                  hotTvShows.map((show, index) => (
-                    <div
-                      key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
-                    >
-                      <VideoCard
-                        from='douban'
-                        title={show.title}
-                        poster={show.poster}
-                        douban_id={Number(show.id)}
-                        rate={show.rate}
-                        year={show.year}
-                        type='tv'
-                      />
-                    </div>
-                  ))}
-            </ScrollableRow>
-          </section>
-
-          {/* 每日新番放送 */}
-          <section className='mb-8'>
-            <div className='mb-4 flex items-center justify-between'>
-              <SectionTitle
-                title='新番放送'
-                icon={Calendar}
-                iconColor='text-purple-500'
-              />
-              <Link
-                href='/douban?type=anime'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-              >
-                查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <SkeletonCard key={index} />
-                  ))
-                : // 展示当前日期的番剧
-                  (() => {
-                    // 获取当前日期对应的星期
-                    const today = new Date();
-                    const weekdays = [
-                      'Sun',
-                      'Mon',
-                      'Tue',
-                      'Wed',
-                      'Thu',
-                      'Fri',
-                      'Sat',
-                    ];
-                    const currentWeekday = weekdays[today.getDay()];
-
-                    // 找到当前星期对应的番剧数据
-                    const todayAnimes =
-                      bangumiCalendarData.find(
-                        (item) => item.weekday.en === currentWeekday,
-                      )?.items || [];
-
-                    return todayAnimes.map((anime, index) => (
                       <div
-                        key={`${anime.id}-${index}`}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
-                      >
-                        <VideoCard
-                          from='douban'
-                          title={anime.name_cn || anime.name}
-                          poster={
-                            anime.images?.large ||
-                            anime.images?.common ||
-                            anime.images?.medium ||
-                            anime.images?.small ||
-                            anime.images?.grid ||
-                            '/placeholder-poster.jpg'
-                          }
-                          douban_id={anime.id}
-                          rate={anime.rating?.score?.toFixed(1) || ''}
-                          year={anime.air_date?.split('-')?.[0] || ''}
-                          type='anime'
-                          isBangumi={true}
-                        />
-                      </div>
-                    ));
-                  })()}
-            </ScrollableRow>
-          </section>
-
-          {/* 热门综艺 */}
-          <section className='mb-8'>
-            <div className='mb-4 flex items-center justify-between'>
-              <SectionTitle
-                title='热门综艺'
-                icon={Tv}
-                iconColor='text-pink-500'
-              />
-              <Link
-                href='/douban?type=show'
-                className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-              >
-                查看更多
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
-            <ScrollableRow>
-              {loading
-                ? // 加载状态显示灰色占位数据
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <SkeletonCard key={index} />
-                  ))
-                : // 显示真实数据
-                  hotVarietyShows.map((show, index) => (
-                    <div
-                      key={index}
-                      className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
-                    >
-                      <VideoCard
-                        from='douban'
-                        title={show.title}
-                        poster={show.poster}
-                        douban_id={Number(show.id)}
-                        rate={show.rate}
-                        year={show.year}
-                        type='variety'
+                        className={`absolute inset-0 ${item.color} transition-all duration-300 group-hover:${item.hoverColor}`}
                       />
-                    </div>
-                  ))}
-            </ScrollableRow>
-          </section>
+                      <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1500 ease-in-out' />
+                      <div className='relative flex flex-col items-center justify-center'>
+                        <Icon
+                          className={`mb-3 h-10 w-10 transition-transform duration-300 group-hover:scale-110 ${item.iconColor}`}
+                        />
+                        <span
+                          className={`text-sm font-semibold tracking-wide bg-gradient-to-r ${item.titleGradient} bg-clip-text text-transparent`}
+                        >
+                          {item.title}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       </div>
       {announcement && showAnnouncement && (
@@ -481,7 +299,6 @@ function HomeClient() {
       <FloatingTools
         showAI={isAIEnabled && hasPermission('ai-recommend')} // 根据功能配置和用户权限显示AI
         showBackToTop={true}
-        virtualGridRef={undefined}
       />
     </PageLayout>
   );
