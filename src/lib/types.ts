@@ -21,28 +21,6 @@ export interface PlayRecord {
   type?: string; // 内容类型，从URL参数获取
 }
 
-// 评论数据结构
-export interface AppComment {
-  id: string;
-  username: string;
-  role: string;
-  content: string;
-  timestamp: number;
-  replies?: CommentReply[];
-  category?: string;
-}
-
-export interface CommentReply {
-  id: string;
-  username: string;
-  role: string;
-  content: string;
-  timestamp: number;
-}
-
-// 导出 Comment 作为 AppComment 的别名（向后兼容）
-export type Comment = AppComment;
-
 // 站长配置数据结构
 export interface OwnerConfig {
   SiteMaintenance?: boolean;
@@ -163,14 +141,6 @@ export interface IStorage {
   // 在线状态管理相关
   updateLastActivity(userName: string): Promise<void>;
   getUserLastActivity(userName: string): Promise<number>;
-
-  // 评论相关
-  getComments(): Promise<Comment[]>;
-  addComment(comment: Comment): Promise<void>;
-  addReply(commentId: string, reply: CommentReply): Promise<void>;
-  deleteComment(commentId: string): Promise<void>;
-  deleteReply(commentId: string, replyId: string): Promise<void>;
-  clearComments(): Promise<void>;
 
   // 站长配置相关
   getOwnerConfig(): Promise<OwnerConfig>;

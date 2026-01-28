@@ -7,7 +7,6 @@ import {
   ChevronDown,
   KeyRound,
   LogOut,
-  MessageSquare,
   Palette,
   Settings,
   Shield,
@@ -220,11 +219,6 @@ export const UserMenu: React.FC = () => {
   const handlePlayStats = () => {
     setIsOpen(false);
     router.push('/play-stats');
-  };
-
-  const handleMessageBoard = () => {
-    router.push('/message');
-    setIsOpen(false);
   };
 
   const handleChangePassword = () => {
@@ -740,15 +734,6 @@ export const UserMenu: React.FC = () => {
             </button>
           )}
 
-          {/* 留言板按钮 */}
-          <button
-            onClick={handleMessageBoard}
-            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/20 transition-colors text-sm rounded-lg mx-1'
-          >
-            <MessageSquare className='w-4 h-4 text-gray-500 dark:text-gray-400' />
-            <span className='font-medium'>用户留言</span>
-          </button>
-
           {/* 修改密码按钮 */}
           {showChangePassword && (
             <button
@@ -1147,7 +1132,7 @@ export const UserMenu: React.FC = () => {
                   提醒消息免打扰
                 </h4>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                  关闭后不再显示版本更新、新消息等提醒
+                  关闭后不再显示版本更新、待审核用户等提醒
                 </p>
               </div>
               <label className='flex items-center cursor-pointer'>

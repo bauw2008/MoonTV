@@ -5,8 +5,6 @@ import { Redis } from '@upstash/redis';
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
 import {
-  AppComment,
-  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -1084,114 +1082,6 @@ export class UpstashRedisStorage implements IStorage {
     } catch (error) {
       logger.error(`获取用户 ${userName} 活动时间失败:`, error);
       return 0;
-    }
-  }
-
-  // 评论相关方法
-  async getComments(): Promise<any[]> {
-    try {
-      const key = 'comments';
-      const data = await withRetry(() => this.client.get(key));
-      if (!data) return [];
-
-      // 智能处理返回值
-      if (typeof data === 'string') {
-        try {
-          return JSON.parse(data);
-        } catch {
-          return [];
-        }
-      }
-      return data as Comment[];
-    } catch (error) {
-      logger.error('获取评论失败:', error);
-      return [];
-    }
-  }
-
-  async addComment(comment: AppComment): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      comments.push(comment);
-      const key = 'comments';
-      await withRetry(() => this.client.set(key, JSON.stringify(comments)));
-    } catch (error) {
-      logger.error('添加评论失败:', error);
-      throw error;
-    }
-  }
-
-  async addReply(commentId: string, reply: CommentReply): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1) {
-        if (!comments[commentIndex].replies) {
-          comments[commentIndex].replies = [];
-        }
-        comments[commentIndex].replies.push(reply);
-        const key = 'comments';
-        await withRetry(() => this.client.set(key, JSON.stringify(comments)));
-      }
-    } catch (error) {
-      logger.error('添加回复失败:', error);
-      throw error;
-    }
-  }
-
-  async clearComments(): Promise<void> {
-    try {
-      const key = 'comments';
-      await withRetry(() => this.client.set(key, JSON.stringify([])));
-    } catch (error) {
-      logger.error('清空评论失败:', error);
-      throw error;
-    }
-  }
-
-  async deleteComment(commentId: string): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1) {
-        comments.splice(commentIndex, 1);
-        const key = 'comments';
-        await withRetry(() => this.client.set(key, JSON.stringify(comments)));
-      }
-    } catch (error) {
-      logger.error('删除评论失败:', error);
-      throw error;
-    }
-  }
-
-  async deleteReply(commentId: string, replyId: string): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1 && comments[commentIndex].replies) {
-        const replies = comments[commentIndex].replies;
-        const replyIndex = replies.findIndex(
-          (r: CommentReply) => r.id === replyId,
-        );
-
-        if (replyIndex !== -1) {
-          replies.splice(replyIndex, 1);
-          const key = 'comments';
-          await withRetry(() => this.client.set(key, JSON.stringify(comments)));
-        }
-      }
-    } catch (error) {
-      logger.error('删除回复失败:', error);
-      throw error;
     }
   }
 

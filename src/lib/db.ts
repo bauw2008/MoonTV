@@ -7,8 +7,6 @@ import { KvrocksStorage } from './kvrocks.db';
 import { RedisStorage } from './redis.db';
 import type { OwnerConfig } from './types';
 import {
-  AppComment,
-  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -561,85 +559,6 @@ export class DbManager {
   isSearchHistorySupported(): boolean {
     const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
     return storageType !== 'localstorage';
-  }
-
-  // 留言相关方法
-  async getComments(): Promise<any[]> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        return await storage.getComments();
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  }
-
-  async addComment(comment: AppComment): Promise<boolean> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        await storage.addComment(comment);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-
-  async addReply(commentId: string, reply: CommentReply): Promise<boolean> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        await storage.addReply(commentId, reply);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      logger.error('添加回复失败:', error);
-      return false;
-    }
-  }
-
-  async clearComments(): Promise<boolean> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        await storage.clearComments();
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-
-  async deleteComment(commentId: string): Promise<boolean> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        await storage.deleteComment(commentId);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-
-  async deleteReply(commentId: string, replyId: string): Promise<boolean> {
-    try {
-      const storage = getStorage();
-      if (storage) {
-        await storage.deleteReply(commentId, replyId);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
   }
 
   // 在线状态管理 - 更新用户最后活动时间

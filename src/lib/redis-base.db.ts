@@ -5,8 +5,6 @@ import { createClient, RedisClientType } from 'redis';
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
 import {
-  AppComment,
-  CommentReply,
   ContentStat,
   EpisodeSkipConfig,
   Favorite,
@@ -1167,66 +1165,6 @@ export abstract class BaseRedisStorage implements IStorage {
     }
   }
 
-  // 评论相关方法
-  async getComments(): Promise<any[]> {
-    try {
-      const key = 'comments';
-      const data = await this.withRetry(() => this.client.get(key));
-      const strData = ensureRedisString(data);
-      return strData ? JSON.parse(strData) : [];
-    } catch (error) {
-      logger.error('获取评论失败:', error);
-      return [];
-    }
-  }
-
-  async addComment(comment: AppComment): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      comments.push(comment);
-      const key = 'comments';
-      await this.withRetry(() =>
-        this.client.set(key, JSON.stringify(comments)),
-      );
-    } catch (error) {
-      logger.error('添加评论失败:', error);
-      throw error;
-    }
-  }
-
-  async addReply(commentId: string, reply: CommentReply): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1) {
-        if (!comments[commentIndex].replies) {
-          comments[commentIndex].replies = [];
-        }
-        comments[commentIndex].replies.push(reply);
-        const key = 'comments';
-        await this.withRetry(() =>
-          this.client.set(key, JSON.stringify(comments)),
-        );
-      }
-    } catch (error) {
-      logger.error('添加回复失败:', error);
-      throw error;
-    }
-  }
-
-  async clearComments(): Promise<void> {
-    try {
-      const key = 'comments';
-      await this.withRetry(() => this.client.set(key, JSON.stringify([])));
-    } catch (error) {
-      logger.error('清空评论失败:', error);
-      throw error;
-    }
-  }
-
   // ---------- 剧集跳过配置 ----------
   private escKey(userName: string, source: string, id: string) {
     return `u:${userName}:esc:${source}:${id}`;
@@ -1293,53 +1231,6 @@ export abstract class BaseRedisStorage implements IStorage {
     }
 
     return configs;
-  }
-
-  async deleteComment(commentId: string): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1) {
-        comments.splice(commentIndex, 1);
-        const key = 'comments';
-        await this.withRetry(() =>
-          this.client.set(key, JSON.stringify(comments)),
-        );
-      }
-    } catch (error) {
-      logger.error('删除评论失败:', error);
-      throw error;
-    }
-  }
-
-  async deleteReply(commentId: string, replyId: string): Promise<void> {
-    try {
-      const comments = await this.getComments();
-      const commentIndex = comments.findIndex(
-        (c: AppComment) => c.id === commentId,
-      );
-
-      if (commentIndex !== -1 && comments[commentIndex].replies) {
-        const replies = comments[commentIndex].replies;
-        const replyIndex = replies.findIndex(
-          (r: CommentReply) => r.id === replyId,
-        );
-
-        if (replyIndex !== -1) {
-          replies.splice(replyIndex, 1);
-          const key = 'comments';
-          await this.withRetry(() =>
-            this.client.set(key, JSON.stringify(comments)),
-          );
-        }
-      }
-    } catch (error) {
-      logger.error('删除回复失败:', error);
-      throw error;
-    }
   }
 
   // 站长配置相关方法

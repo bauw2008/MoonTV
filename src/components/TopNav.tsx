@@ -8,7 +8,6 @@ import {
   Clover,
   Film,
   Home,
-  MessageSquare,
   PlayCircle,
   Radio,
   Search,
@@ -40,15 +39,121 @@ interface MenuItem {
   badge?: string | number;
 }
 
-interface Comment {
-  timestamp: number;
-  username: string;
-  replies?: Comment[];
-}
-
 // 组件定义
 
 import { useSite } from './SiteProvider';
+
+// NotificationModal 组件（提取到组件外部避免在渲染期间创建）
+interface NotificationModalProps {
+  show: boolean;
+  onClose: () => void;
+  hasVersionUpdate: boolean;
+  hasPendingUsers: boolean;
+  pendingUsersCount: number;
+  onClearVersionUpdate: () => void;
+  onClearPendingUsers: () => void;
+}
+
+function NotificationModal({
+  show,
+  onClose,
+  hasVersionUpdate,
+  hasPendingUsers,
+  pendingUsersCount,
+  onClearVersionUpdate,
+  onClearPendingUsers,
+}: NotificationModalProps) {
+  if (!show || (!hasVersionUpdate && !hasPendingUsers)) {
+    return null;
+  }
+
+  return createPortal(
+    <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4'>
+      <div className='bg-white dark:bg-gray-900 rounded-xl shadow-lg max-w-lg w-full p-5 relative max-h-[80vh] overflow-y-auto border border-gray-200 dark:border-gray-700'>
+        {/* 关闭按钮 */}
+        <button
+          onClick={onClose}
+          className='absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+        >
+          <X className='w-5 h-5' />
+        </button>
+        {/* 标题 */}
+        <div className='flex items-center gap-3 mb-4'>
+          <div className='w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center'>
+            <Bell className='w-5 h-5 text-white' />
+          </div>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+            提醒事项
+          </h3>
+        </div>
+        {/* 内容区域 */}
+        <div className='space-y-2'>
+          {/* 版本更新提醒 */}
+          {hasVersionUpdate && (
+            <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'>
+              <div className='flex items-center gap-2 flex-1'>
+                <AlertCircle className='w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0' />
+                <span className='text-sm text-gray-900 dark:text-gray-100'>
+                  版本更新
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  localStorage.removeItem('last-version-check');
+                  onClearVersionUpdate();
+                }}
+                className='text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-shrink-0'
+              >
+                查看
+              </button>
+              <button
+                onClick={onClearVersionUpdate}
+                className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                title='关闭'
+              >
+                <X className='w-4 h-4' />
+              </button>
+            </div>
+          )}
+
+          {/* 注册审核提醒 */}
+          {pendingUsersCount > 0 && (
+            <div className='flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors'>
+              <div className='flex items-center gap-2 flex-1'>
+                <Users className='w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0' />
+                <span className='text-sm text-gray-900 dark:text-gray-100'>
+                  待审核用户
+                </span>
+                <span className='text-xs text-orange-500 dark:text-orange-400 font-medium'>
+                  {pendingUsersCount}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  localStorage.removeItem('last-pending-update');
+                  onClearPendingUsers();
+                }}
+                className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'
+              >
+                前往
+              </button>
+              <button
+                onClick={onClearPendingUsers}
+                className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
+                title='关闭'
+              >
+                <X className='w-4 h-4' />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 
@@ -102,9 +207,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   const menuSettings = getMenuSettings();
   const customCategories = getCustomCategories();
-
-  // 获取认证信息
-  const auth = getAuthInfoFromBrowserCookie();
 
   // 构建菜单项
   const menuItems = (() => {
@@ -162,7 +264,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   const [notifications, setNotifications] = useState({
     versionUpdate: { hasUpdate: false, version: '', count: 0 },
     pendingUsers: { count: 0 },
-    messages: { count: 0, hasUnread: false },
   });
 
   // 鼠标滚轮隐藏逻辑
@@ -334,90 +435,6 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
     };
   }, []);
 
-  // 获取未读消息数量
-  useEffect(() => {
-    // 如果用户正在留言页面，不检查未读消息
-    if (
-      typeof window !== 'undefined' &&
-      window.location.pathname === '/message'
-    ) {
-      return;
-    }
-
-    const checkUnreadMessages = async () => {
-      // 再次检查页面，避免在页面切换后仍然调用
-      if (
-        typeof window !== 'undefined' &&
-        window.location.pathname === '/message'
-      ) {
-        return;
-      }
-
-      try {
-        // 获取最新的留言数据
-        const response = await fetch('/api/message');
-        if (response.ok) {
-          const data = await response.json();
-          const comments = data.comments || [];
-
-          // 计算未读回复数量和新留言数量
-          let unreadCount = 0;
-          const lastViewedMessages = parseInt(
-            localStorage.getItem('lastViewedMessages') || '0',
-          );
-
-          comments.forEach((comment: Comment) => {
-            // 如果是管理员或站长，检查所有新留言和非自己发送的回复
-            if (auth?.role === 'admin' || auth?.role === 'owner') {
-              // 检查新留言（评论本身），但排除自己发送的留言
-              if (
-                comment.timestamp > lastViewedMessages &&
-                comment.username !== auth?.username
-              ) {
-                unreadCount++;
-              }
-
-              // 检查非自己发送的回复
-              comment.replies.forEach((reply: Comment) => {
-                // 如果回复时间在最后查看之后且不是自己发送的，则为未读
-                if (
-                  reply.timestamp > lastViewedMessages &&
-                  reply.username !== auth?.username
-                ) {
-                  unreadCount++;
-                }
-              });
-            } else {
-              // 如果是普通用户，只检查自己的留言回复
-              if (comment.username === auth?.username) {
-                comment.replies.forEach((reply: Comment) => {
-                  // 如果回复时间在最后查看之后，则为未读
-                  if (reply.timestamp > lastViewedMessages) {
-                    unreadCount++;
-                  }
-                });
-              }
-            }
-          });
-
-          setNotifications((prev) => ({
-            ...prev,
-            messages: { count: unreadCount, hasUnread: unreadCount > 0 },
-          }));
-        }
-      } catch (error) {
-        logger.error('获取留言信息失败:', error);
-      }
-    };
-
-    if (auth?.username) {
-      checkUnreadMessages();
-      // 每6小时检查一次未读消息，留言不需要实时查看
-      const interval = setInterval(checkUnreadMessages, 21600000);
-      return () => clearInterval(interval);
-    }
-  }, [auth?.username, auth?.role]); // 依赖 username 和 role，避免 auth 对象引用变化
-
   // 版本检查
   useEffect(() => {
     const checkUpdate = async () => {
@@ -475,15 +492,21 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
 
   useEffect(() => {
     if (previousPathname.current !== pathname) {
-      setIsPageTransitioning(true);
+      // 使用 setTimeout 避免在 effect 中同步调用 setState
+      const startTimer = setTimeout(() => {
+        setIsPageTransitioning(true);
+      }, 0);
 
       // 页面切换动画时长
-      const timer = setTimeout(() => {
+      const endTimer = setTimeout(() => {
         setIsPageTransitioning(false);
         previousPathname.current = pathname;
       }, 300);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(endTimer);
+      };
     }
   }, [pathname]);
 
@@ -518,184 +541,27 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
   // 计算提醒状态
   const hasVersionUpdate = notifications.versionUpdate.hasUpdate;
   const hasPendingUsers = notifications.pendingUsers.count > 0;
-  const hasUnreadMessages = notifications.messages.hasUnread;
   const hasAnyNotifications =
-    userSettings.enableNotifications &&
-    (hasVersionUpdate || hasPendingUsers || hasUnreadMessages);
+    userSettings.enableNotifications && (hasVersionUpdate || hasPendingUsers);
 
-  // 提醒弹窗组件
-  const NotificationModal = () => {
-    if (!showNotificationModal) return null;
+  // 清除版本更新通知
+  const handleClearVersionUpdate = () => {
+    setNotifications((prev) => ({
+      ...prev,
+      versionUpdate: {
+        hasUpdate: false,
+        version: '',
+        count: 0,
+      },
+    }));
+  };
 
-    const pendingUsersCount = notifications.pendingUsers.count;
-
-    // 只有真正有提醒事项时才显示弹窗
-    if (!hasAnyNotifications) {
-      return null;
-    }
-
-    return createPortal(
-      <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4'>
-        <div className='bg-white dark:bg-gray-900 rounded-xl shadow-lg max-w-lg w-full p-5 relative max-h-[80vh] overflow-y-auto border border-gray-200 dark:border-gray-700'>
-          {/* 关闭按钮 */}
-          <button
-            onClick={() => setShowNotificationModal(false)}
-            className='absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
-          >
-            <X className='w-5 h-5' />
-          </button>
-          {/* 标题 */}
-          <div className='flex items-center gap-3 mb-4'>
-            <div className='w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center'>
-              <Bell className='w-5 h-5 text-white' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-              提醒事项
-            </h3>
-          </div>
-          {/* 内容区域 */}
-          <div className='space-y-2'>
-            {/* 版本更新提醒 */}
-            {hasVersionUpdate && (
-              <div className='flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <AlertCircle className='w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    版本更新
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNotificationModal(false);
-                    // 清除版本更新通知标记
-                    localStorage.removeItem('last-version-check');
-                    setNotifications((prev) => ({
-                      ...prev,
-                      versionUpdate: {
-                        hasUpdate: false,
-                        version: '',
-                        count: 0,
-                      },
-                    }));
-                  }}
-                  className='text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-shrink-0'
-                >
-                  查看
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      versionUpdate: {
-                        hasUpdate: false,
-                        version: '',
-                        count: 0,
-                      },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
-                </button>
-              </div>
-            )}
-
-            {/* 注册审核提醒 */}
-            {pendingUsersCount > 0 && (
-              <div className='flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <Users className='w-4 h-4 text-orange-500 dark:text-orange-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    待审核用户
-                  </span>
-                  <span className='text-xs text-orange-500 dark:text-orange-400 font-medium'>
-                    {pendingUsersCount}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNotificationModal(false);
-                    // 清除待审核用户通知标记
-                    localStorage.removeItem('last-pending-update');
-                    // 同时清除通知状态
-                    setNotifications((prev) => ({
-                      ...prev,
-                      pendingUsers: { count: 0 },
-                    }));
-                    router.push('/admin');
-                  }}
-                  className='text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 flex-shrink-0'
-                >
-                  前往
-                </button>
-                <button
-                  onClick={() => {
-                    setNotifications((prev) => ({
-                      ...prev,
-                      pendingUsers: { count: 0 },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
-                </button>
-              </div>
-            )}
-
-            {/* 消息提醒 */}
-            {notifications.messages.hasUnread && (
-              <div className='flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors'>
-                <div className='flex items-center gap-2 flex-1'>
-                  <MessageSquare className='w-4 h-4 text-purple-500 dark:text-purple-400 flex-shrink-0' />
-                  <span className='text-sm text-gray-900 dark:text-gray-100'>
-                    新消息
-                  </span>
-                  <span className='text-xs text-purple-500 dark:text-purple-400 font-medium'>
-                    {notifications.messages.count}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNotificationModal(false);
-                    localStorage.setItem(
-                      'lastViewedMessages',
-                      Date.now().toString(),
-                    );
-                    setNotifications((prev) => ({
-                      ...prev,
-                      messages: { count: 0, hasUnread: false },
-                    }));
-                    router.push('/message');
-                  }}
-                  className='text-sm text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 flex-shrink-0'
-                >
-                  查看
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(
-                      'lastViewedMessages',
-                      Date.now().toString(),
-                    );
-                    setNotifications((prev) => ({
-                      ...prev,
-                      messages: { count: 0, hasUnread: false },
-                    }));
-                  }}
-                  className='text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2'
-                  title='关闭'
-                >
-                  <X className='w-4 h-4' />
-                </button>
-              </div>
-            )}
-          </div>{' '}
-        </div>
-      </div>,
-      document.body,
-    );
+  // 清除待审核用户通知
+  const handleClearPendingUsers = () => {
+    setNotifications((prev) => ({
+      ...prev,
+      pendingUsers: { count: 0 },
+    }));
   };
 
   // 服务端渲染时返回空导航栏骨架，完全避免 hydration 不匹配
@@ -1012,8 +878,7 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
                   {(() => {
                     const totalCount =
                       notifications.versionUpdate.count +
-                      notifications.pendingUsers.count +
-                      notifications.messages.count;
+                      notifications.pendingUsers.count;
 
                     if (totalCount > 0) {
                       return (
@@ -1128,7 +993,15 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
           </div>
         </div>
 
-        <NotificationModal />
+        <NotificationModal
+          show={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          hasVersionUpdate={hasVersionUpdate}
+          hasPendingUsers={hasPendingUsers}
+          pendingUsersCount={notifications.pendingUsers.count}
+          onClearVersionUpdate={handleClearVersionUpdate}
+          onClearPendingUsers={handleClearPendingUsers}
+        />
       </nav>
     </>
   );
