@@ -4,7 +4,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
@@ -93,6 +93,7 @@ function DoubanPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [, startTransition] = useTransition();
 
   // 标记组件是否已挂载，避免服务端和客户端渲染不一致
   const [isMounted, setIsMounted] = useState(false);
@@ -764,7 +765,9 @@ function DoubanPageClient() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          setCurrentPage((prev) => prev + 1);
+          startTransition(() => {
+            setCurrentPage((prev) => prev + 1);
+          });
         }
       },
       { threshold: 0.1 },
@@ -966,20 +969,23 @@ function DoubanPageClient() {
         </div>
 
         {/* 内容展示区域 */}
-        <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
+        <div className='max-w-[95%] mx-auto mt-8 overflow-visible will-change-scroll'>
           {/* 传统网格渲染 */}
           {isMounted && (
             <>
               {/* 传统网格渲染 */}
-              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
                 {loading || !selectorsReady
                   ? // 显示骨架屏
                     skeletonData.map((index) => (
                       <DoubanCardSkeleton key={index} />
                     ))
                   : // 显示实际数据
-                    doubanData.map((item, index) => (
-                      <div key={`${item.title}-${index}`} className='w-full'>
+                    doubanData.map((item) => (
+                      <div
+                        key={item.id || item.title}
+                        className='w-full content-visibility-auto contain-intrinsic-size-[120px_252px] sm:contain-intrinsic-size-[160px_350px]'
+                      >
                         <VideoCard
                           from='douban'
                           title={item.title}

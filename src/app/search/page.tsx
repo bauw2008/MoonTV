@@ -18,7 +18,6 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -35,11 +34,8 @@ import TMDBFilterPanel, { TMDBFilterState } from '@/components/TMDBFilterPanel';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 
 function SearchPageClient() {
-  logger.log('[搜索页面] 组件渲染开始');
-
   // 检查用户权限
-  const { hasPermission, permissions } = useFeaturePermission();
-  logger.log('[搜索页面] 当前权限状态:', permissions);
+  const { hasPermission } = useFeaturePermission();
 
   // 功能启用状态（从全局配置读取）
   const isNetDiskEnabled =
@@ -404,13 +400,6 @@ function SearchPageClient() {
         .map((type) => ({ label: typeLabels[type] || type, value: type })),
     ];
 
-    // 调试类型选项
-    logger.log('类型选项调试:', {
-      typesSet内容: Array.from(typesSet.values()),
-      typeOptions数量: typeOptions.length,
-      typeOptions内容: typeOptions,
-    });
-
     // 第一排：类型筛选（电影、动漫、剧集等）
     const categoriesAll: SearchFilterCategory[] = [
       { key: 'type', label: '类型', options: typeOptions },
@@ -690,19 +679,17 @@ function SearchPageClient() {
               break;
             }
             case 'error':
-              logger.error('搜索错误:', payload.error);
               setIsLoading(false);
               es.close();
               eventSourceRef.current = null;
               break;
           }
-        } catch (e) {
-          logger.error('解析搜索结果失败:', e);
+        } catch {
+          // 解析错误，忽略
         }
       };
 
-      es.onerror = (err) => {
-        logger.error('SSE 连接错误:', err);
+      es.onerror = () => {
         setIsLoading(false);
         es.close();
         eventSourceRef.current = null;
@@ -774,8 +761,7 @@ function SearchPageClient() {
         // 处理错误情况（包括功能关闭、配置错误等）
         setNetdiskError(data.error || '网盘搜索失败');
       }
-    } catch (error: any) {
-      logger.error('网盘搜索请求失败:', error);
+    } catch {
       setNetdiskError('网盘搜索请求失败，请稍后重试');
     } finally {
       setNetdiskLoading(false);
@@ -861,8 +847,7 @@ function SearchPageClient() {
       } else {
         setTmdbActorError(data.error || data.message || '搜索演员失败');
       }
-    } catch (error: any) {
-      logger.error('TMDB演员搜索请求失败:', error);
+    } catch {
       setTmdbActorError('搜索演员失败，请稍后重试');
     } finally {
       setTmdbActorLoading(false);
@@ -1095,6 +1080,12 @@ function SearchPageClient() {
     // 不自动执行搜索，让用户自己点击搜索按钮
   };
 
+  // 计算实际显示的搜索图标数量
+  const visibleSearchIconsCount =
+    1 +
+    (isNetDiskEnabled && hasPermission('netdisk-search') ? 1 : 0) +
+    (isTMDBActorSearchEnabled && hasPermission('tmdb-actor-search') ? 1 : 0);
+
   return (
     <PageLayout activePath='/search'>
       <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
@@ -1102,10 +1093,14 @@ function SearchPageClient() {
         <div className='mb-8'>
           <form
             onSubmit={handleSearch}
-            className='max-w-2xl mx-auto flex items-center gap-2'
+            className={`max-w-2xl mx-auto flex ${
+              visibleSearchIconsCount > 1
+                ? 'flex-col sm:flex-row gap-3 sm:gap-2'
+                : 'flex-row'
+            } items-center gap-2`}
           >
-            {/* 搜索类型选择器 - 放在搜索框左侧 */}
-            <div className='flex items-center gap-2'>
+            {/* 搜索类型选择器 */}
+            <div className='flex items-center gap-2 order-1 sm:order-1'>
               <button
                 type='button'
                 onClick={() => {
@@ -1141,21 +1136,7 @@ function SearchPageClient() {
               </button>
 
               {/* 网盘资源按钮 - 只在启用时显示 */}
-              {(() => {
-                const showNetDisk =
-                  isNetDiskEnabled && hasPermission('netdisk-search');
-                logger.log('[搜索页面] 网盘图标显示条件:', {
-                  isNetDiskEnabled,
-                  hasPermission: hasPermission('netdisk-search'),
-                  showNetDisk,
-                  netdiskConfig:
-                    typeof window !== 'undefined'
-                      ? (window as any).RUNTIME_CONFIG?.NetDiskConfig
-                      : null,
-                  permissions: permissions,
-                });
-                return showNetDisk;
-              })() && (
+              {isNetDiskEnabled && hasPermission('netdisk-search') && (
                 <button
                   type='button'
                   onClick={() => {
@@ -1191,59 +1172,45 @@ function SearchPageClient() {
               )}
 
               {/* TMDB演员按钮 - 只在启用时显示 */}
-              {(() => {
-                const showTMDBActor =
-                  isTMDBActorSearchEnabled &&
-                  hasPermission('tmdb-actor-search');
-                logger.log('[搜索页面] TMDB演员搜索图标显示条件:', {
-                  isTMDBActorSearchEnabled,
-                  hasPermission: hasPermission('tmdb-actor-search'),
-                  showTMDBActor,
-                  tmdbConfig:
-                    typeof window !== 'undefined'
-                      ? (window as any).RUNTIME_CONFIG?.TMDBConfig
-                      : null,
-                  permissions: permissions,
-                });
-                return showTMDBActor;
-              })() && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSearchType('tmdb-actor');
-                    // 清除之前的搜索状态
-                    setTmdbActorError(null);
-                    setTmdbActorResults(null);
-                    setNetdiskResults(null);
-                    setNetdiskError(null);
-                    setNetdiskTotal(0);
-                  }}
-                  className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
-                    searchType === 'tmdb-actor'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
-                      : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
-                  }`}
-                  title='演员搜索'
-                >
-                  <svg
-                    className='w-5 h-5'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
+              {isTMDBActorSearchEnabled &&
+                hasPermission('tmdb-actor-search') && (
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setSearchType('tmdb-actor');
+                      // 清除之前的搜索状态
+                      setTmdbActorError(null);
+                      setTmdbActorResults(null);
+                      setNetdiskResults(null);
+                      setNetdiskError(null);
+                      setNetdiskTotal(0);
+                    }}
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ${
+                      searchType === 'tmdb-actor'
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
+                        : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50'
+                    }`}
+                    title='演员搜索'
                   >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                    />
-                  </svg>
-                </button>
-              )}
+                    <svg
+                      className='w-5 h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                      />
+                    </svg>
+                  </button>
+                )}
             </div>
 
             {/* 搜索输入框 */}
-            <div className='relative flex-1 group'>
+            <div className='relative flex-1 w-full order-2 sm:order-2 group'>
               <Search className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors' />
               <input
                 id='searchInput'
@@ -1467,21 +1434,25 @@ function SearchPageClient() {
                         contentType={tmdbActorType}
                         filters={tmdbFilterState}
                         onFiltersChange={(newFilterState) => {
-                          setTmdbFilterState(newFilterState);
-                          const currentQuery =
-                            searchQuery.trim() || searchParams?.get('q');
-                          if (currentQuery) {
-                            handleTmdbActorSearch(
-                              currentQuery,
-                              tmdbActorType,
-                              newFilterState,
-                            );
-                          }
+                          startTransition(() => {
+                            setTmdbFilterState(newFilterState);
+                            const currentQuery =
+                              searchQuery.trim() || searchParams?.get('q');
+                            if (currentQuery) {
+                              handleTmdbActorSearch(
+                                currentQuery,
+                                tmdbActorType,
+                                newFilterState,
+                              );
+                            }
+                          });
                         }}
                         isVisible={tmdbFilterVisible}
-                        onToggleVisible={() =>
-                          setTmdbFilterVisible(!tmdbFilterVisible)
-                        }
+                        onToggleVisible={() => {
+                          startTransition(() => {
+                            setTmdbFilterVisible(!tmdbFilterVisible);
+                          });
+                        }}
                         resultCount={tmdbActorResults?.length || 0}
                       />
                     </div>
@@ -1508,9 +1479,12 @@ function SearchPageClient() {
                       </button>
                     </div>
                   ) : tmdbActorResults && tmdbActorResults.length > 0 ? (
-                    <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                    <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 will-change-scroll'>
                       {tmdbActorResults.map((item, index) => (
-                        <div key={item.id || index} className='w-full'>
+                        <div
+                          key={item.id || index}
+                          className='w-full content-visibility-auto contain-intrinsic-size-[11rem_252px] sm:contain-intrinsic-size-[160px_350px]'
+                        >
                           <VideoCard
                             id={item.id}
                             title={item.title}
@@ -1567,11 +1541,13 @@ function SearchPageClient() {
                                   ...currentFilter,
                                   type: option.value,
                                 };
-                                if (viewMode === 'agg') {
-                                  setFilterAgg(newFilter as any);
-                                } else {
-                                  setFilterAll(newFilter as any);
-                                }
+                                startTransition(() => {
+                                  if (viewMode === 'agg') {
+                                    setFilterAgg(newFilter as any);
+                                  } else {
+                                    setFilterAll(newFilter as any);
+                                  }
+                                });
                               }}
                               className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
                                 (viewMode === 'agg'
@@ -1594,13 +1570,21 @@ function SearchPageClient() {
                         <SearchResultFilter
                           categories={filterOptions.secondaryFilterOptionsAgg}
                           values={filterAgg}
-                          onChange={(v) => setFilterAgg(v as any)}
+                          onChange={(v) => {
+                            startTransition(() => {
+                              setFilterAgg(v as any);
+                            });
+                          }}
                         />
                       ) : (
                         <SearchResultFilter
                           categories={filterOptions.secondaryFilterOptionsAll}
                           values={filterAll}
-                          onChange={(v) => setFilterAll(v as any)}
+                          onChange={(v) => {
+                            startTransition(() => {
+                              setFilterAll(v as any);
+                            });
+                          }}
                         />
                       )}
                     </div>
@@ -1622,7 +1606,7 @@ function SearchPageClient() {
                   ) : (
                     <div
                       key={`search-results-${viewMode}`}
-                      className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'
+                      className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 will-change-scroll'
                     >
                       {viewMode === 'agg'
                         ? filteredAggResults.map(([mapKey, group]) => {
@@ -1643,7 +1627,10 @@ function SearchPageClient() {
                             }
 
                             return (
-                              <div key={`agg-${mapKey}`} className='w-full'>
+                              <div
+                                key={`agg-${mapKey}`}
+                                className='w-full content-visibility-auto contain-intrinsic-size-[11rem_252px] sm:contain-intrinsic-size-[160px_350px]'
+                              >
                                 <VideoCard
                                   ref={getGroupRef(mapKey)}
                                   from='search'
@@ -1670,7 +1657,7 @@ function SearchPageClient() {
                         : filteredAllResults.map((item) => (
                             <div
                               key={`all-${item.source}-${item.id}`}
-                              className='w-full'
+                              className='w-full content-visibility-auto contain-intrinsic-size-[11rem_252px] sm:contain-intrinsic-size-[160px_350px]'
                             >
                               <VideoCard
                                 id={item.id}

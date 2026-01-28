@@ -330,7 +330,7 @@ function VideoList({
 }) {
   if (loading) {
     return (
-      <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+      <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className='animate-pulse'>
             <div className='bg-gray-300 dark:bg-gray-700 rounded-lg aspect-video mb-3'></div>
@@ -357,9 +357,12 @@ function VideoList({
   }
 
   return (
-    <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-      {videos.map((video, index) => (
-        <div key={`${video.source}-${video.id}-${index}`} className='w-full'>
+    <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
+      {videos.map((video) => (
+        <div
+          key={video.id || video.title}
+          className='w-full content-visibility-auto contain-intrinsic-size-[120px_252px] sm:contain-intrinsic-size-[160px_350px]'
+        >
           <VideoCard
             id={video.videoId || video.id}
             title={video.title}
@@ -480,7 +483,9 @@ function TVBoxPageContent() {
 
           if (intervalOk) {
             lastFetchAtRef.current = now;
-            setCurrentPage((prev) => prev + 1);
+            startTransition(() => {
+              setCurrentPage((prev) => prev + 1);
+            });
           }
         }
       },
@@ -887,7 +892,7 @@ function TVBoxPageContent() {
         )}
 
         {/* 内容展示 */}
-        <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
+        <div className='max-w-[95%] mx-auto mt-8 overflow-visible will-change-scroll'>
           <VideoList videos={videos} loading={loading} />
           {hasMore && (
             <div ref={loadingRef} className='flex justify-center py-4'>

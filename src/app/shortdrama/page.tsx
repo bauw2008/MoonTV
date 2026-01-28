@@ -420,7 +420,9 @@ function ShortDramaPageClient() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          setCurrentPage((prev) => prev + 1);
+          startTransition(() => {
+            setCurrentPage((prev) => prev + 1);
+          });
         }
       },
       { threshold: 0.1 },
@@ -605,21 +607,27 @@ function ShortDramaPageClient() {
         </div>
 
         {/* 内容展示区域 */}
-        <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
+
+        <div className='max-w-[95%] mx-auto mt-8 overflow-visible will-change-scroll'>
           {/* 条件渲染：虚拟化 vs 传统网格 */}
-          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4'>
-            {doubanData.map((item, index) => (
-              <VideoCard
-                key={`${item.id}-${index}`}
-                id={item.id}
-                source={item.source}
-                title={item.title}
-                poster={item.poster}
-                from='shortdrama'
-                rate={item.rate}
-                year={item.year}
-                source_name={item.source_name}
-              />
+
+          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 will-change-scroll'>
+            {doubanData.map((item) => (
+              <div
+                key={item.id || item.title}
+                className='w-full content-visibility-auto contain-intrinsic-size-[120px_252px] sm:contain-intrinsic-size-[160px_350px]'
+              >
+                <VideoCard
+                  id={item.id}
+                  source={item.source}
+                  title={item.title}
+                  poster={item.poster}
+                  from='shortdrama'
+                  rate={item.rate}
+                  year={item.year}
+                  source_name={item.source_name}
+                />
+              </div>
             ))}
           </div>
 
