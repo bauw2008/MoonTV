@@ -1,9 +1,8 @@
-/* @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 import { createClient, RedisClientType } from 'redis';
 
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
+import type { OwnerConfig } from './types';
 import {
   ContentStat,
   EpisodeSkipConfig,
@@ -1234,17 +1233,17 @@ export abstract class BaseRedisStorage implements IStorage {
   }
 
   // 站长配置相关方法
-  async getOwnerConfig(): Promise<any> {
+  async getOwnerConfig(): Promise<OwnerConfig> {
     try {
       const key = 'owner_config';
       const data = await this.withRetry(() => this.client.get(key));
       const strData = ensureRedisString(data);
       return strData
         ? JSON.parse(strData)
-        : { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+        : { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
     } catch (error) {
       logger.error('获取站长配置失败:', error);
-      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
     }
   }
 

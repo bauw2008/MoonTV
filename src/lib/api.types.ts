@@ -88,6 +88,92 @@ export interface TVBoxVideo {
   type?: string;
 }
 
+// TVBox 配置诊断结果
+export interface ConfigDiagnosisResult {
+  ok: boolean;
+  status: number;
+  contentType: string;
+  size: number;
+  baseUrl: string;
+  configUrl: string;
+  receivedToken: string;
+  hasJson: boolean;
+  issues: string[];
+  json?: unknown;
+  parseError?: string;
+  spider_url?: string;
+  spider_md5?: string;
+  spider_cached?: boolean;
+  spider_real_size?: number;
+  spider_tried?: boolean;
+  spider_success?: boolean;
+  spiderReachable?: boolean;
+  spiderStatus?: number | string;
+  spiderContentLength?: string;
+  spiderLastModified?: string;
+  spiderSizeKB?: number;
+  sitesCount?: number;
+  livesCount?: number;
+  spider?: string;
+  spiderPrivate?: boolean;
+  privateApis?: number;
+  issuesCount?: number;
+  parsesCount?: number;
+  spider_backup?: string;
+  spider_candidates?: string[];
+  pass?: boolean;
+  recommendations?: string[];
+}
+
+// TVBox JAR 源修复结果
+export interface JarFixResult {
+  success: boolean;
+  timestamp: number;
+  executionTime: number;
+  summary: {
+    total_tested: number;
+    successful: number;
+    failed: number;
+    user_region: 'domestic' | 'international';
+    avg_response_time: number;
+  };
+  test_results: JarTestResult[];
+  recommended_sources: JarTestResult[];
+  recommendations: {
+    immediate: string[];
+    configuration: string[];
+    troubleshooting: string[];
+  };
+  fixed_config_urls: string[];
+  status: {
+    jar_available: boolean;
+    network_quality: 'good' | 'fair' | 'poor';
+    needs_troubleshooting: boolean;
+  };
+  error?: string;
+  message?: string;
+  emergency_recommendations?: string[];
+}
+
+// JAR 源定义
+export interface JarSource {
+  url: string;
+  name: string;
+  region: 'domestic' | 'international' | 'proxy' | 'overseas';
+  priority: number;
+}
+
+// JAR 源测试结果
+export interface JarTestResult {
+  url: string;
+  name: string;
+  success: boolean;
+  responseTime: number;
+  size?: number;
+  error?: string;
+  statusCode?: number;
+}
+
 // 短剧相关类型
 export interface ShortDramaCategory {
   type_id: number;

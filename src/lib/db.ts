@@ -1,5 +1,3 @@
-/* @typescript-eslint/no-explicit-any */
-
 import { logger } from '@/lib/logger';
 
 import { AdminConfig } from './admin.types';
@@ -391,7 +389,7 @@ export class DbManager {
   }
 
   // ---------- 通用缓存方法 ----------
-  async getCache(key: string): Promise<any | null> {
+  async getCache(key: string): Promise<unknown | null> {
     // 本地存储模式不支持缓存功能
     if (!this.isCacheSupported()) {
       return null;
@@ -583,14 +581,14 @@ export class DbManager {
   }
 
   // 站长配置相关方法
-  async getOwnerConfig(): Promise<any> {
+  async getOwnerConfig(): Promise<OwnerConfig> {
     if (!this.isUserDataSupported()) {
-      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
     }
     if (typeof this.storage.getOwnerConfig === 'function') {
       return await this.storage.getOwnerConfig();
     }
-    return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+    return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
   }
 
   async setOwnerConfig(config: OwnerConfig): Promise<void> {

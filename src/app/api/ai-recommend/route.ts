@@ -480,7 +480,12 @@ export async function POST(request: NextRequest) {
     // 记录用户AI推荐历史（可选）
     try {
       const historyKey = `ai-recommend-history-${username}`;
-      const existingHistory = (await db.getCache(historyKey)) || [];
+      const existingHistory =
+        ((await db.getCache(historyKey)) as Array<{
+          timestamp: string;
+          messages: OpenAIMessage[];
+          response: string;
+        }>) || [];
       const newHistory = [
         {
           timestamp: new Date().toISOString(),
@@ -556,7 +561,12 @@ export async function GET(request: NextRequest) {
     }
 
     const historyKey = `ai-recommend-history-${username}`;
-    const history = (await db.getCache(historyKey)) || [];
+    const history =
+      ((await db.getCache(historyKey)) as Array<{
+        timestamp: string;
+        messages: OpenAIMessage[];
+        response: string;
+      }>) || [];
 
     return NextResponse.json({
       history: history,

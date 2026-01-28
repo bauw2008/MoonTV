@@ -114,16 +114,22 @@ export async function getTVBoxVideoCache(
       return null;
     }
 
+    const typedCached = cached as TVBoxCacheData;
+
     // 检查缓存是否过期（视频列表缓存有效期20分钟）
-    if (isCacheExpired(cached.timestamp, 20 * 60)) {
+    if (isCacheExpired(typedCached.timestamp, 20 * 60)) {
       return null;
     }
 
     // 直接返回原始数据
-    if (cached.list && Array.isArray(cached.list) && cached.list.length > 0) {
+    if (
+      typedCached.list &&
+      Array.isArray(typedCached.list) &&
+      typedCached.list.length > 0
+    ) {
       return {
-        ...cached,
-        list: cached.list,
+        ...typedCached,
+        list: typedCached.list,
       };
     }
 
@@ -153,20 +159,22 @@ export async function getTVBoxCategoryCache(
       return null;
     }
 
+    const typedCached = cached as TVBoxCategoryCacheData;
+
     // 检查缓存是否过期（分类结构缓存有效期2小时）
-    if (isCacheExpired(cached.timestamp, 2 * 60 * 60)) {
+    if (isCacheExpired(typedCached.timestamp, 2 * 60 * 60)) {
       return null;
     }
 
     // 验证缓存数据结构
     if (
-      !cached.primary_categories ||
-      !cached.secondary_categories ||
-      !cached.category_map
+      !typedCached.primary_categories ||
+      !typedCached.secondary_categories ||
+      !typedCached.category_map
     ) {
       return null;
     }
-    return cached;
+    return typedCached;
   } catch (error) {
     logger.error(`[CACHE-GET] 获取分类缓存失败: ${source}`, error);
     return null;
@@ -211,12 +219,14 @@ export async function getTVBoxCache(
       return null;
     }
 
+    const typedCached = cached as TVBoxCacheData;
+
     // 检查缓存是否过期（TVBox缓存有效期30分钟）
-    if (isCacheExpired(cached.timestamp, 30 * 60)) {
+    if (isCacheExpired(typedCached.timestamp, 30 * 60)) {
       return null;
     }
 
-    return cached;
+    return typedCached;
   } catch (error) {
     logger.error('[CACHE-GET] 获取TVBox缓存失败:', error);
     return null;

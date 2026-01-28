@@ -1,5 +1,3 @@
-/* @typescript-eslint/no-explicit-any,no-case-declarations */
-
 import { logger } from '@/lib/logger';
 
 import { ClientCache } from './client-cache';
@@ -15,7 +13,10 @@ const DOUBAN_CACHE_EXPIRE = {
 };
 
 // 缓存工具函数
-function getCacheKey(prefix: string, params: Record<string, any>): string {
+function getCacheKey(
+  prefix: string,
+  params: Record<string, string | number | boolean>,
+): string {
   const sortedParams = Object.keys(params)
     .sort()
     .map((key) => `${key}=${params[key]}`)
@@ -24,7 +25,7 @@ function getCacheKey(prefix: string, params: Record<string, any>): string {
 }
 
 // 统一缓存获取方法
-async function getCache(key: string): Promise<any | null> {
+async function getCache(key: string): Promise<unknown | null> {
   try {
     // 优先从统一存储获取
     const cached = await ClientCache.get(key);
@@ -285,20 +286,26 @@ function getDoubanProxyConfig(settings?: {
   // 优先使用传入的设置，其次是管理员设置的全局配置，最后是 localStorage
   const doubanProxyType =
     settings?.doubanDataSource ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
     (typeof window !== 'undefined'
       ? localStorage.getItem('doubanDataSource')
       : null) ||
     'cmliussss-cdn-tencent';
   const doubanProxy =
     settings?.doubanProxyUrl ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY ||
     (typeof window !== 'undefined'
       ? localStorage.getItem('doubanProxyUrl')
       : null) ||
     '';
   return {
-    proxyType: doubanProxyType,
+    proxyType: doubanProxyType as
+      | 'direct'
+      | 'cors-proxy-zwei'
+      | 'cmliussss-cdn-tencent'
+      | 'cmliussss-cdn-ali'
+      | 'cors-anywhere'
+      | 'custom',
     proxyUrl: doubanProxy,
   };
 }
@@ -395,7 +402,7 @@ export async function getDoubanCategories(
   const cached = await getCache(cacheKey);
   if (cached) {
     logger.log(`豆瓣分类缓存命中: ${kind}/${category}/${type}`);
-    return cached;
+    return cached as DoubanResult;
   }
 
   const { proxyType, proxyUrl } = getDoubanProxyConfig();
@@ -459,7 +466,7 @@ export async function getDoubanList(
   const cached = await getCache(cacheKey);
   if (cached) {
     logger.log(`豆瓣列表缓存命中: ${type}/${tag}/${pageStart}`);
-    return cached;
+    return cached as DoubanResult;
   }
 
   const { proxyType, proxyUrl } = getDoubanProxyConfig();
@@ -615,7 +622,7 @@ export async function getDoubanRecommends(
   const cached = await getCache(cacheKey);
   if (cached) {
     logger.log(`豆瓣推荐缓存命中: ${kind}/${category || 'all'}`);
-    return cached;
+    return cached as DoubanResult;
   }
 
   const { proxyType, proxyUrl } = getDoubanProxyConfig();
@@ -689,11 +696,36 @@ export async function getDoubanDetails(id: string): Promise<{
   // 检查缓存 - 如果缓存中没有plot_summary则重新获取
   const cacheKey = getCacheKey('details', { id });
   const cached = await getCache(cacheKey);
-  if (cached && cached.data?.plot_summary) {
+  if (
+    cached &&
+    (cached as { data?: { plot_summary?: string } }).data?.plot_summary
+  ) {
     logger.log(`豆瓣详情缓存命中(有简介): ${id}`);
-    return cached;
+    return cached as {
+      code: number;
+      message: string;
+      data?: {
+        id: string;
+        title: string;
+        poster: string;
+        rate: string;
+        year: string;
+        directors?: string[];
+        screenwriters?: string[];
+        cast?: string[];
+        genres?: string[];
+        countries?: string[];
+        languages?: string[];
+        episode_length?: number;
+        first_aired?: string;
+        plot_summary?: string;
+      };
+    };
   }
-  if (cached && !cached.data?.plot_summary) {
+  if (
+    cached &&
+    !(cached as { data?: { plot_summary?: string } }).data?.plot_summary
+  ) {
     logger.log(`豆瓣详情缓存无效(缺少简介): ${id}，重新获取`);
     // 缓存无效，继续执行下面的逻辑重新获取
   }
@@ -752,7 +784,7 @@ async function fetchDoubanRecommends(
     sort = '';
   }
 
-  const selectedCategories = { 类型: category } as any;
+  const selectedCategories: Record<string, string> = { 类型: category };
   if (format) {
     selectedCategories['形式'] = format;
   }
@@ -859,7 +891,7 @@ export async function getDoubanActorMovies(
   const cached = await getCache(cacheKey);
   if (cached) {
     logger.log(`豆瓣演员搜索缓存命中: ${actorName}/${type}`);
-    return cached;
+    return cached as DoubanResult;
   }
 
   try {

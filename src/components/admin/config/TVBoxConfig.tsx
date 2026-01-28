@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import type { ConfigDiagnosisResult, JarFixResult } from '@/lib/api.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import {
@@ -107,7 +108,8 @@ function TVBoxConfigContent() {
 
   // 所有状态定义必须在任何条件渲染之前
   const [showToken, setShowToken] = useState(false);
-  const [diagnoseResult, setDiagnoseResult] = useState<any>(null);
+  const [diagnoseResult, setDiagnoseResult] =
+    useState<ConfigDiagnosisResult | null>(null);
   const [showDiagnoseResult, setShowDiagnoseResult] = useState(false);
   const [configMode, setConfigMode] = useState<
     'standard' | 'safe' | 'fast' | 'yingshicang'
@@ -123,7 +125,7 @@ function TVBoxConfigContent() {
   const [showUAList, setShowUAList] = useState(false);
 
   // 源修复相关状态
-  const [jarFixResult, setJarFixResult] = useState<any>(null);
+  const [jarFixResult, setJarFixResult] = useState<JarFixResult | null>(null);
   const [jarFixLoading, setJarFixLoading] = useState(false);
   const [showJarFixResult, setShowJarFixResult] = useState(false);
 
@@ -414,6 +416,28 @@ function TVBoxConfigContent() {
       logger.error('JAR源修复检测失败:', error);
       setJarFixResult({
         success: false,
+        timestamp: Date.now(),
+        executionTime: 0,
+        summary: {
+          total_tested: 0,
+          successful: 0,
+          failed: 0,
+          user_region: 'domestic',
+          avg_response_time: 0,
+        },
+        test_results: [],
+        recommended_sources: [],
+        recommendations: {
+          immediate: ['JAR源检测失败，请稍后重试'],
+          configuration: [],
+          troubleshooting: [],
+        },
+        fixed_config_urls: [],
+        status: {
+          jar_available: false,
+          network_quality: 'poor',
+          needs_troubleshooting: true,
+        },
         error: 'JAR源检测失败，请稍后重试',
       });
       showError('JAR源检测失败');
@@ -1891,22 +1915,22 @@ function TVBoxConfigContent() {
                       </h4>
                       <div className='space-y-2'>
                         {jarFixResult.recommended_sources.map(
-                          (source: string, index: number) => (
+                          (source, index) => (
                             <div
                               key={index}
                               className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg'
                             >
                               <div className='flex-1'>
                                 <div className='font-medium text-gray-900 dark:text-gray-100'>
-                                  {source}
+                                  {source.name}
                                 </div>
                                 <code className='text-xs text-gray-600 dark:text-gray-400 break-all'>
-                                  {source}
+                                  {source.url}
                                 </code>
                               </div>
                               <div className='text-right ml-4'>
                                 <div className='text-sm font-medium text-green-600'>
-                                  -
+                                  {Math.round(source.responseTime)}ms
                                 </div>
                               </div>
                             </div>
@@ -1977,40 +2001,35 @@ function TVBoxConfigContent() {
                       详细测试结果
                     </h4>
                     <div className='space-y-2'>
-                      {jarFixResult.test_results.map(
-                        (
-                          result: { source: string; success: boolean },
-                          index: number,
-                        ) => (
-                          <div
-                            key={index}
-                            className={`p-3 rounded-lg border ${
-                              result.success
-                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
-                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
-                            }`}
-                          >
-                            <div className='flex items-center justify-between mb-1'>
-                              <div className='font-medium text-gray-900 dark:text-gray-100'>
-                                {result.source}
-                              </div>
-                              <div className='text-sm'>
-                                {result.success ? (
-                                  <span className='text-green-600'>✓ 可用</span>
-                                ) : (
-                                  <span className='text-red-600'>✗ 不可用</span>
-                                )}
-                              </div>
+                      {jarFixResult.test_results.map((result, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg border ${
+                            result.success
+                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
+                          }`}
+                        >
+                          <div className='flex items-center justify-between mb-1'>
+                            <div className='font-medium text-gray-900 dark:text-gray-100'>
+                              {result.name}
                             </div>
-                            <code className='text-xs text-gray-600 dark:text-gray-400 break-all block mb-1'>
-                              {result.source}
-                            </code>
-                            <div className='text-xs text-gray-500 dark:text-gray-400'>
-                              -
+                            <div className='text-sm'>
+                              {result.success ? (
+                                <span className='text-green-600'>✓ 可用</span>
+                              ) : (
+                                <span className='text-red-600'>✗ 不可用</span>
+                              )}
                             </div>
                           </div>
-                        ),
-                      )}
+                          <code className='text-xs text-gray-600 dark:text-gray-400 break-all block mb-1'>
+                            {result.url}
+                          </code>
+                          <div className='text-xs text-gray-500 dark:text-gray-400'>
+                            -
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

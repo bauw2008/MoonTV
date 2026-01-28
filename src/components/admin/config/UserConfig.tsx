@@ -135,7 +135,7 @@ function UserConfigContent() {
 
   // 采集源权限配置状态
   const [showConfigureApisModal, setShowConfigureApisModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedApis, setSelectedApis] = useState<string[]>([]);
 
   // 视频源状态

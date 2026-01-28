@@ -16,6 +16,17 @@
 
 import { ToastManager } from '@/components/Toast';
 
+// 类型守卫：检查对象是否为有效的 CacheData
+function isCacheData(obj: unknown): obj is CacheData<unknown> {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'version' in obj &&
+    'timestamp' in obj &&
+    'data' in obj
+  );
+}
+
 import { getAuthInfoFromBrowserCookie } from './auth';
 import { logger } from './logger';
 import type { Favorite, PlayRecord } from './types';
@@ -449,7 +460,11 @@ class HybridCacheManager {
             // 检查是否有任何缓存数据过期
             let hasValidData = false;
             for (const [, cacheData] of Object.entries(cache)) {
-              if (cacheData && this.isCacheValid(cacheData as CacheData<any>)) {
+              if (
+                cacheData &&
+                isCacheData(cacheData) &&
+                this.isCacheValid(cacheData)
+              ) {
                 hasValidData = true;
                 break;
               }

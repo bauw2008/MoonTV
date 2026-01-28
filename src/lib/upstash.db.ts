@@ -1,9 +1,8 @@
-/* @typescript-eslint/no-explicit-any */
-
 import { Redis } from '@upstash/redis';
 
 import { AdminConfig } from './admin.types';
 import { logger } from './logger';
+import type { OwnerConfig } from './types';
 import {
   ContentStat,
   EpisodeSkipConfig,
@@ -1086,12 +1085,12 @@ export class UpstashRedisStorage implements IStorage {
   }
 
   // 站长配置相关方法
-  async getOwnerConfig(): Promise<any> {
+  async getOwnerConfig(): Promise<OwnerConfig> {
     try {
       const key = 'owner_config';
       const data = await withRetry(() => this.client.get(key));
       if (!data) {
-        return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+        return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
       }
 
       // 智能处理返回值
@@ -1099,13 +1098,13 @@ export class UpstashRedisStorage implements IStorage {
         try {
           return JSON.parse(data);
         } catch {
-          return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+          return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
         }
       }
       return data;
     } catch (error) {
       logger.error('获取站长配置失败:', error);
-      return { siteMaintenance: false, debugMode: false, maxUsers: 1000 };
+      return { SiteMaintenance: false, DebugMode: false, MaxUsers: 1000 };
     }
   }
 

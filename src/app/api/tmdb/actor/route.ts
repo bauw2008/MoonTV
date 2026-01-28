@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
       const cachedResult = await db.getCache(cacheKey);
       if (cachedResult) {
         logger.log(
-          `✅ [TMDB API] 缓存命中: ${actorName} - ${cachedResult.list?.length || 0} 项`,
+          `✅ [TMDB API] 缓存命中: ${actorName} - ${(cachedResult as { list?: unknown[] }).list?.length || 0} 项`,
         );
         return NextResponse.json(cachedResult);
       }

@@ -112,7 +112,7 @@ async function checkRateLimit(
 
   try {
     // 获取当前计数
-    const currentCount = (await db.getCache(key)) || 0;
+    const currentCount = ((await db.getCache(key)) as number) || 0;
 
     if (currentCount >= limit) {
       return false;
