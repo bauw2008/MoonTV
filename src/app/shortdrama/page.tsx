@@ -609,9 +609,7 @@ function ShortDramaPageClient() {
         {/* 内容展示区域 */}
 
         <div className='max-w-[95%] mx-auto mt-8 overflow-visible will-change-scroll'>
-          {/* 条件渲染：虚拟化 vs 传统网格 */}
-
-          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 will-change-scroll'>
+          <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
             {doubanData.map((item) => (
               <div
                 key={item.id || item.title}
@@ -633,7 +631,7 @@ function ShortDramaPageClient() {
 
           {/* 加载中骨架屏 */}
           {loading && (
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4'>
+            <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
               {skeletonData.map((_, index) => (
                 <DoubanCardSkeleton key={index} />
               ))}

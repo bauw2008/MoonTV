@@ -358,9 +358,9 @@ function VideoList({
 
   return (
     <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
-      {videos.map((video) => (
+      {videos.map((video, index) => (
         <div
-          key={video.id || video.title}
+          key={`${video.source || ''}-${video.id || video.title}-${index}`}
           className='w-full content-visibility-auto contain-intrinsic-size-[120px_252px] sm:contain-intrinsic-size-[160px_350px]'
         >
           <VideoCard

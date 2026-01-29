@@ -495,19 +495,6 @@ export interface DropZoneProps {
   accept?: string[];
 }
 
-// 虚拟滚动类型
-export interface VirtualScrollItem {
-  index: number;
-  data: unknown;
-  height?: number;
-}
-
-export interface VirtualScrollConfig {
-  itemHeight: number;
-  overscan?: number;
-  bufferSize?: number;
-}
-
 // 动画类型
 export interface AnimationConfig {
   duration?: number;

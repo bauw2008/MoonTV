@@ -367,7 +367,7 @@ export default function FavoritesPage() {
             )}
 
             {/* 筛选后的内容 */}
-            <div className='mt-8 justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+            <div className='mt-8 justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
               {(() => {
                 // 筛选
                 let filtered = favoriteItems;
