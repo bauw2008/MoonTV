@@ -2,8 +2,7 @@
 
 import { logger } from '@/lib/logger';
 
-import { getDoubanDetails, getDoubanRecommends } from './douban.client';
-import type { DoubanItem } from './types';
+import { getDoubanRecommends } from './douban.client';
 
 export interface PosterItem {
   id: string;
@@ -129,7 +128,7 @@ const checkTMDBStatus = async () => {
 
 /**
  * 获取海报轮播数据
- * 整合豆瓣电影、剧集和Bangumi动漫数据
+ * 整合豆瓣电影周榜、剧集周榜和Bangumi动漫数据
  */
 export async function getPosterCarouselData(): Promise<{
   posters: PosterItem[];
@@ -139,14 +138,10 @@ export async function getPosterCarouselData(): Promise<{
     // 检查TMDB海报功能是否启用
     const enableTMDBPosters = await checkTMDBStatus();
 
-    // 并行获取所有数据
+    // 并行获取所有数据（改为从周榜获取）
     const [moviesResponse, tvShowsResponse] = await Promise.allSettled([
-      fetch(
-        '/api/douban/categories?kind=movie&category=热门&type=全部&limit=6&start=0',
-      ),
-      fetch(
-        '/api/douban/categories?kind=tv&category=tv&type=tv&limit=6&start=0',
-      ),
+      fetch('/api/douban/weekly-hot?type=movie&limit=6'),
+      fetch('/api/douban/weekly-hot?type=tv&limit=6'),
     ]);
 
     const posters: PosterItem[] = [];
@@ -156,49 +151,41 @@ export async function getPosterCarouselData(): Promise<{
       try {
         const response = moviesResponse.value;
         const moviesData = await response.json();
-        if (moviesData.code === 200 && moviesData.list) {
+        if (moviesData.success && moviesData.data?.subject_collection_items) {
           // 从前6部电影中随机选择2部
-          const selectedMovies = getRandomItems(moviesData.list, 2);
+          const selectedMovies = getRandomItems(
+            moviesData.data.subject_collection_items,
+            2,
+          );
           for (const movie of selectedMovies) {
-            // 获取详细信息以获得简介
-            const movieObj = movie as DoubanItem;
-            let detailedMovie = movieObj;
-            if (!movieObj.plot_summary || movieObj.plot_summary.trim() === '') {
-              try {
-                const detailsResult = await getDoubanDetails(movieObj.id);
-                if (detailsResult.code === 200 && detailsResult.data) {
-                  detailedMovie = {
-                    ...movieObj,
-                    plot_summary: detailsResult.data.plot_summary || '',
-                  };
-                }
-              } catch (error) {
-                logger.warn(`获取电影详情失败: ${movieObj.title}`, error);
-              }
-            }
+            const movieObj = movie as {
+              id: string;
+              title: string;
+              rating: { value: number };
+              cover_url?: string;
+              cover?: { url: string };
+              year?: string;
+            };
+
+            const posterUrl = movieObj.cover_url || movieObj.cover?.url || '';
 
             // 通过智能名称搜索TMDB海报
             const tmdbPoster = enableTMDBPosters
-              ? await searchTMDBPoster(
-                  detailedMovie.title,
-                  'movie',
-                  detailedMovie.year,
-                )
+              ? await searchTMDBPoster(movieObj.title, 'movie', movieObj.year)
               : null;
 
-            const finalPosterUrl = tmdbPoster?.backdrop || detailedMovie.poster;
+            const finalPosterUrl = tmdbPoster?.backdrop || posterUrl;
 
             posters.push({
               id: `movie-${movieObj.id}`,
-              title: detailedMovie.title,
+              title: movieObj.title,
               poster: finalPosterUrl, // 优先使用TMDB横屏海报
               type: 'movie',
               category: '热门电影',
-              rate: detailedMovie.rate,
-              year: detailedMovie.year,
-              overview:
-                tmdbPoster?.overview || detailedMovie.plot_summary || '', // 优先使用TMDB简介
-              doubanId: detailedMovie.id,
+              rate: movieObj.rating?.value?.toFixed(1),
+              year: movieObj.year,
+              overview: tmdbPoster?.overview || '', // 优先使用TMDB简介
+              doubanId: movieObj.id,
               isTMDB: !!tmdbPoster?.backdrop,
             });
           }
@@ -219,48 +206,41 @@ export async function getPosterCarouselData(): Promise<{
       try {
         const response = tvShowsResponse.value;
         const tvShowsData = await response.json();
-        if (tvShowsData.code === 200 && tvShowsData.list) {
+        if (tvShowsData.success && tvShowsData.data?.subject_collection_items) {
           // 从前6部剧集中随机选择2部
-          const selectedShows = getRandomItems(tvShowsData.list, 2);
+          const selectedShows = getRandomItems(
+            tvShowsData.data.subject_collection_items,
+            2,
+          );
           for (const show of selectedShows) {
-            // 获取详细信息以获得简介
-            const showObj = show as DoubanItem;
-            let detailedShow = showObj;
-            if (!showObj.plot_summary || showObj.plot_summary.trim() === '') {
-              try {
-                const detailsResult = await getDoubanDetails(showObj.id);
-                if (detailsResult.code === 200 && detailsResult.data) {
-                  detailedShow = {
-                    ...showObj,
-                    plot_summary: detailsResult.data.plot_summary || '',
-                  };
-                }
-              } catch (error) {
-                logger.warn(`获取剧集详情失败: ${showObj.title}`, error);
-              }
-            }
+            const showObj = show as {
+              id: string;
+              title: string;
+              rating: { value: number };
+              cover_url?: string;
+              cover?: { url: string };
+              year?: string;
+            };
+
+            const posterUrl = showObj.cover_url || showObj.cover?.url || '';
 
             // 通过智能名称搜索TMDB海报
             const tmdbPoster = enableTMDBPosters
-              ? await searchTMDBPoster(
-                  detailedShow.title,
-                  'tv',
-                  detailedShow.year,
-                )
+              ? await searchTMDBPoster(showObj.title, 'tv', showObj.year)
               : null;
 
-            const finalPosterUrl = tmdbPoster?.backdrop || detailedShow.poster;
+            const finalPosterUrl = tmdbPoster?.backdrop || posterUrl;
 
             posters.push({
               id: `tv-${showObj.id}`,
-              title: detailedShow.title,
+              title: showObj.title,
               poster: finalPosterUrl, // 优先使用TMDB横屏海报
               type: 'tv',
               category: '热门剧集',
-              rate: detailedShow.rate,
-              year: detailedShow.year,
-              overview: tmdbPoster?.overview || detailedShow.plot_summary || '', // 优先使用TMDB简介
-              doubanId: detailedShow.id,
+              rate: showObj.rating?.value?.toFixed(1),
+              year: showObj.year,
+              overview: tmdbPoster?.overview || '', // 优先使用TMDB简介
+              doubanId: showObj.id,
               isTMDB: !!tmdbPoster?.backdrop,
             });
           }

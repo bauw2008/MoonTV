@@ -2,11 +2,9 @@
 
 'use client';
 
-import { Clapperboard, Compass, Film, Radio, Tv, Tv2, X } from 'lucide-react';
-import Link from 'next/link';
+import { X } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
 
-import { getAllPlayRecords } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
 import { getPosterCarouselData } from '@/lib/poster-carousel.client';
 import { useFeaturePermission } from '@/hooks/useFeaturePermission';
@@ -15,66 +13,12 @@ import ContinueWatching from '@/components/ContinueWatching';
 import FloatingTools from '@/components/FloatingTools';
 import PageLayout from '@/components/PageLayout';
 import PosterCarousel from '@/components/PosterCarousel';
-import SectionTitle from '@/components/SectionTitle';
 import { useSite } from '@/components/SiteProvider';
+import TVWeeklyHot from '@/components/TVWeeklyHot';
+import WeeklyHot from '@/components/WeeklyHot';
 
 // 快速入口导航配置
-const quickNavItems = [
-  {
-    title: '热门电影',
-    icon: Film,
-    color: 'bg-red-500/30',
-    hoverColor: 'bg-red-500/50',
-    iconColor: 'text-red-500',
-    titleGradient: 'from-red-600 to-orange-500',
-    href: '/douban?type=movie',
-  },
-  {
-    title: '热门剧集',
-    icon: Tv,
-    color: 'bg-blue-500/30',
-    hoverColor: 'bg-blue-500/50',
-    iconColor: 'text-blue-500',
-    titleGradient: 'from-blue-600 to-cyan-500',
-    href: '/douban?type=tv',
-  },
-  {
-    title: '每日新番',
-    icon: Tv2,
-    color: 'bg-purple-500/30',
-    hoverColor: 'bg-purple-500/50',
-    iconColor: 'text-purple-500',
-    titleGradient: 'from-purple-600 to-pink-500',
-    href: '/douban?type=anime',
-  },
-  {
-    title: '热门综艺',
-    icon: Clapperboard,
-    color: 'bg-pink-500/30',
-    hoverColor: 'bg-pink-500/50',
-    iconColor: 'text-pink-500',
-    titleGradient: 'from-pink-600 to-rose-500',
-    href: '/douban?type=show',
-  },
-  {
-    title: 'TVBox采集',
-    icon: Radio,
-    color: 'bg-green-500/30',
-    hoverColor: 'bg-green-500/50',
-    iconColor: 'text-green-500',
-    titleGradient: 'from-green-600 to-emerald-500',
-    href: '/tvbox',
-  },
-  {
-    title: '随机短剧',
-    icon: Compass,
-    color: 'bg-yellow-500/30',
-    hoverColor: 'bg-yellow-500/50',
-    iconColor: 'text-yellow-500',
-    titleGradient: 'from-yellow-600 to-amber-500',
-    href: '/shortdrama',
-  },
-];
+// const quickNavItems = [
 
 function HomeClient() {
   const { hasPermission } = useFeaturePermission();
@@ -86,7 +30,6 @@ function HomeClient() {
       : false;
   const [posterCarouselData, setPosterCarouselData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasPlayRecords, setHasPlayRecords] = useState<boolean | null>(null);
   const [, startTransition] = useTransition();
   const { announcement } = useSite();
 
@@ -154,12 +97,6 @@ function HomeClient() {
             setPosterCarouselData([]);
           });
         }
-
-        // 获取播放记录数据，用于判断是否显示快速导航
-        const playRecords = await getAllPlayRecords();
-        startTransition(() => {
-          setHasPlayRecords(Object.keys(playRecords).length > 0);
-        });
       } catch (error) {
         // 静默处理错误
         logger.error('获取推荐数据失败:', error);
@@ -186,45 +123,11 @@ function HomeClient() {
           {/* 继续观看 */}
           <ContinueWatching />
 
-          {/* 快速入口导航 - 仅在无继续观看数据时显示 */}
-          {hasPlayRecords === false && (
-            <section className='mb-8'>
-              <div className='mb-4'>
-                <SectionTitle
-                  title='快速导航'
-                  icon={Compass}
-                  iconColor='text-purple-500'
-                />
-              </div>
-              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4'>
-                {quickNavItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className='group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 bg-transparent video-card-hover'
-                    >
-                      <div
-                        className={`absolute inset-0 ${item.color} transition-all duration-300 group-hover:${item.hoverColor}`}
-                      />
-                      <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1500 ease-in-out' />
-                      <div className='relative flex flex-col items-center justify-center'>
-                        <Icon
-                          className={`mb-3 h-10 w-10 transition-transform duration-300 group-hover:scale-110 ${item.iconColor}`}
-                        />
-                        <span
-                          className={`text-sm font-semibold tracking-wide bg-gradient-to-r ${item.titleGradient} bg-clip-text text-transparent`}
-                        >
-                          {item.title}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+          {/* 电影周榜 */}
+          <WeeklyHot limit={10} />
+
+          {/* 剧集周榜 */}
+          <TVWeeklyHot limit={10} />
         </div>
       </div>
       {announcement && showAnnouncement && (

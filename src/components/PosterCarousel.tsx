@@ -157,102 +157,9 @@ export default function PosterCarousel({
     return linkMap[category] || '/douban';
   };
 
-  // 如果正在加载或没有海报数据，显示加载动画
+  // 如果正在加载或没有海报数据，不显示任何内容
   if (loading || posters.length === 0) {
-    return (
-      <div className='mb-8 relative -mt-16 z-10 px-2 md:px-4'>
-        <div className='relative h-[calc(58vh+2rem)] min-h-[480px] max-h-[750px] overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 w-full rounded-2xl shadow-2xl flex items-center justify-center'>
-          {/* 可爱的跑步卡通人物动画 */}
-          <div className='flex flex-col items-center'>
-            <svg
-              className='w-32 h-32 animate-bounce'
-              viewBox='0 0 100 100'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              {/* 身体 */}
-              <circle cx='50' cy='35' r='18' fill='#FCD34D' />
-              {/* 眼睛 */}
-              <circle cx='44' cy='33' r='3' fill='#1F2937' />
-              <circle cx='56' cy='33' r='3' fill='#1F2937' />
-              {/* 嘴巴 */}
-              <path
-                d='M 45 42 Q 50 46 55 42'
-                stroke='#1F2937'
-                strokeWidth='2'
-                fill='none'
-              />
-              {/* 腮红 */}
-              <circle cx='40' cy='38' r='3' fill='#FCA5A5' opacity='0.6' />
-              <circle cx='60' cy='38' r='3' fill='#FCA5A5' opacity='0.6' />
-              {/* 腿 - 左 */}
-              <path
-                d='M 42 52 Q 38 60 40 68'
-                stroke='#FCD34D'
-                strokeWidth='6'
-                strokeLinecap='round'
-                className='animate-pulse'
-              />
-              {/* 腿 - 右 */}
-              <path
-                d='M 58 52 Q 62 60 60 68'
-                stroke='#FCD34D'
-                strokeWidth='6'
-                strokeLinecap='round'
-                className='animate-pulse'
-                style={{ animationDelay: '0.5s' }}
-              />
-              {/* 手臂 - 左 */}
-              <path
-                d='M 32 40 Q 25 45 28 52'
-                stroke='#FCD34D'
-                strokeWidth='6'
-                strokeLinecap='round'
-                className='animate-pulse'
-                style={{ animationDelay: '0.25s' }}
-              />
-              {/* 手臂 - 右 */}
-              <path
-                d='M 68 40 Q 75 45 72 52'
-                stroke='#FCD34D'
-                strokeWidth='6'
-                strokeLinecap='round'
-                className='animate-pulse'
-                style={{ animationDelay: '0.75s' }}
-              />
-            </svg>
-            <p className='mt-6 text-lg font-semibold text-gray-700 dark:text-gray-300 animate-pulse'>
-              正在加载精彩内容...
-            </p>
-            {/* 小星星装饰 */}
-            <div
-              className='absolute top-10 left-10 text-4xl animate-bounce'
-              style={{ animationDelay: '0.2s' }}
-            >
-              ✨
-            </div>
-            <div
-              className='absolute top-20 right-20 text-3xl animate-bounce'
-              style={{ animationDelay: '0.5s' }}
-            >
-              ⭐
-            </div>
-            <div
-              className='absolute bottom-20 left-20 text-3xl animate-bounce'
-              style={{ animationDelay: '0.8s' }}
-            >
-              ✨
-            </div>
-            <div
-              className='absolute bottom-10 right-10 text-4xl animate-bounce'
-              style={{ animationDelay: '1.1s' }}
-            >
-              ⭐
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -397,18 +304,18 @@ export default function PosterCarousel({
       </div>
 
       {/* 底部切换和指示器 - 移动端优化 */}
-      <div className='absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-1.5 sm:space-x-3'>
+      <div className='absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-1 sm:space-x-2'>
         {/* 左侧切换按钮 - 优化样式 */}
         <button
           onClick={goToPrevious}
-          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1 sm:p-1.5 rounded-full backdrop-blur-sm'
+          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-0.5 sm:p-1 rounded-full backdrop-blur-sm'
           aria-label='上一个'
         >
-          <ChevronLeft className='w-3 h-3 sm:w-4 sm:h-4' />
+          <ChevronLeft className='w-2.5 h-2.5 sm:w-3.5 sm:h-3.5' />
         </button>
 
-        {/* 指示器 - 增强视觉效果 */}
-        <div className='flex space-x-1 sm:space-x-1.5'>
+        {/* 指示器 - 缩小尺寸 */}
+        <div className='flex space-x-0.5 sm:space-x-1'>
           {posters.map((_, index) => (
             <button
               key={index}
@@ -418,10 +325,10 @@ export default function PosterCarousel({
                 setCurrentIndex(index);
                 setTimeout(() => setIsTransitioning(false), 500);
               }}
-              className={`h-1 sm:h-1.5 rounded-full transition-all duration-500 ease-out ${
+              className={`h-0.75 sm:h-1 rounded-full transition-all duration-500 ease-out ${
                 index === currentIndex
-                  ? 'w-5 sm:w-6 bg-white shadow-lg shadow-white/30'
-                  : 'w-1 sm:w-1.5 bg-white/30 hover:bg-white/50'
+                  ? 'w-3 sm:w-4 bg-white shadow-md shadow-white/20'
+                  : 'w-0.75 sm:w-1 bg-white/20 hover:bg-white/40'
               }`}
               aria-label={`切换到第${index + 1}张海报`}
             />
@@ -431,10 +338,10 @@ export default function PosterCarousel({
         {/* 右侧切换按钮 - 优化样式 */}
         <button
           onClick={goToNext}
-          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-1 sm:p-1.5 rounded-full backdrop-blur-sm'
+          className='text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-300 p-0.5 sm:p-1 rounded-full backdrop-blur-sm'
           aria-label='下一个'
         >
-          <ChevronRight className='w-3 h-3 sm:w-4 sm:h-4' />
+          <ChevronRight className='w-2.5 h-2.5 sm:w-3.5 sm:h-3.5' />
         </button>
       </div>
     </div>
