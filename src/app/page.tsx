@@ -25,7 +25,7 @@ function HomeClient() {
 
   // 功能启用状态（从全局配置读取）
   const isAIEnabled =
-    typeof window !== 'undefined'
+    typeof window !== 'undefined' && (window as any).RUNTIME_CONFIG
       ? ((window as any).RUNTIME_CONFIG.AIConfig?.enabled ?? false)
       : false;
   const [posterCarouselData, setPosterCarouselData] = useState<any[]>([]);

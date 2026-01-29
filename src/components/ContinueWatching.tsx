@@ -11,6 +11,7 @@ import {
 } from '@/lib/db.client';
 import { logger } from '@/lib/logger';
 
+import ScrollableRow from '@/components/ScrollableRow';
 import SectionTitle from '@/components/SectionTitle';
 import VideoCard from '@/components/VideoCard';
 
@@ -113,11 +114,14 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
           </button>
         )}
       </div>
-      <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20 will-change-scroll'>
+      <ScrollableRow>
         {loading
           ? // 加载状态显示灰色占位数据
             Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className='w-full'>
+              <div
+                key={index}
+                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+              >
                 <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
                   <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
                 </div>
@@ -129,36 +133,37 @@ export default function ContinueWatching({ className }: ContinueWatchingProps) {
             playRecords.map((record, index) => {
               const { source, id } = parseKey(record.key);
               return (
-                <div key={record.key} className='w-full relative group/card'>
-                  <div className='relative group-hover/card:z-[5] transition-all duration-300'>
-                    <VideoCard
-                      id={id}
-                      title={record.title}
-                      poster={record.cover}
-                      year={record.year}
-                      source={source}
-                      source_name={record.source_name}
-                      progress={getProgress(record)}
-                      episodes={record.total_episodes}
-                      currentEpisode={record.index}
-                      query={record.search_title}
-                      from='playrecord'
-                      onDelete={() =>
-                        setPlayRecords((prev) =>
-                          prev.filter((r) => r.key !== record.key),
-                        )
-                      }
-                      type={
-                        record.type || (record.total_episodes > 1 ? 'tv' : '')
-                      }
-                      remarks={record.remarks}
-                      priority={index < 4}
-                    />
-                  </div>
+                <div
+                  key={record.key}
+                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                >
+                  <VideoCard
+                    id={id}
+                    title={record.title}
+                    poster={record.cover}
+                    year={record.year}
+                    source={source}
+                    source_name={record.source_name}
+                    progress={getProgress(record)}
+                    episodes={record.total_episodes}
+                    currentEpisode={record.index}
+                    query={record.search_title}
+                    from='playrecord'
+                    onDelete={() =>
+                      setPlayRecords((prev) =>
+                        prev.filter((r) => r.key !== record.key),
+                      )
+                    }
+                    type={
+                      record.type || (record.total_episodes > 1 ? 'tv' : '')
+                    }
+                    remarks={record.remarks}
+                    priority={index < 4}
+                  />
                 </div>
               );
             })}
-      </div>
+      </ScrollableRow>
     </section>
   );
 }
