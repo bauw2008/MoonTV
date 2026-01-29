@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
+import { getDoubanRandomUserAgent } from '@/lib/user-agent';
 
 /**
  * 获取豆瓣每周热门（电影或剧集）
- * GET /api/douban/weekly-hot?type=movie|tv&limit=10
+ * GET /api/douban/weekly-hot?type=movie|tv|tv-global&limit=10
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const type = searchParams.get('type') || 'movie'; // movie 或 tv
+    const type = searchParams.get('type') || 'movie'; // movie | tv | tv-global
     const limit = parseInt(searchParams.get('limit') || '10');
     const start = parseInt(searchParams.get('start') || '0');
 
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
     const collectionMap: Record<string, string> = {
       movie: 'movie_weekly_best',
       tv: 'tv_chinese_best_weekly',
+      'tv-global': 'tv_global_best_weekly',
     };
 
     const collection = collectionMap[type] || 'movie_weekly_best';
@@ -26,8 +28,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(apiURL, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+        'User-Agent': getDoubanRandomUserAgent(),
         Referer: 'https://m.douban.com/',
         Accept: 'application/json, text/plain, */*',
       },

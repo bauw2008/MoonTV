@@ -716,17 +716,23 @@ const TopNav = ({ activePath: _activePath = '/' }: TopNavProps) => {
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className='md:hidden transition-colors duration-200'
+                className='md:hidden transition-all duration-300'
               >
-                {isMobileMenuOpen ? (
-                  <X className='w-6 h-6' />
-                ) : (
-                  <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
-                    <div className='w-6 h-0.5 bg-current rounded-full'></div>
-                    <div className='w-5 h-0.5 bg-current rounded-full'></div>
-                    <div className='w-4 h-0.5 bg-current rounded-full'></div>
-                  </div>
-                )}
+                <div className='w-6 h-6 flex flex-col justify-center space-y-1.5'>
+                  {isMobileMenuOpen ? (
+                    <>
+                      <div className='w-6 h-0.5 bg-white dark:bg-white rounded-full'></div>
+                      <div className='w-5 h-0.5 bg-white dark:bg-white rounded-full ml-auto'></div>
+                      <div className='w-4 h-0.5 bg-white dark:bg-white rounded-full ml-auto'></div>
+                    </>
+                  ) : (
+                    <>
+                      <div className='w-6 h-0.5 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-full'></div>
+                      <div className='w-5 h-0.5 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-400 dark:to-purple-500 rounded-full ml-auto'></div>
+                      <div className='w-4 h-0.5 bg-gradient-to-r from-pink-500 to-pink-600 dark:from-pink-400 dark:to-pink-500 rounded-full ml-auto'></div>
+                    </>
+                  )}
+                </div>
               </button>
             </div>
           </div>

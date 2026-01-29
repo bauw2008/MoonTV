@@ -55,6 +55,7 @@ export interface VideoCardProps {
   origin?: 'vod' | 'live';
   remarks?: string;
   priority?: boolean;
+  rank?: number; // 排行（1-3）
   ref?: React.RefObject<VideoCardHandle>;
 }
 
@@ -86,6 +87,7 @@ function VideoCard({
   origin = 'vod',
   remarks,
   priority = false,
+  rank,
   ref,
 }: VideoCardProps) {
   const router = useRouter();
@@ -936,6 +938,26 @@ function VideoCard({
             </div>
           )}
 
+          {/* 排行徽章（1-3名） */}
+          {rank && rank >= 1 && rank <= 3 && (
+            <div
+              className='absolute top-2 left-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-lg z-10'
+              style={
+                {
+                  WebkitUserSelect: 'none',
+                  userSelect: 'none',
+                  WebkitTouchCallout: 'none',
+                } as React.CSSProperties
+              }
+              onContextMenu={(e: React.MouseEvent) => {
+                e.preventDefault();
+                return false;
+              }}
+            >
+              {rank}
+            </div>
+          )}
+
           {/* 豆瓣链接 */}
           {config.showDoubanLink && actualDoubanId && actualDoubanId !== 0 && (
             <a
@@ -1210,14 +1232,13 @@ function VideoCard({
             <div className='absolute inset-0 bg-gradient-to-r from-transparent via-green-50/0 to-transparent dark:via-green-900/0 group-hover:via-green-50/50 dark:group-hover:via-green-900/30 transition-all duration-300 rounded-md'></div>
 
             <span
-              className='block text-sm font-bold line-clamp-2 text-gray-900 dark:text-gray-100 transition-all duration-300 ease-in-out group-hover:scale-[1.02] peer relative z-10 group-hover:bg-gradient-to-r group-hover:from-green-600 group-hover:via-emerald-600 group-hover:to-teal-600 dark:group-hover:from-green-400 dark:group-hover:via-emerald-400 dark:group-hover:to-teal-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]'
+              className='block text-sm font-bold line-clamp-1 sm:line-clamp-2 text-gray-900 dark:text-gray-100 transition-all duration-300 ease-in-out group-hover:scale-[1.02] peer relative z-10 group-hover:bg-gradient-to-r group-hover:from-green-600 group-hover:via-emerald-600 group-hover:to-teal-600 dark:group-hover:from-green-400 dark:group-hover:via-emerald-400 dark:group-hover:to-teal-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]'
               style={
                 {
                   WebkitUserSelect: 'none',
                   userSelect: 'none',
                   WebkitTouchCallout: 'none',
                   display: '-webkit-box',
-                  WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                   lineHeight: '1.4',
@@ -1291,8 +1312,8 @@ function VideoCard({
                 {/* 背景渐变效果 */}
                 <span className='absolute inset-0 bg-gradient-to-r from-transparent via-green-50/0 to-transparent dark:via-green-500/0 group-hover:via-green-50/80 dark:group-hover:via-green-500/20 transition-all duration-300'></span>
 
-                {/* 左侧装饰点 */}
-                <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)]'></span>
+                {/* 左侧装饰点 - 移动端隐藏 */}
+                <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)] hidden sm:block'></span>
 
                 {origin === 'live' && (
                   <Radio
@@ -1301,10 +1322,12 @@ function VideoCard({
                   />
                 )}
 
-                <span className='relative font-semibold'>{source_name}</span>
+                <span className='relative font-semibold truncate max-w-[120px] sm:max-w-none'>
+                  {source_name}
+                </span>
 
-                {/* 右侧装饰点 */}
-                <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)]'></span>
+                {/* 右侧装饰点 - 移动端隐藏 */}
+                <span className='relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400 transition-all duration-300 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)] hidden sm:block'></span>
               </span>
             </div>
           )}

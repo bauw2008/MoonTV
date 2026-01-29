@@ -52,6 +52,12 @@ export async function GET(request: Request) {
     clearTimeout(timeoutId);
 
     if (!imageResponse.ok) {
+      logger.error('[Image Proxy] Failed to fetch image:', {
+        url: imageUrl,
+        status: imageResponse.status,
+        statusText: imageResponse.statusText,
+      });
+
       const errorResponse = NextResponse.json(
         {
           error: 'Failed to fetch image',

@@ -1,5 +1,3 @@
-'use client';
-
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -23,7 +21,20 @@ export default function PosterCarousel({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  // 检测是否为移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 使用 useRef 来跟踪 initialPosters 的前一个值
   const prevInitialPostersRef = useRef<PosterItem[] | undefined>(undefined);
@@ -151,8 +162,7 @@ export default function PosterCarousel({
     const linkMap: { [key: string]: string } = {
       热门电影: '/douban?type=movie',
       热门剧集: '/douban?type=tv',
-      番剧: '/douban?type=anime&primary=番剧',
-      剧场版: '/douban?type=anime&primary=剧场版',
+      海外剧集: '/douban?type=tv',
     };
     return linkMap[category] || '/douban';
   };
@@ -166,7 +176,7 @@ export default function PosterCarousel({
     <div className='mb-8 relative -mt-16 z-10 px-2 md:px-4'>
       {/* 海报轮播容器 */}
       <div
-        className='relative h-[calc(58vh+2rem)] min-h-[480px] max-h-[750px] overflow-hidden bg-black w-full rounded-2xl shadow-2xl'
+        className='relative h-[50vh] sm:h-[55vh] md:h-[calc(58vh+2rem)] min-h-[360px] sm:min-h-[450px] md:min-h-[480px] max-h-[600px] sm:max-h-[700px] md:max-h-[750px] overflow-hidden bg-black w-full rounded-2xl shadow-2xl'
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -194,15 +204,21 @@ export default function PosterCarousel({
                 {/* 背景海报 */}
                 <div className='absolute inset-0'>
                   <Image
-                    src={poster.poster}
+                    src={
+                      isMobile && poster.portraitPoster
+                        ? poster.portraitPoster
+                        : poster.poster
+                    }
                     alt={poster.title}
                     fill
                     sizes='(max-width: 1366px) 100vw, (max-width: 1920px) 1600px, 1920px'
-                    quality={75}
+                    quality={poster.isTMDB ? 75 : 70}
                     priority={posters.indexOf(poster) === 0}
                     className='object-cover'
                     style={{
-                      filter: 'contrast(1.05) brightness(0.95)',
+                      filter: poster.isTMDB
+                        ? 'contrast(1.05) brightness(0.95)'
+                        : 'none',
                       transform: 'scale(1)',
                       transition: 'none',
                     }}

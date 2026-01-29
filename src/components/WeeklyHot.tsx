@@ -1,7 +1,7 @@
 'use client';
 
 import { TrendingUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 import { ClientCache } from '@/lib/client-cache';
 import { logger } from '@/lib/logger';
@@ -33,6 +33,7 @@ const CACHE_EXPIRE = 7200; // 2小时
 export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
   const [weeklyHot, setWeeklyHot] = useState<WeeklyHotItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const loadWeeklyHot = async () => {
@@ -42,7 +43,9 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
         // 先尝试从缓存获取
         const cached = await ClientCache.get<WeeklyHotItem[]>(CACHE_KEY);
         if (cached && cached.length > 0) {
-          setWeeklyHot(cached.slice(0, limit));
+          startTransition(() => {
+            setWeeklyHot(cached.slice(0, limit));
+          });
           setLoading(false);
           return;
         }
@@ -60,7 +63,9 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
 
         if (result.success && result.data?.subject_collection_items) {
           const items = result.data.subject_collection_items;
-          setWeeklyHot(items);
+          startTransition(() => {
+            setWeeklyHot(items);
+          });
           // 保存到缓存
           await ClientCache.set(CACHE_KEY, items, CACHE_EXPIRE);
         } else {
@@ -68,7 +73,9 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
         }
       } catch (error) {
         logger.error('加载每周热门失败:', error);
-        setWeeklyHot([]); // 出错时显示空数组
+        startTransition(() => {
+          setWeeklyHot([]); // 出错时显示空数组
+        });
       } finally {
         setLoading(false);
       }
@@ -98,7 +105,7 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
             Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 content-visibility-auto contain-intrinsic-size-[96px_144px] sm:contain-intrinsic-size-[180px_270px]'
               >
                 <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
                   <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
@@ -110,7 +117,7 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
             weeklyHot.map((item, index) => (
               <div
                 key={item.id}
-                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 content-visibility-auto contain-intrinsic-size-[96px_144px] sm:contain-intrinsic-size-[180px_270px]'
               >
                 <VideoCard
                   id={item.id}
@@ -121,6 +128,7 @@ export default function WeeklyHot({ limit = 10 }: WeeklyHotProps) {
                   from='douban'
                   type='movie'
                   priority={index < 4}
+                  rank={index + 1}
                 />
               </div>
             ))}
