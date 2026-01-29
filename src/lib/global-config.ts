@@ -1,6 +1,12 @@
 /**
  * 全局配置管理工具函数
  * 操作 window.RUNTIME_CONFIG
+ *
+ * 简化版本：
+ * - 移除 syncToServer() 函数
+ * - 移除 localStorage 同步机制
+ * - 移除页面可见性监听
+ * - 简化 notifyConfigUpdated() 函数
  */
 
 import { MenuSettings } from '@/types/menu';
@@ -177,22 +183,10 @@ export function updateMenuSettings(newSettings: Partial<MenuSettings>): void {
   // 更新全局配置
   window.RUNTIME_CONFIG.MenuSettings = updatedSettings;
 
-  // localstorage 模式：保存到 localStorage
-  if (!isServerMode()) {
-    try {
-      localStorage.setItem(
-        'vidora-menu-settings',
-        JSON.stringify(updatedSettings),
-      );
-    } catch {
-      // 静默处理 localStorage 保存错误
-    }
-  }
-
   // 更新禁用菜单配置
   updateDisabledMenus();
 
-  // 触发配置更新事件
+  // 触发配置更新事件（仅通知组件更新，不触发同步）
   notifyConfigUpdated();
 }
 
@@ -238,57 +232,15 @@ export function updateCustomCategories(categories: CustomCategory[]): void {
   // 更新全局配置
   window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = categories;
 
-  // localstorage 模式：保存到 localStorage
-  if (!isServerMode()) {
-    try {
-      localStorage.setItem(
-        'vidora-custom-categories',
-        JSON.stringify(categories),
-      );
-    } catch {
-      // 静默处理 localStorage 保存错误
-    }
-  }
-
   // 触发配置更新事件
   notifyConfigUpdated();
 }
 
-// 同步到服务端
-export async function syncToServer(): Promise<boolean> {
-  if (!isServerMode()) {
-    return false;
-  }
-
-  try {
-    const menuSettings = getMenuSettings();
-    const response = await fetch('/api/admin/menu-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ MenuSettings: menuSettings }),
-    });
-
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-// 配置更新标记键名
-const CONFIG_UPDATE_KEY = 'vidora-config-update-timestamp';
-
-// 通知配置更新
+// 简化的配置更新通知
+// 只触发自定义事件，不进行 localStorage 同步或服务器同步
 export async function notifyConfigUpdated(): Promise<void> {
   if (typeof window === 'undefined') {
     return;
-  }
-
-  // 通过 localStorage 触发 storage 事件通知其他标签页
-  try {
-    const timestamp = Date.now();
-    localStorage.setItem(CONFIG_UPDATE_KEY, timestamp.toString());
-  } catch {
-    // 静默处理 localStorage 保存错误
   }
 
   // 触发自定义事件供组件监听
@@ -299,124 +251,14 @@ export async function notifyConfigUpdated(): Promise<void> {
   window.dispatchEvent(event);
 }
 
-// 重新加载配置（从服务器获取最新配置）
-export async function refreshConfig(): Promise<void> {
-  if (!isServerMode()) {
-    // localstorage 模式：从 localStorage 读取
-    try {
-      const savedSettings = localStorage.getItem('vidora-menu-settings');
-      if (savedSettings) {
-        const parsedSettings: MenuSettings = JSON.parse(savedSettings);
-        if (window.RUNTIME_CONFIG) {
-          window.RUNTIME_CONFIG.MenuSettings = parsedSettings;
-          // 更新禁用菜单的全局变量
-          updateDisabledMenus();
-        }
-      }
-
-      const savedCategories = localStorage.getItem('vidora-custom-categories');
-      if (savedCategories) {
-        const parsedCategories: CustomCategory[] = JSON.parse(savedCategories);
-        if (window.RUNTIME_CONFIG) {
-          window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = parsedCategories;
-        }
-      }
-    } catch {
-      // 静默处理 localStorage 读取错误
-    }
-    return;
-  }
-
-  // 服务端模式：从 API 获取最新配置
-  try {
-    const response = await fetch('/api/public-config', {
-      headers: { 'Cache-Control': 'no-cache' },
-      cache: 'no-store',
-    });
-
-    if (response.ok) {
-      const data: Partial<RuntimeConfig> = await response.json();
-
-      if (data?.MenuSettings && window.RUNTIME_CONFIG) {
-        window.RUNTIME_CONFIG.MenuSettings = data.MenuSettings;
-        // 更新禁用菜单的全局变量
-        updateDisabledMenus();
-      }
-
-      if (data?.CUSTOM_CATEGORIES && window.RUNTIME_CONFIG) {
-        window.RUNTIME_CONFIG.CUSTOM_CATEGORIES = data.CUSTOM_CATEGORIES;
-      }
-    }
-  } catch {
-    // API 请求失败，静默处理
-  }
-}
-
-// 初始化配置监听
+// 初始化配置监听（简化版）
+// 只初始化禁用菜单配置，移除 storage 和 visibility 监听
 export function initConfigListener(): () => void {
   if (typeof window === 'undefined') return () => {};
 
   // 初始化禁用菜单配置
   updateDisabledMenus();
 
-  // 监听 storage 事件（跨标签页配置同步）
-  const handleStorage = async (event: StorageEvent) => {
-    // 只处理配置更新事件
-    if (event.key === CONFIG_UPDATE_KEY && event.newValue !== event.oldValue) {
-      try {
-        await refreshConfig();
-        window.dispatchEvent(
-          new CustomEvent('vidora-config-update', {
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      } catch {
-        // 静默处理错误
-      }
-    }
-  };
-
-  // 监听页面可见性变化，当页面从隐藏变为可见时刷新配置
-  let refreshTimeout: NodeJS.Timeout | null = null;
-  const debounceDelay = 1000;
-
-  const handleVisibilityChange = async () => {
-    if (!document.hidden) {
-      if (refreshTimeout) {
-        clearTimeout(refreshTimeout);
-      }
-
-      refreshTimeout = setTimeout(async () => {
-        try {
-          await refreshConfig();
-          window.dispatchEvent(
-            new CustomEvent('vidora-config-update', {
-              bubbles: true,
-              composed: true,
-            }),
-          );
-        } catch {
-          // 静默处理错误
-        } finally {
-          refreshTimeout = null;
-        }
-      }, debounceDelay);
-    } else if (refreshTimeout) {
-      clearTimeout(refreshTimeout);
-      refreshTimeout = null;
-    }
-  };
-
-  window.addEventListener('storage', handleStorage);
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-
-  return () => {
-    window.removeEventListener('storage', handleStorage);
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-    if (refreshTimeout) {
-      clearTimeout(refreshTimeout);
-    }
-  };
+  // 返回空的清理函数
+  return () => {};
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { notifyConfigUpdated, updateMenuSettings } from '@/lib/global-config';
+import { notifyConfigUpdated } from '@/lib/global-config';
 import { logger } from '@/lib/logger';
 import { useAdminLoading } from '@/hooks/admin/useAdminLoading';
 import { useToastNotification } from '@/hooks/admin/useToastNotification';
@@ -55,8 +55,6 @@ const doubanImageProxyTypeOptions = [
 ];
 
 function SiteConfigContent() {
-  const [config, setConfig] = useState<SiteConfigSettings | null>(null);
-
   // 使用统一接口
   const { isLoading } = useAdminLoading();
   const { showError, showSuccess } = useToastNotification();
@@ -92,14 +90,11 @@ function SiteConfigContent() {
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
     useState(false);
 
+  // 只在组件挂载时加载一次配置
   useEffect(() => {
-    const loadConfig = async (forceRefresh = false) => {
+    const loadConfig = async () => {
       try {
-        // 添加时间戳参数，强制刷新缓存
-        const url = forceRefresh
-          ? '/api/admin/config?t=' + Date.now()
-          : '/api/admin/config';
-        const response = await fetch(url, {
+        const response = await fetch('/api/admin/config', {
           headers: {
             'Cache-Control': 'no-cache',
             Pragma: 'no-cache',
@@ -107,15 +102,13 @@ function SiteConfigContent() {
           cache: 'no-store',
         });
         const data = await response.json();
-        setConfig(data.Config);
 
         if (data.Config?.SiteConfig) {
-          // 使用从服务器返回的数据，避免闭包陷阱
           const siteConfigData = data.Config.SiteConfig;
 
           setSiteSettings({
             SiteName: siteConfigData.SiteName || '',
-            Announcement: siteConfigData.Announcement ?? '', // 使用 ?? 而不是 ||，允许空字符串
+            Announcement: siteConfigData.Announcement ?? '',
             SearchDownstreamMaxPage:
               siteConfigData.SearchDownstreamMaxPage || 1,
             SiteInterfaceCacheTime:
@@ -154,13 +147,13 @@ function SiteConfigContent() {
     };
 
     loadConfig();
+    // 空依赖数组，只在挂载时执行一次
   }, [showError]);
 
   const saveConfig = async () => {
     try {
       // 更新菜单设置，只包含导航菜单相关的字段
       const updatedMenuSettings = {
-        // 导航菜单字段
         showMovies: siteSettings.MenuSettings.showMovies,
         showTVShows: siteSettings.MenuSettings.showTVShows,
         showAnime: siteSettings.MenuSettings.showAnime,
@@ -201,13 +194,8 @@ function SiteConfigContent() {
 
       showSuccess('站点配置保存成功');
 
-      // 更新菜单设置，让导航立即生效
-      updateMenuSettings(updatedMenuSettings);
-
-      // 通知其他窗口重新获取配置
+      // 通知其他窗口重新获取配置（但不自动更新本地 RUNTIME_CONFIG）
       notifyConfigUpdated();
-
-      // 不重新加载配置，避免读到旧数据覆盖用户编辑的内容
     } catch (error) {
       logger.error('保存站点配置失败:', error);
       showError('保存失败: ' + (error as Error).message);
@@ -221,23 +209,12 @@ function SiteConfigContent() {
       [menuKey]: !siteSettings.MenuSettings[menuKey],
     };
 
-    // 只更新本地状态，不立即更新导航
-    // 用户需要手动保存才能使配置生效
+    // 只更新本地状态，不触发全局配置更新
     setSiteSettings((prev) => ({
       ...prev,
       MenuSettings: newMenuSettings,
     }));
   };
-
-  // 初始化时同步菜单配置到 NavigationConfig（仅在首次加载时执行）
-  const hasInitializedMenu = useRef(false);
-
-  useEffect(() => {
-    if (!hasInitializedMenu.current && siteSettings.MenuSettings && config) {
-      updateMenuSettings(siteSettings.MenuSettings);
-      hasInitializedMenu.current = true;
-    }
-  }, [siteSettings.MenuSettings, config]);
 
   // 处理豆瓣数据源变化
   const handleDoubanDataSourceChange = (value: string) => {

@@ -1,74 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   getMenuSettings,
-  getStorageType,
-  initConfigListener,
-  isMenuEnabled as isMenuEnabledGlobal,
-  notifyConfigUpdated,
-  syncToServer,
   updateMenuSettings as updateMenuSettingsGlobal,
 } from '@/lib/global-config';
-import { useToast } from '@/hooks/useToast';
+
+import { MenuSettings } from '@/types/menu';
+import { menuLabels } from '@/types/menu';
+
+const menuSettings = getMenuSettings();
 
 export function useMenuSettings() {
-  const [menuSettings, setMenuSettings] = useState(getMenuSettings());
-  const storageType = getStorageType();
-  const { success: showToast } = useToast();
+  const [currentSettings, setCurrentSettings] =
+    useState<MenuSettings>(menuSettings);
 
-  // 监听配置变化
   useEffect(() => {
-    // 监听全局配置更新事件
     const handleConfigUpdate = () => {
       const newSettings = getMenuSettings();
-      setMenuSettings(newSettings);
+      setCurrentSettings(newSettings);
     };
 
     window.addEventListener('vidora-config-update', handleConfigUpdate);
 
-    // 初始化广播监听
-    const cleanup = initConfigListener();
-
     return () => {
       window.removeEventListener('vidora-config-update', handleConfigUpdate);
-      cleanup();
     };
   }, []);
 
-  // 自动同步到服务端（防抖）
-  useEffect(() => {
-    let syncTimeout: NodeJS.Timeout;
-
-    const autoSync = () => {
-      if (storageType !== 'localstorage') {
-        syncTimeout = setTimeout(async () => {
-          const success = await syncToServer();
-          if (success) {
-            showToast('菜单配置已同步到服务端');
-            // 通知其他窗口重新获取配置
-            notifyConfigUpdated();
-          }
-        }, 1000); // 1 秒防抖
-      }
-    };
-
-    // 监听配置变化
-    const handleConfigChange = () => {
-      clearTimeout(syncTimeout);
-      autoSync();
-    };
-
-    window.addEventListener('vidora-config-update', handleConfigChange);
-
-    return () => {
-      clearTimeout(syncTimeout);
-      window.removeEventListener('vidora-config-update', handleConfigChange);
-    };
-  }, [storageType, showToast]);
-
   const updateMenuSettings = (newSettings: Partial<typeof menuSettings>) => {
     updateMenuSettingsGlobal(newSettings);
-    setMenuSettings(getMenuSettings()); // 立即更新本地状态
+    setCurrentSettings(getMenuSettings()); // 立即更新本地状态
   };
 
   const toggleMenu = (menuKey: keyof typeof menuSettings) => {
@@ -77,12 +38,7 @@ export function useMenuSettings() {
       [menuKey]: !menuSettings[menuKey],
     };
     updateMenuSettingsGlobal(newSettings);
-    setMenuSettings(newSettings);
-
-    // localstorage 模式：立即通知配置更新
-    if (storageType === 'localstorage') {
-      notifyConfigUpdated();
-    }
+    setCurrentSettings(newSettings);
 
     // 触发自定义事件，通知其他组件更新
     window.dispatchEvent(
@@ -100,12 +56,7 @@ export function useMenuSettings() {
   ) => {
     const newSettings = { ...menuSettings, [menuKey]: enabled };
     updateMenuSettingsGlobal(newSettings);
-    setMenuSettings(newSettings);
-
-    // localstorage 模式：立即通知配置更新
-    if (storageType === 'localstorage') {
-      notifyConfigUpdated();
-    }
+    setCurrentSettings(newSettings);
 
     // 触发自定义事件，通知其他组件更新
     window.dispatchEvent(
@@ -117,13 +68,54 @@ export function useMenuSettings() {
     );
   };
 
+  const resetToDefaults = useCallback(() => {
+    const defaults: MenuSettings = {
+      showMovies: true,
+      showTVShows: true,
+      showAnime: true,
+      showVariety: true,
+      showLive: false,
+      showTvbox: false,
+      showShortDrama: false,
+    };
+    updateMenuSettingsGlobal(defaults);
+    setCurrentSettings(defaults);
+
+    // 触发自定义事件，通知其他组件更新
+    window.dispatchEvent(
+      new CustomEvent('vidora-config-update', {
+        bubbles: true,
+        composed: true,
+        detail: { menuSettings: defaults },
+      }),
+    );
+  }, []);
+
+  const isMenuEnabled = (menuKey: keyof MenuSettings): boolean => {
+    return currentSettings[menuKey];
+  };
+
+  const getEnabledMenus = useCallback(() => {
+    return Object.entries(currentSettings)
+      .filter(([, enabled]) => enabled)
+      .map(([key]) => key as keyof MenuSettings);
+  }, [currentSettings]);
+
+  const getDisabledMenus = useCallback(() => {
+    return Object.entries(currentSettings)
+      .filter(([, enabled]) => !enabled)
+      .map(([key]) => key as keyof MenuSettings);
+  }, [currentSettings]);
+
   return {
-    menuSettings,
+    menuSettings: currentSettings,
     updateMenuSettings,
-    isMenuEnabled: isMenuEnabledGlobal,
     toggleMenu,
     setMenuEnabled,
-    syncToServer,
-    storageType,
+    resetToDefaults,
+    isMenuEnabled,
+    getEnabledMenus,
+    getDisabledMenus,
+    menuLabels,
   };
 }
