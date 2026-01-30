@@ -207,6 +207,6 @@ function shouldSkipAuth(pathname: string): boolean {
 // 配置proxy匹配规则
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|login|register|warning|api/login|api/register|api/registration|api/logout|api/cron|api/server-config|api/tvbox|api/live/merged|api/parse|api/test-env).*)',
+    '/((?!_next/static|_next/image|favicon.ico|login|register|warning|api/login|api/register|api/registration|api/logout|api/cron|api/server-config|api/tvbox|api/live/merged|api/parse).*)',
   ],
 };
